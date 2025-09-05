@@ -1,0 +1,42 @@
+{
+  "name": "FoundryVTT Module Template",
+  "description": "A modern FoundryVTT module template with Svelte, TypeScript, and Vite",
+  "variables": {
+    "MODULE_ID": {
+      "description": "The module ID (e.g., 'my-awesome-module')",
+      "type": "string",
+      "required": true,
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "MODULE_TITLE": {
+      "description": "The module title (e.g., 'My Awesome Module')",
+      "type": "string",
+      "required": true
+    },
+    "MODULE_DESCRIPTION": {
+      "description": "The module description",
+      "type": "string",
+      "default": "A FoundryVTT module"
+    },
+    "AUTHOR_NAME": {
+      "description": "Your name",
+      "type": "string",
+      "default": "Your Name"
+    },
+    "AUTHOR_EMAIL": {
+      "description": "Your email",
+      "type": "string",
+      "default": "your.email@example.com"
+    },
+    "AUTHOR_DISCORD": {
+      "description": "Your Discord username",
+      "type": "string",
+      "default": "yourusername"
+    },
+    "AUTHOR_URL": {
+      "description": "Your website URL",
+      "type": "string",
+      "default": "https://yourwebsite.com"
+    }
+  }
+}

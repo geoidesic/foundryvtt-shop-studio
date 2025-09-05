@@ -1,0 +1,33 @@
+import '~/src/styles/Variables.scss'; // Import any styles as this includes them in the build.
+import '~/src/styles/init.scss'; // Import any styles as this includes them in the build.
+
+import WelcomeApplication from '~/src/components/pages/WelcomeApplication.js';
+import { MODULE_ID } from '~/src/helpers/constants';
+import { log } from '~/src/helpers/utility';
+import { registerSettings } from '~/src/settings';
+
+window.log = log;
+log.level = log.DEBUG;
+
+Hooks.once("init", (app, html, data) => {
+  log.i('Initialising');
+  CONFIG.debug.hooks = true;
+
+  if(game.version > 13) {
+    // V12 -> 13 SHIM
+    window.MIN_WINDOW_WIDTH = 200;
+    window.MIN_WINDOW_HEIGHT = 50;
+  }
+  
+  registerSettings(app);
+});
+
+Hooks.once("ready", (app, html, data) => {
+  if (!game.modules.get(MODULE_ID).active) {
+    log.w('Module is not active');
+    return;
+  }
+  if (!game.settings.get(MODULE_ID, 'dontShowWelcome')) {
+    new WelcomeApplication().render(true, { focus: true });
+  }
+});
