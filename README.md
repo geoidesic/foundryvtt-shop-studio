@@ -1,59 +1,40 @@
-# FoundryVTT Module Template
+# Foundryvtt Shop Studio
 
-A modern FoundryVTT module template with Svelte, TypeScript, and Vite.
+Easily create shop actors for your PCs to interact with in-game
 
-## Quick Start
+## Installation
 
-1. **Create a new repository from this template**
-   - Click "Use this template" on GitHub
-   - Choose your repository name (this will become your module ID)
-
-2. **Run the setup script**
-   ```bash
-   ./setup.sh
-   ```
-   This will automatically replace all placeholders with values based on your repository name.
-
-3. **Install dependencies and start developing**
-   ```bash
-   bun install
-   bun run dev
-   ```
-
-## Manual Setup (Alternative)
-
-If you prefer to set up manually or the script doesn't work:
-
-1. Replace the following placeholders in your files:
-   - `<MODULE_ID>` → Your module ID (e.g., "my-awesome-module")
-   - `<MODULE_TITLE>` → Your module title (e.g., "My Awesome Module")
-   - `<MODULE_DESCRIPTION>` → Your module description
-   - `<MODULE_LOG_PREFIX>` → Your log prefix (e.g., "MAM")
-
-2. Update the author information in `module.json` and `package.json`
-
-3. Update the GitHub URLs in `module.json` to point to your repository
-
-## Features
-
-- ⚡ **Vite** for fast development and building
-- 🎨 **Svelte** for reactive UI components
-- 📝 **TypeScript** for type safety
-- 🔧 **ESLint** and **Prettier** for code quality
-- 🎯 **Hot Module Replacement** for instant development feedback
-- 📦 **Modern ES modules** with proper imports
+1. Download the module from the [latest release](https://github.com/geoidesic/foundryvtt-shop-studio/releases/latest)
+2. Extract the zip file to your FoundryVTT  directory
+3. Restart FoundryVTT
+4. Enable the module in your world settings
 
 ## Development
 
-- `bun run dev` - Start development server with HMR
-- `bun run build` - Build for production
-- `bun run eslint` - Run ESLint
+This module is built using the TyphonJS framework with Svelte.
 
-## Template Variables
+### Prerequisites
 
-The template uses the following variables that get replaced during setup:
+- Node.js 18+ 
+- Bun (recommended) or npm
 
-- `MODULE_ID`: The module identifier (from repository name)
-- `MODULE_TITLE`: Human-readable module title
-- `MODULE_DESCRIPTION`: Module description
-- `MODULE_LOG_PREFIX`: Short prefix for logging (derived from title)
+### Setup
+
+```bash
+# Install dependencies
+bun install
+
+# Start development server
+bun run dev
+```
+
+### Building
+
+```bash
+# Build for production
+bun run build
+```
+
+## License
+
+No license is granted. All rights reserved.

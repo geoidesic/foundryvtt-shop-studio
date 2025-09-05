@@ -27,8 +27,8 @@ function dontShowWelcome() {
 
 function debugSetting() {
   game.settings.register(MODULE_ID, 'debug', {
-    name: game.i18n.localize(`${MODULE_ID}.Setting.debug.Name`),
-    hint: game.i18n.localize(`${MODULE_ID}.Setting.debug.Hint`),
+    name: game.i18n.localize(`${MODULE_ID}.Setting.Debug.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.Debug.Hint`),
     scope: 'world',
     config: true,
     default: false,
@@ -46,8 +46,8 @@ function debugSetting() {
 }
 function debugHooksSetting() {
   game.settings.register(MODULE_ID, 'debug.hooks', {
-    name: game.i18n.localize(`${MODULE_ID}.Setting.debugHooks.Name`),
-    hint: game.i18n.localize(`${MODULE_ID}.Setting.debugHooks.Hint`),
+    name: game.i18n.localize(`${MODULE_ID}.Setting.DebugHooks.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.DebugHooks.Hint`),
     scope: 'world',
     config: true,
     default: false,
