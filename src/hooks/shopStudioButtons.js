@@ -118,7 +118,7 @@ async function createOrOpenShop() {
             [SHOP_FLAG_KEYS.configuration]: DEFAULT_SHOP_CONFIGURATION
           }
         },
-        img: 'icons/svg/shop.svg' // fallback icon
+        img: `modules/${MODULE_ID}/assets/shop-studio-logo-dragon-be7c41ff.webp`
       }, { renderSheet: true });
       ui.notifications.info('New shop created and opened.');
     } catch (err) {

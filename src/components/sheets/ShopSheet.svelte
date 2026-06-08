@@ -85,6 +85,14 @@
     }
   }
 
+  function handleActorDrop(e) {
+    handleDrop(e, 'actor');
+  }
+
+  function handleRollTableDrop(e) {
+    handleDrop(e, 'rolltable');
+  }
+
   function removeAssociated(index) {
     associatedActors = associatedActors.filter((_, i) => i !== index);
     saveSettings();
@@ -160,7 +168,7 @@ section.shop-sheet
             textarea(description-text bind:value="{descriptionValue}" placeholder="Describe your shop...")
           div.associated-actors-section
             h2 {localize("AssociatedActors")}
-            div.drag-drop-area(on:dragover|preventDefault="{handleDragOver}" on:drop|preventDefault="{handleDrop(e, 'actor')}")  
+            div.drag-drop-area(on:dragover|preventDefault="{handleDragOver}" on:drop|preventDefault="{handleActorDrop}")
               p.drag-hint {localize("DragActorsHere")}
               p.small (Drag actor tokens or from actor directory)
             +if("associatedActors && associatedActors.length > 0")
@@ -206,14 +214,14 @@ section.shop-sheet
             span % (chance to remove old stock on provision)
           div.rolltables-section
             h3 {localize("RollTables")}
-            div.drag-drop-area(on:dragover|preventDefault="{handleDragOver}" on:drop|preventDefault="{handleDrop(e, 'rolltable')}")  
+            div.drag-drop-area(on:dragover|preventDefault="{handleDragOver}" on:drop|preventDefault="{handleRollTableDrop}")
               p.drag-hint {localize("DragRollTablesHere")} (from compendium or tables sidebar)
             +if("rollTables && rollTables.length > 0")
               ul.rolltable-list
                 +each("rollTables as rtUuid, index")
                   li
                     span {getRollTableName(rtUuid)}
-                    button.remove-btn(on:click!="{removeRollTableAtIndex(index)}") ×
+                    button.remove-btn(on:click!="{removeRollTable(index)}") ×
               +else()
                 p.no-items No roll tables configured. Drag some here to enable provisioning.
           div.actions

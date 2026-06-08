@@ -8,7 +8,10 @@ export default class ShopActorSheet extends ActorSheet {
       template: `modules/${MODULE_ID}/templates/sheets/shop.html`,
       width: 640,
       height: 720,
-      resizable: true
+      resizable: true,
+      submitOnClose: false,
+      submitOnChange: false,
+      closeOnSubmit: false
     });
   }
 
