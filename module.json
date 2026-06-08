@@ -21,14 +21,14 @@
   "authors": [
     {
       "name": "Noel da Costa",
-      "url": "https://www.arc2.co.uk",
+      "url": "https://www.aardvark.games",
       "discord": "geoidesic",
       "flags": {}
     }
   ],
   "compatibility": {
     "minimum": "12",
-    "verified": "13",
+    "verified": "14",
     "maximum": "14"
   },
   "flags": {

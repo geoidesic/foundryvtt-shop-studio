@@ -1,0 +1,113 @@
+import { MODULE_ID } from '~/src/helpers/constants';
+
+export const LEGACY_SHOP_ACTOR_TYPE = 'shop';
+export const SHOP_ACTOR_TYPE = 'npc';
+export const SHOP_IDENTITY_KIND = `${MODULE_ID}.shop`;
+export const SHOP_FLAG_SCOPE = MODULE_ID;
+export const SHOP_FLAG_KEYS = Object.freeze({
+  configuration: 'configuration',
+  stock: 'stock',
+  transactions: 'transactions',
+  identity: 'identity'
+});
+
+export const DEFAULT_SHOP_CONFIGURATION = Object.freeze({
+  pricingFactor: 100,
+  priceVariance: 10,
+  variancePeriod: 'daily',
+  atrophyPercent: 5,
+  associatedActors: [],
+  rollTables: []
+});
+
+let RegisteredShopActor = null;
+
+export function registerShopActor() {
+  const BaseActorClass = CONFIG.Actor.documentClass;
+
+  if (RegisteredShopActor) {
+    return RegisteredShopActor;
+  }
+
+  class ShopActor extends BaseActorClass {
+    /**
+     * Indicates whether the Actor is managed by Shop Studio.
+     * @returns {boolean}
+     */
+    get isShop() {
+      if (this.type === LEGACY_SHOP_ACTOR_TYPE) {
+        return true;
+      }
+
+      const identity = this.getFlag(MODULE_ID, SHOP_FLAG_KEYS.identity);
+      return identity?.isShop === true || identity?.kind === SHOP_IDENTITY_KIND;
+    }
+
+    /**
+     * Retrieves configuration flags for this shop.
+     * @returns {Record<string, unknown>}
+     */
+    get shopConfiguration() {
+      const stored = this.getFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.configuration) ?? {};
+      return foundry.utils.mergeObject(DEFAULT_SHOP_CONFIGURATION, stored, { inplace: false });
+    }
+
+    /**
+     * Updates shop configuration flags.
+     * @param {Record<string, unknown>} update
+     */
+    async updateShopConfiguration(update) {
+      const merged = foundry.utils.mergeObject(this.shopConfiguration, update ?? {}, { inplace: false });
+      return this.setFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.configuration, merged);
+    }
+
+    /**
+     * Returns the persisted stock snapshot for the shop.
+     * @returns {Array<Record<string, unknown>>}
+     */
+    get stockSnapshot() {
+      return this.getFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.stock) ?? [];
+    }
+
+    /**
+     * Persists a new stock snapshot.
+     * @param {Array<Record<string, unknown>>} stock
+     */
+    async setStockSnapshot(stock) {
+      return this.setFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.stock, stock ?? []);
+    }
+
+    /**
+     * Marks the actor as a shop when the underlying system does not support a custom type.
+     * @returns {Promise<foundry.abstract.Document>} update result
+     */
+    async setShopIdentity() {
+      return this.setFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.identity, {
+        isShop: true,
+        kind: SHOP_IDENTITY_KIND
+      });
+    }
+
+    /**
+     * Prepare baseline data for shop actors ensuring required structures exist.
+     */
+    prepareBaseData() {
+      super.prepareBaseData();
+
+      if (!this.isShop) {
+        return;
+      }
+
+      this.system ??= {};
+      this.system.details ??= {};
+      this.system.details.biography ??= '';
+      this.system.currency ??= {};
+    }
+  }
+
+  // Register the actor class with the system
+  CONFIG.Actor.documentClass = ShopActor;
+  RegisteredShopActor = ShopActor;
+
+  return ShopActor;
+}

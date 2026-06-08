@@ -1,0 +1,459 @@
+<script>
+  import { onMount } from 'svelte';
+  import { localize, log } from '~/src/helpers/utility.js';
+
+  export let actor;
+
+  let activeTab = 'shopfront';
+  let filterText = '';
+  let associatedActors = [];
+  let rollTables = [];
+  let pricingFactor = 100;
+  let priceVariance = 10;
+  let variancePeriod = 'daily';
+  let atrophyPercent = 5;
+
+  $: sheetTitle = actor?.name ?? game.i18n.localize('foundryvtt-shop-studio.ShopSheetTitle');
+  $: config = actor?.shopConfiguration ?? {};
+  $: descriptionValue = actor?.system?.details?.biography?.value || '';
+  $: {
+    if (config) {
+      pricingFactor = config.pricingFactor ?? 100;
+      priceVariance = config.priceVariance ?? 10;
+      variancePeriod = config.variancePeriod ?? 'daily';
+      atrophyPercent = config.atrophyPercent ?? 5;
+      associatedActors = config.associatedActors ?? [];
+      rollTables = config.rollTables ?? [];
+    }
+  }
+
+  function switchTab(tab) {
+    activeTab = tab;
+  }
+
+  async function saveSettings() {
+    if (!actor?.isOwner) {
+      ui.notifications.warn(localize('NoPermission'));
+      return;
+    }
+    await actor.updateShopConfiguration({
+      pricingFactor: parseFloat(pricingFactor),
+      priceVariance: parseFloat(priceVariance),
+      variancePeriod,
+      atrophyPercent: parseFloat(atrophyPercent),
+      associatedActors,
+      rollTables
+    });
+    ui.notifications.info(localize('SettingsSaved'));
+  }
+
+  async function provisionStore() {
+    if (!actor?.isOwner) return;
+    ui.notifications.info('Provisioning store... This will roll on configured tables, apply pricing variance, and update inventory.');
+    // TODO: Implement full provisioning logic using RollTable.roll(), adjust prices with factor/variance, apply atrophy to old stock
+    // For example:
+    // for each rollTable, draw items, create with price = base * (pricingFactor/100) * (1 + random variance)
+    // remove some items based on atrophy %
+    const numToAdd = 5; // placeholder
+    ui.notifications.info(`Added ${numToAdd} items to inventory.`);
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }
+
+  function handleDrop(e, dropType) {
+    e.preventDefault();
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+      if (dropType === 'actor' && data.type === 'Actor' && data.uuid) {
+        // Add to associated actors (dedup)
+        const actorId = data.uuid || data.id;
+        if (!associatedActors.includes(actorId)) {
+          associatedActors = [...associatedActors, actorId];
+          saveSettings(); // auto save
+        }
+      } else if (dropType === 'rolltable' && data.type === 'RollTable' && data.uuid) {
+        if (!rollTables.includes(data.uuid)) {
+          rollTables = [...rollTables, data.uuid];
+          saveSettings();
+        }
+      }
+    } catch (err) {
+      console.error('Drop error:', err);
+    }
+  }
+
+  function removeAssociated(index) {
+    associatedActors = associatedActors.filter((_, i) => i !== index);
+    saveSettings();
+  }
+
+  function removeRollTable(index) {
+    rollTables = rollTables.filter((_, i) => i !== index);
+    saveSettings();
+  }
+
+  function clearFilter() {
+    filterText = '';
+  }
+
+  function renderItem(item) {
+    item.sheet?.render(true);
+  }
+
+  function openItemSheet(item) {
+    renderItem(item);
+  }
+
+  function openImageEditor() {
+    actor?.sheet?._onEditImage?.();
+  }
+
+  function getActorName(uuidOrId) {
+    const a = game.actors.get(uuidOrId) || game.actors.getName(uuidOrId); // simplistic
+    return a?.name || uuidOrId.split('.').pop() || 'Unknown Actor';
+  }
+
+  function getRollTableName(uuid) {
+    const rt = game.tables.get(uuid) || game.tables.getName(uuid.split('.').pop());
+    return rt?.name || 'Unknown Table';
+  }
+
+  // Calculate displayed price for inventory items (placeholder)
+  function calculatePrice(basePrice = 0) {
+    const factor = pricingFactor / 100;
+    const variance = (Math.random() * 2 - 1) * (priceVariance / 100); // simple random variance
+    return Math.round(basePrice * factor * (1 + variance));
+  }
+
+  onMount(() => {
+    // Could setup drag drop listeners if needed beyond inline
+    log?.d('ShopSheet mounted for actor', actor?.name);
+  });
+</script>
+
+<template lang="pug">
+section.shop-sheet
+  header.shop-sheet__header
+    h1.shop-sheet__title {sheetTitle}
+    nav.shop-sheet__tabs
+      button.tab-button(class="{activeTab === 'shopfront' ? 'active' : ''}" on:click!="{switchTab('shopfront')}")
+        | {localize("Shopfront")}
+      button.tab-button(class="{activeTab === 'inventory' ? 'active' : ''}" on:click!="{switchTab('inventory')}")
+        | {localize("Inventory")}
+      button.tab-button(class="{activeTab === 'settings' ? 'active' : ''}" on:click!="{switchTab('settings')}")
+        | {localize("Settings")}
+
+  main.shop-sheet__body
+    +if("activeTab === 'shopfront'")
+      div.shopfront-tab
+        div.shopfront-grid
+          div.profile-section
+            h2 {localize("ProfileImage")}
+            img.profile-img(src="{actor?.img || 'icons/svg/mystery-man.svg'}" alt="Shop Profile")
+            button(on:click!="{openImageEditor}")
+              | Change Image
+          div.description-section
+            h2 {localize("Description")}
+            textarea(description-text bind:value="{descriptionValue}" placeholder="Describe your shop...")
+          div.associated-actors-section
+            h2 {localize("AssociatedActors")}
+            div.drag-drop-area(on:dragover|preventDefault="{handleDragOver}" on:drop|preventDefault="{handleDrop(e, 'actor')}")  
+              p.drag-hint {localize("DragActorsHere")}
+              p.small (Drag actor tokens or from actor directory)
+            +if("associatedActors && associatedActors.length > 0")
+              ul.associated-list
+                +each("associatedActors as assoc, index")
+                  li
+                    span {getActorName(assoc)}
+                    button.remove-btn(on:click!="{removeAssociated(index)}") ×
+              +else()
+                p.no-items No associated actors yet.
+    +if("activeTab === 'inventory'")
+      div.inventory-tab
+        div.inventory-controls
+          input.filter-input(type="text" bind:value="{filterText}" placeholder="{localize('FilterInventory')}")
+          button(on:click!="{clearFilter}") Clear
+        div.inventory-list
+          +each("actor?.items || [] as item")
+            +if("!filterText || (item.name && item.name.toLowerCase().includes(filterText.toLowerCase()))")
+              div.inventory-item
+                span.item-name {item.name}
+                span.item-price ${calculatePrice(item.system?.price?.value || item.system?.price || 0)} gp
+                button(on:click!="{openItemSheet(item)}") View
+    +if("activeTab === 'settings'")
+      div.settings-tab
+        div.settings-form
+          label
+            | {localize("PricingFactor")}
+            input(type="number" bind:value="{pricingFactor}" min="50" max="200" step="1")
+            span % (affects all prices)
+          label
+            | {localize("PriceVariance")}
+            input(type="number" bind:value="{priceVariance}" min="0" max="50" step="1")
+            span % (random element per item)
+          label
+            | {localize("VariancePeriod")}
+            select(bind:value="{variancePeriod}")
+              option(value="daily") {localize("Daily")}
+              option(value="weekly") {localize("Weekly")}
+              option(value="monthly") {localize("Monthly")}
+          label
+            | {localize("Atrophy")}
+            input(type="number" bind:value="{atrophyPercent}" min="0" max="30" step="1")
+            span % (chance to remove old stock on provision)
+          div.rolltables-section
+            h3 {localize("RollTables")}
+            div.drag-drop-area(on:dragover|preventDefault="{handleDragOver}" on:drop|preventDefault="{handleDrop(e, 'rolltable')}")  
+              p.drag-hint {localize("DragRollTablesHere")} (from compendium or tables sidebar)
+            +if("rollTables && rollTables.length > 0")
+              ul.rolltable-list
+                +each("rollTables as rtUuid, index")
+                  li
+                    span {getRollTableName(rtUuid)}
+                    button.remove-btn(on:click!="{removeRollTableAtIndex(index)}") ×
+              +else()
+                p.no-items No roll tables configured. Drag some here to enable provisioning.
+          div.actions
+            button.provision-btn(on:click!="{provisionStore}")
+              | {localize("ProvisionStore")}
+            button.save-btn(on:click!="{saveSettings}")
+              | Save Settings
+</template>
+
+<style lang="sass">
+.shop-sheet
+  display: flex
+  flex-direction: column
+  gap: 1rem
+  padding: 1rem
+  min-height: 100%
+  background: linear-gradient(145deg, #f5e8c7, #e6d5a8)
+  border-radius: 8px
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1)
+
+  &__header
+    border-bottom: 2px solid #8b5a2b
+    padding-bottom: 1rem
+
+  &__title
+    font-size: 1.6rem
+    margin: 0 0 0.5rem 0
+    color: #3a2f1f
+    text-shadow: 1px 1px 2px rgba(139, 90, 43, 0.2)
+
+  &__tabs
+    display: flex
+    gap: 0.5rem
+    margin-top: 0.5rem
+
+  .tab-button
+    padding: 0.6rem 1.2rem
+    background: #d2b48c
+    border: 2px solid #8b5a2b
+    border-radius: 6px 6px 0 0
+    color: #3a2f1f
+    font-weight: bold
+    cursor: pointer
+    transition: all 0.2s ease
+    flex: 1
+    text-align: center
+
+    &:hover
+      background: #e6c9a0
+      transform: translateY(-2px)
+
+    &.active
+      background: #3a2f1f
+      color: #f5e8c7
+      border-bottom: 3px solid #d4af37
+
+  &__body
+    flex: 1 1 auto
+    background: rgba(255, 255, 255, 0.9)
+    border: 2px solid #8b5a2b
+    border-radius: 8px
+    padding: 1.5rem
+    overflow: auto
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1)
+
+.shopfront-grid
+  display: grid
+  grid-template-columns: 1fr 2fr
+  gap: 2rem
+
+.profile-section, .description-section, .associated-actors-section
+  background: white
+  padding: 1.5rem
+  border-radius: 8px
+  border: 1px solid #d4af37
+  box-shadow: 0 2px 8px rgba(139, 90, 43, 0.1)
+
+.profile-img
+  width: 120px
+  height: 120px
+  object-fit: cover
+  border: 4px solid #8b5a2b
+  border-radius: 50%
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2)
+  display: block
+  margin: 0 auto 1rem
+
+.description-section textarea
+  width: 100%
+  min-height: 150px
+  padding: 1rem
+  border: 1px solid #d4af37
+  border-radius: 6px
+  font-family: inherit
+  resize: vertical
+
+.drag-drop-area
+  border: 3px dashed #8b5a2b
+  border-radius: 8px
+  padding: 2rem
+  text-align: center
+  background: rgba(212, 175, 55, 0.1)
+  transition: all 0.2s
+  min-height: 80px
+  cursor: pointer
+
+  &:hover
+    background: rgba(212, 175, 55, 0.2)
+    border-color: #d4af37
+
+.associated-list, .rolltable-list
+  list-style: none
+  padding: 0
+  margin: 1rem 0 0 0
+
+  li
+    display: flex
+    justify-content: space-between
+    align-items: center
+    padding: 0.75rem
+    background: #f9f0d9
+    margin-bottom: 0.5rem
+    border-radius: 6px
+    border-left: 4px solid #d4af37
+
+.remove-btn
+  background: #c0392b
+  color: white
+  border: none
+  width: 24px
+  height: 24px
+  border-radius: 50%
+  cursor: pointer
+  font-size: 14px
+  line-height: 1
+  display: flex
+  align-items: center
+  justify-content: center
+
+  &:hover
+    background: #e74c3c
+
+.inventory-controls
+  display: flex
+  gap: 1rem
+  margin-bottom: 1rem
+  align-items: center
+
+.filter-input
+  flex: 1
+  padding: 0.75rem
+  border: 2px solid #8b5a2b
+  border-radius: 6px
+  font-size: 1rem
+
+.inventory-item
+  display: flex
+  justify-content: space-between
+  align-items: center
+  padding: 1rem
+  background: white
+  border: 1px solid #d4af37
+  border-radius: 8px
+  margin-bottom: 0.75rem
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05)
+
+  .item-name
+    font-weight: bold
+    color: #3a2f1f
+
+  .item-price
+    color: #d4af37
+    font-weight: bold
+    background: rgba(212, 175, 55, 0.1)
+    padding: 0.25rem 0.75rem
+    border-radius: 20px
+
+.settings-form
+  display: flex
+  flex-direction: column
+  gap: 1.5rem
+  max-width: 500px
+
+  label
+    display: flex
+    flex-direction: column
+    gap: 0.5rem
+    font-weight: bold
+    color: #3a2f1f
+
+  input, select
+    padding: 0.75rem
+    border: 2px solid #8b5a2b
+    border-radius: 6px
+    font-size: 1rem
+    background: white
+
+.provision-btn
+  background: linear-gradient(#4a90e2, #357abd)
+  color: white
+  padding: 1rem 2rem
+  border: none
+  border-radius: 8px
+  font-size: 1.1rem
+  font-weight: bold
+  cursor: pointer
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3)
+  transition: transform 0.2s
+
+  &:hover
+    transform: translateY(-2px)
+    box-shadow: 0 6px 16px rgba(74, 144, 226, 0.4)
+
+.save-btn
+  background: #27ae60
+  color: white
+  padding: 0.75rem 1.5rem
+  border: none
+  border-radius: 6px
+  cursor: pointer
+  font-weight: bold
+
+  &:hover
+    background: #2ecc71
+
+h2, h3
+  color: #3a2f1f
+  border-bottom: 2px solid #d4af37
+  padding-bottom: 0.5rem
+  margin-top: 0
+
+.small, .no-items, .drag-hint
+  color: #666
+  font-style: italic
+  margin: 0.5rem 0
+
+.no-items
+  text-align: center
+  padding: 2rem
+  background: #f9f0d9
+  border-radius: 8px
+  border: 2px dashed #d4af37
+</style>

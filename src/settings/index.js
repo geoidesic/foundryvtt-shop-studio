@@ -8,9 +8,21 @@ export function registerSettings(app) {
   /** World Settings */
   debugSetting();
   debugHooksSetting();
+  registerUISettings();
   /** User settings */
   dontShowWelcome()
 
+}
+
+function registerUISettings() {
+  game.settings.register(MODULE_ID, 'showButtonInSideBar', {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.showButtonInSideBar.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.showButtonInSideBar.Hint`),
+    scope: 'world',
+    config: true,
+    default: true,
+    type: Boolean,
+  });
 }
 
 function dontShowWelcome() {

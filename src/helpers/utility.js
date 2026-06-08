@@ -97,3 +97,15 @@ export function localize(string) {
   if (typeof game === 'undefined') return string; //- avoid lint error
   return game.i18n.localize(`${MODULE_ID}.${string}`);
 }
+
+/**
+ * Safely get a game setting with fallback
+ */
+export function safeGetSetting(moduleId, key, defaultValue = true) {
+  try {
+    const setting = game.settings.get(moduleId, key);
+    return setting !== undefined ? setting : defaultValue;
+  } catch (err) {
+    return defaultValue;
+  }
+}

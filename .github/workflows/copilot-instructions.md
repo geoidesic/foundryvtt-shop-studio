@@ -39,6 +39,11 @@ NB: don't ask for permission to code, just do it.
 - **CRITICAL: ALL style blocks and CSS in Svelte components MUST use SASS indented format** (never SCSS or CSS block braces). Use `style lang="sass"` and always indent with two spaces per level. Never use curly braces for style blocks.
 - Conditional logic must be properly nested: `+else()` indented one level deeper than `+if()`
 - Avoid long expressions in attributes - extract to script functions
+- **CRITICAL: Svelte/Pug Rule Compliance**: When fixing Svelte/Pug files, identify ALL violations simultaneously and apply ALL fixes in a single comprehensive solution rather than incrementally. This includes:
+  - Event handlers must use `!=` operator instead of `=` 
+  - No arrow functions in event handlers
+  - Complex expressions must be moved to computed values or helper functions
+  - Data binding expressions cannot contain compound operations like optional chaining
 - ESM-only project - never use `require()`, always `import`
 
 **State Machine (Finity v0.5.4) - CRITICAL API PATTERNS**:

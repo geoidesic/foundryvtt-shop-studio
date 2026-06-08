@@ -16,7 +16,38 @@
       "DebugHooks": {
         "Name": "Debug Hooks",
         "Hint": "Enable debug hooks"
+      },
+      "UI": {
+        "Name": "UI Settings",
+        "Hint": "Configure the user interface for Shop Studio",
+        "Label": "Configure UI"
+      },
+      "showButtonInSideBar": {
+        "Name": "Show Button in Sidebar",
+        "Hint": "Show the Shop Studio button in the Actors sidebar directory"
       }
-    }
+    },
+    "ShopSheetTitle": "Shop",
+    "Shopfront": "Shopfront",
+    "Inventory": "Inventory",
+    "Settings": "Settings",
+    "ProfileImage": "Profile Image",
+    "Description": "Description",
+    "AssociatedActors": "Associated Actors",
+    "DragActorsHere": "Drag actors here to associate with this shop",
+    "PricingFactor": "Pricing Factor (%)",
+    "PriceVariance": "Price Variance (%)",
+    "VariancePeriod": "Variance Period",
+    "Daily": "Daily",
+    "Weekly": "Weekly",
+    "Monthly": "Monthly",
+    "RollTables": "Roll Tables",
+    "DragRollTablesHere": "Drag roll tables here",
+    "ProvisionStore": "Provision Store",
+    "Atrophy": "Atrophy (%)",
+    "FilterInventory": "Filter Inventory...",
+    "NoPermission": "You don't have permission to modify this shop.",
+    "SettingsSaved": "Shop settings have been saved.",
+    "NoPermission": "Permission denied."
   }
 }
