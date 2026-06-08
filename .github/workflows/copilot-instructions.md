@@ -1,9 +1,7 @@
 # FoundryVTT Actor Studio - AI Coding Guide
-
 NB: don't ask for permission to code, just do it.
 
 ## Architecture Overview
-
 **Core Framework**: This is a FoundryVTT module built with Svelte + TyphonJS runtime for reactive UI components and Finity state machines for workflow orchestration. The module creates D&D 5e characters through a guided multi-step process with advancement capture integration.
 
 **Key Design Patterns**:
@@ -18,6 +16,13 @@ NB: don't ask for permission to code, just do it.
 - **Frontend Stack**:
 - **CRITICAL**: ALL Svelte components MUST use Pug templates with `<template lang="pug">` - NEVER use standard HTML markup
 - Pug templates with Svelte preprocessing (NOT standard Pug - see `.cursor/rules/`)
+- **CRITICAL: Svelte/Pug Rule Compliance**: When fixing Svelte/Pug files, identify ALL violations simultaneously and apply ALL fixes in a single comprehensive solution rather than incrementally. This includes:
+  - Event handlers must use `!=` operator instead of `=` 
+  - Complex expressions must be moved to computed values or helper functions
+  - No arrow functions in event handlers
+  - NO FUCKING ARROW FUNCTIONS IN EVENT HANDLERS, I.E. DO NOT FUCKING DO THIS: `on:drop|preventDefault="{ (e) => handleDrop(e, 'rolltable') }")`, INSTEAD DO THIS: `on:drop|preventDefault="{handleRollTableDrop}")`
+  - Data binding expressions cannot contain compound operations like optional chaining
+- ESM-only project - never use `require()`, always `import`
 - **CRITICAL: Svelte Pug attribute assignment syntax:**
   - Always use `ComponentName(attr1="{expr1}" attr2="{expr2}")` for all props/attributes.
   - **Do NOT use** `{attr1=expr1}` or `{attr1}` or `{...}` syntax. These are invalid in Svelte Pug.
@@ -39,12 +44,6 @@ NB: don't ask for permission to code, just do it.
 - **CRITICAL: ALL style blocks and CSS in Svelte components MUST use SASS indented format** (never SCSS or CSS block braces). Use `style lang="sass"` and always indent with two spaces per level. Never use curly braces for style blocks.
 - Conditional logic must be properly nested: `+else()` indented one level deeper than `+if()`
 - Avoid long expressions in attributes - extract to script functions
-- **CRITICAL: Svelte/Pug Rule Compliance**: When fixing Svelte/Pug files, identify ALL violations simultaneously and apply ALL fixes in a single comprehensive solution rather than incrementally. This includes:
-  - Event handlers must use `!=` operator instead of `=` 
-  - No arrow functions in event handlers
-  - Complex expressions must be moved to computed values or helper functions
-  - Data binding expressions cannot contain compound operations like optional chaining
-- ESM-only project - never use `require()`, always `import`
 
 **State Machine (Finity v0.5.4) - CRITICAL API PATTERNS**:
 - **ASYNC OPERATIONS**: Only `.do()` method on states supports async functions - NEVER use `.onEnter()` for async
