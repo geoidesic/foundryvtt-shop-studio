@@ -17145,7 +17145,7 @@ function create_if_block_3(ctx) {
   return {
     c() {
       svg = svg_element("svg");
-      attr(svg, "class", "icon-int svelte-guag71");
+      attr(svg, "class", "icon-int svelte-FOU-guag71");
     },
     m(target, anchor) {
       insert(target, svg, anchor);
@@ -17182,7 +17182,7 @@ function create_if_block_2$1(ctx) {
       if (!src_url_equal(img.src, img_src_value = /*icon*/
       ctx[2])) attr(img, "src", img_src_value);
       attr(img, "alt", "");
-      attr(img, "class", "icon-int svelte-guag71");
+      attr(img, "class", "icon-int svelte-FOU-guag71");
     },
     m(target, anchor) {
       insert(target, img, anchor);
@@ -17210,7 +17210,7 @@ function create_if_block_1$1(ctx) {
       attr(i, "class", i_class_value = null_to_empty(
         /*icon*/
         ctx[2]
-      ) + " svelte-guag71");
+      ) + " svelte-FOU-guag71");
     },
     m(target, anchor) {
       insert(target, i, anchor);
@@ -17220,7 +17220,7 @@ function create_if_block_1$1(ctx) {
       4 && i_class_value !== (i_class_value = null_to_empty(
         /*icon*/
         ctx2[2]
-      ) + " svelte-guag71")) {
+      ) + " svelte-FOU-guag71")) {
         attr(i, "class", i_class_value);
       }
     },
@@ -17249,7 +17249,7 @@ function create_fragment$a(ctx) {
       attr(button_1, "type", "button");
       attr(button_1, "class", button_1_class_value = "header-control icon" + (typeof /*button*/
       ctx[0].class === "string" ? ` ${/*button*/
-      ctx[0].class}` : "") + " svelte-guag71");
+      ctx[0].class}` : "") + " svelte-FOU-guag71");
       toggle_class(
         button_1,
         "keep-minimized",
@@ -17325,7 +17325,7 @@ function create_fragment$a(ctx) {
       if (dirty & /*button*/
       1 && button_1_class_value !== (button_1_class_value = "header-control icon" + (typeof /*button*/
       ctx2[0].class === "string" ? ` ${/*button*/
-      ctx2[0].class}` : "") + " svelte-guag71")) {
+      ctx2[0].class}` : "") + " svelte-FOU-guag71")) {
         attr(button_1, "class", button_1_class_value);
       }
       if (applyStyles_action && is_function(applyStyles_action.update) && dirty & /*styles*/
@@ -17508,7 +17508,7 @@ function create_if_block_2(ctx) {
   return {
     c() {
       svg = svg_element("svg");
-      attr(svg, "class", "tjs-app-icon keep-minimized svelte-1n4tpql");
+      attr(svg, "class", "tjs-app-icon keep-minimized svelte-FOU-1n4tpql");
     },
     m(target, anchor) {
       insert(target, svg, anchor);
@@ -17543,7 +17543,7 @@ function create_if_block_1(ctx) {
     c() {
       i = element("i");
       attr(i, "class", i_class_value = "window-icon keep-minimized " + /*$storeHeaderIcon*/
-      ctx[4] + " svelte-1n4tpql");
+      ctx[4] + " svelte-FOU-1n4tpql");
     },
     m(target, anchor) {
       insert(target, i, anchor);
@@ -17551,7 +17551,7 @@ function create_if_block_1(ctx) {
     p(ctx2, dirty) {
       if (dirty[0] & /*$storeHeaderIcon*/
       16 && i_class_value !== (i_class_value = "window-icon keep-minimized " + /*$storeHeaderIcon*/
-      ctx2[4] + " svelte-1n4tpql")) {
+      ctx2[4] + " svelte-FOU-1n4tpql")) {
         attr(i, "class", i_class_value);
       }
     },
@@ -17568,7 +17568,7 @@ function create_if_block$5(ctx) {
   return {
     c() {
       img = element("img");
-      attr(img, "class", "tjs-app-icon keep-minimized svelte-1n4tpql");
+      attr(img, "class", "tjs-app-icon keep-minimized svelte-FOU-1n4tpql");
       if (!src_url_equal(img.src, img_src_value = getRoutePrefix(
         /*$storeHeaderIcon*/
         ctx[4]
@@ -17837,15 +17837,15 @@ function create_key_block(ctx) {
       for (let i = 0; i < each_blocks.length; i += 1) {
         each_blocks[i].c();
       }
-      attr(h1, "class", "window-title svelte-1n4tpql");
+      attr(h1, "class", "window-title svelte-FOU-1n4tpql");
       set_style(
         h1,
         "display",
         /*displayHeaderTitle*/
         ctx[7]
       );
-      attr(span, "class", "tjs-window-header-spacer keep-minimized svelte-1n4tpql");
-      attr(header, "class", "window-header svelte-1n4tpql");
+      attr(span, "class", "tjs-window-header-spacer keep-minimized svelte-FOU-1n4tpql");
+      attr(header, "class", "window-header svelte-FOU-1n4tpql");
       toggle_class(header, "not-draggable", !/*$storeDraggable*/
       ctx[5]);
     },
@@ -18347,7 +18347,7 @@ function create_fragment$8(ctx) {
     c() {
       div = element("div");
       div.innerHTML = ``;
-      attr(div, "class", "window-resize-handle svelte-1kzx9yd");
+      attr(div, "class", "window-resize-handle svelte-FOU-1kzx9yd");
     },
     m(target, anchor) {
       insert(target, div, anchor);
@@ -18552,7 +18552,7 @@ function create_fragment$7(ctx) {
   return {
     c() {
       div = element("div");
-      attr(div, "class", "tjs-focus-wrap svelte-kjcljd");
+      attr(div, "class", "tjs-focus-wrap svelte-FOU-kjcljd");
       attr(div, "tabindex", "0");
     },
     m(target, anchor) {
@@ -18689,12 +18689,12 @@ function create_else_block$2(ctx) {
       create_component(resizablehandle.$$.fragment);
       t2 = space();
       create_component(tjsfocuswrap.$$.fragment);
-      attr(section, "class", "window-content svelte-xfthie");
+      attr(section, "class", "window-content svelte-FOU-xfthie");
       attr(section, "tabindex", "-1");
       attr(div, "id", div_id_value = /*application*/
       ctx[10].id);
       attr(div, "class", div_class_value = "application tjs-app " + /*appClasses*/
-      ctx[14] + " svelte-xfthie");
+      ctx[14] + " svelte-FOU-xfthie");
       attr(div, "data-appid", div_data_appid_value = /*application*/
       ctx[10].appId);
       attr(div, "role", "application");
@@ -18838,7 +18838,7 @@ function create_else_block$2(ctx) {
       }
       if (!current || dirty[0] & /*appClasses*/
       16384 && div_class_value !== (div_class_value = "application tjs-app " + /*appClasses*/
-      ctx2[14] + " svelte-xfthie")) {
+      ctx2[14] + " svelte-FOU-xfthie")) {
         attr(div, "class", div_class_value);
       }
       if (!current || dirty[0] & /*application*/
@@ -18970,12 +18970,12 @@ function create_if_block$4(ctx) {
       create_component(resizablehandle.$$.fragment);
       t2 = space();
       create_component(tjsfocuswrap.$$.fragment);
-      attr(section, "class", "window-content svelte-xfthie");
+      attr(section, "class", "window-content svelte-FOU-xfthie");
       attr(section, "tabindex", "-1");
       attr(div, "id", div_id_value = /*application*/
       ctx[10].id);
       attr(div, "class", div_class_value = "application tjs-app " + /*appClasses*/
-      ctx[14] + " svelte-xfthie");
+      ctx[14] + " svelte-FOU-xfthie");
       attr(div, "data-appid", div_data_appid_value = /*application*/
       ctx[10].appId);
       attr(div, "role", "application");
@@ -19117,7 +19117,7 @@ function create_if_block$4(ctx) {
       }
       if (!current || dirty[0] & /*appClasses*/
       16384 && div_class_value !== (div_class_value = "application tjs-app " + /*appClasses*/
-      ctx[14] + " svelte-xfthie")) {
+      ctx[14] + " svelte-FOU-xfthie")) {
         attr(div, "class", div_class_value);
       }
       if (!current || dirty[0] & /*application*/
@@ -19832,18 +19832,18 @@ function create_default_slot$1(ctx) {
       main.innerHTML = `<p>Welcome</p>`;
       footer = element("footer");
       div0 = element("div");
-      div0.innerHTML = `<a href="https://www.aardvark.games" class="svelte-142wv8w"><img class="white" src="/modules/${MODULE_ID}/assets/aardvark-logo.webp" alt="Aardvark Game Studios Logo" height="50" width="50" style="fill: white; border: none; width: auto;"/></a>`;
+      div0.innerHTML = `<a href="https://www.aardvark.games" class="svelte-FOU-142wv8w"><img class="white" src="/modules/${MODULE_ID}/assets/aardvark-logo.webp" alt="Aardvark Game Studios Logo" height="50" width="50" style="fill: white; border: none; width: auto;"/></a>`;
       div2 = element("div");
       div1 = element("div");
       div1.textContent = `${localize("Title")} ${localize("Welcome.CreatedBy")} `;
       a1 = element("a");
       a1.textContent = "Aardvark Game Studios";
-      attr(main, "class", "svelte-142wv8w");
+      attr(main, "class", "svelte-FOU-142wv8w");
       attr(div0, "class", "logo");
       attr(a1, "href", "https://www.aardvark.games");
-      attr(a1, "class", "svelte-142wv8w");
+      attr(a1, "class", "svelte-FOU-142wv8w");
       attr(div2, "class", "left");
-      attr(footer, "class", "svelte-142wv8w");
+      attr(footer, "class", "svelte-FOU-142wv8w");
     },
     m(target, anchor) {
       insert(target, main, anchor);
@@ -21775,7 +21775,7 @@ function create_each_block$3(ctx) {
         /*activeTab*/
         ctx[0] === /*tab*/
         ctx[6].id ? "active" : ""
-      ) + " svelte-13pma25");
+      ) + " svelte-FOU-13pma25");
       attr(button, "type", "button");
     },
     m(target, anchor) {
@@ -21796,7 +21796,7 @@ function create_each_block$3(ctx) {
         /*activeTab*/
         ctx[0] === /*tab*/
         ctx[6].id ? "active" : ""
-      ) + " svelte-13pma25")) {
+      ) + " svelte-FOU-13pma25")) {
         attr(button, "class", button_class_value);
       }
     },
@@ -21910,10 +21910,10 @@ function create_fragment$4(ctx) {
       }
       div1 = element("div");
       if (if_block) if_block.c();
-      attr(div0, "class", "tabs-list svelte-13pma25");
-      attr(div1, "class", "tab-content svelte-13pma25");
+      attr(div0, "class", "tabs-list svelte-FOU-13pma25");
+      attr(div1, "class", "tab-content svelte-FOU-13pma25");
       attr(div2, "class", div2_class_value = "tabs " + /*$$restProps*/
-      ctx[4].class + " svelte-13pma25");
+      ctx[4].class + " svelte-FOU-13pma25");
     },
     m(target, anchor) {
       insert(target, div2, anchor);
@@ -21975,7 +21975,7 @@ function create_fragment$4(ctx) {
       }
       if (!current || dirty & /*$$restProps*/
       16 && div2_class_value !== (div2_class_value = "tabs " + /*$$restProps*/
-      ctx2[4].class + " svelte-13pma25")) {
+      ctx2[4].class + " svelte-FOU-13pma25")) {
         attr(div2, "class", div2_class_value);
       }
     },
@@ -22788,83 +22788,113 @@ function create_each_block(ctx) {
   };
 }
 function create_fragment$1(ctx) {
-  let div4;
-  let div3;
+  let div10;
+  let div9;
   let label0;
+  let div0;
+  let span0;
   let t0_value = (
     /*sharedProps*/
     ctx[0].localize("PricingFactor") + ""
   );
   let t0;
+  let strong0;
+  let t1_value = (
+    /*sharedProps*/
+    ctx[0].pricingFactor + ""
+  );
+  let t1;
+  let t2;
   let input0;
   let input0_value_value;
-  let span0;
+  let div1;
+  let p0;
   let label1;
-  let t2_value = (
+  let div2;
+  let span3;
+  let t6_value = (
     /*sharedProps*/
     ctx[0].localize("PriceVariance") + ""
   );
-  let t2;
-  let input1;
-  let input1_value_value;
-  let span1;
-  let label2;
-  let t4_value = (
-    /*sharedProps*/
-    ctx[0].localize("VariancePeriod") + ""
-  );
-  let t4;
-  let select;
-  let option0;
-  let t5_value = (
-    /*sharedProps*/
-    ctx[0].localize("Daily") + ""
-  );
-  let t5;
-  let option1;
-  let t6_value = (
-    /*sharedProps*/
-    ctx[0].localize("Weekly") + ""
-  );
   let t6;
-  let option2;
+  let strong1;
   let t7_value = (
     /*sharedProps*/
-    ctx[0].localize("Monthly") + ""
+    ctx[0].priceVariance + ""
   );
   let t7;
-  let select_value_value;
-  let label3;
-  let t8_value = (
+  let t8;
+  let input1;
+  let input1_value_value;
+  let div3;
+  let p1;
+  let label2;
+  let div4;
+  let span6;
+  let t12_value = (
     /*sharedProps*/
     ctx[0].localize("Atrophy") + ""
   );
-  let t8;
+  let t12;
+  let strong2;
+  let t13_value = (
+    /*sharedProps*/
+    ctx[0].atrophyPercent + ""
+  );
+  let t13;
+  let t14;
   let input2;
   let input2_value_value;
-  let span2;
-  let div1;
+  let div5;
+  let p2;
+  let label3;
+  let t18_value = (
+    /*sharedProps*/
+    ctx[0].localize("VariancePeriod") + ""
+  );
+  let t18;
+  let select;
+  let option0;
+  let t19_value = (
+    /*sharedProps*/
+    ctx[0].localize("Daily") + ""
+  );
+  let t19;
+  let option1;
+  let t20_value = (
+    /*sharedProps*/
+    ctx[0].localize("Weekly") + ""
+  );
+  let t20;
+  let option2;
+  let t21_value = (
+    /*sharedProps*/
+    ctx[0].localize("Monthly") + ""
+  );
+  let t21;
+  let select_value_value;
+  let div7;
   let h3;
-  let t10_value = (
+  let t22_value = (
     /*sharedProps*/
     ctx[0].localize("RollTables") + ""
   );
-  let t10;
-  let div0;
-  let p;
-  let t11_value = (
+  let t22;
+  let div6;
+  let p3;
+  let t23_value = (
     /*sharedProps*/
     ctx[0].localize("DragRollTablesHere") + ""
   );
-  let t11;
-  let t12;
-  let div2;
+  let t23;
+  let t24;
+  let div8;
   let button0;
-  let t13_value = (
+  let t25_value = (
     /*sharedProps*/
     ctx[0].localize("ProvisionStore") + ""
   );
-  let t13;
+  let t25;
   let button1;
   let mounted;
   let dispose;
@@ -22880,123 +22910,174 @@ function create_fragment$1(ctx) {
   let if_block = current_block_type(ctx);
   return {
     c() {
-      div4 = element("div");
-      div3 = element("div");
+      div10 = element("div");
+      div9 = element("div");
       label0 = element("label");
-      t0 = text(t0_value);
-      input0 = element("input");
+      div0 = element("div");
       span0 = element("span");
-      span0.textContent = "% (affects all prices)";
+      t0 = text(t0_value);
+      strong0 = element("strong");
+      t1 = text(t1_value);
+      t2 = text("%");
+      input0 = element("input");
+      div1 = element("div");
+      div1.innerHTML = `<span>50%</span><span>200%</span>`;
+      p0 = element("p");
+      p0.textContent = "(affects all prices)";
       label1 = element("label");
-      t2 = text(t2_value);
+      div2 = element("div");
+      span3 = element("span");
+      t6 = text(t6_value);
+      strong1 = element("strong");
+      t7 = text(t7_value);
+      t8 = text("%");
       input1 = element("input");
-      span1 = element("span");
-      span1.textContent = "% (random element per item)";
+      div3 = element("div");
+      div3.innerHTML = `<span>0%</span><span>50%</span>`;
+      p1 = element("p");
+      p1.textContent = "(random element per item)";
       label2 = element("label");
-      t4 = text(t4_value);
+      div4 = element("div");
+      span6 = element("span");
+      t12 = text(t12_value);
+      strong2 = element("strong");
+      t13 = text(t13_value);
+      t14 = text("%");
+      input2 = element("input");
+      div5 = element("div");
+      div5.innerHTML = `<span>0%</span><span>30%</span>`;
+      p2 = element("p");
+      p2.textContent = "(chance to remove old stock on provision)";
+      label3 = element("label");
+      t18 = text(t18_value);
       select = element("select");
       option0 = element("option");
-      t5 = text(t5_value);
+      t19 = text(t19_value);
       option1 = element("option");
-      t6 = text(t6_value);
+      t20 = text(t20_value);
       option2 = element("option");
-      t7 = text(t7_value);
-      label3 = element("label");
-      t8 = text(t8_value);
-      input2 = element("input");
-      span2 = element("span");
-      span2.textContent = "% (chance to remove old stock on provision)";
-      div1 = element("div");
+      t21 = text(t21_value);
+      div7 = element("div");
       h3 = element("h3");
-      t10 = text(t10_value);
-      div0 = element("div");
-      p = element("p");
-      t11 = text(t11_value);
-      t12 = text(" (from compendium or tables sidebar)");
+      t22 = text(t22_value);
+      div6 = element("div");
+      p3 = element("p");
+      t23 = text(t23_value);
+      t24 = text(" (from compendium or tables sidebar)");
       if_block.c();
-      div2 = element("div");
+      div8 = element("div");
       button0 = element("button");
-      t13 = text(t13_value);
+      t25 = text(t25_value);
       button1 = element("button");
       button1.textContent = "Save Settings";
-      attr(input0, "type", "number");
+      attr(div0, "class", "setting-label");
+      attr(input0, "type", "range");
       input0.value = input0_value_value = /*sharedProps*/
       ctx[0].pricingFactor;
       attr(input0, "min", "50");
       attr(input0, "max", "200");
       attr(input0, "step", "1");
-      attr(input1, "type", "number");
+      attr(input0, "class", "svelte-FOU-1xuueht");
+      attr(div1, "class", "setting-range");
+      attr(p0, "class", "setting-help");
+      attr(div2, "class", "setting-label");
+      attr(input1, "type", "range");
       input1.value = input1_value_value = /*sharedProps*/
       ctx[0].priceVariance;
       attr(input1, "min", "0");
       attr(input1, "max", "50");
       attr(input1, "step", "1");
+      attr(input1, "class", "svelte-FOU-1xuueht");
+      attr(div3, "class", "setting-range");
+      attr(p1, "class", "setting-help");
+      attr(div4, "class", "setting-label");
+      attr(input2, "type", "range");
+      input2.value = input2_value_value = /*sharedProps*/
+      ctx[0].atrophyPercent;
+      attr(input2, "min", "0");
+      attr(input2, "max", "30");
+      attr(input2, "step", "1");
+      attr(input2, "class", "svelte-FOU-1xuueht");
+      attr(div5, "class", "setting-range");
+      attr(p2, "class", "setting-help");
       option0.__value = "daily";
       set_input_value(option0, option0.__value);
       option1.__value = "weekly";
       set_input_value(option1, option1.__value);
       option2.__value = "monthly";
       set_input_value(option2, option2.__value);
-      attr(input2, "type", "number");
-      input2.value = input2_value_value = /*sharedProps*/
-      ctx[0].atrophyPercent;
-      attr(input2, "min", "0");
-      attr(input2, "max", "30");
-      attr(input2, "step", "1");
-      attr(p, "class", "drag-hint");
-      attr(div0, "class", "drag-drop-area");
-      attr(div0, "role", "region");
-      attr(div0, "aria-label", "Roll table drop zone");
-      attr(div1, "class", "rolltables-section");
+      attr(p3, "class", "drag-hint");
+      attr(div6, "class", "drag-drop-area");
+      attr(div6, "role", "region");
+      attr(div6, "aria-label", "Roll table drop zone");
+      attr(div7, "class", "rolltables-section");
       attr(button0, "class", "provision-btn");
       attr(button0, "type", "button");
       attr(button1, "class", "save-btn");
       attr(button1, "type", "button");
-      attr(div2, "class", "actions");
-      attr(div3, "class", "settings-form");
-      attr(div4, "class", "settings-tab");
+      attr(div8, "class", "actions");
+      attr(div9, "class", "settings-form");
+      attr(div10, "class", "settings-tab");
     },
     m(target, anchor) {
-      insert(target, div4, anchor);
-      append(div4, div3);
-      append(div3, label0);
-      append(label0, t0);
+      insert(target, div10, anchor);
+      append(div10, div9);
+      append(div9, label0);
+      append(label0, div0);
+      append(div0, span0);
+      append(span0, t0);
+      append(div0, strong0);
+      append(strong0, t1);
+      append(strong0, t2);
       append(label0, input0);
-      append(label0, span0);
-      append(div3, label1);
-      append(label1, t2);
+      append(label0, div1);
+      append(label0, p0);
+      append(div9, label1);
+      append(label1, div2);
+      append(div2, span3);
+      append(span3, t6);
+      append(div2, strong1);
+      append(strong1, t7);
+      append(strong1, t8);
       append(label1, input1);
-      append(label1, span1);
-      append(div3, label2);
-      append(label2, t4);
-      append(label2, select);
+      append(label1, div3);
+      append(label1, p1);
+      append(div9, label2);
+      append(label2, div4);
+      append(div4, span6);
+      append(span6, t12);
+      append(div4, strong2);
+      append(strong2, t13);
+      append(strong2, t14);
+      append(label2, input2);
+      append(label2, div5);
+      append(label2, p2);
+      append(div9, label3);
+      append(label3, t18);
+      append(label3, select);
       append(select, option0);
-      append(option0, t5);
+      append(option0, t19);
       append(select, option1);
-      append(option1, t6);
+      append(option1, t20);
       append(select, option2);
-      append(option2, t7);
+      append(option2, t21);
       select_option(
         select,
         /*sharedProps*/
         ctx[0].variancePeriod
       );
-      append(div3, label3);
-      append(label3, t8);
-      append(label3, input2);
-      append(label3, span2);
-      append(div3, div1);
-      append(div1, h3);
-      append(h3, t10);
-      append(div1, div0);
-      append(div0, p);
-      append(p, t11);
-      append(p, t12);
-      if_block.m(div1, null);
-      append(div3, div2);
-      append(div2, button0);
-      append(button0, t13);
-      append(div2, button1);
+      append(div9, div7);
+      append(div7, h3);
+      append(h3, t22);
+      append(div7, div6);
+      append(div6, p3);
+      append(p3, t23);
+      append(p3, t24);
+      if_block.m(div7, null);
+      append(div9, div8);
+      append(div8, button0);
+      append(button0, t25);
+      append(div8, button1);
       if (!mounted) {
         dispose = [
           listen(
@@ -23012,24 +23093,24 @@ function create_fragment$1(ctx) {
             ctx[2]
           ),
           listen(
-            select,
-            "change",
-            /*change_handler*/
-            ctx[3]
-          ),
-          listen(
             input2,
             "input",
             /*input_handler_2*/
+            ctx[3]
+          ),
+          listen(
+            select,
+            "change",
+            /*change_handler*/
             ctx[4]
           ),
-          listen(div0, "dragover", prevent_default(function() {
+          listen(div6, "dragover", prevent_default(function() {
             if (is_function(
               /*sharedProps*/
               ctx[0].handleDragOver
             )) ctx[0].handleDragOver.apply(this, arguments);
           })),
-          listen(div0, "drop", prevent_default(function() {
+          listen(div6, "drop", prevent_default(function() {
             if (is_function(
               /*sharedProps*/
               ctx[0].handleRollTableDrop
@@ -23057,30 +23138,47 @@ function create_fragment$1(ctx) {
       1 && t0_value !== (t0_value = /*sharedProps*/
       ctx[0].localize("PricingFactor") + "")) set_data(t0, t0_value);
       if (dirty & /*sharedProps*/
+      1 && t1_value !== (t1_value = /*sharedProps*/
+      ctx[0].pricingFactor + "")) set_data(t1, t1_value);
+      if (dirty & /*sharedProps*/
       1 && input0_value_value !== (input0_value_value = /*sharedProps*/
-      ctx[0].pricingFactor) && input0.value !== input0_value_value) {
+      ctx[0].pricingFactor)) {
         input0.value = input0_value_value;
       }
       if (dirty & /*sharedProps*/
-      1 && t2_value !== (t2_value = /*sharedProps*/
-      ctx[0].localize("PriceVariance") + "")) set_data(t2, t2_value);
+      1 && t6_value !== (t6_value = /*sharedProps*/
+      ctx[0].localize("PriceVariance") + "")) set_data(t6, t6_value);
+      if (dirty & /*sharedProps*/
+      1 && t7_value !== (t7_value = /*sharedProps*/
+      ctx[0].priceVariance + "")) set_data(t7, t7_value);
       if (dirty & /*sharedProps*/
       1 && input1_value_value !== (input1_value_value = /*sharedProps*/
-      ctx[0].priceVariance) && input1.value !== input1_value_value) {
+      ctx[0].priceVariance)) {
         input1.value = input1_value_value;
       }
       if (dirty & /*sharedProps*/
-      1 && t4_value !== (t4_value = /*sharedProps*/
-      ctx[0].localize("VariancePeriod") + "")) set_data(t4, t4_value);
+      1 && t12_value !== (t12_value = /*sharedProps*/
+      ctx[0].localize("Atrophy") + "")) set_data(t12, t12_value);
       if (dirty & /*sharedProps*/
-      1 && t5_value !== (t5_value = /*sharedProps*/
-      ctx[0].localize("Daily") + "")) set_data(t5, t5_value);
+      1 && t13_value !== (t13_value = /*sharedProps*/
+      ctx[0].atrophyPercent + "")) set_data(t13, t13_value);
       if (dirty & /*sharedProps*/
-      1 && t6_value !== (t6_value = /*sharedProps*/
-      ctx[0].localize("Weekly") + "")) set_data(t6, t6_value);
+      1 && input2_value_value !== (input2_value_value = /*sharedProps*/
+      ctx[0].atrophyPercent)) {
+        input2.value = input2_value_value;
+      }
       if (dirty & /*sharedProps*/
-      1 && t7_value !== (t7_value = /*sharedProps*/
-      ctx[0].localize("Monthly") + "")) set_data(t7, t7_value);
+      1 && t18_value !== (t18_value = /*sharedProps*/
+      ctx[0].localize("VariancePeriod") + "")) set_data(t18, t18_value);
+      if (dirty & /*sharedProps*/
+      1 && t19_value !== (t19_value = /*sharedProps*/
+      ctx[0].localize("Daily") + "")) set_data(t19, t19_value);
+      if (dirty & /*sharedProps*/
+      1 && t20_value !== (t20_value = /*sharedProps*/
+      ctx[0].localize("Weekly") + "")) set_data(t20, t20_value);
+      if (dirty & /*sharedProps*/
+      1 && t21_value !== (t21_value = /*sharedProps*/
+      ctx[0].localize("Monthly") + "")) set_data(t21, t21_value);
       if (dirty & /*sharedProps*/
       1 && select_value_value !== (select_value_value = /*sharedProps*/
       ctx[0].variancePeriod)) {
@@ -23091,19 +23189,11 @@ function create_fragment$1(ctx) {
         );
       }
       if (dirty & /*sharedProps*/
-      1 && t8_value !== (t8_value = /*sharedProps*/
-      ctx[0].localize("Atrophy") + "")) set_data(t8, t8_value);
+      1 && t22_value !== (t22_value = /*sharedProps*/
+      ctx[0].localize("RollTables") + "")) set_data(t22, t22_value);
       if (dirty & /*sharedProps*/
-      1 && input2_value_value !== (input2_value_value = /*sharedProps*/
-      ctx[0].atrophyPercent) && input2.value !== input2_value_value) {
-        input2.value = input2_value_value;
-      }
-      if (dirty & /*sharedProps*/
-      1 && t10_value !== (t10_value = /*sharedProps*/
-      ctx[0].localize("RollTables") + "")) set_data(t10, t10_value);
-      if (dirty & /*sharedProps*/
-      1 && t11_value !== (t11_value = /*sharedProps*/
-      ctx[0].localize("DragRollTablesHere") + "")) set_data(t11, t11_value);
+      1 && t23_value !== (t23_value = /*sharedProps*/
+      ctx[0].localize("DragRollTablesHere") + "")) set_data(t23, t23_value);
       if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block) {
         if_block.p(ctx, dirty);
       } else {
@@ -23111,18 +23201,18 @@ function create_fragment$1(ctx) {
         if_block = current_block_type(ctx);
         if (if_block) {
           if_block.c();
-          if_block.m(div1, null);
+          if_block.m(div7, null);
         }
       }
       if (dirty & /*sharedProps*/
-      1 && t13_value !== (t13_value = /*sharedProps*/
-      ctx[0].localize("ProvisionStore") + "")) set_data(t13, t13_value);
+      1 && t25_value !== (t25_value = /*sharedProps*/
+      ctx[0].localize("ProvisionStore") + "")) set_data(t25, t25_value);
     },
     i: noop,
     o: noop,
     d(detaching) {
       if (detaching) {
-        detach(div4);
+        detach(div10);
       }
       if_block.d();
       mounted = false;
@@ -23134,8 +23224,8 @@ function instance$1($$self, $$props, $$invalidate) {
   let { sharedProps = {} } = $$props;
   const input_handler = (e) => sharedProps.onPricingFactorChange?.(e.target.value);
   const input_handler_1 = (e) => sharedProps.onPriceVarianceChange?.(e.target.value);
-  const change_handler = (e) => sharedProps.onVariancePeriodChange?.(e.target.value);
   const input_handler_2 = (e) => sharedProps.onAtrophyPercentChange?.(e.target.value);
+  const change_handler = (e) => sharedProps.onVariancePeriodChange?.(e.target.value);
   const click_handler = (index) => sharedProps.removeRollTable(index);
   $$self.$$set = ($$props2) => {
     if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
@@ -23144,8 +23234,8 @@ function instance$1($$self, $$props, $$invalidate) {
     sharedProps,
     input_handler,
     input_handler_1,
-    change_handler,
     input_handler_2,
+    change_handler,
     click_handler
   ];
 }
@@ -23248,8 +23338,8 @@ function create_default_slot(ctx) {
       section = element("section");
       main = element("main");
       create_component(tabs_1.$$.fragment);
-      attr(main, "class", "shop-sheet__body svelte-1wn8t4w");
-      attr(section, "class", "shop-sheet svelte-1wn8t4w");
+      attr(main, "class", "shop-sheet__body svelte-FOU-1xcwi9c");
+      attr(section, "class", "shop-sheet svelte-FOU-1xcwi9c");
     },
     m(target, anchor) {
       insert(target, section, anchor);
@@ -23641,8 +23731,10 @@ class ShopActorSheet extends SvelteDocumentSheet {
     if (Number(game.version) >= 13) {
       classes.push("gas-v13-plus");
     }
+    const foundryVersion = game.version || "";
     return foundry.utils.mergeObject(super.defaultOptions, {
       id: "foundryvtt-shop-studio-sheet",
+      title: `${localize("ShopStudio")} v${version} | Foundry: ${foundryVersion}`,
       classes,
       width: 640,
       height: 720,

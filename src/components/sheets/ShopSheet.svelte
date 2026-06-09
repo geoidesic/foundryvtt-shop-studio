@@ -227,10 +227,10 @@
     grid-template-columns: minmax(220px, 1fr) minmax(280px, 1.7fr)
     gap: var(--size-md)
 
+
   :global(.profile-section),
   :global(.description-section),
   :global(.associated-actors-section),
-  :global(.settings-form),
   :global(.inventory-controls),
   :global(.inventory-list),
   :global(.rolltables-section)
@@ -338,16 +338,35 @@
     font-weight: 700
 
   :global(.settings-form)
-    display: flex
-    flex-direction: column
-    gap: var(--size-md)
-    max-width: 560px
+    margin: 0.5rem
 
   :global(.settings-form label)
     display: flex
     flex-direction: column
     gap: var(--size-xs)
     font-weight: 600
+
+  :global(.setting-label)
+    display: flex
+    align-items: baseline
+    justify-content: space-between
+    gap: var(--size-sm)
+
+  :global(.setting-label strong)
+    color: var(--gas-tab-active-color)
+    font-size: 0.9rem
+
+  :global(.setting-range)
+    display: flex
+    justify-content: space-between
+    opacity: 0.7
+    font-size: 0.75rem
+
+  :global(.setting-help)
+    margin: 0
+    opacity: 0.75
+    font-size: 0.8rem
+    font-weight: 400
 
   :global(.actions)
     display: flex
