@@ -83,6 +83,20 @@ function get_all_dirty_from_scope($$scope) {
   }
   return -1;
 }
+function exclude_internal_props(props) {
+  const result = {};
+  for (const k in props) if (k[0] !== "$") result[k] = props[k];
+  return result;
+}
+function compute_rest_props(props, keys) {
+  const rest = {};
+  keys = new Set(keys);
+  for (const k in props) if (!keys.has(k) && k[0] !== "$") rest[k] = props[k];
+  return rest;
+}
+function null_to_empty(value) {
+  return value == null ? "" : value;
+}
 function action_destroyer(action_result) {
   return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
 }
@@ -156,6 +170,9 @@ function destroy_each(iterations, detaching) {
 function element(name) {
   return document.createElement(name);
 }
+function svg_element(name) {
+  return document.createElementNS("http://www.w3.org/2000/svg", name);
+}
 function text(data) {
   return document.createTextNode(data);
 }
@@ -194,11 +211,26 @@ function set_data(text2, data) {
   text2.data = /** @type {string} */
   data;
 }
+function set_input_value(input, value) {
+  input.value = value == null ? "" : value;
+}
 function set_style(node, key, value, important) {
   if (value == null) {
     node.style.removeProperty(key);
   } else {
     node.style.setProperty(key, value, "");
+  }
+}
+function select_option(select, value, mounting) {
+  for (let i = 0; i < select.options.length; i += 1) {
+    const option = select.options[i];
+    if (option.__value === value) {
+      option.selected = true;
+      return;
+    }
+  }
+  {
+    select.selectedIndex = -1;
   }
 }
 function toggle_class(element2, name, toggle) {
@@ -279,6 +311,9 @@ function get_current_component() {
 function onMount(fn) {
   get_current_component().$$.on_mount.push(fn);
 }
+function onDestroy(fn) {
+  get_current_component().$$.on_destroy.push(fn);
+}
 function setContext(key, context) {
   get_current_component().$$.context.set(key, context);
   return context;
@@ -297,6 +332,10 @@ function schedule_update() {
     update_scheduled = true;
     resolved_promise.then(flush);
   }
+}
+function tick() {
+  schedule_update();
+  return resolved_promise;
 }
 function add_render_callback(fn) {
   render_callbacks.push(fn);
@@ -428,11 +467,11 @@ function create_in_transition(node, fn, params) {
       delay = 0,
       duration = 300,
       easing = identity,
-      tick = noop,
+      tick: tick2 = noop,
       css
     } = config || null_transition;
     if (css) animation_name = create_rule(node, 0, 1, duration, delay, easing, css, uid++);
-    tick(0, 1);
+    tick2(0, 1);
     const start_time = now() + delay;
     const end_time = start_time + duration;
     if (task) task.abort();
@@ -441,14 +480,14 @@ function create_in_transition(node, fn, params) {
     task = loop((now2) => {
       if (running) {
         if (now2 >= end_time) {
-          tick(1, 0);
+          tick2(1, 0);
           dispatch(node, true, "end");
           cleanup();
           return running = false;
         }
         if (now2 >= start_time) {
           const t = easing((now2 - start_time) / duration);
-          tick(t, 1 - t);
+          tick2(t, 1 - t);
         }
       }
       return running;
@@ -491,7 +530,7 @@ function create_out_transition(node, fn, params) {
       delay = 0,
       duration = 300,
       easing = identity,
-      tick = noop,
+      tick: tick2 = noop,
       css
     } = config || null_transition;
     if (css) animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
@@ -506,7 +545,7 @@ function create_out_transition(node, fn, params) {
     loop((now2) => {
       if (running) {
         if (now2 >= end_time) {
-          tick(0, 1);
+          tick2(0, 1);
           dispatch(node, false, "end");
           if (!--group.r) {
             run_all(group.c);
@@ -515,7 +554,7 @@ function create_out_transition(node, fn, params) {
         }
         if (now2 >= start_time) {
           const t = easing((now2 - start_time) / duration);
-          tick(1 - t, t);
+          tick2(1 - t, t);
         }
       }
       return running;
@@ -871,6 +910,109 @@ const svelteEasingFunc = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.de
   sineInOut,
   sineOut
 }, Symbol.toStringTag, { value: "Module" }));
+class Frozen {
+  /**
+   * @hideconstructor
+   */
+  constructor() {
+    throw new Error("Frozen constructor: This is a static class and should not be constructed.");
+  }
+  /**
+   * @param {Iterable<[K, V]>} [entries] - Target Map or iterable of [key, value] pairs.
+   *
+   * @returns {ReadonlyMap<K, V>} A strictly ReadonlyMap.
+   *
+   * @template K, V
+   */
+  static Map(entries) {
+    const result = new Map(entries);
+    result.set = void 0;
+    result.delete = void 0;
+    result.clear = void 0;
+    return (
+      /** @type {ReadonlyMap<K, V>} */
+      result
+    );
+  }
+  /**
+   * @param {Iterable<T>} [data] - Target Set or iterable list.
+   *
+   * @returns {ReadonlySet<T>} A strictly ReadonlySet.
+   *
+   * @template T
+   */
+  static Set(data) {
+    const result = new Set(data);
+    result.add = void 0;
+    result.delete = void 0;
+    result.clear = void 0;
+    return (
+      /** @type {ReadonlySet<T>} */
+      result
+    );
+  }
+}
+Object.freeze(Frozen);
+class Hashing {
+  static #regexUuidv = /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
+  /**
+   * @hideconstructor
+   */
+  constructor() {
+    throw new Error("Hashing constructor: This is a static class and should not be constructed.");
+  }
+  /**
+   * Provides a solid string hashing algorithm.
+   *
+   * Sourced from: https://stackoverflow.com/a/52171480
+   *
+   * @param {string}   str - String to hash.
+   *
+   * @param {number}   [seed=0] - A seed value altering the hash.
+   *
+   * @returns {number} Hash code.
+   */
+  static hashCode(str, seed = 0) {
+    if (typeof str !== "string") {
+      return 0;
+    }
+    let h1 = 3735928559 ^ seed, h2 = 1103547991 ^ seed;
+    for (let ch, i = 0; i < str.length; i++) {
+      ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ h1 >>> 16, 2246822507) ^ Math.imul(h2 ^ h2 >>> 13, 3266489909);
+    h2 = Math.imul(h2 ^ h2 >>> 16, 2246822507) ^ Math.imul(h1 ^ h1 >>> 13, 3266489909);
+    return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+  }
+  /**
+   * Validates that the given string is formatted as a UUIDv4 string.
+   *
+   * @param {unknown}   uuid - UUID string to test.
+   *
+   * @returns {uuid is string} Is UUIDv4 string.
+   */
+  static isUuidv4(uuid) {
+    return typeof uuid === "string" && this.#regexUuidv.test(uuid);
+  }
+  /**
+   * Generates a UUID v4 compliant ID. Please use a complete UUID generation package for guaranteed compliance.
+   *
+   * This code is an evolution of the following Gist.
+   * https://gist.github.com/jed/982883
+   *
+   * There is a public domain / free copy license attached to it that is not a standard OSS license...
+   * https://gist.github.com/jed/982883#file-license-txt
+   *
+   * @returns {string} UUIDv4
+   */
+  static uuidv4() {
+    return ("10000000-1000-4000-8000" + -1e11).replace(/[018]/g, (c) => (c ^ (globalThis.crypto ?? globalThis.msCrypto).getRandomValues(
+      new Uint8Array(1)
+    )[0] & 15 >> c / 4).toString(16));
+  }
+}
 function deepMerge(target, ...sourceObj) {
   if (Object.prototype.toString.call(target) !== "[object Object]") {
     throw new TypeError(`deepMerge error: 'target' is not an object.`);
@@ -935,6 +1077,20 @@ function hasGetter(object, accessor) {
   for (let o = Object.getPrototypeOf(object); o; o = Object.getPrototypeOf(o)) {
     const descriptor = Object.getOwnPropertyDescriptor(o, accessor);
     if (descriptor !== void 0 && descriptor.get !== void 0) {
+      return true;
+    }
+  }
+  return false;
+}
+function hasPrototype(target, Prototype) {
+  if (typeof target !== "function") {
+    return false;
+  }
+  if (target === Prototype) {
+    return true;
+  }
+  for (let proto = Object.getPrototypeOf(target); proto; proto = Object.getPrototypeOf(proto)) {
+    if (proto === Prototype) {
       return true;
     }
   }
@@ -1042,268 +1198,15 @@ function safeSet(data, accessor, value, { operation = "set", createMissing = fal
   }
   return result;
 }
-class StyleParse {
-  static #regexPixels = /(\d+)\s*px/;
-  /**
-   * Parses a pixel string / computed styles. Ex. `100px` returns `100`.
-   *
-   * @param {string}   value - Value to parse.
-   *
-   * @returns {number|undefined} The integer component of a pixel string.
-   */
-  static pixels(value) {
-    if (typeof value !== "string") {
-      return void 0;
-    }
-    const isPixels = this.#regexPixels.test(value);
-    const number = parseInt(value);
-    return isPixels && Number.isFinite(number) ? number : void 0;
-  }
-  /**
-   * Returns the pixel value for `1rem` based on the root document element. You may apply an optional multiplier.
-   *
-   * @param {number} [multiplier=1] - Optional multiplier to apply to `rem` pixel value; default: 1.
-   *
-   * @param {object} [options] - Optional parameters.
-   *
-   * @param {Document} [options.targetDocument=document] The target DOM {@link Document} if different from the main
-   *        browser global `document`.
-   *
-   * @returns {number} The pixel value for `1rem` with or without a multiplier based on the root document element.
-   */
-  static remPixels(multiplier = 1, { targetDocument = document } = {}) {
-    return targetDocument?.documentElement ? multiplier * parseFloat(globalThis.getComputedStyle(targetDocument.documentElement).fontSize) : void 0;
-  }
-}
-class TJSStyleManager {
-  /** @type {CSSStyleRule} */
-  #cssRule;
-  /** @type {string} */
-  #docKey;
-  /** @type {string} */
-  #selector;
-  /** @type {HTMLStyleElement} */
-  #styleElement;
-  /** @type {number} */
-  #version;
-  /**
-   *
-   * @param {object}   opts - Options.
-   *
-   * @param {string}   opts.docKey - Required key providing a link to a specific style sheet element.
-   *
-   * @param {string}   [opts.selector=:root] - Selector element.
-   *
-   * @param {Document} [opts.document] - Target document to load styles into.
-   *
-   * @param {number}   [opts.version] - An integer representing the version / level of styles being managed.
-   */
-  constructor({ docKey, selector = ":root", document: document2 = globalThis.document, version: version2 } = {}) {
-    if (typeof docKey !== "string") {
-      throw new TypeError(`StyleManager error: 'docKey' is not a string.`);
-    }
-    if (Object.prototype.toString.call(document2) !== "[object HTMLDocument]") {
-      throw new TypeError(`TJSStyleManager error: 'document' is not an instance of HTMLDocument.`);
-    }
-    if (typeof selector !== "string") {
-      throw new TypeError(`StyleManager error: 'selector' is not a string.`);
-    }
-    if (version2 !== void 0 && !Number.isSafeInteger(version2) && version2 < 1) {
-      throw new TypeError(`StyleManager error: 'version' is defined and is not a positive integer >= 1.`);
-    }
-    this.#selector = selector;
-    this.#docKey = docKey;
-    this.#version = version2;
-    if (document2[this.#docKey] === void 0) {
-      this.#styleElement = document2.createElement("style");
-      document2.head.append(this.#styleElement);
-      this.#styleElement._STYLE_MANAGER_VERSION = version2;
-      this.#styleElement.sheet.insertRule(`${selector} {}`, 0);
-      this.#cssRule = this.#styleElement.sheet.cssRules[0];
-      document2[docKey] = this.#styleElement;
-    } else {
-      this.#styleElement = document2[docKey];
-      this.#cssRule = this.#styleElement.sheet.cssRules[0];
-      if (version2) {
-        const existingVersion = this.#styleElement._STYLE_MANAGER_VERSION ?? 0;
-        if (version2 > existingVersion) {
-          this.#cssRule.style.cssText = "";
-        }
-      }
-    }
-  }
-  /**
-   * @returns {string} Provides an accessor to get the `cssText` for the style sheet.
-   */
-  get cssText() {
-    return this.#cssRule.style.cssText;
-  }
-  /**
-   * @returns {number} Returns the version of this instance.
-   */
-  get version() {
-    return this.#version;
-  }
-  /**
-   * Provides a copy constructor to duplicate an existing TJSStyleManager instance into a new document.
-   *
-   * Note: This is used to support the `PopOut` module.
-   *
-   * @param {Document} [document] Target browser document to clone into.
-   *
-   * @returns {TJSStyleManager} New style manager instance.
-   */
-  clone(document2 = globalThis.document) {
-    const newStyleManager = new TJSStyleManager({
-      selector: this.#selector,
-      docKey: this.#docKey,
-      document: document2,
-      version: this.#version
-    });
-    newStyleManager.#cssRule.style.cssText = this.#cssRule.style.cssText;
-    return newStyleManager;
-  }
-  get() {
-    const cssText = this.#cssRule.style.cssText;
-    const result = {};
-    if (cssText !== "") {
-      for (const entry of cssText.split(";")) {
-        if (entry !== "") {
-          const values = entry.split(":");
-          result[values[0].trim()] = values[1];
-        }
-      }
-    }
-    return result;
-  }
-  /**
-   * Gets a particular CSS variable.
-   *
-   * @param {string}   key - CSS variable property key.
-   *
-   * @returns {string} Returns CSS variable value.
-   */
-  getProperty(key) {
-    if (typeof key !== "string") {
-      throw new TypeError(`StyleManager error: 'key' is not a string.`);
-    }
-    return this.#cssRule.style.getPropertyValue(key);
-  }
-  /**
-   * Set rules by property / value; useful for CSS variables.
-   *
-   * @param {{ [key: string]: string }}  rules - An object with property / value string pairs to load.
-   *
-   * @param {boolean}                 [overwrite=true] - When true overwrites any existing values.
-   */
-  setProperties(rules, overwrite = true) {
-    if (!isObject(rules)) {
-      throw new TypeError(`StyleManager error: 'rules' is not an object.`);
-    }
-    if (typeof overwrite !== "boolean") {
-      throw new TypeError(`StyleManager error: 'overwrite' is not a boolean.`);
-    }
-    if (overwrite) {
-      for (const [key, value] of Object.entries(rules)) {
-        this.#cssRule.style.setProperty(key, value);
-      }
-    } else {
-      for (const [key, value] of Object.entries(rules)) {
-        if (this.#cssRule.style.getPropertyValue(key) === "") {
-          this.#cssRule.style.setProperty(key, value);
-        }
-      }
-    }
-  }
-  /**
-   * Sets a particular property.
-   *
-   * @param {string}   key - CSS variable property key.
-   *
-   * @param {string}   value - CSS variable value.
-   *
-   * @param {boolean}  [overwrite=true] - Overwrite any existing value.
-   */
-  setProperty(key, value, overwrite = true) {
-    if (typeof key !== "string") {
-      throw new TypeError(`StyleManager error: 'key' is not a string.`);
-    }
-    if (typeof value !== "string") {
-      throw new TypeError(`StyleManager error: 'value' is not a string.`);
-    }
-    if (typeof overwrite !== "boolean") {
-      throw new TypeError(`StyleManager error: 'overwrite' is not a boolean.`);
-    }
-    if (overwrite) {
-      this.#cssRule.style.setProperty(key, value);
-    } else {
-      if (this.#cssRule.style.getPropertyValue(key) === "") {
-        this.#cssRule.style.setProperty(key, value);
-      }
-    }
-  }
-  /**
-   * Removes the property keys specified. If `keys` is an iterable list then all property keys in the list are removed.
-   *
-   * @param {Iterable<string>} keys - The property keys to remove.
-   */
-  removeProperties(keys) {
-    if (!isIterable(keys)) {
-      throw new TypeError(`StyleManager error: 'keys' is not an iterable list.`);
-    }
-    for (const key of keys) {
-      if (typeof key === "string") {
-        this.#cssRule.style.removeProperty(key);
-      }
-    }
-  }
-  /**
-   * Removes a particular CSS variable.
-   *
-   * @param {string}   key - CSS variable property key.
-   *
-   * @returns {string} CSS variable value when removed.
-   */
-  removeProperty(key) {
-    if (typeof key !== "string") {
-      throw new TypeError(`StyleManager error: 'key' is not a string.`);
-    }
-    return this.#cssRule.style.removeProperty(key);
-  }
-}
-const cssVariables = new TJSStyleManager({ docKey: "#__trl-root-styles", version: 1 });
-function isWritableStore(store) {
-  if (store === null || store === void 0) {
-    return false;
-  }
-  switch (typeof store) {
-    case "function":
-    case "object":
-      return typeof store.subscribe === "function" && typeof store.set === "function" && typeof store.update === "function";
-  }
-  return false;
-}
-function subscribeIgnoreFirst(store, update2) {
-  let firedFirst = false;
-  return store.subscribe((value) => {
-    if (!firedFirst) {
-      firedFirst = true;
-    } else {
-      update2(value);
-    }
-  });
-}
 class CrossWindow {
   /**
    * @private
    */
   constructor() {
+    throw new Error("CrossWindow constructor: This is a static class and should not be constructed.");
   }
-  // eslint-disable-line no-useless-constructor
   /**
    * Class names for all focusable element types.
-   *
-   * @type {string[]}
    */
   static #FocusableElementClassNames = [
     "HTMLAnchorElement",
@@ -1318,8 +1221,6 @@ class CrossWindow {
   ];
   /**
    * DOM nodes with defined `ownerDocument` property.
-   *
-   * @type {Set<number>}
    */
   static #NodesWithOwnerDocument = /* @__PURE__ */ new Set([
     Node.ELEMENT_NODE,
@@ -1327,17 +1228,13 @@ class CrossWindow {
     Node.COMMENT_NODE,
     Node.DOCUMENT_FRAGMENT_NODE
   ]);
-  // Various UI Event sets for duck typing by constructor name.
+  // Various UIEvent sets for duck typing by constructor name.
   /**
    * Duck typing class names for pointer events.
-   *
-   * @type {Set<string>}
    */
   static #PointerEventSet = /* @__PURE__ */ new Set(["MouseEvent", "PointerEvent"]);
   /**
    * Duck typing class names for all UIEvents.
-   *
-   * @type {Set<string>}
    */
   static #UIEventSet = /* @__PURE__ */ new Set([
     "UIEvent",
@@ -1353,45 +1250,48 @@ class CrossWindow {
   ]);
   /**
    * Duck typing class names for events considered as user input.
-   *
-   * @type {Set<string>}
    */
   static #UserInputEventSet = /* @__PURE__ */ new Set(["KeyboardEvent", "MouseEvent", "PointerEvent"]);
   /**
    * Internal options used by `#checkDOMInstanceType` when retrieving the Window reference from a Node that doesn't
    * define `ownerDocument`.
-   *
-   * @type {{throws: boolean}}
    */
   static #optionsInternalCheckDOM = { throws: false };
   // DOM Querying ---------------------------------------------------------------------------------------------------
   /**
+   * Convenience method to test if the given target element is the current active element.
+   *
+   * @param target - Element to test as current active element.
+   */
+  static isActiveElement(target) {
+    if (this.#hasOwnerDocument(target)) {
+      return target?.ownerDocument?.activeElement === target;
+    }
+    return false;
+  }
+  /**
    * Convenience method to retrieve the `document.activeElement` value in the current Window context of a DOM Node /
    * Element, EventTarget, Document, or Window.
    *
-   * @param {Document | EventTarget | Node | UIEvent | Window}  target - DOM Node / Element, EventTarget, Document,
-   *        UIEvent or Window to query.
+   * @param target - DOM Node / Element, EventTarget, Document, UIEvent or Window to query.
    *
-   * @param {object} [options] - Options.
+   * @param [options] - Options.
    *
-   * @param {boolean} [options.throws=true] - When `true` and target is invalid throw an exception. If `false` and the
-   *        target is invalid `undefined` is returned; default: `true`.
-   *
-   * @returns {Element | null} Active element or `undefined` when `throws` option is `false` and the target is invalid.
+   * @returns Active element or `undefined` when `throws` option is `false` and the target is invalid.
    *
    * @throws {@link TypeError} Target must be a DOM Node / Element, Document, UIEvent, or Window.
    */
   static getActiveElement(target, { throws = true } = {}) {
-    if (this.#NodesWithOwnerDocument.has(target?.nodeType)) {
+    if (this.#hasOwnerDocument(target)) {
       return target?.ownerDocument?.activeElement ?? null;
     }
     if (this.isUIEvent(target) && isObject(target?.view)) {
       return target?.view?.document?.activeElement ?? null;
     }
-    if (isObject(target?.defaultView)) {
+    if (this.isDocument(target)) {
       return target?.activeElement ?? null;
     }
-    if (isObject(target?.document) && isObject(target?.location)) {
+    if (this.isWindow(target)) {
       return target?.document?.activeElement ?? null;
     }
     if (throws) {
@@ -1403,29 +1303,25 @@ class CrossWindow {
    * Convenience method to retrieve the `Document` value in the current context of a DOM Node / Element, EventTarget,
    * Document, UIEvent, or Window.
    *
-   * @param {Document | EventTarget | Node | UIEvent | Window}  target - DOM Node / Element, EventTarget, Document,
-   *        UIEvent or Window to query.
+   * @param target - DOM Node / Element, EventTarget, Document, UIEvent or Window to query.
    *
-   * @param {object} [options] - Options.
-   *
-   * @param {boolean} [options.throws=true] - When `true` and target is invalid throw an exception. If `false` and the
-   *        target is invalid `undefined` is returned; default: `true`.
+   * @param [options] - Options.
    *
    * @returns {Document} Active document or `undefined` when `throws` option is `false` and the target is invalid.
    *
    * @throws {@link TypeError} Target must be a DOM Node / Element, Document, UIEvent, or Window.
    */
   static getDocument(target, { throws = true } = {}) {
-    if (this.#NodesWithOwnerDocument.has(target?.nodeType)) {
+    if (this.#hasOwnerDocument(target)) {
       return target?.ownerDocument;
     }
     if (this.isUIEvent(target) && isObject(target?.view)) {
       return target?.view?.document;
     }
-    if (isObject(target?.defaultView)) {
+    if (this.isDocument(target)) {
       return target;
     }
-    if (isObject(target?.document) && isObject(target?.location)) {
+    if (this.isWindow(target)) {
       return target?.document;
     }
     if (throws) {
@@ -1437,29 +1333,25 @@ class CrossWindow {
    * Convenience method to retrieve the `Window` value in the current context of a DOM Node / Element, EventTarget,
    * Document, or Window.
    *
-   * @param {Document | EventTarget | Node | UIEvent | Window}  target - DOM Node / Element, EventTarget, Document,
-   *        UIEvent or Window to query.
+   * @param target - DOM Node / Element, EventTarget, Document, UIEvent or Window to query.
    *
-   * @param {object} [options] - Options.
+   * @param [options] - Options.
    *
-   * @param {boolean} [options.throws=true] - When `true` and target is invalid throw an exception. If `false` and the
-   *        target is invalid `undefined` is returned; default: `true`.
-   *
-   * @returns {Window} Active window or `undefined` when `throws` option is `false` and the target is invalid.
+   * @returns Active window or `undefined` when `throws` option is `false` and the target is invalid.
    *
    * @throws {@link TypeError} Target must be a DOM Node / Element, Document, UIEvent, or Window.
    */
   static getWindow(target, { throws = true } = {}) {
-    if (this.#NodesWithOwnerDocument.has(target?.nodeType)) {
+    if (this.#hasOwnerDocument(target)) {
       return target.ownerDocument?.defaultView ?? globalThis;
     }
     if (this.isUIEvent(target) && isObject(target?.view)) {
       return target.view ?? globalThis;
     }
-    if (isObject(target?.defaultView)) {
+    if (this.isDocument(target)) {
       return target.defaultView ?? globalThis;
     }
-    if (isObject(target?.document) && isObject(target?.location)) {
+    if (this.isWindow(target)) {
       return target;
     }
     if (throws) {
@@ -1469,21 +1361,61 @@ class CrossWindow {
   }
   // ES / Browser API basic prototype tests -------------------------------------------------------------------------
   /**
+   * Provides basic prototype string type checking if `target` is a CSSImportRule.
+   *
+   * @param target - A potential CSSImportRule to test.
+   *
+   * @returns Is `target` a CSSImportRule.
+   */
+  static isCSSImportRule(target) {
+    return isObject(target) && Object.prototype.toString.call(target) === "[object CSSImportRule]";
+  }
+  /**
+   * Provides basic prototype string type checking if `target` is a CSSLayerBlockRule.
+   *
+   * @param target - A potential CSSLayerBlockRule to test.
+   *
+   * @returns Is `target` a CSSLayerBlockRule.
+   */
+  static isCSSLayerBlockRule(target) {
+    return isObject(target) && Object.prototype.toString.call(target) === "[object CSSLayerBlockRule]";
+  }
+  /**
+   * Provides basic prototype string type checking if `target` is a CSSStyleRule.
+   *
+   * @param target - A potential CSSStyleRule to test.
+   *
+   * @returns Is `target` a CSSStyleRule.
+   */
+  static isCSSStyleRule(target) {
+    return isObject(target) && Object.prototype.toString.call(target) === "[object CSSStyleRule]";
+  }
+  /**
+   * Provides basic prototype string type checking if `target` is a CSSStyleSheet.
+   *
+   * @param target - A potential CSSStyleSheet to test.
+   *
+   * @returns Is `target` a CSSStyleSheet.
+   */
+  static isCSSStyleSheet(target) {
+    return isObject(target) && Object.prototype.toString.call(target) === "[object CSSStyleSheet]";
+  }
+  /**
    * Provides basic prototype string type checking if `target` is a Document.
    *
-   * @param {unknown}  target - A potential Document to test.
+   * @param target - A potential Document to test.
    *
-   * @returns {target is Document} Is `target` a Document.
+   * @returns Is `target` a Document.
    */
   static isDocument(target) {
-    return isObject(target) && Object.prototype.toString.call(target) === "[object Document]";
+    return isObject(target) && /^\[object (HTML)?Document]$/.test(Object.prototype.toString.call(target));
   }
   /**
    * Provides basic prototype string type checking if `target` is a Map.
    *
-   * @param {unknown}  target - A potential Map to test.
+   * @param target - A potential Map to test.
    *
-   * @returns {target is Map} Is `target` a Map.
+   * @returns Is `target` a Map.
    */
   static isMap(target) {
     return isObject(target) && Object.prototype.toString.call(target) === "[object Map]";
@@ -1491,9 +1423,9 @@ class CrossWindow {
   /**
    * Provides basic prototype string type checking if `target` is a Promise.
    *
-   * @param {unknown}  target - A potential Promise to test.
+   * @param target - A potential Promise to test.
    *
-   * @returns {target is Promise} Is `target` a Promise.
+   * @returns Is `target` a Promise.
    */
   static isPromise(target) {
     return isObject(target) && Object.prototype.toString.call(target) === "[object Promise]";
@@ -1501,9 +1433,9 @@ class CrossWindow {
   /**
    * Provides basic prototype string type checking if `target` is a RegExp.
    *
-   * @param {unknown}  target - A potential RegExp to test.
+   * @param target - A potential RegExp to test.
    *
-   * @returns {target is RegExp} Is `target` a RegExp.
+   * @returns Is `target` a RegExp.
    */
   static isRegExp(target) {
     return isObject(target) && Object.prototype.toString.call(target) === "[object RegExp]";
@@ -1511,9 +1443,9 @@ class CrossWindow {
   /**
    * Provides basic prototype string type checking if `target` is a Set.
    *
-   * @param {unknown}  target - A potential Set to test.
+   * @param target - A potential Set to test.
    *
-   * @returns {target is Set} Is `target` a Set.
+   * @returns Is `target` a Set.
    */
   static isSet(target) {
     return isObject(target) && Object.prototype.toString.call(target) === "[object Set]";
@@ -1521,9 +1453,9 @@ class CrossWindow {
   /**
    * Provides basic prototype string type checking if `target` is a URL.
    *
-   * @param {unknown}  target - A potential URL to test.
+   * @param target - A potential URL to test.
    *
-   * @returns {target is URL} Is `target` a URL.
+   * @returns Is `target` a URL.
    */
   static isURL(target) {
     return isObject(target) && Object.prototype.toString.call(target) === "[object URL]";
@@ -1531,9 +1463,9 @@ class CrossWindow {
   /**
    * Provides basic prototype string type checking if `target` is a Window.
    *
-   * @param {unknown}  target - A potential Window to test.
+   * @param target - A potential Window to test.
    *
-   * @returns {target is Window} Is `target` a Window.
+   * @returns Is `target` a Window.
    */
   static isWindow(target) {
     return isObject(target) && Object.prototype.toString.call(target) === "[object Window]";
@@ -1543,9 +1475,9 @@ class CrossWindow {
    * Ensures that the given target is an `instanceof` all known DOM elements that are focusable. Please note that
    * additional checks are required regarding focusable state; use {@link A11yHelper.isFocusable} for a complete check.
    *
-   * @param {unknown}  target - Target to test for `instanceof` focusable HTML element.
+   * @param target - Target to test for `instanceof` focusable HTML element.
    *
-   * @returns {boolean} Is target an `instanceof` a focusable DOM element.
+   * @returns Is target an `instanceof` a focusable DOM element.
    */
   static isFocusableHTMLElement(target) {
     for (let cntr = this.#FocusableElementClassNames.length; --cntr >= 0; ) {
@@ -1558,9 +1490,9 @@ class CrossWindow {
   /**
    * Provides precise type checking if `target` is a DocumentFragment.
    *
-   * @param {unknown}  target - A potential DocumentFragment to test.
+   * @param target - A potential DocumentFragment to test.
    *
-   * @returns {target is DocumentFragment} Is `target` a DocumentFragment.
+   * @returns Is `target` a DocumentFragment.
    */
   static isDocumentFragment(target) {
     return this.#checkDOMInstanceType(target, Node.DOCUMENT_FRAGMENT_NODE, "DocumentFragment");
@@ -1568,9 +1500,9 @@ class CrossWindow {
   /**
    * Provides precise type checking if `target` is an Element.
    *
-   * @param {unknown}  target - A potential Element to test.
+   * @param target - A potential Element to test.
    *
-   * @returns {target is Element} Is `target` an Element.
+   * @returns Is `target` an Element.
    */
   static isElement(target) {
     return this.#checkDOMInstanceType(target, Node.ELEMENT_NODE, "Element");
@@ -1578,19 +1510,19 @@ class CrossWindow {
   /**
    * Provides precise type checking if `target` is a HTMLAnchorElement.
    *
-   * @param {unknown}  target - A potential HTMLAnchorElement to test.
+   * @param target - A potential HTMLAnchorElement to test.
    *
-   * @returns {target is HTMLAnchorElement} Is `target` a HTMLAnchorElement.
+   * @returns Is `target` a HTMLAnchorElement.
    */
   static isHTMLAnchorElement(target) {
     return this.#checkDOMInstanceType(target, Node.ELEMENT_NODE, "HTMLAnchorElement");
   }
   /**
-   * Provides precise type checking if `target` is a HTMLElement.
+   * Provides precise type checking if `target` is an HTMLElement.
    *
-   * @param {unknown}  target - A potential HTMLElement to test.
+   * @param target - A potential HTMLElement to test.
    *
-   * @returns {target is HTMLElement} Is `target` a HTMLElement.
+   * @returns Is `target` a HTMLElement.
    */
   static isHTMLElement(target) {
     return this.#checkDOMInstanceType(target, Node.ELEMENT_NODE, "HTMLElement");
@@ -1598,9 +1530,9 @@ class CrossWindow {
   /**
    * Provides precise type checking if `target` is a Node.
    *
-   * @param {unknown}  target - A potential Node to test.
+   * @param target - A potential Node to test.
    *
-   * @returns {target is Node} Is `target` a DOM Node.
+   * @returns Is `target` a DOM Node.
    */
   static isNode(target) {
     if (typeof target?.nodeType !== "number") {
@@ -1616,9 +1548,9 @@ class CrossWindow {
   /**
    * Provides precise type checking if `target` is a ShadowRoot.
    *
-   * @param {unknown}  target - A potential ShadowRoot to test.
+   * @param target - A potential ShadowRoot to test.
    *
-   * @returns {target is ShadowRoot} Is `target` a ShadowRoot.
+   * @returns Is `target` a ShadowRoot.
    */
   static isShadowRoot(target) {
     return this.#checkDOMInstanceType(target, Node.DOCUMENT_FRAGMENT_NODE, "ShadowRoot");
@@ -1626,9 +1558,9 @@ class CrossWindow {
   /**
    * Provides precise type checking if `target` is a SVGElement.
    *
-   * @param {unknown}  target - A potential SVGElement to test.
+   * @param target - A potential SVGElement to test.
    *
-   * @returns {target is SVGElement} Is `target` a SVGElement.
+   * @returns Is `target` a SVGElement.
    */
   static isSVGElement(target) {
     return this.#checkDOMInstanceType(target, Node.ELEMENT_NODE, "SVGElement");
@@ -1637,11 +1569,11 @@ class CrossWindow {
   /**
    * Provides basic duck type checking for `Event` signature and optional constructor name(s).
    *
-   * @param {unknown}  target - A potential DOM event to test.
+   * @param target - A potential DOM event to test.
    *
-   * @param {string | Set<string>} [types] Specific constructor name or Set of constructor names to match.
+   * @param [types] Specific constructor name or Set of constructor names to match.
    *
-   * @returns {target is Event} Is `target` an Event with optional constructor name check.
+   * @returns Is `target` an Event with optional constructor name check.
    */
   static isEvent(target, types) {
     if (typeof target?.type !== "string" || typeof target?.defaultPrevented !== "boolean" || typeof target?.stopPropagation !== "function") {
@@ -1653,9 +1585,9 @@ class CrossWindow {
    * Provides basic duck type checking for `Event` signature for standard mouse / pointer events including
    * `MouseEvent` and `PointerEvent`.
    *
-   * @param {unknown}  target - A potential DOM event to test.
+   * @param target - A potential DOM event to test.
    *
-   * @returns {target is PointerEvent} Is `target` a MouseEvent or PointerEvent.
+   * @returns Is `target` a MouseEvent or PointerEvent.
    */
   static isPointerEvent(target) {
     return this.isEvent(target, this.#PointerEventSet);
@@ -1663,9 +1595,9 @@ class CrossWindow {
   /**
    * Provides basic duck type checking for `Event` signature for all UI events.
    *
-   * @param {unknown}  target - A potential DOM event to test.
+   * @param target - A potential DOM event to test.
    *
-   * @returns {target is UIEvent} Is `target` a UIEvent.
+   * @returns Is `target` a UIEvent.
    * @see https://developer.mozilla.org/en-US/docs/Web/API/UIEvent
    */
   static isUIEvent(target) {
@@ -1675,10 +1607,9 @@ class CrossWindow {
    * Provides basic duck type checking for `Event` signature for standard user input events including `KeyboardEvent`,
    * `MouseEvent`, and `PointerEvent`.
    *
-   * @param {unknown}  target - A potential DOM event to test.
+   * @param target - A potential DOM event to test.
    *
-   * @returns {target is KeyboardEvent | MouseEvent | PointerEvent} Is `target` a Keyboard, MouseEvent, or
-   *          PointerEvent.
+   * @returns Is `target` a Keyboard, MouseEvent, or PointerEvent.
    */
   static isUserInputEvent(target) {
     return this.isEvent(target, this.#UserInputEventSet);
@@ -1688,11 +1619,11 @@ class CrossWindow {
    * Provides basic type checking by constructor name(s) for objects. This can be useful when checking multiple
    * constructor names against a provided Set.
    *
-   * @param {unknown}  target - Object to test for constructor name.
+   * @param target - Object to test for constructor name.
    *
-   * @param {string | Set<string>} types Specific constructor name or Set of constructor names to match.
+   * @param types Specific constructor name or Set of constructor names to match.
    *
-   * @returns {boolean} Does the provided object constructor name match the types provided.
+   * @returns Does the provided object constructor name match the types provided.
    */
   static isCtorName(target, types) {
     if (!isObject(target)) {
@@ -1703,18 +1634,33 @@ class CrossWindow {
     }
     return !!types?.has(target?.constructor?.name);
   }
+  // Errors ---------------------------------------------------------------------------------------------------------
+  /**
+   * Provides basic duck type checking and error name for {@link DOMException}.
+   *
+   * @param target - Error to duck type test.
+   *
+   * @param name - Specific error name.
+   *
+   * @returns Is target a DOMException matching the error name.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/DOMException#error_names
+   */
+  static isDOMException(target, name) {
+    return isObject(target) && Object.prototype.toString.call(target) === "[object DOMException]" && target.name === name;
+  }
   // Internal implementation ----------------------------------------------------------------------------------------
   /**
    * Internal generic DOM `instanceof` check. First will attempt to find the class name by `globalThis` falling back
    * to the {@link Window} associated with the DOM node.
    *
-   * @param {unknown}  target - Target to test.
+   * @param target - Target to test.
    *
-   * @param {number}   nodeType - Node type constant.
+   * @param nodeType - Node type constant.
    *
-   * @param {string}   className - DOM class name for instanceof check.
+   * @param className - DOM classname for instanceof check.
    *
-   * @returns {boolean} Is the target the given nodeType and instance of class name.
+   * @returns Is the target the given nodeType and instance of class name.
    */
   static #checkDOMInstanceType(target, nodeType, className) {
     if (!isObject(target)) {
@@ -1723,358 +1669,217 @@ class CrossWindow {
     if (target.nodeType !== nodeType) {
       return false;
     }
-    const GlobalClass = globalThis[className];
+    const GlobalClass = window[className];
     if (GlobalClass && target instanceof GlobalClass) {
       return true;
     }
-    const activeWindow = this.#NodesWithOwnerDocument.has(target.nodeType) ? target?.ownerDocument?.defaultView : this.getWindow(target, this.#optionsInternalCheckDOM);
+    const activeWindow = this.#hasOwnerDocument(target) ? target?.ownerDocument?.defaultView : (
+      // @ts-ignore: Safe in this context.
+      this.getWindow(target, this.#optionsInternalCheckDOM)
+    );
     const TargetClass = activeWindow?.[className];
     return TargetClass && target instanceof TargetClass;
   }
+  static #hasOwnerDocument(target) {
+    return typeof target === "object" && target !== null && this.#NodesWithOwnerDocument.has(target?.nodeType);
+  }
 }
-class ResizeObserverManager {
-  /** @type {Map<HTMLElement, import('./types-local').ResizeObserverSubscriber[]>} */
-  #elMap = /* @__PURE__ */ new Map();
-  /** @type {ResizeObserver} */
-  #resizeObserver;
+class URLParser {
   /**
-   * Defines the various shape / update type of the given target.
-   *
-   * @type {{ [key: string]: number }}
+   * @private
    */
-  static #updateTypes = Object.freeze({
-    none: 0,
-    attribute: 1,
-    function: 2,
-    resizeObserved: 3,
-    setContentBounds: 4,
-    setDimension: 5,
-    storeObject: 6,
-    storesObject: 7
-  });
   constructor() {
-    this.#resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const subscribers = this.#elMap.get(entry?.target);
-        if (Array.isArray(subscribers)) {
-          const contentWidth = entry.contentRect.width;
-          const contentHeight = entry.contentRect.height;
-          for (const subscriber of subscribers) {
-            ResizeObserverManager.#updateSubscriber(subscriber, contentWidth, contentHeight);
-          }
-        }
-      }
-    });
+    throw new Error("URLParser constructor: This is a static class and should not be constructed.");
   }
   /**
-   * Add an {@link HTMLElement} and {@link ResizeObserverData.ResizeTarget} instance for monitoring. Create cached
-   * style attributes for the given element include border & padding dimensions for offset width / height calculations.
+   * Parses a URL string converting it to a fully qualified URL. If URL is an existing URL instance, it is returned
+   * immediately. Optionally, you may construct a fully qualified URL from a relative base origin / path or with a
+   * route prefix added to the current location origin.
    *
-   * @param {HTMLElement}    el - The element to observe.
+   * @param options - Options.
    *
-   * @param {import('./types').ResizeObserverData.ResizeTarget} target - A target that contains one of several
-   *        mechanisms for updating resize data.
+   * @param options.url - URL string to convert to a URL.
+   *
+   * @param [options.base] - Optional fully qualified base path for relative URL construction.
+   *
+   * @param [options.routePrefix] - Optional route prefix to add to location origin for absolute URL strings
+   *        when `base` is not defined.
+   *
+   * @returns Parsed URL or null if `url` is not parsed.
    */
-  add(el, target) {
-    if (!CrossWindow.isHTMLElement(el)) {
-      throw new TypeError(`ResizeObserverManager.add error: 'el' is not a HTMLElement.`);
+  static parse({ url, base, routePrefix }) {
+    if (CrossWindow.isURL(url)) {
+      return url;
     }
-    if (this.#hasTarget(el, target)) {
-      return;
+    if (typeof url !== "string") {
+      return null;
     }
-    const updateType = ResizeObserverManager.#getUpdateType(target);
-    if (updateType === 0) {
-      throw new Error(`ResizeObserverManager.add error: 'target' is not a valid ResizeObserverManager target.`);
+    if (base !== void 0 && typeof base !== "string") {
+      return null;
     }
-    const computed = globalThis.getComputedStyle(el);
-    const borderBottom = StyleParse.pixels(el.style.borderBottom) ?? StyleParse.pixels(computed.borderBottom) ?? 0;
-    const borderLeft = StyleParse.pixels(el.style.borderLeft) ?? StyleParse.pixels(computed.borderLeft) ?? 0;
-    const borderRight = StyleParse.pixels(el.style.borderRight) ?? StyleParse.pixels(computed.borderRight) ?? 0;
-    const borderTop = StyleParse.pixels(el.style.borderTop) ?? StyleParse.pixels(computed.borderTop) ?? 0;
-    const paddingBottom = StyleParse.pixels(el.style.paddingBottom) ?? StyleParse.pixels(computed.paddingBottom) ?? 0;
-    const paddingLeft = StyleParse.pixels(el.style.paddingLeft) ?? StyleParse.pixels(computed.paddingLeft) ?? 0;
-    const paddingRight = StyleParse.pixels(el.style.paddingRight) ?? StyleParse.pixels(computed.paddingRight) ?? 0;
-    const paddingTop = StyleParse.pixels(el.style.paddingTop) ?? StyleParse.pixels(computed.paddingTop) ?? 0;
-    const data = {
-      updateType,
-      target,
-      // Stores most recent contentRect.width and contentRect.height values from ResizeObserver.
-      contentWidth: 0,
-      contentHeight: 0,
-      // Convenience data for total border & padding for offset width & height calculations.
-      styles: {
-        additionalWidth: borderLeft + borderRight + paddingLeft + paddingRight,
-        additionalHeight: borderTop + borderBottom + paddingTop + paddingBottom
-      }
-    };
-    if (this.#elMap.has(el)) {
-      const subscribers = this.#elMap.get(el);
-      subscribers.push(data);
+    if (routePrefix !== void 0 && typeof routePrefix !== "string") {
+      return null;
+    }
+    const targetURL = this.#createURL(url);
+    if (targetURL) {
+      return targetURL;
+    }
+    let targetBase;
+    if (url.startsWith("./") || url.startsWith("../")) {
+      targetBase = base ? base : `${globalThis.location.origin}${globalThis.location.pathname}`;
     } else {
-      this.#elMap.set(el, [data]);
-    }
-    this.#resizeObserver.observe(el);
-  }
-  /**
-   * Clears and unobserves all currently tracked elements and managed targets.
-   */
-  clear() {
-    for (const el of this.#elMap.keys()) {
-      this.#resizeObserver.unobserve(el);
-    }
-    this.#elMap.clear();
-  }
-  /**
-   * Removes all {@link ResizeObserverData.ResizeTarget} instances for the given element from monitoring when just an
-   * element is provided otherwise removes a specific target from the monitoring map. If no more targets remain then
-   * the element is removed from monitoring.
-   *
-   * @param {HTMLElement} el - Element to remove from monitoring.
-   *
-   * @param {import('./types').ResizeObserverData.ResizeTarget} [target] - A specific target to remove from monitoring.
-   */
-  remove(el, target = void 0) {
-    const subscribers = this.#elMap.get(el);
-    if (Array.isArray(subscribers)) {
-      if (target !== void 0) {
-        const index = subscribers.findIndex((entry) => entry.target === target);
-        if (index >= 0) {
-          subscribers.splice(index, 1);
-        }
-      } else {
-        subscribers.length = 0;
+      let targetRoutePrefix = "";
+      if (routePrefix) {
+        targetRoutePrefix = routePrefix.startsWith("/") ? routePrefix : `/${routePrefix}`;
+        targetRoutePrefix = targetRoutePrefix.endsWith("/") ? targetRoutePrefix : `${targetRoutePrefix}/`;
       }
-      if (subscribers.length === 0) {
-        this.#elMap.delete(el);
-        this.#resizeObserver.unobserve(el);
-      }
+      targetBase = `${globalThis.location.origin}${targetRoutePrefix}`;
     }
-  }
-  /**
-   * Provides a function that when invoked with an element updates the cached styles for each subscriber of the
-   * element.
-   *
-   * The style attributes cached to calculate offset height / width include border & padding dimensions. You only need
-   * to update the cache if you change border or padding attributes of the element.
-   *
-   * @param {HTMLElement} el - A HTML element.
-   */
-  updateCache(el) {
-    const subscribers = this.#elMap.get(el);
-    if (Array.isArray(subscribers)) {
-      const computed = globalThis.getComputedStyle(el);
-      const borderBottom = StyleParse.pixels(el.style.borderBottom) ?? StyleParse.pixels(computed.borderBottom) ?? 0;
-      const borderLeft = StyleParse.pixels(el.style.borderLeft) ?? StyleParse.pixels(computed.borderLeft) ?? 0;
-      const borderRight = StyleParse.pixels(el.style.borderRight) ?? StyleParse.pixels(computed.borderRight) ?? 0;
-      const borderTop = StyleParse.pixels(el.style.borderTop) ?? StyleParse.pixels(computed.borderTop) ?? 0;
-      const paddingBottom = StyleParse.pixels(el.style.paddingBottom) ?? StyleParse.pixels(computed.paddingBottom) ?? 0;
-      const paddingLeft = StyleParse.pixels(el.style.paddingLeft) ?? StyleParse.pixels(computed.paddingLeft) ?? 0;
-      const paddingRight = StyleParse.pixels(el.style.paddingRight) ?? StyleParse.pixels(computed.paddingRight) ?? 0;
-      const paddingTop = StyleParse.pixels(el.style.paddingTop) ?? StyleParse.pixels(computed.paddingTop) ?? 0;
-      const additionalWidth = borderLeft + borderRight + paddingLeft + paddingRight;
-      const additionalHeight = borderTop + borderBottom + paddingTop + paddingBottom;
-      for (const subscriber of subscribers) {
-        subscriber.styles.additionalWidth = additionalWidth;
-        subscriber.styles.additionalHeight = additionalHeight;
-        ResizeObserverManager.#updateSubscriber(subscriber, subscriber.contentWidth, subscriber.contentHeight);
-      }
-    }
+    return this.#createURL(url, targetBase);
   }
   // Internal implementation ----------------------------------------------------------------------------------------
   /**
-   * Determines the shape of the target instance regarding valid update mechanisms to set width & height changes.
+   * Helper to create a URL and catch any exception. Useful until `URL.parse` and `URL.canParse` are more widespread.
    *
-   * @param {import('./types').ResizeObserverData.ResizeTarget}  target - The target instance.
+   * @param url - URL string.
    *
-   * @returns {number} Update type value.
+   * @param base - Base origin / path.
+   *
+   * @returns Valid URL or null.
    */
-  static #getUpdateType(target) {
-    if (typeof target?.resizeObserved === "function") {
-      return this.#updateTypes.resizeObserved;
+  static #createURL(url, base = "") {
+    try {
+      return new URL(url, base);
+    } catch (err) {
+      return null;
     }
-    if (typeof target?.setDimension === "function") {
-      return this.#updateTypes.setDimension;
-    }
-    if (typeof target?.setContentBounds === "function") {
-      return this.#updateTypes.setContentBounds;
-    }
-    const targetType = typeof target;
-    if (targetType !== null && (targetType === "object" || targetType === "function")) {
-      if (isWritableStore(target.resizeObserved)) {
-        return this.#updateTypes.storeObject;
-      }
-      const stores = target?.stores;
-      if (isObject(stores) || typeof stores === "function") {
-        if (isWritableStore(stores.resizeObserved)) {
-          return this.#updateTypes.storesObject;
-        }
-      }
-    }
-    if (targetType !== null && targetType === "object") {
-      return this.#updateTypes.attribute;
-    }
-    if (targetType === "function") {
-      return this.#updateTypes.function;
-    }
-    return this.#updateTypes.none;
+  }
+}
+class AssetValidator {
+  /** Default media types. */
+  static #mediaTypes = Object.freeze({
+    all: Frozen.Set(["audio", "img", "svg", "video"]),
+    audio: Frozen.Set(["audio"]),
+    img: Frozen.Set(["img"]),
+    img_svg: Frozen.Set(["img", "svg"]),
+    img_svg_video: Frozen.Set(["img", "svg", "video"]),
+    video: Frozen.Set(["video"])
+  });
+  /** Supported audio extensions. */
+  static #audioExtensions = /* @__PURE__ */ new Set(["mp3", "wav", "ogg", "aac", "flac", "webm"]);
+  /** Supported image extensions. */
+  static #imageExtensions = /* @__PURE__ */ new Set(["jpg", "jpeg", "png", "gif", "bmp", "svg", "webp"]);
+  /** Supported SVG extensions. */
+  static #svgExtensions = /* @__PURE__ */ new Set(["svg"]);
+  /** Supported video extensions. */
+  static #videoExtensions = /* @__PURE__ */ new Set(["mp4", "webm", "ogg"]);
+  /**
+   * @private
+   */
+  constructor() {
+    throw new Error("AssetValidator constructor: This is a static class and should not be constructed.");
   }
   /**
-   * Determines if a given element and target is already being observed.
-   *
-   * @param {HTMLElement} el - A HTMLElement.
-   *
-   * @param {import('./types').ResizeObserverData.ResizeTarget} [target] - A specific target to find.
-   *
-   * @returns {boolean} Whether the target is already being tracked for the given element.
+   * Provides several readonly default media type Sets useful for the `mediaTypes` option.
    */
-  #hasTarget(el, target) {
-    if (target === void 0 || target === null) {
-      return false;
-    }
-    const subscribers = this.#elMap.get(el);
-    if (Array.isArray(subscribers)) {
-      return subscribers.findIndex((entry) => entry.target === target) >= 0;
-    }
-    return false;
+  static get MediaTypes() {
+    return this.#mediaTypes;
   }
   /**
-   * Updates a subscriber target with given content width & height values. Offset width & height is calculated from
-   * the content values + cached styles.
+   * Parses the provided file path to determine the media type and validity based on the file extension. Certain
+   * extensions can be excluded in addition to filtering by specified media types.
    *
-   * @param {import('./types-local').ResizeObserverSubscriber} subscriber - Internal data about subscriber.
+   * @param options - Options.
    *
-   * @param {number|undefined}  contentWidth - ResizeObserver `contentRect.width` value or undefined.
+   * @returns The parsed asset information containing the file path, extension, element type, and whether the parsing
+   *          is valid for the file extension is supported and not excluded.
    *
-   * @param {number|undefined}  contentHeight - ResizeObserver `contentRect.height` value or undefined.
+   * @throws {TypeError} If the provided `url` is not a string or URL, `routePrefix` is not a string,
+   *         `exclude` is not a Set, or `mediaTypes` is not a Set.
    */
-  static #updateSubscriber(subscriber, contentWidth, contentHeight) {
-    const styles = subscriber.styles;
-    subscriber.contentWidth = contentWidth;
-    subscriber.contentHeight = contentHeight;
-    const offsetWidth = Number.isFinite(contentWidth) ? contentWidth + styles.additionalWidth : void 0;
-    const offsetHeight = Number.isFinite(contentHeight) ? contentHeight + styles.additionalHeight : void 0;
-    const target = subscriber.target;
-    switch (subscriber.updateType) {
-      case this.#updateTypes.attribute:
-        target.contentWidth = contentWidth;
-        target.contentHeight = contentHeight;
-        target.offsetWidth = offsetWidth;
-        target.offsetHeight = offsetHeight;
-        break;
-      case this.#updateTypes.function:
-        target?.(offsetWidth, offsetHeight, contentWidth, contentHeight);
-        break;
-      case this.#updateTypes.resizeObserved:
-        target.resizeObserved?.(offsetWidth, offsetHeight, contentWidth, contentHeight);
-        break;
-      case this.#updateTypes.setContentBounds:
-        target.setContentBounds?.(contentWidth, contentHeight);
-        break;
-      case this.#updateTypes.setDimension:
-        target.setDimension?.(offsetWidth, offsetHeight);
-        break;
-      case this.#updateTypes.storeObject:
-        target.resizeObserved.update((object) => {
-          object.contentHeight = contentHeight;
-          object.contentWidth = contentWidth;
-          object.offsetHeight = offsetHeight;
-          object.offsetWidth = offsetWidth;
-          return object;
-        });
-        break;
-      case this.#updateTypes.storesObject:
-        target.stores.resizeObserved.update((object) => {
-          object.contentHeight = contentHeight;
-          object.contentWidth = contentWidth;
-          object.offsetHeight = offsetHeight;
-          object.offsetWidth = offsetWidth;
-          return object;
-        });
-        break;
+  static parseMedia({ url, routePrefix, exclude, mediaTypes = this.#mediaTypes.all, raiseException = false }) {
+    const throws = typeof raiseException === "boolean" ? raiseException : true;
+    if (typeof url !== "string" && !CrossWindow.isURL(url)) {
+      if (throws) {
+        throw new TypeError(`'url' is not a string or URL instance.`);
+      } else {
+        return { url, valid: false };
+      }
     }
+    if (routePrefix !== void 0 && typeof routePrefix !== "string") {
+      if (throws) {
+        throw new TypeError(`'routePrefix' is not a string.`);
+      } else {
+        return { url, valid: false };
+      }
+    }
+    if (exclude !== void 0 && !CrossWindow.isSet(exclude)) {
+      if (throws) {
+        throw new TypeError(`'exclude' is not a Set.`);
+      } else {
+        return { url, valid: false };
+      }
+    }
+    if (!CrossWindow.isSet(mediaTypes)) {
+      if (throws) {
+        throw new TypeError(`'mediaTypes' is not a Set.`);
+      } else {
+        return { url, valid: false };
+      }
+    }
+    const targetURL = typeof url === "string" ? URLParser.parse({ url, routePrefix }) : url;
+    if (!targetURL) {
+      if (throws) {
+        throw new TypeError(`'url' is invalid.`);
+      } else {
+        return { url, valid: false };
+      }
+    }
+    const extensionMatch = targetURL.pathname.match(/\.([a-zA-Z0-9]+)$/);
+    const extension = extensionMatch ? extensionMatch[1].toLowerCase() : void 0;
+    const isExcluded = extension && CrossWindow.isSet(exclude) ? exclude.has(extension) : false;
+    let elementType = void 0;
+    let valid = false;
+    if (extension && !isExcluded) {
+      if (this.#svgExtensions.has(extension) && mediaTypes.has("svg")) {
+        elementType = "svg";
+        valid = true;
+      } else if (this.#imageExtensions.has(extension) && mediaTypes.has("img")) {
+        elementType = "img";
+        valid = true;
+      } else if (this.#videoExtensions.has(extension) && mediaTypes.has("video")) {
+        elementType = "video";
+        valid = true;
+      } else if (this.#audioExtensions.has(extension) && mediaTypes.has("audio")) {
+        elementType = "audio";
+        valid = true;
+      }
+    }
+    return valid ? {
+      src: url,
+      url: targetURL,
+      extension,
+      elementType,
+      valid
+    } : { url, valid: false };
   }
 }
-const resizeObserverActionManager = new ResizeObserverManager();
-function resizeObserver(node, target) {
-  resizeObserverActionManager.add(node, target);
-  return {
-    /**
-     * @param {import('#runtime/util/dom/observer').ResizeObserverData.ResizeTarget} newTarget - A
-     *        {@link ResizeObserverManager} target to update with observed width & height changes.
-     */
-    update: (newTarget) => {
-      resizeObserverActionManager.remove(node, target);
-      target = newTarget;
-      resizeObserverActionManager.add(node, target);
-    },
-    destroy: () => {
-      resizeObserverActionManager.remove(node, target);
-    }
-  };
-}
-resizeObserver.updateCache = function(el) {
-  resizeObserverActionManager.updateCache(el);
-};
-function applyStyles(node, properties) {
-  function setProperties() {
-    if (!isObject(properties)) {
-      return;
-    }
-    for (const prop of Object.keys(properties)) {
-      node.style.setProperty(`${prop}`, properties[prop]);
-    }
+Object.freeze(AssetValidator);
+class BrowserSupports {
+  /**
+   * @private
+   */
+  constructor() {
+    throw new Error("BrowserSupports constructor: This is a static class and should not be constructed.");
   }
-  setProperties();
-  return {
-    /**
-     * @param {{ [key: string]: string | null }}  newProperties - Key / value object of properties to set.
-     */
-    update: (newProperties) => {
-      properties = newProperties;
-      setProperties();
-    }
-  };
-}
-function dynamicAction(node, { action, data } = {}) {
-  let actionResult;
-  if (typeof action === "function") {
-    actionResult = action(node, data);
+  /**
+   * Check for container query support.
+   *
+   * @returns True if container queries supported.
+   */
+  static get containerQueries() {
+    return "container" in document.documentElement.style;
   }
-  return {
-    /**
-     * @param {import('./types').DynamicActionOptions} newOptions - Defines the new action to dynamically mount.
-     */
-    update: (newOptions) => {
-      if (!isObject(newOptions)) {
-        actionResult?.destroy?.();
-        action = void 0;
-        data = void 0;
-        return;
-      }
-      const { action: newAction, data: newData } = newOptions;
-      if (typeof newAction !== "function") {
-        console.warn(`dynamicAction.update warning: Aborting as 'action' is not a function.`);
-        return;
-      }
-      const hasNewData = newData !== data;
-      if (hasNewData) {
-        data = newData;
-      }
-      if (newAction !== action) {
-        actionResult?.destroy?.();
-        action = newAction;
-        actionResult = action(node, data);
-      } else if (hasNewData) {
-        actionResult?.update?.(data);
-      }
-    },
-    destroy: () => {
-      actionResult?.destroy?.();
-      action = void 0;
-      data = void 0;
-      actionResult = void 0;
-    }
-  };
 }
 const subscriber_queue = [];
 function readable(value, start) {
@@ -2170,6 +1975,275 @@ function derived(stores, fn, initial_value) {
       started = false;
     };
   });
+}
+class ThemeObserver {
+  /**
+   * All readable theme stores.
+   *
+   * @type {Readonly<({
+   *    themeName: Readonly<import('svelte/store').Readable<string>>
+   *    themeToken: Readonly<import('svelte/store').Readable<string>>
+   * })>}
+   */
+  static #stores;
+  /**
+   * Internal setter for theme stores.
+   *
+   * @type {{ themeName: Function, themeToken: Function }}
+   */
+  static #storeSet;
+  /**
+   * Current theme name.
+   *
+   * @type {string}
+   */
+  static #themeName = "";
+  /**
+   * Current theme token.
+   *
+   * @type {string}
+   */
+  static #themeToken = "";
+  /**
+   * @hideconstructor
+   */
+  constructor() {
+    throw new Error("ThemeObserver constructor: This is a static class and should not be constructed.");
+  }
+  /**
+   * @returns {Readonly<({
+   *    themeName: Readonly<import('svelte/store').Readable<string>>
+   *    themeToken: Readonly<import('svelte/store').Readable<string>>
+   * })>} Current platform theme stores.
+   */
+  static get stores() {
+    return this.#stores;
+  }
+  /**
+   * @returns {string} Current theme name; may be different from the theme token.
+   */
+  static get themeName() {
+    return this.#themeName;
+  }
+  /**
+   * @returns {string} Current theme token - CSS class.
+   */
+  static get themeToken() {
+    return this.#themeToken;
+  }
+  /**
+   * Verify that the given `theme` name or token (CSS class) is the current platform theme.
+   *
+   * @param {string} theme - A theme name or token to verify.
+   *
+   * @returns {boolean} If the requested theme matches the current platform theme.
+   */
+  static isTheme(theme) {
+    return typeof theme === "string" && (this.#themeName === theme || this.#themeToken === theme);
+  }
+  /**
+   * Detect if theming tokens (CSS classes) are present in the given iterable list.
+   *
+   * @param {Iterable<string>}  tokens - a token list to verify if any theming tokens are included.
+   *
+   * @param {object} [options] - Optional parameters.
+   *
+   * @param {boolean} [options.strict=false] - When true, all theming tokens required if multiple are verified.
+   *
+   * @returns {boolean} True if theming tokens present.
+   */
+  static hasThemedTokens(tokens, { strict = false } = {}) {
+    if (!isIterable(tokens)) {
+      return false;
+    }
+    let strictFound = !strict;
+    let themeFound = false;
+    for (const entry of tokens) {
+      if (typeof entry !== "string") {
+        continue;
+      }
+      if (entry.startsWith("theme-")) {
+        themeFound = true;
+      }
+      if (entry === "themed") {
+        strictFound = true;
+      }
+    }
+    return themeFound && strictFound;
+  }
+  /**
+   * Initialize `document.body` theme observation.
+   *
+   * @internal
+   */
+  static initialize() {
+    if (this.#stores !== void 0) {
+      return;
+    }
+    const themeName = writable(this.#themeName);
+    const themeToken = writable(this.#themeToken);
+    this.#stores = Object.freeze({
+      themeName: Object.freeze({ subscribe: themeName.subscribe }),
+      themeToken: Object.freeze({ subscribe: themeToken.subscribe })
+    });
+    this.#storeSet = {
+      themeName: themeName.set,
+      themeToken: themeToken.set
+    };
+    const observer = new MutationObserver(() => {
+      if (document.body.classList.contains("theme-light")) {
+        this.#themeName = "light";
+        this.#themeToken = "theme-light";
+      } else if (document.body.classList.contains("theme-dark")) {
+        this.#themeName = "dark";
+        this.#themeToken = "theme-dark";
+      }
+      this.#storeSet.themeName(this.#themeName);
+      this.#storeSet.themeToken(this.#themeToken);
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  }
+  /**
+   * Determine the nearest theme tokens (CSS classes) from the given element.
+   *
+   * @param {object} options - Required options.
+   *
+   * @param {Element | EventTarget} options.element - A DOM element.
+   *
+   * @param {Set<string>} [options.output] - An optional source Set of existing tokens.
+   *
+   * @param {boolean} [options.override=true] - When true, override any existing theme tokens.
+   *
+   * @param {boolean} [options.strict=false] - When true, ensure all required theming tokens in output.
+   *
+   * @returns {Iterable<string>} Any theming tokens found from the given element.
+   */
+  static nearestThemedTokens({ element: element2, output = /* @__PURE__ */ new Set(), override = true, strict = false }) {
+    if (!CrossWindow.isSet(output)) {
+      throw new TypeError(`'output' is not a Set.`);
+    }
+    if (!CrossWindow.isElement(element2)) {
+      return output;
+    }
+    if (!override && ThemeObserver.hasThemedTokens(output)) {
+      if (strict) {
+        output.add("themed");
+      }
+      return output;
+    }
+    const nearestThemed = element2.closest(".themed") ?? CrossWindow.getDocument(element2).body;
+    const match = nearestThemed.className.match(/(?:^|\s)(theme-\w+)/);
+    if (match) {
+      output.add("themed");
+      output.add(match[1]);
+    }
+    return output;
+  }
+}
+function isWritableStore(store) {
+  if (store === null || store === void 0) {
+    return false;
+  }
+  switch (typeof store) {
+    case "function":
+    case "object":
+      return typeof store.subscribe === "function" && typeof store.set === "function" && typeof store.update === "function";
+  }
+  return false;
+}
+function subscribeIgnoreFirst(store, update2) {
+  let firedFirst = false;
+  return store.subscribe((value) => {
+    if (!firedFirst) {
+      firedFirst = true;
+    } else {
+      update2(value);
+    }
+  });
+}
+class SvelteSet extends Set {
+  /**
+   * Stores the subscribers.
+   */
+  #subscribers = [];
+  constructor(entries) {
+    super();
+    if (entries !== void 0 && !isIterable(entries)) {
+      throw new TypeError(`'entries' must be an iterable list.`);
+    }
+    if (entries) {
+      for (const entry of entries) {
+        super.add(entry);
+      }
+    }
+  }
+  /**
+   * Appends a new element with a specified value to the end of the Set.
+   *
+   * @param value - Value to add.
+   *
+   * @returns This instance.
+   */
+  add(value) {
+    const hasValue = super.has(value);
+    super.add(value);
+    if (!hasValue) {
+      this.#updateSubscribers();
+    }
+    return this;
+  }
+  /**
+   * Clears this set.
+   */
+  clear() {
+    if (this.size === 0) {
+      return;
+    }
+    super.clear();
+    this.#updateSubscribers();
+  }
+  /**
+   * Removes a specified value from the Set.
+   *
+   * @param value - Value to delete.
+   *
+   * @returns Returns true if an element in the Set existed and has been removed, or false if the element
+   *          does not exist.
+   */
+  delete(value) {
+    const result = super.delete(value);
+    if (result) {
+      this.#updateSubscribers();
+    }
+    return result;
+  }
+  // Store subscriber implementation --------------------------------------------------------------------------------
+  /**
+   * @param handler - Callback function that is invoked on update / changes.
+   *
+   * @returns Unsubscribe function.
+   */
+  subscribe(handler) {
+    const currentIdx = this.#subscribers.findIndex((sub) => sub === handler);
+    if (currentIdx === -1) {
+      this.#subscribers.push(handler);
+      handler(this);
+    }
+    return () => {
+      const index = this.#subscribers.findIndex((sub) => sub === handler);
+      if (index >= 0) {
+        this.#subscribers.splice(index, 1);
+      }
+    };
+  }
+  /**
+   * Updates subscribers.
+   */
+  #updateSubscribers() {
+    for (let cntr = 0; cntr < this.#subscribers.length; cntr++) {
+      this.#subscribers[cntr](this);
+    }
+  }
 }
 function storeGenerator({ storage, serialize = JSON.stringify, deserialize = JSON.parse }) {
   function isSimpleDeriver(deriver) {
@@ -2886,6 +2960,1753 @@ class TJSSvelte {
   }
 }
 Object.seal(TJSSvelte);
+const semver = /^[v^~<>=]*?(\d+)(?:\.([x*]|\d+)(?:\.([x*]|\d+)(?:\.([x*]|\d+))?(?:-([\da-z\-]+(?:\.[\da-z\-]+)*))?(?:\+[\da-z\-]+(?:\.[\da-z\-]+)*)?)?)?$/i;
+const validateAndParse = (version2) => {
+  if (typeof version2 !== "string") {
+    throw new TypeError("Invalid argument expected string");
+  }
+  const match = version2.match(semver);
+  if (!match) {
+    throw new Error(`Invalid argument not valid semver ('${version2}' received)`);
+  }
+  match.shift();
+  return match;
+};
+const isWildcard = (s) => s === "*" || s === "x" || s === "X";
+const tryParse = (v) => {
+  const n = parseInt(v, 10);
+  return isNaN(n) ? v : n;
+};
+const forceType = (a, b) => typeof a !== typeof b ? [String(a), String(b)] : [a, b];
+const compareStrings = (a, b) => {
+  if (isWildcard(a) || isWildcard(b))
+    return 0;
+  const [ap, bp] = forceType(tryParse(a), tryParse(b));
+  if (ap > bp)
+    return 1;
+  if (ap < bp)
+    return -1;
+  return 0;
+};
+const compareSegments = (a, b) => {
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const r = compareStrings(a[i] || "0", b[i] || "0");
+    if (r !== 0)
+      return r;
+  }
+  return 0;
+};
+const compareVersions = (v1, v2) => {
+  const n1 = validateAndParse(v1);
+  const n2 = validateAndParse(v2);
+  const p1 = n1.pop();
+  const p2 = n2.pop();
+  const r = compareSegments(n1, n2);
+  if (r !== 0)
+    return r;
+  if (p1 && p2) {
+    return compareSegments(p1.split("."), p2.split("."));
+  } else if (p1 || p2) {
+    return p1 ? -1 : 1;
+  }
+  return 0;
+};
+const compare = (v1, v2, operator) => {
+  assertValidOperator(operator);
+  const res = compareVersions(v1, v2);
+  return operatorResMap[operator].includes(res);
+};
+const operatorResMap = {
+  ">": [1],
+  ">=": [0, 1],
+  "=": [0],
+  "<=": [-1, 0],
+  "<": [-1],
+  "!=": [-1, 1]
+};
+const allowedOperators = Object.keys(operatorResMap);
+const assertValidOperator = (op) => {
+  if (typeof op !== "string") {
+    throw new TypeError(`Invalid operator type, expected string but got ${typeof op}`);
+  }
+  if (allowedOperators.indexOf(op) === -1) {
+    throw new Error(`Invalid operator, expected one of ${allowedOperators.join("|")}`);
+  }
+};
+const satisfies = (version2, range) => {
+  range = range.replace(/([><=]+)\s+/g, "$1");
+  if (range.includes("||")) {
+    return range.split("||").some((r4) => satisfies(version2, r4));
+  } else if (range.includes(" - ")) {
+    const [a, b] = range.split(" - ", 2);
+    return satisfies(version2, `>=${a} <=${b}`);
+  } else if (range.includes(" ")) {
+    return range.trim().replace(/\s{2,}/g, " ").split(" ").every((r4) => satisfies(version2, r4));
+  }
+  const m = range.match(/^([<>=~^]+)/);
+  const op = m ? m[1] : "=";
+  if (op !== "^" && op !== "~")
+    return compare(version2, range, op);
+  const [v1, v2, v3, , vp] = validateAndParse(version2);
+  const [r1, r2, r3, , rp] = validateAndParse(range);
+  const v = [v1, v2, v3];
+  const r = [r1, r2 !== null && r2 !== void 0 ? r2 : "x", r3 !== null && r3 !== void 0 ? r3 : "x"];
+  if (rp) {
+    if (!vp)
+      return false;
+    if (compareSegments(v, r) !== 0)
+      return false;
+    if (compareSegments(vp.split("."), rp.split(".")) === -1)
+      return false;
+  }
+  const nonZero = r.findIndex((v4) => v4 !== "0") + 1;
+  const i = op === "~" ? 2 : nonZero > 1 ? nonZero : 1;
+  if (compareSegments(v.slice(0, i), r.slice(0, i)) !== 0)
+    return false;
+  if (compareSegments(v.slice(i), r.slice(i)) === -1)
+    return false;
+  return true;
+};
+const validateStrict = (version2) => typeof version2 === "string" && /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/.test(version2);
+class StyleParse {
+  static #regexPixels = /(\d+)\s*px/;
+  /**
+   * @private
+   */
+  constructor() {
+    throw new Error("StyleParse constructor: This is a static class and should not be constructed.");
+  }
+  /**
+   * Parse a CSS declaration block / {@link CSSDeclarationBlock} (IE `color: red; font-size: 14px;`) into an object of
+   * property / value pairs.
+   *
+   * This implementation is optimized for parsing the output of `CSSStyleRule.style.cssText`, which is always
+   * well-formed according to the CSSOM spec. It is designed to be:
+   * ```
+   * - **Fast**: minimal allocations, no regex in the hot loop.
+   * - **Accurate**: ignores `;` inside quotes or parentheses.
+   * - **Flexible**: supports optional camel case conversion.
+   * - **CSS variable safe**: leaves `--*` properties untouched.
+   *```
+   *
+   * @param cssText - A valid CSS declaration block (no selectors).
+   *
+   * @param [options] - Optional parser settings.
+   *
+   * @param [options.camelCase=false] - Convert hyphen-case property names to camel case.
+   *
+   * @returns An object mapping property names to their CSS values.
+   */
+  static cssText(cssText, { camelCase = false } = {}) {
+    if (typeof cssText !== "string" || cssText.length === 0) {
+      return {};
+    }
+    if (cssText.indexOf(":") === -1) {
+      return {};
+    }
+    const out = {};
+    let segStart = 0;
+    let parens = 0;
+    let inSQ = false;
+    let inDQ = false;
+    for (let i = 0; i < cssText.length; i++) {
+      const ch = cssText[i];
+      if (ch === '"' && !inSQ) {
+        inDQ = !inDQ;
+      } else if (ch === "'" && !inDQ) {
+        inSQ = !inSQ;
+      } else if (!inSQ && !inDQ) {
+        if (ch === "(") {
+          parens++;
+        } else if (ch === ")") {
+          if (parens > 0) {
+            parens--;
+          }
+        } else if (ch === ";" && parens === 0) {
+          if (i > segStart) {
+            const chunk = cssText.slice(segStart, i).trim();
+            if (chunk) {
+              this.#cssTextFlushDecl(chunk, out, camelCase);
+            }
+          }
+          segStart = i + 1;
+        }
+      }
+    }
+    if (segStart < cssText.length) {
+      const chunk = cssText.slice(segStart).trim();
+      if (chunk) {
+        this.#cssTextFlushDecl(chunk, out, camelCase);
+      }
+    }
+    return out;
+  }
+  /**
+   * Parses a pixel string / computed styles. Ex. `100px` returns `100`.
+   *
+   * @param   value - Value to parse.
+   *
+   * @returns The integer component of a pixel string.
+   */
+  static pixels(value) {
+    if (typeof value !== "string") {
+      return void 0;
+    }
+    const isPixels = this.#regexPixels.test(value);
+    const number = parseInt(value);
+    return isPixels && Number.isFinite(number) ? number : void 0;
+  }
+  /**
+   * Returns the pixel value for `1rem` based on the root document element. You may apply an optional multiplier.
+   *
+   * @param [multiplier=1] - Optional multiplier to apply to `rem` pixel value; default: 1.
+   *
+   * @param [options] - Optional parameters.
+   *
+   * @param [options.targetDocument=document] The target DOM {@link Document} if different from the main
+   *        browser global `document`.
+   *
+   * @returns The pixel value for `1rem` with or without a multiplier based on the root document element.
+   */
+  static remPixels(multiplier = 1, { targetDocument = window.document } = {}) {
+    return targetDocument?.documentElement ? multiplier * parseFloat(window.getComputedStyle(targetDocument.documentElement).fontSize) : void 0;
+  }
+  /**
+   * Split a CSS selector list into individual selectors, honoring commas that appear only at the top level
+   * (IE not inside (), [], or quotes). Additional options provide inclusion / exclusion filtering of selector parts.
+   *
+   * Examples:
+   *   '.a, .b'                                  → ['.a', '.b']
+   *   ':is(.a, .b):not([data-x=","]) .c, .d'    → [':is(.a, .b):not([data-x=","]) .c', '.d']
+   *
+   * @param selectorText - `CSSStyleRule.selectorText` to parse.
+   *
+   * @param [options] - Optional filtering options.
+   *
+   * @param [options.excludeSelectorParts] - An array of RegExp instances to filter by exclusion.
+   *
+   * @param [options.includeSelectorPartSet] - A Set of strings to filter by inclusion.
+   *
+   * @returns Array of trimmed selector strings w/ optional filtering of parts.
+   */
+  static selectorText(selectorText, { excludeSelectorParts, includeSelectorPartSet } = {}) {
+    const parts = [];
+    if (typeof selectorText !== "string" || selectorText.length === 0) {
+      return parts;
+    }
+    const hasExclude = Array.isArray(excludeSelectorParts) && excludeSelectorParts.length > 0;
+    const hasInclude = CrossWindow.isSet(includeSelectorPartSet) && includeSelectorPartSet.size > 0;
+    let start = 0;
+    let inSQ = false;
+    let inDQ = false;
+    let paren = 0;
+    let bracket = 0;
+    for (let i = 0; i < selectorText.length; i++) {
+      const ch = selectorText[i];
+      if (ch === '"' && !inSQ) {
+        inDQ = !inDQ;
+        continue;
+      }
+      if (ch === "'" && !inDQ) {
+        inSQ = !inSQ;
+        continue;
+      }
+      if (inSQ || inDQ) {
+        continue;
+      }
+      if (ch === "(") {
+        paren++;
+        continue;
+      }
+      if (ch === ")") {
+        if (paren > 0) {
+          paren--;
+        }
+        continue;
+      }
+      if (ch === "[") {
+        bracket++;
+        continue;
+      }
+      if (ch === "]") {
+        if (bracket > 0) {
+          bracket--;
+        }
+        continue;
+      }
+      if (ch === "," && paren === 0 && bracket === 0) {
+        const piece = selectorText.slice(start, i).trim();
+        if (piece && (!hasInclude || includeSelectorPartSet.has(piece)) && (!hasExclude || !excludeSelectorParts.some((rx) => rx.test(piece)))) {
+          parts.push(piece);
+        }
+        start = i + 1;
+      }
+    }
+    const last = selectorText.slice(start).trim();
+    if (last && (!hasInclude || includeSelectorPartSet.has(last)) && (!hasExclude || !excludeSelectorParts.some((rx) => rx.test(last)))) {
+      parts.push(last);
+    }
+    return parts;
+  }
+  // Internal Implementation ----------------------------------------------------------------------------------------
+  /**
+   * Parse a single CSS declaration string into a property / value pair and store it in the output object.
+   *
+   * Note: Used by {@link StyleParse.cssText}.
+   *
+   * This method:
+   * ```
+   * - Splits on the first `:` into property and value parts
+   * - Trims whitespace from both
+   * - Optionally converts hyphen-case to camelCase
+   * - Ignores empty or malformed declarations
+   * ```
+   *
+   * @param chunk - The raw CSS declaration string (IE `"color: red"`).
+   *
+   * @param out - The object to store the parsed property / value pair.
+   *
+   * @param camelCase - Whether to convert hyphen-case keys to camel case.
+   */
+  static #cssTextFlushDecl(chunk, out, camelCase) {
+    const idx = chunk.indexOf(":");
+    if (idx < 0) {
+      return;
+    }
+    let key = chunk.slice(0, idx).trim();
+    if (!key) {
+      return;
+    }
+    const value = chunk.slice(idx + 1).trim();
+    if (camelCase && !key.startsWith("--")) {
+      let s = "";
+      for (let i = 0; i < key.length; i++) {
+        const code = key.charCodeAt(i);
+        if (code === 45 && i + 1 < key.length) {
+          i++;
+          s += key[i].toUpperCase();
+        } else {
+          s += key[i];
+        }
+      }
+      key = s;
+    }
+    out[key] = value;
+  }
+}
+class RuleManager {
+  /**
+   * The specific rule instance in the association HTMLStyleElement.
+   */
+  #cssRule;
+  /**
+   * The CSS selector for this rule manager.
+   */
+  #selector;
+  /**
+   * The name that this rule manager is indexed by in the associated `StyleManager` instance.
+   */
+  #name;
+  /**
+   * @param   cssRule -
+   *
+   * @param   name -
+   *
+   * @param   selector -
+   */
+  constructor(cssRule, name, selector) {
+    if (!CrossWindow.isCSSStyleRule(cssRule)) {
+      throw new TypeError(`RuleManager error: 'cssRule' is not a CSSStyleRule instance..`);
+    }
+    if (typeof name !== "string") {
+      throw new TypeError(`RuleManager error: 'name' is not a string.`);
+    }
+    if (typeof selector !== "string") {
+      throw new TypeError(`RuleManager error: 'selector' is not a string.`);
+    }
+    this.#cssRule = cssRule;
+    this.#name = name;
+    this.#selector = selector;
+  }
+  // Accessors ------------------------------------------------------------------------------------------------------
+  /**
+   * @returns Provides an accessor to get the `cssText` for the style rule or undefined if not connected.
+   */
+  get cssText() {
+    return this.isConnected ? this.#cssRule.style.cssText : void 0;
+  }
+  /**
+   * Determines if this RuleManager is still connected / available.
+   *
+   * @returns Is RuleManager connected.
+   */
+  get isConnected() {
+    const sheet = this.#cssRule?.parentStyleSheet;
+    const owner = sheet?.ownerNode;
+    return !!(sheet && owner && owner.isConnected);
+  }
+  /**
+   * @returns Name of this RuleManager indexed by associated StyleManager.
+   */
+  get name() {
+    return this.#name;
+  }
+  /**
+   * @returns The associated selector for this CSS rule.
+   */
+  get selector() {
+    return this.#selector;
+  }
+  /**
+   * @param   cssText - Provides an accessor to set the `cssText` for the style rule.
+   */
+  set cssText(cssText) {
+    if (!this.isConnected) {
+      return;
+    }
+    this.#cssRule.style.cssText = typeof cssText === "string" ? cssText : "";
+  }
+  // Iterator -------------------------------------------------------------------------------------------------------
+  /**
+   * Allows usage in `for of` loops directly.
+   *
+   * @returns Entries Map iterator.
+   */
+  [Symbol.iterator]() {
+    return this.entries();
+  }
+  // Methods --------------------------------------------------------------------------------------------------------
+  /**
+   * @returns Iterator of CSS property entries in hyphen-case.
+   */
+  entries() {
+    return Object.entries(this.get() ?? {})[Symbol.iterator]();
+  }
+  /**
+   * Retrieves an object with the current CSS rule data.
+   *
+   * @param [options] - Optional settings.
+   *
+   * @param [options.camelCase=false] - Whether to convert property names to camel case.
+   *
+   * @returns Current CSS style data or undefined if not connected.
+   */
+  get(options = {}) {
+    return this.isConnected ? StyleParse.cssText(this.#cssRule.style.cssText, options) : void 0;
+  }
+  /**
+   * Gets a particular CSS property value.
+   *
+   * @param key - CSS property key; must be in hyphen-case (IE `background-color`).
+   *
+   * @returns Returns CSS property value or undefined if non-existent.
+   */
+  getProperty(key) {
+    if (!this.isConnected) {
+      return void 0;
+    }
+    if (typeof key !== "string") {
+      throw new TypeError(`RuleManager error: 'key' is not a string.`);
+    }
+    const result = this.#cssRule.style.getPropertyValue(key);
+    return result !== "" ? result : void 0;
+  }
+  /**
+   * Returns whether this CSS rule manager has a given property key.
+   *
+   * @param key - CSS property key; must be in hyphen-case (IE `background-color`).
+   *
+   * @returns Property key exists / is defined.
+   */
+  hasProperty(key) {
+    if (!this.isConnected) {
+      return false;
+    }
+    if (typeof key !== "string") {
+      throw new TypeError(`RuleManager error: 'key' is not a string.`);
+    }
+    return this.#cssRule.style.getPropertyValue(key) !== "";
+  }
+  /**
+   * @returns Iterator of CSS property keys in hyphen-case.
+   */
+  keys() {
+    return Object.keys(this.get() ?? {})[Symbol.iterator]();
+  }
+  /**
+   * Set CSS properties in bulk by property / value. Must use hyphen-case.
+   *
+   * @param styles - CSS styles object.
+   *
+   * @param [options] - Options.
+   *
+   * @param [override=true] - When true overrides any existing values; default: `true`.
+   */
+  setProperties(styles, { override = true } = {}) {
+    if (!this.isConnected) {
+      return;
+    }
+    if (!isObject(styles)) {
+      throw new TypeError(`RuleManager error: 'styles' is not an object.`);
+    }
+    if (typeof override !== "boolean") {
+      throw new TypeError(`RuleManager error: 'override' is not a boolean.`);
+    }
+    if (override) {
+      for (const [key, value] of Object.entries(styles)) {
+        this.#cssRule.style.setProperty(key, value);
+      }
+    } else {
+      for (const [key, value] of Object.entries(styles)) {
+        if (this.#cssRule.style.getPropertyValue(key) === "") {
+          this.#cssRule.style.setProperty(key, value);
+        }
+      }
+    }
+  }
+  /**
+   * Sets a particular property.
+   *
+   * @param key - CSS property key; must be in hyphen-case (IE `background-color`).
+   *
+   * @param value - CSS property value.
+   *
+   * @param [options] - Options.
+   *
+   * @param [options.override=true] - When true overrides any existing value; default: `true`.
+   */
+  setProperty(key, value, { override = true } = {}) {
+    if (!this.isConnected) {
+      return;
+    }
+    if (typeof key !== "string") {
+      throw new TypeError(`RuleManager error: 'key' is not a string.`);
+    }
+    if (typeof value !== "string") {
+      throw new TypeError(`RuleManager error: 'value' is not a string.`);
+    }
+    if (typeof override !== "boolean") {
+      throw new TypeError(`RuleManager error: 'override' is not a boolean.`);
+    }
+    if (override) {
+      this.#cssRule.style.setProperty(key, value);
+    } else {
+      if (this.#cssRule.style.getPropertyValue(key) === "") {
+        this.#cssRule.style.setProperty(key, value);
+      }
+    }
+  }
+  /**
+   * Removes the property keys specified. If `keys` is an iterable list then all property keys in the list are
+   * removed. The keys must be in hyphen-case (IE `background-color`).
+   *
+   * @param keys - The property keys to remove.
+   */
+  removeProperties(keys) {
+    if (!this.isConnected) {
+      return;
+    }
+    if (!isIterable(keys)) {
+      throw new TypeError(`RuleManager error: 'keys' is not an iterable list.`);
+    }
+    for (const key of keys) {
+      if (typeof key === "string") {
+        this.#cssRule.style.removeProperty(key);
+      }
+    }
+  }
+  /**
+   * Removes a particular CSS property.
+   *
+   * @param key - CSS property key; must be in hyphen-case (IE `background-color`).
+   *
+   * @returns CSS value when removed or undefined if non-existent.
+   */
+  removeProperty(key) {
+    if (!this.isConnected) {
+      return void 0;
+    }
+    if (typeof key !== "string") {
+      throw new TypeError(`RuleManager error: 'key' is not a string.`);
+    }
+    const result = this.#cssRule.style.removeProperty(key);
+    return result !== "" ? result : void 0;
+  }
+}
+class StyleManager {
+  /**
+   * Provides a token allowing internal instance construction.
+   */
+  static #CTOR_TOKEN = Symbol("StyleManager.CTOR_TOKEN");
+  /**
+   * Stores configured RuleManager instance by name.
+   */
+  #cssRuleMap;
+  /**
+   * CSS ID associated with style element.
+   */
+  #id;
+  /**
+   * Any associated CSS layer name.
+   */
+  #layerName;
+  /**
+   * The target style element.
+   */
+  #styleElement;
+  /**
+   * The version of this style manager.
+   */
+  #version;
+  /**
+   * @private
+   */
+  constructor({ cssRuleMap, id, styleElement, version: version2, layerName, token }) {
+    if (token !== StyleManager.#CTOR_TOKEN) {
+      throw new Error("StyleManager constructor: Please use the static `create` or `connect` methods.");
+    }
+    this.#cssRuleMap = cssRuleMap;
+    this.#id = id;
+    this.#layerName = layerName;
+    this.#styleElement = styleElement;
+    this.#version = version2;
+  }
+  // Static Methods -------------------------------------------------------------------------------------------------
+  /**
+   * Connect to an existing dynamic styles managed element by CSS ID with semver check on version range compatibility.
+   *
+   * @param   options - Options.
+   */
+  static connect({ id, range, document: document2 = window.document, warn = false }) {
+    if (typeof id !== "string") {
+      throw new TypeError(`'id' is not a string.`);
+    }
+    if (typeof range !== "string") {
+      throw new TypeError(`'range' is not a string.`);
+    }
+    if (!CrossWindow.isDocument(document2)) {
+      throw new TypeError(`'document' is not an instance of HTMLDocument.`);
+    }
+    return this.#initializeConnect(document2, id, range, warn);
+  }
+  /**
+   * @param   options - Options.
+   *
+   * @returns Created style manager instance or undefined if already exists with a higher version.
+   */
+  static create(options) {
+    return this.#createImpl(options);
+  }
+  /**
+   * Query and check for an existing dynamic style manager element / instance given a CSS ID.
+   *
+   * @param   options - Options.
+   *
+   * @returns Undefined if no style manager is configured for the given CSS ID otherwise an object containing the
+   *          current version and HTMLStyleElement associated with the CSS ID.
+   */
+  static exists({ id, document: document2 = window.document }) {
+    if (typeof id !== "string") {
+      throw new TypeError(`'id' is not a string.`);
+    }
+    if (!CrossWindow.isDocument(document2)) {
+      throw new TypeError(`'document' is not an instance of HTMLDocument.`);
+    }
+    const existingStyleEl = document2.querySelector(`head style#${id}`);
+    if (existingStyleEl) {
+      const existingVersion = existingStyleEl.getAttribute("data-version") ?? "";
+      if (validateStrict(existingVersion)) {
+        return {
+          id,
+          version: existingVersion,
+          element: existingStyleEl
+        };
+      }
+    }
+    return void 0;
+  }
+  // Accessors ------------------------------------------------------------------------------------------------------
+  /**
+   * Determines if this StyleManager style element is still connected / available.
+   *
+   * @returns Is StyleManager connected.
+   */
+  get isConnected() {
+    return !!this.#styleElement?.isConnected;
+  }
+  /**
+   * @returns Provides an accessor to get the `textContent` for the style sheet.
+   */
+  get textContent() {
+    return this.#styleElement?.textContent;
+  }
+  /**
+   * @returns Returns the version of this instance.
+   */
+  get version() {
+    return this.#version;
+  }
+  // Iterator -------------------------------------------------------------------------------------------------------
+  /**
+   * Allows usage in `for of` loops directly.
+   *
+   * @returns Entries Map iterator.
+   */
+  [Symbol.iterator]() {
+    return this.entries();
+  }
+  // Methods --------------------------------------------------------------------------------------------------------
+  /**
+   * Provides a copy constructor to duplicate an existing StyleManager instance into a new document.
+   *
+   * @param   options - Required clone options.
+   *
+   * @returns New style manager instance or undefined if not connected.
+   */
+  clone({ document: document2, force = false, warn = false }) {
+    if (!this.isConnected) {
+      StyleManager.#log(warn, "clone", `This style manager instance is not connected for id: ${this.#id}`);
+      return void 0;
+    }
+    if (!CrossWindow.isDocument(document2)) {
+      throw new TypeError(`'document' is not an instance of HTMLDocument.`);
+    }
+    const rules = {};
+    for (const key of this.#cssRuleMap.keys()) {
+      const selector = this.#cssRuleMap.get(key)?.selector;
+      if (selector) {
+        rules[key] = selector;
+      }
+    }
+    const newStyleManager = StyleManager.#createImpl({
+      id: this.#id,
+      version: this.#version,
+      layerName: this.#layerName,
+      rules,
+      document: document2,
+      force,
+      warn
+    });
+    if (newStyleManager) {
+      for (const key of this.#cssRuleMap.keys()) {
+        if (newStyleManager.#cssRuleMap.has(key)) {
+          const value = this.#cssRuleMap.get(key)?.cssText;
+          const targetRuleManager = newStyleManager.#cssRuleMap.get(key);
+          if (value && targetRuleManager) {
+            targetRuleManager.cssText = value;
+          }
+        }
+      }
+      return newStyleManager;
+    }
+    return void 0;
+  }
+  /**
+   * @returns RuleManager entries iterator.
+   */
+  entries() {
+    return this.#cssRuleMap.entries();
+  }
+  /**
+   * Retrieves an associated {@link RuleManager} by name.
+   *
+   * @param   ruleName - Rule name.
+   *
+   * @returns Associated rule manager for given name or undefined if the rule name is not defined or manager is
+   *          unconnected.
+   */
+  get(ruleName) {
+    if (!this.isConnected) {
+      return;
+    }
+    return this.#cssRuleMap.get(ruleName);
+  }
+  /**
+   * Returns whether a {@link StyleManager.CSSRuleManger} exists for the given name.
+   *
+   * @param ruleName - Rule name.
+   *
+   * @returns Is there a CSS rule manager with the given name.
+   */
+  has(ruleName) {
+    return this.#cssRuleMap.has(ruleName);
+  }
+  /**
+   * @returns {MapIterator<string>} RuleManager keys iterator.
+   */
+  keys() {
+    return this.#cssRuleMap.keys();
+  }
+  /**
+   * @returns Iterator of all RuleManager instances.
+   */
+  values() {
+    return this.#cssRuleMap.values();
+  }
+  // Internal Implementation ----------------------------------------------------------------------------------------
+  /**
+   * Internal `create` implementation with additional `force` option to override any version check.
+   *
+   * @param   options - Options.
+   *
+   * @returns Created style manager instance or undefined if already exists with a higher version.
+   */
+  static #createImpl({ id, rules, version: version2, layerName, document: document2 = window.document, force = false, warn = false }) {
+    if (typeof id !== "string") {
+      throw new TypeError(`'id' is not a string.`);
+    }
+    if (!isObject(rules)) {
+      throw new TypeError(`'rules' is not an object.`);
+    }
+    if (!CrossWindow.isDocument(document2)) {
+      throw new TypeError(`'document' is not an instance of HTMLDocument.`);
+    }
+    if (!validateStrict(version2)) {
+      throw new TypeError(`'version' is not a valid semver string.`);
+    }
+    if (typeof force !== "boolean") {
+      throw new TypeError(`'force' is not a boolean.`);
+    }
+    if (typeof warn !== "boolean") {
+      throw new TypeError(`'warn' is not a boolean.`);
+    }
+    if (layerName !== void 0 && typeof layerName !== "string") {
+      throw new TypeError(`'layerName' is not a string.`);
+    }
+    const current = this.exists({ id, document: document2 });
+    if (isObject(current)) {
+      if (force || compare(version2, current.version, ">")) {
+        current.element?.remove?.();
+        return this.#initializeCreate(document2, id, rules, version2, layerName);
+      } else {
+        this.#log(warn, "create", `Could not create instance as one already exists with a higher version for ID: ${id}.`);
+        return void 0;
+      }
+    } else {
+      return this.#initializeCreate(document2, id, rules, version2, layerName);
+    }
+  }
+  /**
+   * @param document - Target Document.
+   *
+   * @param id - Associated CSS ID
+   *
+   * @param range - SemVer version or version range.
+   *
+   * @param warn - When true, log warnings.
+   *
+   * @returns Style manager connected to existing element / style rules or undefined if no connection possible.
+   */
+  static #initializeConnect(document2, id, range, warn = false) {
+    const styleElement = document2.querySelector(`head style#${id}`);
+    if (!styleElement || styleElement?.sheet === null) {
+      this.#log(warn, "connect", `Could not find existing style element for id: ${id}`);
+      return void 0;
+    }
+    const existingRules = styleElement._tjsRules;
+    const existingVersion = styleElement._tjsVersion;
+    const existingLayerName = styleElement._tjsLayerName;
+    let targetSheet = styleElement.sheet;
+    if (!isObject(existingRules)) {
+      this.#log(warn, "connect", `Could not find rules configuration on existing style element for id: ${id}`);
+      return void 0;
+    }
+    if (!validateStrict(existingVersion)) {
+      this.#log(warn, "connect", `Could not find version on existing style element for id: ${id}`);
+      return void 0;
+    }
+    if (existingLayerName !== void 0 && typeof existingLayerName !== "string") {
+      this.#log(warn, "connect", `Could not find layer name on existing style element for id: ${id}`);
+      return void 0;
+    }
+    if (!satisfies(existingVersion, range)) {
+      this.#log(warn, "connect", `Requested range (${range}) does not satisfy existing version: ${existingVersion}`);
+      return void 0;
+    }
+    if (!CrossWindow.isCSSStyleSheet(targetSheet)) {
+      return void 0;
+    }
+    const cssRuleMap = /* @__PURE__ */ new Map();
+    const reverseRuleMap = new Map(Object.entries(existingRules).map(([key, value]) => [value, key]));
+    try {
+      if (typeof existingLayerName) {
+        let foundLayer = false;
+        for (const rule of Array.from(targetSheet.cssRules)) {
+          if (CrossWindow.isCSSLayerBlockRule(rule) && rule.name === existingLayerName) {
+            targetSheet = rule;
+            foundLayer = true;
+          }
+        }
+        if (!foundLayer) {
+          this.#log(warn, "connect", `Could not find CSSLayerBlockRule for existing layer name: ${existingLayerName}`);
+          return void 0;
+        }
+      }
+      for (const cssRule of Array.from(targetSheet.cssRules)) {
+        if (!CrossWindow.isCSSStyleRule(cssRule)) {
+          continue;
+        }
+        const selector = cssRule?.selectorText;
+        if (reverseRuleMap.has(selector)) {
+          const ruleName = reverseRuleMap.get(selector);
+          cssRuleMap.set(ruleName, new RuleManager(cssRule, ruleName, selector));
+          reverseRuleMap.delete(selector);
+        }
+      }
+      if (reverseRuleMap.size > 0) {
+        this.#log(warn, "connect", `Could not find CSSStyleRules for these rule configurations: ${JSON.stringify([...reverseRuleMap])}`);
+        return void 0;
+      }
+      return new StyleManager({
+        cssRuleMap,
+        id,
+        version: existingVersion,
+        layerName: existingLayerName,
+        styleElement,
+        token: StyleManager.#CTOR_TOKEN
+      });
+    } catch (error) {
+      console.error(`TyphonJS Runtime [StyleManager error]: Please update your browser to the latest version.`, error);
+    }
+    return void 0;
+  }
+  /**
+   * @param document - Target Document.
+   *
+   * @param id - Associated CSS ID
+   *
+   * @param rules -
+   *
+   * @param version -
+   *
+   * @param layerName -
+   *
+   * @returns New StyleManager instance.
+   */
+  static #initializeCreate(document2, id, rules, version2, layerName) {
+    const styleElement = document2.createElement("style");
+    styleElement.id = id;
+    styleElement.setAttribute("data-version", String(version2));
+    styleElement._tjsRules = rules;
+    styleElement._tjsVersion = version2;
+    styleElement._tjsLayerName = layerName;
+    document2.head.append(styleElement);
+    let targetSheet;
+    if (styleElement.sheet === null) {
+      return void 0;
+    }
+    const cssRuleMap = /* @__PURE__ */ new Map();
+    try {
+      if (layerName) {
+        const index = styleElement.sheet.insertRule(`@layer ${layerName} {}`);
+        targetSheet = styleElement.sheet.cssRules[index];
+      } else {
+        targetSheet = styleElement.sheet;
+      }
+      if (rules) {
+        for (const ruleName in rules) {
+          const selector = rules[ruleName];
+          const index = targetSheet.insertRule(`${selector} {}`);
+          const cssRule = targetSheet.cssRules[index];
+          cssRuleMap.set(ruleName, new RuleManager(cssRule, ruleName, selector));
+        }
+      }
+      return new StyleManager({
+        cssRuleMap,
+        id,
+        version: version2,
+        layerName,
+        styleElement,
+        token: StyleManager.#CTOR_TOKEN
+      });
+    } catch (error) {
+      console.error(`TyphonJS Runtime [StyleManager error]: Please update your browser to the latest version.`, error);
+      if (styleElement && styleElement.parentNode) {
+        styleElement.remove();
+      }
+    }
+    return void 0;
+  }
+  /**
+   * @param   warn - When true, log warnings.
+   *
+   * @param   path - Particular interaction path for warning.
+   *
+   * @param   message - Message to log.
+   */
+  static #log(warn, path, message) {
+    if (warn) {
+      console.warn(`[TRL StyleManager] ${path} warning: ${message}`);
+    }
+  }
+}
+var _a$1, _b;
+class StyleSheetResolve {
+  /**
+   * Detects hyphen-case separator for camel case property key conversion.
+   */
+  static #HYPHEN_CASE_REGEX = /-([a-z])/g;
+  /**
+   * Detects just a single `(prefers-*)` CSSMediaRule condition.
+   */
+  static #MEDIA_RULE_PREFERS = /^\s*\(?\s*prefers-[^)]+(?:\s*:\s*[^)]+)?\)?\s*$/i;
+  /**
+   * Detects relative `url()` references in CSSStyleRule `cssText`.
+   */
+  static #URL_DETECTION_REGEX = /\burl\(\s*(['"]?)(?!data:|https?:|\/|#)/i;
+  /**
+   * Captures contents of `url()` references.
+   */
+  static #URL_REGEX = /url\((['"]?)([^'")]+)\1\)/g;
+  /**
+   * Internal tracking of frozen state; once frozen, no more modifications are possible.
+   */
+  #frozen = false;
+  /**
+   * Parsed selector to associated style properties.
+   */
+  #sheetMap = /* @__PURE__ */ new Map();
+  /**
+   * Parse a CSSStyleSheet instance with the given options or accept a pre-filled Map generating a new
+   * `StyleSheetResolve` instance.
+   *
+   * @param styleSheetOrMap - The stylesheet instance to parse or an existing parsed stylesheet Map.
+   *
+   * @param [options] - Options for parsing stylesheet.
+   *
+   * @returns {StyleSheetResolve} New instance with the given parsed data.
+   */
+  static parse(styleSheetOrMap, options = {}) {
+    return new _a$1().parse(styleSheetOrMap, options);
+  }
+  /**
+   * Instantiate an empty `StyleSheetResolve` instance.
+   */
+  constructor() {
+  }
+  // Accessors ------------------------------------------------------------------------------------------------------
+  /**
+   * @returns Current frozen state; when true no more modifications are possible.
+   */
+  get frozen() {
+    return this.#frozen;
+  }
+  /**
+   * @returns Returns the size / count of selector properties tracked.
+   */
+  get size() {
+    return this.#sheetMap.size;
+  }
+  // Iterator -------------------------------------------------------------------------------------------------------
+  /**
+   * Allows usage in `for of` loops directly.
+   *
+   * @returns Entries Map iterator.
+   */
+  *[Symbol.iterator]() {
+    yield* this.entries();
+  }
+  // Methods --------------------------------------------------------------------------------------------------------
+  /**
+   * Clears any existing parsed styles.
+   */
+  clear() {
+    if (this.#frozen) {
+      throw new Error("Cannot modify a frozen StyleSheetResolve instance.");
+    }
+    this.#sheetMap.clear();
+  }
+  /**
+   * Clones this instance returning a new `StyleSheetResolve` instance with a copy of the data.
+   *
+   * @returns Cloned instance.
+   */
+  clone() {
+    return _a$1.parse(this.#clone(this.#sheetMap));
+  }
+  /**
+   * Deletes an entry in the parsed stylesheet Map.
+   *
+   * @param   selector - Selector key to delete.
+   *
+   * @returns Success state.
+   */
+  delete(selector) {
+    if (this.#frozen) {
+      throw new Error("Cannot modify a frozen StyleSheetResolve instance.");
+    }
+    return this.#sheetMap.delete(selector);
+  }
+  /**
+   * Entries iterator of selector / style properties objects.
+   *
+   * @returns {MapIterator<[string, { [key: string]: string }]>} Tracked CSS selector key / value iterator.
+   * @yields
+   */
+  *entries() {
+    for (const key of this.#sheetMap.keys()) {
+      yield [key, { ...this.#sheetMap.get(key) }];
+    }
+  }
+  /**
+   * Freezes this instance disallowing further modifications to the stylesheet data.
+   *
+   * @returns This instance.
+   */
+  freeze() {
+    if (this.#frozen) {
+      return this;
+    }
+    this.#frozen = true;
+    for (const props of this.#sheetMap.values()) {
+      Object.freeze(props);
+    }
+    Object.freeze(this.#sheetMap);
+    return this;
+  }
+  /**
+   * Gets all properties associated with the given selector(s). You may combine multiple selectors for a
+   * combined result. You may also provide additional selectors as the `resolve` option to substitute any CSS variables
+   * in the target selector(s).
+   *
+   * @param selector - A selector or list of selectors to retrieve.
+   *
+   * @param [options] - Options.
+   *
+   * @returns Style properties object or undefined.
+   */
+  get(selector, { camelCase = false, depth, resolve, warnCycles = false, warnResolve = false } = {}) {
+    if (typeof selector !== "string" && !isIterable(selector)) {
+      throw new TypeError(`'selector' must be a string or an iterable list of strings.`);
+    }
+    if (typeof camelCase !== "boolean") {
+      throw new TypeError(`'camelCase' must be a boolean.`);
+    }
+    if (depth !== void 0 && (!Number.isInteger(depth) || depth < 1)) {
+      throw new TypeError(`'depth' must be a positive integer >= 1.`);
+    }
+    if (resolve !== void 0 && typeof resolve !== "string" && !isIterable(resolve)) {
+      throw new TypeError(`'resolve' must be a string or an iterable list of strings.`);
+    }
+    if (typeof warnCycles !== "boolean") {
+      throw new TypeError(`'warnCycles' must be a boolean.`);
+    }
+    if (typeof warnResolve !== "boolean") {
+      throw new TypeError(`'warnResolve' must be a boolean.`);
+    }
+    let result = void 0;
+    if (isIterable(selector)) {
+      for (const entry of selector) {
+        if (this.#sheetMap.has(entry)) {
+          result = Object.assign(result ?? {}, this.#sheetMap.get(entry));
+        }
+      }
+    } else {
+      if (this.#sheetMap.has(selector)) {
+        result = Object.assign(result ?? {}, this.#sheetMap.get(selector));
+      }
+    }
+    if (result && (typeof resolve === "string" || isIterable(resolve))) {
+      const resolveList = typeof resolve === "string" ? [resolve] : Array.from(resolve);
+      depth = typeof depth === "number" ? depth : Math.max(1, resolveList.length);
+      const resolveData = {
+        parentNotFound: /* @__PURE__ */ new Set(),
+        seenCycles: /* @__PURE__ */ new Set(),
+        warnCycles
+      };
+      for (let cntr = 0; cntr < depth && cntr < resolveList.length; cntr++) {
+        this.#resolve(result, resolveList, resolveData);
+      }
+      if (resolveData.parentNotFound.size > 0) {
+        console.warn(`[TyphonJS Runtime] StyleSheetResolve - resolve - Could not locate parent selector(s) for resolution: '${[...resolveData.parentNotFound].join(", ")}'`);
+      }
+    }
+    if (result && camelCase) {
+      const remapped = {};
+      const toUpper = (_, str) => str.toUpperCase();
+      for (const key in result) {
+        const mappedKey = key.startsWith("--") ? key : key.replace(_a$1.#HYPHEN_CASE_REGEX, toUpper);
+        remapped[mappedKey] = result[key];
+      }
+      result = remapped;
+    }
+    return result;
+  }
+  /**
+   * Gets a specific property value from the given `selector` and `property` key.
+   *
+   * @param   selector - A selector or list of selectors to retrieve.
+   *
+   * @param   property - Specific property to locate.
+   *
+   * @param   [options] - Options.
+   *
+   * @returns Style property value.
+   */
+  getProperty(selector, property, options) {
+    const data = this.get(selector, options);
+    return isObject(data) && property in data ? data[property] : void 0;
+  }
+  /**
+   * Test if `StyleSheetResolve` tracks the given selector.
+   *
+   * @param   selector - CSS selector to check.
+   *
+   * @returns StyleSheetResolve tracks the given selector.
+   */
+  has(selector) {
+    return this.#sheetMap.has(selector);
+  }
+  /**
+   * @returns Tracked CSS selector keys iterator.
+   */
+  keys() {
+    return this.#sheetMap.keys();
+  }
+  /**
+   * Merges selectors and style properties from another StyleSheetResolve instance into this one. By default, the
+   * source of the merge overrides existing properties. You may choose to preserve existing values along with
+   * specifying exact selector matches.
+   *
+   * @param   source - Another instance to merge from.
+   *
+   * @param   [options] - Options.
+   *
+   * @returns This instance.
+   */
+  merge(source, { exactMatch = false, strategy = "override" } = {}) {
+    if (this.#frozen) {
+      throw new Error("Cannot modify a frozen StyleSheetResolve instance.");
+    }
+    if (!(source instanceof _a$1)) {
+      throw new TypeError(`'source' is not a StyleSheetResolve instance.`);
+    }
+    for (const selectorPart of source.keys()) {
+      if (exactMatch && !this.#sheetMap.has(selectorPart)) {
+        continue;
+      }
+      const incoming = source.#sheetMap.get(selectorPart);
+      if (!incoming) {
+        continue;
+      }
+      const current = this.#sheetMap.get(selectorPart) ?? {};
+      const merged = strategy === "preserve" ? Object.assign({}, { ...incoming }, current) : Object.assign({}, current, incoming);
+      this.#sheetMap.set(selectorPart, merged);
+    }
+    return this;
+  }
+  /**
+   * Clears existing stylesheet mapping and parses the given stylesheet or Map.
+   *
+   * @param   styleSheetOrMap - The stylesheet element to parse or an existing parsed stylesheet Map.
+   *
+   * @param   [options] - Options for parsing stylesheet.
+   *
+   * @returns This instance.
+   */
+  parse(styleSheetOrMap, options = {}) {
+    if (this.#frozen) {
+      throw new Error("Cannot modify a frozen StyleSheetResolve instance.");
+    }
+    this.#sheetMap.clear();
+    if (!CrossWindow.isCSSStyleSheet(styleSheetOrMap) && !CrossWindow.isMap(styleSheetOrMap)) {
+      throw new TypeError(`'styleSheetOrMap' must be a 'CSSStyleSheet' instance or a parsed Map of stylesheet entries.`);
+    }
+    if (!isObject(options)) {
+      throw new TypeError(`'options' is not an object.`);
+    }
+    if (options.baseHref !== void 0 && typeof options.baseHref !== "string") {
+      throw new TypeError(`'baseHref' must be a string.`);
+    }
+    if (options.excludeSelectorParts !== void 0 && !isIterable(options.excludeSelectorParts)) {
+      throw new TypeError(`'excludeSelectorParts' must be a list of RegExp instances.`);
+    }
+    if (options.includeCSSLayers !== void 0 && !isIterable(options.includeCSSLayers)) {
+      throw new TypeError(`'includeCSSLayers' must be a list of RegExp instances.`);
+    }
+    if (options.includeSelectorPartSet !== void 0 && !CrossWindow.isSet(options.includeSelectorPartSet)) {
+      throw new TypeError(`'includeSelectorPartSet' must be a Set of strings.`);
+    }
+    if (options.mediaQuery !== void 0 && typeof options.mediaQuery !== "boolean") {
+      throw new TypeError(`'mediaQuery' must be a boolean.`);
+    }
+    if (options.urlRewrite !== void 0 && typeof options.urlRewrite !== "boolean") {
+      throw new TypeError(`'urlRewrite' must be a boolean.`);
+    }
+    if (CrossWindow.isCSSStyleSheet(styleSheetOrMap)) {
+      this.#parse(styleSheetOrMap, options);
+    } else if (CrossWindow.isMap(styleSheetOrMap)) {
+      this.#sheetMap = this.#clone(styleSheetOrMap);
+    }
+    return this;
+  }
+  /**
+   * Directly sets a selector key with the given style properties object.
+   *
+   * @param   selector - A single selector key to set.
+   *
+   * @param   styleObj - Style data object of property / value pairs.
+   */
+  set(selector, styleObj) {
+    if (this.#frozen) {
+      throw new Error("Cannot modify a frozen StyleSheetResolve instance.");
+    }
+    if (typeof selector !== "string") {
+      throw new TypeError(`'selector' must be a string.`);
+    }
+    if (!isObject(styleObj)) {
+      throw new TypeError(`'styleObj' must be an object.`);
+    }
+    this.#sheetMap.set(selector, styleObj);
+  }
+  // Internal Implementation ----------------------------------------------------------------------------------------
+  /**
+   * Shallow clone of source Map into target Map.
+   *
+   * @param   sourceMap - Source Map.
+   *
+   * @param   [targetMap] - Target Map.
+   *
+   * @returns Shallow copy cloned Map.
+   */
+  #clone(sourceMap, targetMap = /* @__PURE__ */ new Map()) {
+    for (const [selector, props] of sourceMap.entries()) {
+      targetMap.set(selector, { ...props });
+    }
+    return targetMap;
+  }
+  /**
+   * Parses the given CSSStyleSheet instance.
+   *
+   * @param styleSheet - The stylesheet to parse.
+   *
+   * @param [opts] - Options for parsing stylesheet.
+   */
+  #parse(styleSheet, opts) {
+    const options = {
+      baseHref: styleSheet.href ?? opts.baseHref,
+      excludeSelectorParts: isIterable(opts.excludeSelectorParts) ? Array.from(opts.excludeSelectorParts) : [],
+      includeCSSLayers: isIterable(opts.includeCSSLayers) ? Array.from(opts.includeCSSLayers) : [],
+      includeSelectorPartSet: CrossWindow.isSet(opts.includeSelectorPartSet) ? opts.includeSelectorPartSet : /* @__PURE__ */ new Set(),
+      mediaQuery: opts.mediaQuery ?? true,
+      urlRewrite: opts.urlRewrite ?? true
+    };
+    const rules = styleSheet.cssRules;
+    const allStyleRules = [];
+    for (let i = 0; i < rules.length; i++) {
+      const rule = rules[i];
+      switch (rule.constructor.name) {
+        case "CSSLayerBlockRule":
+          this.#processLayerBlockRule(rule, void 0, allStyleRules, options);
+          break;
+        case "CSSMediaRule":
+          this.#processMediaRule(rule, allStyleRules, options);
+          break;
+        case "CSSStyleRule":
+          allStyleRules.push(rule);
+          break;
+      }
+    }
+    this.#processStyleRules(allStyleRules, options);
+  }
+  /**
+   * Recursively parses / processes a CSSLayerBlockRule and encountered CSSStyleRule entries.
+   *
+   * @param   blockRule - The `CSSLayerBlockRule` to parse.
+   *
+   * @param   parentLayerName - Name of parent CSS layer.
+   *
+   * @param   allStyleRules - All style rules to process.
+   *
+   * @param   opts - Sanitized process options.
+   */
+  #processLayerBlockRule(blockRule, parentLayerName, allStyleRules, opts) {
+    const fullname = typeof parentLayerName === "string" ? `${parentLayerName}.${blockRule.name}` : blockRule.name;
+    const includeLayer = opts.includeCSSLayers.length === 0 || opts.includeCSSLayers.some((regex) => regex.test(fullname));
+    const layerBlockRules = [];
+    const rules = blockRule.cssRules;
+    for (let i = 0; i < rules.length; i++) {
+      const rule = rules[i];
+      switch (rule.constructor.name) {
+        case "CSSLayerBlockRule":
+          layerBlockRules.push(rule);
+          break;
+        case "CSSMediaRule":
+          this.#processMediaRule(rule, allStyleRules, opts);
+          break;
+        case "CSSStyleRule":
+          if (includeLayer) {
+            allStyleRules.push(rule);
+          }
+          break;
+      }
+    }
+    for (let i = 0; i < layerBlockRules.length; i++) {
+      this.#processLayerBlockRule(layerBlockRules[i], fullname, allStyleRules, opts);
+    }
+  }
+  /**
+   * Simple processing of a CSSMediaRule and directly nested CSSStyleRule entries.
+   *
+   * @param   mediaRule - The `CSSMediaRule` to parse.
+   *
+   * @param   allStyleRules - All style rules to process.
+   *
+   * @param   opts - Sanitized process options.
+   */
+  #processMediaRule(mediaRule, allStyleRules, opts) {
+    if (!opts.mediaQuery) {
+      return;
+    }
+    if (!window.matchMedia(mediaRule.media.mediaText).matches) {
+      return;
+    }
+    if (!_a$1.#MEDIA_RULE_PREFERS.test(mediaRule.media.mediaText)) {
+      return;
+    }
+    const rules = mediaRule.cssRules;
+    for (let i = 0; i < rules.length; i++) {
+      const rule = rules[i];
+      switch (rule.constructor.name) {
+        case "CSSStyleRule":
+          allStyleRules.push(rule);
+          break;
+      }
+    }
+  }
+  /**
+   * Processes all collected `CSSStyleRules`.
+   *
+   * @param   allStyleRules - Style rules to parse.
+   *
+   * @param   opts - ProcessOptions.
+   */
+  #processStyleRules(allStyleRules, opts) {
+    for (let i = 0; i < allStyleRules.length; i++) {
+      const styleRule = allStyleRules[i];
+      const selectorParts = StyleParse.selectorText(styleRule.selectorText, opts);
+      if (selectorParts.length) {
+        const result = StyleParse.cssText(styleRule.style.cssText);
+        if (opts.urlRewrite && opts.baseHref && _a$1.#URL_DETECTION_REGEX.test(styleRule.style.cssText)) {
+          this.#processStyleRuleUrls(result, opts);
+        }
+        for (let j = selectorParts.length; --j >= 0; ) {
+          const part = selectorParts[j];
+          if (this.#sheetMap.has(part)) {
+            Object.assign(this.#sheetMap.get(part), result);
+          } else {
+            this.#sheetMap.set(part, result);
+          }
+        }
+      }
+    }
+  }
+  /**
+   * Resolve relative `url(...)` references in CSS property values based on the stylesheet origin.
+   *
+   * This method rewrites relative paths in `url(...)` to absolute paths (IE `/assets/img.png`) using the
+   * CSSStyleSheet `href` when available or falling back to the provided `baseHref` for inline stylesheets.
+   *
+   * @param result - Parsed CSS property key-value map.
+   *
+   * @param opts - Processing options.
+   */
+  #processStyleRuleUrls(result, opts) {
+    const baseHref = opts.baseHref;
+    for (const key in result) {
+      let value = result[key];
+      if (value.indexOf("url(") === -1) {
+        continue;
+      }
+      if (!_a$1.#URL_DETECTION_REGEX.test(value)) {
+        continue;
+      }
+      let modified = false;
+      value = value.replace(_a$1.#URL_REGEX, (match, quote, relPath) => {
+        try {
+          const absPath = new URL(relPath, baseHref).pathname;
+          modified = true;
+          return `url(${quote}${absPath}${quote})`;
+        } catch {
+          return match;
+        }
+      });
+      if (modified) {
+        result[key] = value;
+      }
+    }
+  }
+  /**
+   * Resolves intermediate CSS variables defined in the `result` style properties object with data from the given
+   * `resolve` selector(s).
+   *
+   * @param   result - Copy of source selector style properties to resolve.
+   *
+   * @param   resolve - Parent CSS variable resolution selectors.
+   *
+   * @param   resolveData - Resolution data.
+   */
+  #resolve(result, resolve, resolveData) {
+    const parentVars = {};
+    for (let i = 0; i < resolve.length; i++) {
+      const entry = resolve[i];
+      const parent = this.get(entry);
+      if (!isObject(parent)) {
+        resolveData.parentNotFound.add(entry);
+        continue;
+      }
+      for (const key in parent) {
+        if (key.startsWith("--")) {
+          parentVars[key] = parent[key];
+        }
+      }
+    }
+    const cssVars = new ResolveVars(result, parentVars, resolveData);
+    if (!cssVars.unresolvedCount) {
+      return;
+    }
+    for (const key in parentVars) {
+      cssVars.set(key, parentVars[key]);
+    }
+    Object.assign(result, cssVars.resolved);
+  }
+}
+_a$1 = StyleSheetResolve;
+class ResolveVars {
+  /**
+   * Detect CSS variable.
+   */
+  static #DETECT_CSS_VAR_REGEX = /--[\w-]+/g;
+  /**
+   * Capture CSS variable fallbacks.
+   */
+  static #CSS_VAR_FALLBACK_REGEX = /^var\((?<varName>--[\w-]+)\s*,\s*(?<fallback>.+?)\)$/;
+  /**
+   * Replace CSS variable fallbacks.
+   */
+  static #CSS_VAR_FALLBACK_REPLACE_REGEX = /var\((--[\w-]+)(?:\s*,\s*[^()]*?)?\)/g;
+  /**
+   * Closed CSS variable.
+   */
+  static #CSS_VAR_REGEX = /^var\((--[\w-]+)\)$/;
+  /**
+   * Open CSS variable.
+   */
+  static #CSS_VAR_PARTIAL_REGEX = /^var\((--[\w-]+)/;
+  /**
+   * Prevent deep fallback recursion.
+   */
+  static #MAX_FALLBACK_DEPTH = 10;
+  /**
+   * Initial style properties w/ CSS variables to track.
+   */
+  #propMap = /* @__PURE__ */ new Map();
+  /**
+   * Reverse lookup for CSS variable name to associated property.
+   */
+  #varToProp = /* @__PURE__ */ new Map();
+  /**
+   * Resolved CSS variable from parent selector properties.
+   */
+  #varResolved = /* @__PURE__ */ new Map();
+  #parentVars;
+  #resolveData;
+  /**
+   * @param initial - Initial style entry to resolve.
+   *
+   * @param parentVars - All parent resolution vars.
+   *
+   * @param resolveData - Resolution data.
+   */
+  constructor(initial, parentVars, resolveData) {
+    this.#parentVars = parentVars;
+    this.#resolveData = resolveData;
+    for (const prop in initial) {
+      const value = initial[prop];
+      let match;
+      _b.#DETECT_CSS_VAR_REGEX.lastIndex = 0;
+      let found = false;
+      while (match = _b.#DETECT_CSS_VAR_REGEX.exec(value)) {
+        const entry = match[0];
+        if (!this.#varToProp.has(entry))
+          this.#varToProp.set(entry, /* @__PURE__ */ new Set());
+        this.#varToProp.get(entry).add(prop);
+        found = true;
+      }
+      if (found)
+        this.#propMap.set(prop, value);
+    }
+  }
+  /**
+   * Resolves properties in `#propMap` by substituting var(...) expressions using resolved values in #varResolved. If
+   * no resolution is available, attempts to preserve fallback expressions in their original var(...) form.
+   *
+   * Supports chained fallbacks like: var(--a, var(--b, var(--c, red))) and resolving variables in statements like
+   * `calc(1rem + var(--x))`.
+   *
+   * @returns All fields that have been resolved.
+   */
+  get resolved() {
+    const result = {};
+    for (const entry of this.#varToProp.keys()) {
+      const props = this.#varToProp.get(entry);
+      const varResolved = this.#varResolved.get(entry);
+      if (!props) {
+        continue;
+      }
+      if (varResolved) {
+        for (const prop of props) {
+          let value = this.#propMap.get(prop);
+          if (value.indexOf(`var(${entry}`) !== -1) {
+            value = value.replace(_b.#CSS_VAR_FALLBACK_REPLACE_REGEX, (match) => {
+              const varName = match.match(_b.#CSS_VAR_PARTIAL_REGEX)?.[1];
+              const resolved = this.#varResolved.get(varName);
+              return resolved ?? match;
+            });
+          }
+          this.#propMap.set(prop, value);
+          result[prop] = value;
+        }
+      } else {
+        for (const prop of props) {
+          const value = this.#propMap.get(prop);
+          if (value.indexOf(`var(${entry}`) === -1) {
+            continue;
+          }
+          const fallback = this.#resolveNestedFallback(value);
+          this.#propMap.set(prop, fallback);
+          result[prop] = fallback;
+        }
+      }
+    }
+    return result;
+  }
+  /**
+   * @returns Unresolved field count.
+   */
+  get unresolvedCount() {
+    let count = 0;
+    for (const entry of this.#varToProp.keys()) {
+      if (!this.#varResolved.has(entry)) {
+        count++;
+      }
+    }
+    return count;
+  }
+  /**
+   * Sets the parent selector defined CSS variable for resolution.
+   *
+   * @param name - CSS variable name
+   *
+   * @param value - Value of target CSS variable.
+   */
+  set(name, value) {
+    if (typeof value !== "string" || value.length === 0) {
+      return;
+    }
+    if (this.#resolveData.warnCycles) {
+      this.#setCycleWarn(name, value);
+    } else {
+      if (this.#varToProp.has(name) && !this.#varResolved.has(name)) {
+        this.#varResolved.set(name, value);
+      }
+    }
+  }
+  // Internal Implementation ----------------------------------------------------------------------------------------
+  /**
+   * Performs DFS traversal to detect cycles in CSS variable resolution. Tracks the resolution path and emits a
+   * warning if a cycle is found. Each affected property is reported once with its originating chain.
+   *
+   * @param   value - Value of target CSS variable.
+   *
+   * @param   visited - Visited CSS variables.
+   *
+   * @param   seenCycles - Dedupe cyclic dependency warnings.
+   *
+   * @returns Resolution result or undefined.
+   */
+  #resolveCycleWarn(value, visited, seenCycles) {
+    const match = value.match(_b.#CSS_VAR_REGEX);
+    if (!match) {
+      return value;
+    }
+    const next = match[1];
+    if (visited.has(next)) {
+      const cycleChain = [...visited, next];
+      const cycleKey = cycleChain.join("→");
+      if (!seenCycles.has(cycleKey)) {
+        seenCycles.add(cycleKey);
+        const affected = cycleChain.flatMap((varName) => Array.from(this.#varToProp.get(varName) ?? []).map((prop) => `- ${prop} (via ${varName})`));
+        if (affected.length > 0) {
+          console.warn(`[TyphonJS Runtime] StyleSheetResolve - CSS variable cyclic dependency detected: ${cycleChain.join(" → ")}
+Affected properties:
+${affected.join("\n")}`);
+        }
+      }
+      return void 0;
+    }
+    visited.add(next);
+    const nextValue = this.#varResolved.get(next) ?? this.#parentVars[next];
+    if (typeof nextValue !== "string") {
+      return void 0;
+    }
+    return this.#resolveCycleWarn(nextValue, visited, seenCycles);
+  }
+  /**
+   * Resolve fallback chains of the form: var(--a, var(--b, ...))
+   * - Only replaces the top-level var if it is resolved.
+   * - Leaves fallback intact if unresolved.
+   * - Recursively evaluates nested fallbacks if they are var(...).
+   * - Limits recursion depth to prevent cycles or stack overflow.
+   *
+   * @param   expr - CSS var expression to resolve.
+   *
+   * @param   depth - Recursion guard
+   *
+   * @returns Nested fallback resolution result.
+   */
+  #resolveNestedFallback(expr, depth = 0) {
+    if (depth > _b.#MAX_FALLBACK_DEPTH) {
+      return expr;
+    }
+    const match = expr.match(_b.#CSS_VAR_FALLBACK_REGEX);
+    if (!match?.groups) {
+      return expr;
+    }
+    const { varName, fallback } = match.groups;
+    const resolved = this.#varResolved.get(varName);
+    if (resolved !== void 0) {
+      return resolved;
+    }
+    const fallbackTrimmed = fallback.trim();
+    if (fallbackTrimmed.startsWith("var(")) {
+      let nested = this.#resolveNestedFallback(fallbackTrimmed, depth + 1);
+      const innerMatch = nested.match(_b.#CSS_VAR_REGEX);
+      if (innerMatch) {
+        const innerResolved = this.#varResolved.get(innerMatch[1]);
+        if (innerResolved !== void 0) {
+          nested = innerResolved;
+        }
+      }
+      return `var(${varName}, ${nested})`;
+    }
+    return `var(${varName}, ${fallbackTrimmed})`;
+  }
+  /**
+   * Sets the parent selector defined CSS variable for resolution with additional cyclic dependency metrics.
+   *
+   * @param   name - CSS variable name
+   *
+   * @param   value - Value of target CSS variable.
+   */
+  #setCycleWarn(name, value) {
+    const resolved = this.#resolveCycleWarn(value, /* @__PURE__ */ new Set([name]), this.#resolveData.seenCycles);
+    if (resolved !== void 0 && this.#varToProp.has(name) && !this.#varResolved.has(name)) {
+      this.#varResolved.set(name, resolved);
+    }
+  }
+}
+_b = ResolveVars;
 const easingFunc = svelteEasingFunc;
 function getEasingFunc(easingRef, options) {
   if (typeof easingRef === "function") {
@@ -2901,6 +4722,12 @@ class A11yHelper {
    * @type {boolean}
    */
   static #globalDebug = false;
+  /**
+   * @private
+   */
+  constructor() {
+    throw new Error("A11yHelper constructor: This is a static class and should not be constructed.");
+  }
   /**
    * @returns {boolean} Global debugging enabled.
    */
@@ -2938,6 +4765,9 @@ class A11yHelper {
    */
   static applyFocusSource(options) {
     if (!isObject(options)) {
+      if (this.debug) {
+        console.debug(`A11yHelper.applyFocusSource debug - options is not an object: `, options);
+      }
       return;
     }
     const focusOpts = isObject(options?.focusSource) ? options.focusSource : options;
@@ -3135,10 +4965,10 @@ class A11yHelper {
         `A11yHelper.getFocusSource error: 'event' is not a KeyboardEvent, MouseEvent, or PointerEvent.`
       );
     }
-    if (x !== void 0 && !Number.isInteger(x)) {
+    if (x !== void 0 && !Number.isFinite(x)) {
       throw new TypeError(`A11yHelper.getFocusSource error: 'x' is not a number.`);
     }
-    if (y !== void 0 && !Number.isInteger(y)) {
+    if (y !== void 0 && !Number.isFinite(y)) {
       throw new TypeError(`A11yHelper.getFocusSource error: 'y' is not a number.`);
     }
     let targetEl;
@@ -3223,6 +5053,9 @@ class A11yHelper {
   /**
    * Tests if the given element is focusable.
    *
+   * Note: A special case for focus testing occurs when an element has `tabindex` of `-1` _and_ the
+   * `tjs-a11y-focusable` class.
+   *
    * @param {unknown} el - Element to test.
    *
    * @param {object} [options] - Optional parameters.
@@ -3246,7 +5079,7 @@ class A11yHelper {
     const contenteditableAttr = el.getAttribute("contenteditable");
     const contenteditableFocusable = typeof contenteditableAttr === "string" && (contenteditableAttr === "" || contenteditableAttr === "true");
     const tabindexAttr = globalThis.parseInt(el.getAttribute("tabindex"));
-    const tabindexFocusable = Number.isInteger(tabindexAttr) && tabindexAttr >= 0;
+    const tabindexFocusable = Number.isInteger(tabindexAttr) && (tabindexAttr >= 0 || tabindexAttr === -1 && el.classList.contains("tjs-a11y-focusable"));
     if (contenteditableFocusable || tabindexFocusable || CrossWindow.isFocusableHTMLElement(el)) {
       if (anchorHref && !tabindexFocusable && CrossWindow.isHTMLAnchorElement(el) && typeof el.getAttribute("href") !== "string") {
         return false;
@@ -6791,7 +8624,7 @@ function draggable(node, { position, enabled = true, button = 0, storeDragging =
   };
   function activateListeners() {
     node.addEventListener(...handlers.dragDown);
-    node.classList.add("draggable");
+    node.classList.add("tjs-draggable");
   }
   function removeListeners() {
     if (typeof storeDragging?.set === "function") {
@@ -6800,7 +8633,7 @@ function draggable(node, { position, enabled = true, button = 0, storeDragging =
     node.removeEventListener(...handlers.dragDown);
     node.removeEventListener(...handlers.dragMove);
     node.removeEventListener(...handlers.dragUp);
-    node.classList.remove("draggable");
+    node.classList.remove("tjs-draggable");
   }
   if (enabled) {
     activateListeners();
@@ -7172,7 +9005,7 @@ class AnimationManager {
   /**
    * Provides the `this` context for {@link AnimationManager.animate} to be scheduled on rAF.
    */
-  static #animateBound = (timeFrame) => this.animate(timeFrame);
+  static #animateBound = AnimationManager.animate.bind(AnimationManager);
   /**
    */
   static #pendingList = [];
@@ -7247,7 +9080,7 @@ class AnimationManager {
     }
     for (let cntr = AnimationManager.#activeList.length; --cntr >= 0; ) {
       const data = AnimationManager.#activeList[cntr];
-      if (data.cancelled || data.el !== void 0 && !data.el.isConnected) {
+      if (data.cancelled) {
         AnimationManager.#activeList.splice(cntr, 1);
         this.#cleanupData(data);
         continue;
@@ -7282,7 +9115,7 @@ class AnimationManager {
   static cancel(position, cancelFn = AnimationManager.cancelFn) {
     for (let cntr = AnimationManager.#activeList.length; --cntr >= 0; ) {
       const data = AnimationManager.#activeList[cntr];
-      if (data.position === position && cancelFn(data)) {
+      if (data.cancelable && data.position === position && cancelFn(data)) {
         AnimationManager.#activeList.splice(cntr, 1);
         data.cancelled = true;
         this.#cleanupData(data);
@@ -7290,7 +9123,7 @@ class AnimationManager {
     }
     for (let cntr = AnimationManager.#pendingList.length; --cntr >= 0; ) {
       const data = AnimationManager.#pendingList[cntr];
-      if (data.position === position && cancelFn(data)) {
+      if (data.cancelable && data.position === position && cancelFn(data)) {
         AnimationManager.#pendingList.splice(cntr, 1);
         data.cancelled = true;
         this.#cleanupData(data);
@@ -7447,8 +9280,6 @@ class TJSPositionData {
    * @param [opts.width] -
    *
    * @param [opts.zIndex] -
-   *
-   * @param [opts.rotation] - Alias for `rotateZ`.
    */
   constructor({ height = null, left = null, maxHeight = null, maxWidth = null, minHeight = null, minWidth = null, rotateX = null, rotateY = null, rotateZ = null, scale = null, translateX = null, translateY = null, translateZ = null, top = null, transformOrigin = null, width = null, zIndex = null } = {}) {
     this.height = height;
@@ -7974,6 +9805,8 @@ class TJSPositionStyleCache {
       resizeContentWidth: propertyStore(storeResizeObserved, "contentWidth"),
       resizeObserved: storeResizeObserved,
       resizeObservable: writable(false),
+      resizeObservableHeight: writable(false),
+      resizeObservableWidth: writable(false),
       resizeOffsetHeight: propertyStore(storeResizeObserved, "offsetHeight"),
       resizeOffsetWidth: propertyStore(storeResizeObserved, "offsetWidth")
     };
@@ -8064,12 +9897,15 @@ class TJSTransforms {
   #orderList = [];
   /**
    * Defines the keys of TJSPositionData that are transform keys.
+   *
+   * Note: `rotateZ` is the most likely transform applied in 2D context. Putting it first makes `hasTransform` slightly
+   * quicker.
    */
   static #transformKeys = Object.freeze([
-    "rotateX",
-    "rotateY",
     "rotateZ",
     "scale",
+    "rotateX",
+    "rotateY",
     "translateX",
     "translateY",
     "translateZ"
@@ -8645,8 +10481,8 @@ class TJSTransforms {
    * @returns Whether the given TJSPositionData has transforms.
    */
   hasTransform(data) {
-    for (const key of TJSTransforms.#transformKeys) {
-      if (Number.isFinite(data[key])) {
+    for (let cntr = 0; cntr < TJSTransforms.#transformKeys.length; cntr++) {
+      if (Number.isFinite(data[TJSTransforms.#transformKeys[cntr]])) {
         return true;
       }
     }
@@ -8788,6 +10624,8 @@ class AnimationScheduler {
    *
    * @param el -
    *
+   * @param cancelable -
+   *
    * @param delay -
    *
    * @param ease -
@@ -8802,7 +10640,7 @@ class AnimationScheduler {
    *
    * @returns An AnimationControl instance or null if none created.
    */
-  static #addAnimation(position, initial, destination, duration, el, delay, ease, interpolate = lerp, transformOrigin, transformOriginInitial, cleanup) {
+  static #addAnimation(position, initial, destination, duration, el, cancelable, delay, ease, interpolate = lerp, transformOrigin, transformOriginInitial, cleanup) {
     TJSPositionDataUtil.setNumericDefaults(initial);
     TJSPositionDataUtil.setNumericDefaults(destination);
     for (const key in initial) {
@@ -8818,6 +10656,7 @@ class AnimationScheduler {
     const animationData = {
       active: true,
       cleanup,
+      cancelable,
       cancelled: false,
       control: void 0,
       current: 0,
@@ -8866,7 +10705,7 @@ class AnimationScheduler {
     if (parent !== void 0 && typeof parent?.options?.positionable === "boolean" && !parent?.options?.positionable) {
       return null;
     }
-    let { delay = 0, duration = 1, ease = "cubicOut", strategy, transformOrigin } = options;
+    let { cancelable = true, delay = 0, duration = 1, ease = "cubicOut", strategy, transformOrigin } = options;
     if (strategy !== void 0) {
       if (this.#handleStrategy(position, strategy) === null) {
         return null;
@@ -8897,7 +10736,7 @@ class AnimationScheduler {
       }
     }
     ConvertStringData.process(initial, this.#data, el);
-    return this.#addAnimation(position, initial, destination, duration, el, delay, ease, lerp, transformOrigin, transformOriginInitial, cleanup);
+    return this.#addAnimation(position, initial, destination, duration, el, cancelable, delay, ease, lerp, transformOrigin, transformOriginInitial, cleanup);
   }
   /**
    * Provides a tween from given position data to the given position.
@@ -8925,7 +10764,7 @@ class AnimationScheduler {
     if (parent !== void 0 && typeof parent?.options?.positionable === "boolean" && !parent?.options?.positionable) {
       return null;
     }
-    let { delay = 0, duration = 1, ease = "cubicOut", strategy, transformOrigin } = options;
+    let { cancelable = true, delay = 0, duration = 1, ease = "cubicOut", strategy, transformOrigin } = options;
     if (strategy !== void 0) {
       if (this.#handleStrategy(position, strategy) === null) {
         return null;
@@ -8961,7 +10800,7 @@ class AnimationScheduler {
     }
     ConvertStringData.process(initial, this.#data, el);
     ConvertStringData.process(destination, this.#data, el);
-    return this.#addAnimation(position, initial, destination, duration, el, delay, ease, lerp, transformOrigin, transformOriginInitial, cleanup);
+    return this.#addAnimation(position, initial, destination, duration, el, cancelable, delay, ease, lerp, transformOrigin, transformOriginInitial, cleanup);
   }
   /**
    * Provides a tween to given position data from the current position.
@@ -8984,7 +10823,7 @@ class AnimationScheduler {
     if (parent !== void 0 && typeof parent?.options?.positionable === "boolean" && !parent?.options?.positionable) {
       return null;
     }
-    let { delay = 0, duration = 1, ease = "cubicOut", strategy, transformOrigin } = options;
+    let { cancelable = true, delay = 0, duration = 1, ease = "cubicOut", strategy, transformOrigin } = options;
     if (strategy !== void 0) {
       if (this.#handleStrategy(position, strategy) === null) {
         return null;
@@ -9015,7 +10854,7 @@ class AnimationScheduler {
       }
     }
     ConvertStringData.process(destination, this.#data, el);
-    return this.#addAnimation(position, initial, destination, duration, el, delay, ease, lerp, transformOrigin, transformOriginInitial, cleanup);
+    return this.#addAnimation(position, initial, destination, duration, el, cancelable, delay, ease, lerp, transformOrigin, transformOriginInitial, cleanup);
   }
   // Internal implementation ----------------------------------------------------------------------------------------
   /**
@@ -9176,6 +11015,7 @@ class AnimationAPIImpl {
     const newData = Object.assign({}, initial);
     const animationData = {
       active: true,
+      cancelable: true,
       cancelled: false,
       control: void 0,
       current: 0,
@@ -10129,13 +11969,15 @@ class PositionStateAPI {
    *
    * @param [options.animateTo=false] - Animate to restore data.
    *
+   * @param [options.cancelable=true] - When false, any animation can not be cancelled.
+   *
    * @param [options.duration=0.1] - Duration in seconds.
    *
    * @param [options.ease='linear'] - Easing function name or function.
    *
    * @returns Any saved position data.
    */
-  restore({ name, remove = false, properties, silent = false, async = false, animateTo = false, duration = 0.1, ease = "linear" }) {
+  restore({ name, remove = false, properties, silent = false, async = false, animateTo = false, cancelable = true, duration = 0.1, ease = "linear" }) {
     if (typeof name !== "string") {
       throw new TypeError(`TJSPosition - restore error: 'name' is not a string.`);
     }
@@ -10163,9 +12005,9 @@ class PositionStateAPI {
           this.#position.transformOrigin = data.transformOrigin;
         }
         if (async) {
-          return this.#position.animate.to(data, { duration, ease }).finished.then(() => dataSaved);
+          return this.#position.animate.to(data, { cancelable, duration, ease }).finished.then(() => dataSaved);
         } else {
-          this.#position.animate.to(data, { duration, ease });
+          this.#position.animate.to(data, { cancelable, duration, ease });
         }
       } else {
         this.#position.set(data);
@@ -10832,9 +12674,6 @@ class UpdateElementManager {
       entry[0] = void 0;
       entry[1] = void 0;
       updateData.queued = false;
-      if (!el.isConnected) {
-        continue;
-      }
       if (updateData.options.ortho) {
         UpdateElementManager.#updateElementOrtho(el, updateData);
       } else {
@@ -10856,9 +12695,6 @@ class UpdateElementManager {
    * @param updateData - An UpdateElementData instance.
    */
   static immediate(el, updateData) {
-    if (!el.isConnected) {
-      return;
-    }
     if (updateData.options.ortho) {
       UpdateElementManager.#updateElementOrtho(el, updateData);
     } else {
@@ -11032,6 +12868,16 @@ class TJSPosition {
    */
   #resizeObservable = false;
   /**
+   * Tracks the current state if this position instance is a candidate for resize observation by the `resizeObserver`
+   * action. This is `true` when `height` is `auto` or `inherit`.
+   */
+  #resizeObservableHeight = false;
+  /**
+   * Tracks the current state if this position instance is a candidate for resize observation by the `resizeObserver`
+   * action. This is `true` when `width` is `auto` or `inherit`.
+   */
+  #resizeObservableWidth = false;
+  /**
    */
   #stores;
   /**
@@ -11124,7 +12970,7 @@ class TJSPosition {
   }
   /**
    * Returns a duplicate of a given position instance copying any options and validators. The position parent is not
-   * copied and a new one must be set manually via the {@link TJSPosition.parent} setter.
+   * copied, and a new one must be set manually via the {@link TJSPosition.parent} setter.
    *
    * @param position - A position instance.
    *
@@ -11143,10 +12989,10 @@ class TJSPosition {
     return newPosition;
   }
   /**
-   * @param [parentOrOptions] - A  potential parent element or object w/ `elementTarget` accessor. You may also forego
-   *        setting the parent and pass in the options object.
+   * @param [parentOrOptions] - A potential parent element or object w/ `elementTarget` accessor. You may also forego
+   *        setting the parent and pass in the configuration options object.
    *
-   * @param [options] - The options object.
+   * @param [options] - The configuration options object.
    */
   constructor(parentOrOptions, options) {
     if (isPlainObject(parentOrOptions)) {
@@ -11189,6 +13035,8 @@ class TJSPosition {
       resizeContentHeight: { subscribe: this.#styleCache.stores.resizeContentHeight.subscribe },
       resizeContentWidth: { subscribe: this.#styleCache.stores.resizeContentWidth.subscribe },
       resizeObservable: { subscribe: this.#styleCache.stores.resizeObservable.subscribe },
+      resizeObservableHeight: { subscribe: this.#styleCache.stores.resizeObservableHeight.subscribe },
+      resizeObservableWidth: { subscribe: this.#styleCache.stores.resizeObservableWidth.subscribe },
       resizeOffsetHeight: { subscribe: this.#styleCache.stores.resizeOffsetHeight.subscribe },
       resizeOffsetWidth: { subscribe: this.#styleCache.stores.resizeOffsetWidth.subscribe },
       transform: { subscribe: updateData.storeTransform.subscribe },
@@ -11275,6 +13123,24 @@ class TJSPosition {
     return this.#parent;
   }
   /**
+   * Returns the resize observable state which is `true` whenever `width` or `height` is `auto` or `inherit`.
+   */
+  get resizeObservable() {
+    return this.#resizeObservable;
+  }
+  /**
+   * Returns the resize observable state which is `true` whenever `height` is `auto` or `inherit`.
+   */
+  get resizeObservableHeight() {
+    return this.#resizeObservableHeight;
+  }
+  /**
+   * Returns the resize observable state which is `true` whenever `width` is `auto` or `inherit`.
+   */
+  get resizeObservableWidth() {
+    return this.#resizeObservableWidth;
+  }
+  /**
    * Returns the state API.
    *
    * @returns TJSPosition state API.
@@ -11309,13 +13175,18 @@ class TJSPosition {
   /**
    * Sets the enabled state.
    *
-   * @param enabled - New enabled state.
+   * @param enabled - Newly enabled state.
    */
   set enabled(enabled) {
     if (typeof enabled !== "boolean") {
       throw new TypeError(`'enabled' is not a boolean.`);
     }
-    this.#enabled = enabled;
+    if (this.#enabled !== enabled) {
+      this.#enabled = enabled;
+      if (enabled) {
+        this.set(this.#data);
+      }
+    }
   }
   /**
    * Sets the associated {@link TJSPosition.PositionParent} instance. Resets the style cache and default data.
@@ -11553,16 +13424,16 @@ class TJSPosition {
     this.#stores.zIndex.set(zIndex);
   }
   /**
-   * Assigns current position data to given object `data` object. By default, `null` position data is not assigned.
-   * Other options allow configuration of the data assigned including setting default numeric values for any properties
-   * that are null.
+   * Assigns current position data to the given object `data` object. By default, `null` position data is not assigned.
+   * Other options allow configuration of the data assigned, including setting default numeric values for any
+   * properties that are null.
    *
    * @param [data] - Target to assign current position data.
    *
    * @param [options] - Defines options for specific keys and substituting null for numeric default values. By
    *        default, nullable keys are included.
    *
-   * @returns Passed in object with current position data.
+   * @returns Any passed in data object with current position data.
    */
   get(data = {}, options = {}) {
     const keys = options?.keys;
@@ -11615,7 +13486,7 @@ class TJSPosition {
    * The initial set call with a target element will always set width / height as this is necessary for correct
    * calculations.
    *
-   * When a target element is present updated styles are applied after validation. To modify the behavior of set
+   * When a target element is present, updated styles are applied after validation. To modify the behavior of set,
    * implement one or more validator functions and add them via the validator API available from
    * {@link TJSPosition.validators}.
    *
@@ -11650,7 +13521,7 @@ class TJSPosition {
     const data = this.#data;
     const transforms = this.#transforms;
     const targetEl = A11yHelper.isFocusTarget(parent) ? parent : parent?.elementTarget;
-    const el = A11yHelper.isFocusTarget(targetEl) && targetEl.isConnected ? targetEl : void 0;
+    const el = A11yHelper.isFocusTarget(targetEl) ? targetEl : void 0;
     const changeSet = this.#positionChangeSet;
     const styleCache = this.#styleCache;
     if (el) {
@@ -11785,6 +13656,14 @@ class TJSPosition {
       this.#resizeObservable = resizeObservable;
       this.#styleCache.stores.resizeObservable.set(resizeObservable);
     }
+    if (this.#resizeObservableHeight !== heightIsObservable) {
+      this.#resizeObservableHeight = heightIsObservable;
+      this.#styleCache.stores.resizeObservableHeight.set(heightIsObservable);
+    }
+    if (this.#resizeObservableWidth !== widthIsObservable) {
+      this.#resizeObservableWidth = widthIsObservable;
+      this.#styleCache.stores.resizeObservableWidth.set(widthIsObservable);
+    }
     if (el) {
       const defaultData = this.#state.getDefault();
       if (!isObject(defaultData)) {
@@ -11888,7 +13767,7 @@ class TJSPosition {
     translateY,
     translateZ,
     zIndex,
-    // Aliased parameters
+    // Aliased parameters.
     rotation,
     ...rest
   }, parent, el, styleCache) {
@@ -12003,7 +13882,179 @@ class TJSPosition {
   }
 }
 _a = TJSPosition;
-function localize(stringId, data) {
+class CQPositionValidate {
+  /**
+   * Associated TJSPosition.
+   */
+  #position;
+  /**
+   * Stores the subscribers.
+   */
+  #subscribers = [];
+  /**
+   * Unsubscriber when subscribed to backing SvelteSet.
+   */
+  #unsubscribe = [];
+  #resizeObservableHeight = false;
+  #resizeObservableWidth = false;
+  #updateStateBound;
+  /**
+   * @param [position] - Associated TJSPosition instance.
+   */
+  constructor(position) {
+    this.#updateStateBound = this.#updateState.bind(this);
+    if (position) {
+      this.setPosition(position);
+    }
+  }
+  /**
+   * Manually destroy and cleanup associations to any subscribers and TJSPosition instance.
+   */
+  destroy() {
+    this.#cleanup();
+  }
+  /**
+   * Returns the associated TJSPosition instance.
+   */
+  getPosition() {
+    return this.#deref();
+  }
+  /**
+   * Set a new TJSPosition instance to monitor.
+   *
+   * @param position - New TJSPosition instance to associate.
+   */
+  setPosition(position) {
+    const current = this.#deref();
+    if (position === current) {
+      return;
+    }
+    this.#cleanup();
+    this.#position = void 0;
+    if (position instanceof TJSPosition) {
+      this.#position = new WeakRef(position);
+      if (this.#subscribers.length) {
+        this.#unsubscribe.push(position.stores.resizeObservableHeight.subscribe(this.#updateStateBound));
+        this.#unsubscribe.push(position.stores.resizeObservableWidth.subscribe(this.#updateStateBound));
+      }
+    }
+  }
+  /**
+   * Returns the serialized state tracking supported container types.
+   */
+  toJSON() {
+    return {
+      inlineSize: !this.#resizeObservableWidth,
+      normal: true,
+      size: !this.#resizeObservableWidth && !this.#resizeObservableHeight
+    };
+  }
+  /**
+   * @param cqType - The container query type to validate against current associated {@link TJSPosition} state.
+   *
+   * @returns Whether the browser and associated TJSPosition current state supports the requested container query type.
+   */
+  validate(cqType) {
+    if (!BrowserSupports.containerQueries) {
+      return false;
+    }
+    const hasPosition = this.#deref() !== void 0;
+    switch (cqType) {
+      case "inline-size":
+        return hasPosition && !this.#resizeObservableWidth;
+      case "normal":
+        return true;
+      case "size":
+        return hasPosition && !this.#resizeObservableWidth && !this.#resizeObservableHeight;
+    }
+    return false;
+  }
+  // Store subscriber implementation --------------------------------------------------------------------------------
+  /**
+   * @param handler - Callback function that is invoked on update / changes.
+   *
+   * @returns Unsubscribe function.
+   */
+  subscribe(handler) {
+    const currentIdx = this.#subscribers.findIndex((sub) => sub === handler);
+    if (currentIdx === -1) {
+      this.#subscribers.push(handler);
+      if (this.#subscribers.length === 1) {
+        const position = this.#deref();
+        if (position) {
+          this.#unsubscribe.push(position.stores.resizeObservableHeight.subscribe(this.#updateStateBound));
+          this.#unsubscribe.push(position.stores.resizeObservableWidth.subscribe(this.#updateStateBound));
+        }
+      }
+      handler(this);
+    }
+    return () => {
+      const index = this.#subscribers.findIndex((sub) => sub === handler);
+      if (index >= 0) {
+        this.#subscribers.splice(index, 1);
+        if (this.#subscribers.length === 0) {
+          this.#cleanup();
+        }
+      }
+    };
+  }
+  // Internal Implementation ----------------------------------------------------------------------------------------
+  #cleanup(notify = false) {
+    for (const unsubscribe of this.#unsubscribe) {
+      unsubscribe();
+    }
+    this.#unsubscribe.length = 0;
+    this.#resizeObservableHeight = false;
+    this.#resizeObservableWidth = false;
+    if (notify) {
+      this.#updateSubscribers();
+    }
+  }
+  #deref() {
+    const position = this.#position?.deref();
+    if (!position) {
+      this.#cleanup(true);
+    }
+    return position;
+  }
+  #updateState() {
+    const position = this.#deref();
+    if (position) {
+      this.#resizeObservableHeight = position.resizeObservableHeight;
+      this.#resizeObservableWidth = position.resizeObservableWidth;
+    }
+    this.#updateSubscribers();
+  }
+  /**
+   * Updates subscribers.
+   */
+  #updateSubscribers() {
+    for (let cntr = 0; cntr < this.#subscribers.length; cntr++) {
+      this.#subscribers[cntr](this);
+    }
+  }
+}
+function applyStyles(node, properties) {
+  function setProperties() {
+    if (!isObject(properties)) {
+      return;
+    }
+    for (const prop of Object.keys(properties)) {
+      node.style.setProperty(`${prop}`, properties[prop]);
+    }
+  }
+  setProperties();
+  return {
+    /**
+     * @param {{ [key: string]: string | null }}  newProperties - Key / value object of properties to set.
+     */
+    update: (newProperties) => {
+      properties = newProperties;
+      setProperties();
+    }
+  };
+}
+function localize$1(stringId, data) {
   const result = !isObject(data) ? globalThis.game.i18n.localize(stringId) : globalThis.game.i18n.format(stringId, data);
   return result !== void 0 ? result : "";
 }
@@ -12099,6 +14150,8 @@ class ApplicationState {
    *
    * @param {boolean}           [options.animateTo=false] - Animate to restore data.
    *
+   * @param {boolean}           [options.cancelable=true] - When true, animation is cancelable.
+   *
    * @param {number}            [options.duration=0.1] - Duration in seconds.
    *
    * @param {import('@typhonjs-fvtt/runtime/svelte/easing').EasingReference} [options.ease='linear'] - Easing function or easing
@@ -12106,7 +14159,7 @@ class ApplicationState {
    *
    * @returns {import('../../types').SvelteApp.API.State.Data | undefined} Any saved application state.
    */
-  restore({ name, remove = false, animateTo = false, duration = 0.1, ease = "linear" }) {
+  restore({ name, remove = false, animateTo = false, cancelable = true, duration = 0.1, ease = "linear" }) {
     if (typeof name !== "string") {
       throw new TypeError(`[SvelteApp.state.restore] error: 'name' is not a string.`);
     }
@@ -12120,6 +14173,7 @@ class ApplicationState {
         this.#setImpl(dataSaved, {
           animateTo,
           async: true,
+          cancelable,
           duration,
           ease
         }).then(() => {
@@ -12163,6 +14217,8 @@ class ApplicationState {
    *
    * @param {boolean}        [options.animateTo=false] - Animate to restore data.
    *
+   * @param {boolean}        [options.cancelable=true] - When true, animation is cancelable.
+   *
    * @param {number}         [options.duration=0.1] - Duration in seconds.
    *
    * @param {import('@typhonjs-fvtt/runtime/svelte/easing').EasingReference} [options.ease='linear'] - Easing function or easing
@@ -12192,6 +14248,8 @@ class ApplicationState {
    *
    * @param {boolean}           [opts.animateTo=false] - Animate to restore data.
    *
+   * @param {boolean}           [opts.cancelable=true] - When true, animation is cancelable.
+   *
    * @param {number}            [opts.duration=0.1] - Duration in seconds.
    *
    * @param {import('@typhonjs-fvtt/runtime/svelte/easing').EasingReference} [opts.ease='linear'] - Easing function or easing
@@ -12199,7 +14257,7 @@ class ApplicationState {
    *
    * @returns {undefined | Promise<void>} When asynchronous the animation Promise.
    */
-  #setImpl(data, { async = false, animateTo = false, duration = 0.1, ease = "linear" } = {}) {
+  #setImpl(data, { async = false, animateTo = false, cancelable = true, duration = 0.1, ease = "linear" } = {}) {
     if (!isObject(data)) {
       throw new TypeError(`[SvelteApp.state.set] error: 'data' is not an object.`);
     }
@@ -12224,6 +14282,7 @@ class ApplicationState {
         }
       }
       const promise2 = application.position.animate.to(data.position, {
+        cancelable,
         duration,
         ease,
         strategy: "cancelAll"
@@ -12248,10 +14307,10 @@ class ApplicationState {
         return promise2;
       }
     } else {
+      if (isObject(data?.options)) {
+        application?.reactive.mergeOptions(data.options);
+      }
       if (rendered) {
-        if (isObject(data?.options)) {
-          application?.reactive.mergeOptions(data.options);
-        }
         if (isObject(data?.ui)) {
           const minimized = typeof data.ui?.minimized === "boolean" ? data.ui.minimized : false;
           if (application?.reactive?.minimized && !minimized) {
@@ -12321,565 +14380,29 @@ class GetSvelteData {
     return this.#svelteData[0];
   }
 }
-class SvelteReactive {
-  /**
-   * @type {import('../SvelteApp').SvelteApp}
-   */
-  #application;
-  /**
-   * @type {boolean}
-   */
-  #initialized = false;
-  /** @type {import('@typhonjs-fvtt/runtime/svelte/store/web-storage').WebStorage} */
-  #sessionStorage;
-  /**
-   * The Application option store which is injected into mounted Svelte component context under the `external` key.
-   *
-   * @type {import('./types').StoreAppOptions}
-   */
-  #storeAppOptions;
-  /**
-   * Stores the update function for `#storeAppOptions`.
-   *
-   * @type {(this: void, updater: import('svelte/store').Updater<object>) => void}
-   */
-  #storeAppOptionsUpdate;
-  /**
-   * Stores the UI state data to make it accessible via getters.
-   *
-   * @type {object}
-   */
-  #dataUIState;
-  /**
-   * The UI option store which is injected into mounted Svelte component context under the `external` key.
-   *
-   * @type {import('./types').StoreUIOptions}
-   */
-  #storeUIState;
-  /**
-   * Stores the update function for `#storeUIState`.
-   *
-   * @type {(this: void, updater: import('svelte/store').Updater<object>) => void}
-   */
-  #storeUIStateUpdate;
-  /**
-   * Stores the unsubscribe functions from local store subscriptions.
-   *
-   * @type {import('svelte/store').Unsubscriber[]}
-   */
-  #storeUnsubscribe = [];
-  /**
-   * @param {import('../SvelteApp').SvelteApp} application - The host Foundry application.
-   */
-  constructor(application) {
-    this.#application = application;
-    const optionsSessionStorage = application?.options?.sessionStorage;
-    if (optionsSessionStorage !== void 0 && !(optionsSessionStorage instanceof TJSWebStorage)) {
-      throw new TypeError(`'options.sessionStorage' is not an instance of TJSWebStorage.`);
-    }
-    this.#sessionStorage = optionsSessionStorage !== void 0 ? optionsSessionStorage : new TJSSessionStorage();
+function handleAlwaysOnTop(application, enabled, initialPopOut) {
+  if (typeof enabled !== "boolean") {
+    throw new TypeError(`[SvelteApp handleAlwaysOnTop error]: 'enabled' is not a boolean.`);
   }
-  /**
-   * Initializes reactive support. Package private for internal use.
-   *
-   * @returns {import('./types-local').SvelteReactiveStores | undefined} Internal methods to interact with Svelte
-   * stores.
-   *
-   * @package
-   * @internal
-   */
-  initialize() {
-    if (this.#initialized) {
-      return;
-    }
-    this.#initialized = true;
-    this.#storesInitialize();
-    return {
-      appOptionsUpdate: this.#storeAppOptionsUpdate,
-      uiStateUpdate: this.#storeUIStateUpdate,
-      subscribe: this.#storesSubscribe.bind(this),
-      unsubscribe: this.#storesUnsubscribe.bind(this)
-    };
+  if (typeof initialPopOut !== "boolean") {
+    throw new TypeError(`[SvelteApp handleAlwaysOnTop error]: 'initialPopOut' is not a boolean.`);
   }
-  // Store getters -----------------------------------------------------------------------------------------------------
-  /**
-   * @returns {import('@typhonjs-fvtt/runtime/svelte/store/web-storage').WebStorage} Returns WebStorage (session) instance.
-   */
-  get sessionStorage() {
-    return this.#sessionStorage;
+  const version2 = globalThis?.TRL_SVELTE_APP_DATA?.VERSION;
+  if (typeof version2 !== "number") {
+    console.error("[SvelteApp handleAlwaysOnTop error]: global SvelteApp data unavailable.");
+    return;
   }
-  /**
-   * Returns the store for app options.
-   *
-   * @returns {import('../../types').SvelteApp.API.Reactive.AppOptions} App options store.
-   */
-  get storeAppOptions() {
-    return this.#storeAppOptions;
-  }
-  /**
-   * Returns the store for UI options.
-   *
-   * @returns {import('../../types').SvelteApp.API.Reactive.UIState} UI options store.
-   */
-  get storeUIState() {
-    return this.#storeUIState;
-  }
-  // Only reactive getters ---------------------------------------------------------------------------------------------
-  /**
-   * Returns the current active Window / WindowProxy UI state.
-   *
-   * @returns {Window} Active window UI state.
-   */
-  get activeWindow() {
-    return this.#dataUIState.activeWindow ?? globalThis;
-  }
-  /**
-   * Returns the current dragging UI state.
-   *
-   * @returns {boolean} Dragging UI state.
-   */
-  get dragging() {
-    return this.#dataUIState.dragging;
-  }
-  /**
-   * Returns the current minimized UI state.
-   *
-   * @returns {boolean} Minimized UI state.
-   */
-  get minimized() {
-    return this.#dataUIState.minimized;
-  }
-  /**
-   * Returns the current resizing UI state.
-   *
-   * @returns {boolean} Resizing UI state.
-   */
-  get resizing() {
-    return this.#dataUIState.resizing;
-  }
-  /**
-   * Sets the current active Window / WindowProxy UI state.
-   *
-   * Note: This is protected usage and used internally.
-   *
-   * @param {Window} activeWindow - Active Window / WindowProxy UI state.
-   *
-   * @hidden
-   */
-  set activeWindow(activeWindow) {
-    if (activeWindow === void 0 || activeWindow === null || Object.prototype.toString.call(activeWindow) === "[object Window]") {
-      this.#storeUIStateUpdate((options) => deepMerge(options, { activeWindow: activeWindow ?? globalThis }));
-    }
-  }
-  // Reactive getter / setters -----------------------------------------------------------------------------------------
-  /**
-   * Returns the draggable app option.
-   *
-   * @returns {boolean} Draggable app option.
-   */
-  get draggable() {
-    return this.#application?.options?.draggable;
-  }
-  /**
-   * Returns the focusAuto app option.
-   *
-   * @returns {boolean} When true auto-management of app focus is enabled.
-   */
-  get focusAuto() {
-    return this.#application?.options?.focusAuto;
-  }
-  /**
-   * Returns the focusKeep app option.
-   *
-   * @returns {boolean} When `focusAuto` and `focusKeep` is true; keeps internal focus.
-   */
-  get focusKeep() {
-    return this.#application?.options?.focusKeep;
-  }
-  /**
-   * Returns the focusTrap app option.
-   *
-   * @returns {boolean} When true focus trapping / wrapping is enabled keeping focus inside app.
-   */
-  get focusTrap() {
-    return this.#application?.options?.focusTrap;
-  }
-  /**
-   * Returns the headerButtonNoClose app option.
-   *
-   * @returns {boolean} Remove the close the button in header app option.
-   */
-  get headerButtonNoClose() {
-    return this.#application?.options?.headerButtonNoClose;
-  }
-  /**
-   * Returns the headerButtonNoLabel app option.
-   *
-   * @returns {boolean} Remove the labels from buttons in header app option.
-   */
-  get headerButtonNoLabel() {
-    return this.#application?.options?.headerButtonNoLabel;
-  }
-  /**
-   * Returns the headerIcon app option.
-   *
-   * @returns {string|void} URL for header app icon.
-   */
-  get headerIcon() {
-    return this.#application?.options?.headerIcon;
-  }
-  /**
-   * Returns the headerNoTitleMinimized app option.
-   *
-   * @returns {boolean} When true removes the header title when minimized.
-   */
-  get headerNoTitleMinimized() {
-    return this.#application?.options?.headerNoTitleMinimized;
-  }
-  /**
-   * Returns the minimizable app option.
-   *
-   * @returns {boolean} Minimizable app option.
-   */
-  get minimizable() {
-    return this.#application?.options?.minimizable;
-  }
-  /**
-   * Returns the Foundry popOut state; {@link Application.popOut}
-   *
-   * @returns {boolean} Positionable app option.
-   */
-  get popOut() {
-    return this.#application.popOut;
-  }
-  /**
-   * Returns the positionable app option; {@link SvelteApp.Options.positionable}
-   *
-   * @returns {boolean} Positionable app option.
-   */
-  get positionable() {
-    return this.#application?.options?.positionable;
-  }
-  /**
-   * Returns the resizable option.
-   *
-   * @returns {boolean} Resizable app option.
-   */
-  get resizable() {
-    return this.#application?.options?.resizable;
-  }
-  /**
-   * Returns the title accessor from the parent Application class; {@link Application.title}
-   *
-   * @privateRemarks
-   * TODO: Application v2; note that super.title localizes `this.options.title`; IMHO it shouldn't.    *
-   *
-   * @returns {string} Title.
-   */
-  get title() {
-    return this.#application.title;
-  }
-  /**
-   * Sets `this.options.draggable` which is reactive for application shells.
-   *
-   * @param {boolean}  draggable - Sets the draggable option.
-   */
-  set draggable(draggable2) {
-    if (typeof draggable2 === "boolean") {
-      this.setOptions("draggable", draggable2);
-    }
-  }
-  /**
-   * Sets `this.options.focusAuto` which is reactive for application shells.
-   *
-   * @param {boolean}  focusAuto - Sets the focusAuto option.
-   */
-  set focusAuto(focusAuto) {
-    if (typeof focusAuto === "boolean") {
-      this.setOptions("focusAuto", focusAuto);
-    }
-  }
-  /**
-   * Sets `this.options.focusKeep` which is reactive for application shells.
-   *
-   * @param {boolean}  focusKeep - Sets the focusKeep option.
-   */
-  set focusKeep(focusKeep) {
-    if (typeof focusKeep === "boolean") {
-      this.setOptions("focusKeep", focusKeep);
-    }
-  }
-  /**
-   * Sets `this.options.focusTrap` which is reactive for application shells.
-   *
-   * @param {boolean}  focusTrap - Sets the focusTrap option.
-   */
-  set focusTrap(focusTrap) {
-    if (typeof focusTrap === "boolean") {
-      this.setOptions("focusTrap", focusTrap);
-    }
-  }
-  /**
-   * Sets `this.options.headerButtonNoClose` which is reactive for application shells.
-   *
-   * @param {boolean}  headerButtonNoClose - Sets the headerButtonNoClose option.
-   */
-  set headerButtonNoClose(headerButtonNoClose) {
-    if (typeof headerButtonNoClose === "boolean") {
-      this.setOptions("headerButtonNoClose", headerButtonNoClose);
-    }
-  }
-  /**
-   * Sets `this.options.headerButtonNoLabel` which is reactive for application shells.
-   *
-   * @param {boolean}  headerButtonNoLabel - Sets the headerButtonNoLabel option.
-   */
-  set headerButtonNoLabel(headerButtonNoLabel) {
-    if (typeof headerButtonNoLabel === "boolean") {
-      this.setOptions("headerButtonNoLabel", headerButtonNoLabel);
-    }
-  }
-  /**
-   * Sets `this.options.headerIcon` which is reactive for application shells.
-   *
-   * @param {string | undefined}  headerIcon - Sets the headerButtonNoLabel option.
-   */
-  set headerIcon(headerIcon) {
-    if (headerIcon === void 0 || typeof headerIcon === "string") {
-      this.setOptions("headerIcon", headerIcon);
-    }
-  }
-  /**
-   * Sets `this.options.headerNoTitleMinimized` which is reactive for application shells.
-   *
-   * @param {boolean}  headerNoTitleMinimized - Sets the headerNoTitleMinimized option.
-   */
-  set headerNoTitleMinimized(headerNoTitleMinimized) {
-    if (typeof headerNoTitleMinimized === "boolean") {
-      this.setOptions("headerNoTitleMinimized", headerNoTitleMinimized);
-    }
-  }
-  /**
-   * Sets `this.options.minimizable` which is reactive for application shells that are also pop out.
-   *
-   * @param {boolean}  minimizable - Sets the minimizable option.
-   */
-  set minimizable(minimizable) {
-    if (typeof minimizable === "boolean") {
-      this.setOptions("minimizable", minimizable);
-    }
-  }
-  /**
-   * Sets `this.options.popOut` which is reactive for application shells. This will add / remove this application
-   * from `ui.windows`.
-   *
-   * @param {boolean}  popOut - Sets the popOut option.
-   */
-  set popOut(popOut) {
-    if (typeof popOut === "boolean") {
-      this.setOptions("popOut", popOut);
-    }
-  }
-  /**
-   * Sets `this.options.positionable` enabling / disabling {@link SvelteApp.position}.
-   *
-   * @param {boolean}  positionable - Sets the positionable option.
-   */
-  set positionable(positionable) {
-    if (typeof positionable === "boolean") {
-      this.setOptions("positionable", positionable);
-    }
-  }
-  /**
-   * Sets `this.options.resizable` which is reactive for application shells.
-   *
-   * @param {boolean}  resizable - Sets the resizable option.
-   */
-  set resizable(resizable) {
-    if (typeof resizable === "boolean") {
-      this.setOptions("resizable", resizable);
-    }
-  }
-  /**
-   * Sets `this.options.title` which is reactive for application shells.
-   *
-   * Note: Will set empty string if title is undefined or null.
-   *
-   * @param {string | undefined | null}   title - Application title; will be localized, so a translation key is fine.
-   */
-  set title(title) {
-    if (typeof title === "string") {
-      this.setOptions("title", title);
-    } else if (title === void 0 || title === null) {
-      this.setOptions("title", "");
-    }
-  }
-  // Reactive Options API -------------------------------------------------------------------------------------------
-  /**
-   * Provides a way to safely get this applications options given an accessor string which describes the
-   * entries to walk. To access deeper entries into the object format the accessor string with `.` between entries
-   * to walk.
-   *
-   * // TODO DOCUMENT the accessor in more detail.
-   *
-   * @param {string}   accessor - The path / key to set. You can set multiple levels.
-   *
-   * @param {*}        [defaultValue] - A default value returned if the accessor is not found.
-   *
-   * @returns {*} Value at the accessor.
-   */
-  getOptions(accessor, defaultValue) {
-    return safeAccess(this.#application.options, accessor, defaultValue);
-  }
-  /**
-   * Provides a way to merge `options` into this applications options and update the appOptions store.
-   *
-   * @param {object}   options - The options object to merge with `this.options`.
-   */
-  mergeOptions(options) {
-    this.#storeAppOptionsUpdate((instanceOptions) => deepMerge(instanceOptions, options));
-  }
-  /**
-   * Provides a way to safely set this applications options given an accessor string which describes the
-   * entries to walk. To access deeper entries into the object format the accessor string with `.` between entries
-   * to walk.
-   *
-   * Additionally, if an application shell Svelte component is mounted and exports the `appOptions` property then
-   * the application options is set to `appOptions` potentially updating the application shell / Svelte component.
-   *
-   * @param {string}   accessor - The path / key to set. You can set multiple levels.
-   *
-   * @param {any}      value - Value to set.
-   */
-  setOptions(accessor, value) {
-    const success = safeSet(this.#application.options, accessor, value, { createMissing: true });
-    if (success) {
-      this.#storeAppOptionsUpdate(() => this.#application.options);
-    }
-  }
-  /**
-   * Serializes the main {@link SvelteApp.Options} for common application state.
-   *
-   * @returns {import('../../types').SvelteApp.API.Reactive.Data} Common application state.
-   */
-  toJSON() {
-    return {
-      draggable: this.#application?.options?.draggable ?? true,
-      focusAuto: this.#application?.options?.focusAuto ?? true,
-      focusKeep: this.#application?.options?.focusKeep ?? false,
-      focusTrap: this.#application?.options?.focusTrap ?? true,
-      headerButtonNoClose: this.#application?.options?.headerButtonNoClose ?? false,
-      headerButtonNoLabel: this.#application?.options?.headerButtonNoLabel ?? false,
-      headerNoTitleMinimized: this.#application?.options?.headerNoTitleMinimized ?? false,
-      minimizable: this.#application?.options?.minimizable ?? true,
-      positionable: this.#application?.options?.positionable ?? true,
-      resizable: this.#application?.options?.resizable ?? true
-    };
-  }
-  /**
-   * Updates the UI Options store with the current header buttons. You may dynamically add / remove header buttons
-   * if using an application shell Svelte component. In either overriding `_getHeaderButtons` or responding to the
-   * Hooks fired return a new button array and the uiOptions store is updated and the application shell will render
-   * the new buttons.
-   *
-   * Optionally you can set in the SvelteApp app options {@link SvelteApp.Options.headerButtonNoClose}
-   * to remove the close button from the header buttons.
-   *
-   * @param {object} [opts] - Optional parameters (for internal use)
-   *
-   * @param {boolean} [opts.headerButtonNoClose] - The value for `headerButtonNoClose`.
-   */
-  updateHeaderButtons({ headerButtonNoClose = this.#application.options.headerButtonNoClose } = {}) {
-    let buttons = this.#application._getHeaderButtons();
-    if (typeof headerButtonNoClose === "boolean" && headerButtonNoClose) {
-      buttons = buttons.filter((button) => button.class !== "close");
-    }
-    const closeButton = buttons.find((button) => button.class === "close");
-    if (closeButton) {
-      closeButton.label = "APPLICATION.TOOLS.Close";
-    }
-    this.#storeUIStateUpdate((options) => {
-      options.headerButtons = buttons;
-      return options;
+  if (enabled) {
+    globalThis.requestAnimationFrame(() => {
+      application.reactive.popOut = false;
+      globalThis.requestAnimationFrame(() => application.bringToTop({ force: true }));
     });
-  }
-  // Internal implementation ----------------------------------------------------------------------------------------
-  /**
-   * Initializes the Svelte stores and derived stores for the application options and UI state.
-   *
-   * While writable stores are created the update method is stored in private variables locally and derived Readable
-   * stores are provided for essential options which are commonly used.
-   *
-   * These stores are injected into all Svelte components mounted under the `external` context: `storeAppOptions` and
-   * `storeUIState`.
-   */
-  #storesInitialize() {
-    const writableAppOptions = writable(this.#application.options);
-    this.#storeAppOptionsUpdate = writableAppOptions.update;
-    const storeAppOptions = {
-      subscribe: writableAppOptions.subscribe,
-      draggable: propertyStore(writableAppOptions, "draggable"),
-      focusAuto: propertyStore(writableAppOptions, "focusAuto"),
-      focusKeep: propertyStore(writableAppOptions, "focusKeep"),
-      focusTrap: propertyStore(writableAppOptions, "focusTrap"),
-      headerButtonNoClose: propertyStore(writableAppOptions, "headerButtonNoClose"),
-      headerButtonNoLabel: propertyStore(writableAppOptions, "headerButtonNoLabel"),
-      headerIcon: propertyStore(writableAppOptions, "headerIcon"),
-      headerNoTitleMinimized: propertyStore(writableAppOptions, "headerNoTitleMinimized"),
-      minimizable: propertyStore(writableAppOptions, "minimizable"),
-      popOut: propertyStore(writableAppOptions, "popOut"),
-      positionable: propertyStore(writableAppOptions, "positionable"),
-      resizable: propertyStore(writableAppOptions, "resizable"),
-      title: propertyStore(writableAppOptions, "title")
-    };
-    Object.freeze(storeAppOptions);
-    this.#storeAppOptions = storeAppOptions;
-    this.#dataUIState = {
-      activeWindow: globalThis,
-      dragging: false,
-      headerButtons: [],
-      minimized: this.#application._minimized,
-      resizing: false
-    };
-    const writableUIOptions = writable(this.#dataUIState);
-    this.#storeUIStateUpdate = writableUIOptions.update;
-    const storeUIState = {
-      subscribe: writableUIOptions.subscribe,
-      // activeWindow: propertyStore(writableUIOptions, 'activeWindow'),
-      activeWindow: derived(writableUIOptions, ($options, set) => set($options.activeWindow)),
-      dragging: propertyStore(writableUIOptions, "dragging"),
-      headerButtons: derived(writableUIOptions, ($options, set) => set($options.headerButtons)),
-      minimized: derived(writableUIOptions, ($options, set) => set($options.minimized)),
-      resizing: propertyStore(writableUIOptions, "resizing")
-    };
-    Object.freeze(storeUIState);
-    this.#storeUIState = storeUIState;
-  }
-  /**
-   * Registers local store subscriptions for app options. `popOut` controls registering this app with `ui.windows`.
-   *
-   * @see SvelteApp._injectHTML
-   */
-  #storesSubscribe() {
-    this.#storeUnsubscribe.push(subscribeIgnoreFirst(this.#storeAppOptions.headerButtonNoClose, (value) => {
-      this.updateHeaderButtons({ headerButtonNoClose: value });
-    }));
-    this.#storeUnsubscribe.push(subscribeIgnoreFirst(this.#storeAppOptions.popOut, (value) => {
-      if (value && this.#application.rendered) {
-        globalThis.ui.windows[this.#application.appId] = this.#application;
-      } else {
-        delete globalThis.ui.windows[this.#application.appId];
-      }
-    }));
-  }
-  /**
-   * Unsubscribes from any locally monitored stores.
-   *
-   * @see SvelteApp.close
-   */
-  #storesUnsubscribe() {
-    this.#storeUnsubscribe.forEach((unsubscribe) => unsubscribe());
-    this.#storeUnsubscribe = [];
+  } else {
+    globalThis.requestAnimationFrame(() => {
+      application.position.zIndex = foundry.applications.api.ApplicationV2._maxZ - 1;
+      application.reactive.popOut = initialPopOut;
+      globalThis.requestAnimationFrame(() => application.bringToTop({ force: true }));
+    });
   }
 }
 const applicationShellContract = ["elementRoot"];
@@ -12953,6 +14476,742 @@ Offending config:
   }
   return { config: svelteConfig, component, element: element2 };
 }
+class SvelteReactive {
+  /**
+   * @type {SvelteSet<string>}
+   */
+  #activeClasses;
+  /**
+   * @type {import('../SvelteApp').SvelteApp}
+   */
+  #application;
+  /**
+   * @type {boolean}
+   */
+  #initialized = false;
+  /**
+   * @type {boolean}
+   */
+  #initialPopOut;
+  /** @type {import('@typhonjs-fvtt/runtime/svelte/store/web-storage').WebStorage} */
+  #sessionStorage;
+  /**
+   * The Application option store which is injected into mounted Svelte component context under the `external` key.
+   *
+   * @type {import('../../types').SvelteApp.API.Reactive.AppOptions}
+   */
+  #storeAppOptions;
+  /**
+   * Stores the update function for `#storeAppOptions`.
+   *
+   * @type {(this: void, updater: import('svelte/store').Updater<object>) => void}
+   */
+  #storeAppOptionsUpdate;
+  /**
+   * Stores the UI state data to make it accessible via getters.
+   *
+   * @type {import('../../types').SvelteApp.API.Reactive.UIStateData}
+   */
+  #dataUIState;
+  /**
+   * The UI option store which is injected into mounted Svelte component context under the `external` key.
+   *
+   * @type {import('../../types').SvelteApp.API.Reactive.UIState}
+   */
+  #storeUIState;
+  /**
+   * Stores the update function for `#storeUIState`.
+   *
+   * @type {(this: void, updater: import('svelte/store').Updater<object>) => void}
+   */
+  #storeUIStateUpdate;
+  /**
+   * Stores the unsubscribe functions from local store subscriptions.
+   *
+   * @type {import('svelte/store').Unsubscriber[]}
+   */
+  #storeUnsubscribe = [];
+  /**
+   * @param {import('../SvelteApp').SvelteApp} application - The host Foundry application.
+   *
+   * @param {boolean} initialPopOut - Initial `popOut` state on app construction.
+   */
+  constructor(application, initialPopOut) {
+    this.#application = application;
+    this.#initialPopOut = initialPopOut;
+    const optionsSessionStorage = application?.options?.sessionStorage;
+    if (optionsSessionStorage !== void 0 && !(optionsSessionStorage instanceof TJSWebStorage)) {
+      throw new TypeError(`'options.sessionStorage' is not an instance of TJSWebStorage.`);
+    }
+    this.#sessionStorage = optionsSessionStorage !== void 0 ? optionsSessionStorage : new TJSSessionStorage();
+  }
+  /**
+   * Initializes reactive support. Package private for internal use.
+   *
+   * @returns {import('./types-local').SvelteReactiveStores | undefined} Internal methods to interact with Svelte
+   * stores.
+   *
+   * @package
+   * @internal
+   */
+  initialize() {
+    if (this.#initialized) {
+      return;
+    }
+    this.#initialized = true;
+    this.#storesInitialize();
+    return {
+      appOptionsUpdate: this.#storeAppOptionsUpdate,
+      uiStateUpdate: this.#storeUIStateUpdate,
+      subscribe: this.#storesSubscribe.bind(this),
+      unsubscribe: this.#storesUnsubscribe.bind(this)
+    };
+  }
+  // Store getters -----------------------------------------------------------------------------------------------------
+  /**
+   * @returns {import('@typhonjs-fvtt/runtime/svelte/store/web-storage').WebStorage} Returns WebStorage (session) instance.
+   */
+  get sessionStorage() {
+    return this.#sessionStorage;
+  }
+  /**
+   * Returns the store for app options.
+   *
+   * @returns {import('../../types').SvelteApp.API.Reactive.AppOptions} App options store.
+   */
+  get storeAppOptions() {
+    return this.#storeAppOptions;
+  }
+  /**
+   * Returns the store for UI options.
+   *
+   * @returns {import('../../types').SvelteApp.API.Reactive.UIState} UI options store.
+   */
+  get storeUIState() {
+    return this.#storeUIState;
+  }
+  // Only reactive getters ---------------------------------------------------------------------------------------------
+  /**
+   * Returns the current active CSS classes Set applied to the app window. This is reactive for any modifications.
+   *
+   * @returns {SvelteSet<string>} Active app CSS classes Set.
+   */
+  get activeClasses() {
+    return this.#activeClasses;
+  }
+  /**
+   * Returns the current active Window / WindowProxy UI state.
+   *
+   * @returns {Window} Active window UI state.
+   */
+  get activeWindow() {
+    return this.#dataUIState.activeWindow ?? globalThis;
+  }
+  /**
+   * Returns the current dragging UI state.
+   *
+   * @returns {boolean} Dragging UI state.
+   */
+  get dragging() {
+    return this.#dataUIState.dragging;
+  }
+  /**
+   * Returns whether the app is detached from the main browser window.
+   *
+   * @returns {boolean} App detached state.
+   */
+  get detached() {
+    return this.#dataUIState.activeWindow !== globalThis;
+  }
+  /**
+   * Returns the current minimized UI state.
+   *
+   * @returns {boolean} Minimized UI state.
+   */
+  get minimized() {
+    return this.#dataUIState.minimized;
+  }
+  /**
+   * Returns the current resizing UI state.
+   *
+   * @returns {boolean} Resizing UI state.
+   */
+  get resizing() {
+    return this.#dataUIState.resizing;
+  }
+  /**
+   * Sets the current active Window / WindowProxy UI state.
+   *
+   * Note: This is protected usage and used internally.
+   *
+   * @param {Window} activeWindow - Active Window / WindowProxy UI state.
+   *
+   * @internal
+   */
+  set activeWindow(activeWindow) {
+    if (activeWindow === void 0 || activeWindow === null || Object.prototype.toString.call(activeWindow) === "[object Window]") {
+      this.#storeUIStateUpdate((options) => deepMerge(options, { activeWindow: activeWindow ?? globalThis }));
+    }
+  }
+  // Reactive getter / setters -----------------------------------------------------------------------------------------
+  /**
+   * Returns the alwaysOnTop app option.
+   *
+   * @returns {boolean} Always on top app option.
+   */
+  get alwaysOnTop() {
+    return this.#application?.options?.alwaysOnTop;
+  }
+  /**
+   * Returns the containerQueryType app option.
+   *
+   * @returns {string} App content container query app option.
+   */
+  get containerQueryType() {
+    return this.#application?.options?.containerQueryType;
+  }
+  /**
+   * Returns the draggable app option.
+   *
+   * @returns {boolean} Draggable app option.
+   */
+  get draggable() {
+    return this.#application?.options?.draggable;
+  }
+  /**
+   * Returns the focusAuto app option.
+   *
+   * @returns {boolean} When true auto-management of app focus is enabled.
+   */
+  get focusAuto() {
+    return this.#application?.options?.focusAuto;
+  }
+  /**
+   * Returns the focusKeep app option.
+   *
+   * @returns {boolean} When `focusAuto` and `focusKeep` is true; keeps internal focus.
+   */
+  get focusKeep() {
+    return this.#application?.options?.focusKeep;
+  }
+  /**
+   * Returns the focusTrap app option.
+   *
+   * @returns {boolean} When true focus trapping / wrapping is enabled keeping focus inside app.
+   */
+  get focusTrap() {
+    return this.#application?.options?.focusTrap;
+  }
+  /**
+   * Returns the headerButtonNoClose app option.
+   *
+   * @returns {boolean} Remove the close the button in header app option.
+   */
+  get headerButtonNoClose() {
+    return this.#application?.options?.headerButtonNoClose;
+  }
+  /**
+   * Returns the headerButtonNoLabel app option.
+   *
+   * @returns {boolean} Remove the labels from buttons in the header app option.
+   */
+  get headerButtonNoLabel() {
+    return this.#application?.options?.headerButtonNoLabel;
+  }
+  /**
+   * Returns the headerIcon app option.
+   *
+   * @returns {string | undefined} URL for header app icon.
+   */
+  get headerIcon() {
+    return this.#application?.options?.headerIcon;
+  }
+  /**
+   * Returns the headerNoTitleMinimized app option.
+   *
+   * @returns {boolean} When true removes the header title when minimized.
+   */
+  get headerNoTitleMinimized() {
+    return this.#application?.options?.headerNoTitleMinimized;
+  }
+  /**
+   * Returns the minimizable app option.
+   *
+   * @returns {boolean} Minimizable app option.
+   */
+  get minimizable() {
+    return this.#application?.options?.minimizable;
+  }
+  /**
+   * Returns the Foundry popOut state; {@link Application.popOut}
+   *
+   * @returns {boolean} Positionable app option.
+   */
+  get popOut() {
+    return this.#application.popOut;
+  }
+  /**
+   * Returns the positionable app option; {@link SvelteApp.Options.positionable}
+   *
+   * @returns {boolean} Positionable app option.
+   */
+  get positionable() {
+    return this.#application?.options?.positionable;
+  }
+  /**
+   * Returns the resizable option.
+   *
+   * @returns {boolean} Resizable app option.
+   */
+  get resizable() {
+    return this.#application?.options?.resizable;
+  }
+  /**
+   * Returns the explicit theme name option.
+   *
+   * @returns {string | undefined} Theme name option.
+   */
+  get themeName() {
+    return this.#application?.options?.themeName;
+  }
+  /**
+   * Returns the title accessor from the parent Application class; {@link Application.title}
+   *
+   * @privateRemarks
+   * TODO: Application v2; note that super.title localizes `this.options.title`; IMHO it shouldn't.    *
+   *
+   * @returns {string} Title.
+   */
+  get title() {
+    return this.#application.title;
+  }
+  /**
+   * Sets `this.options.alwaysOnTop`, which is reactive for application shells.
+   *
+   * @param {boolean}  alwaysOnTop - Sets the `alwaysOnTop` option.
+   */
+  set alwaysOnTop(alwaysOnTop) {
+    if (typeof alwaysOnTop === "boolean") {
+      this.setOptions("alwaysOnTop", alwaysOnTop);
+    }
+  }
+  /**
+   * Sets `this.options.containerQueryType`, which is reactive for application shells.
+   *
+   * @param {string}  containerQueryType - Sets the `containerQueryType` option.
+   */
+  set containerQueryType(containerQueryType) {
+    if (containerQueryType === void 0 || containerQueryType === "inline-size" || containerQueryType === "size") {
+      this.setOptions("containerQueryType", containerQueryType);
+    }
+  }
+  /**
+   * Sets `this.options.draggable`, which is reactive for application shells.
+   *
+   * @param {boolean}  draggable - Sets the draggable option.
+   */
+  set draggable(draggable2) {
+    if (typeof draggable2 === "boolean") {
+      this.setOptions("draggable", draggable2);
+    }
+  }
+  /**
+   * Sets `this.options.focusAuto`, which is reactive for application shells.
+   *
+   * @param {boolean}  focusAuto - Sets the focusAuto option.
+   */
+  set focusAuto(focusAuto) {
+    if (typeof focusAuto === "boolean") {
+      this.setOptions("focusAuto", focusAuto);
+    }
+  }
+  /**
+   * Sets `this.options.focusKeep`, which is reactive for application shells.
+   *
+   * @param {boolean}  focusKeep - Sets the focusKeep option.
+   */
+  set focusKeep(focusKeep) {
+    if (typeof focusKeep === "boolean") {
+      this.setOptions("focusKeep", focusKeep);
+    }
+  }
+  /**
+   * Sets `this.options.focusTrap`, which is reactive for application shells.
+   *
+   * @param {boolean}  focusTrap - Sets the focusTrap option.
+   */
+  set focusTrap(focusTrap) {
+    if (typeof focusTrap === "boolean") {
+      this.setOptions("focusTrap", focusTrap);
+    }
+  }
+  /**
+   * Sets `this.options.headerButtonNoClose`, which is reactive for application shells.
+   *
+   * @param {boolean}  headerButtonNoClose - Sets the headerButtonNoClose option.
+   */
+  set headerButtonNoClose(headerButtonNoClose) {
+    if (typeof headerButtonNoClose === "boolean") {
+      this.setOptions("headerButtonNoClose", headerButtonNoClose);
+    }
+  }
+  /**
+   * Sets `this.options.headerButtonNoLabel`, which is reactive for application shells.
+   *
+   * @param {boolean}  headerButtonNoLabel - Sets the headerButtonNoLabel option.
+   */
+  set headerButtonNoLabel(headerButtonNoLabel) {
+    if (typeof headerButtonNoLabel === "boolean") {
+      this.setOptions("headerButtonNoLabel", headerButtonNoLabel);
+    }
+  }
+  /**
+   * Sets `this.options.headerIcon`, which is reactive for application shells.
+   *
+   * @param {string | undefined}  headerIcon - Sets the headerButtonNoLabel option.
+   */
+  set headerIcon(headerIcon) {
+    if (headerIcon === void 0 || typeof headerIcon === "string") {
+      this.setOptions("headerIcon", headerIcon);
+    }
+  }
+  /**
+   * Sets `this.options.headerNoTitleMinimized`, which is reactive for application shells.
+   *
+   * @param {boolean}  headerNoTitleMinimized - Sets the headerNoTitleMinimized option.
+   */
+  set headerNoTitleMinimized(headerNoTitleMinimized) {
+    if (typeof headerNoTitleMinimized === "boolean") {
+      this.setOptions("headerNoTitleMinimized", headerNoTitleMinimized);
+    }
+  }
+  /**
+   * Sets `this.options.minimizable`, which is reactive for application shells that are also pop out.
+   *
+   * @param {boolean}  minimizable - Sets the minimizable option.
+   */
+  set minimizable(minimizable) {
+    if (typeof minimizable === "boolean") {
+      this.setOptions("minimizable", minimizable);
+    }
+  }
+  /**
+   * Sets `this.options.popOut` which is reactive for application shells. This will add / remove this application
+   * from `ui.windows` via the subscription set in `#storesSubscribe`.
+   *
+   * @param {boolean}  popOut - Sets the popOut option.
+   */
+  set popOut(popOut) {
+    if (typeof popOut === "boolean") {
+      this.setOptions("popOut", popOut);
+    }
+  }
+  /**
+   * Sets `this.options.positionable`, enabling / disabling {@link SvelteApp.position}.
+   *
+   * @param {boolean}  positionable - Sets the positionable option.
+   */
+  set positionable(positionable) {
+    if (typeof positionable === "boolean") {
+      this.setOptions("positionable", positionable);
+    }
+  }
+  /**
+   * Sets `this.options.resizable`, which is reactive for application shells.
+   *
+   * @param {boolean}  resizable - Sets the resizable option.
+   */
+  set resizable(resizable) {
+    if (typeof resizable === "boolean") {
+      this.setOptions("resizable", resizable);
+    }
+  }
+  /**
+   * Sets `this.options.themeName`, which is reactive for application shells.
+   *
+   * @param {string | undefined}  themeName - Sets the themeName option.
+   */
+  set themeName(themeName) {
+    if (themeName === void 0 || typeof themeName === "string") {
+      this.setOptions("themeName", themeName);
+    }
+  }
+  /**
+   * Sets `this.options.title`, which is reactive for application shells.
+   *
+   * Note: Will set empty string if title is undefined or null.
+   *
+   * @param {string | undefined | null}   title - Application title; will be localized, so a translation key is fine.
+   */
+  set title(title) {
+    if (typeof title === "string") {
+      this.setOptions("title", title);
+    } else if (title === void 0 || title === null) {
+      this.setOptions("title", "");
+    }
+  }
+  // Reactive Options API -------------------------------------------------------------------------------------------
+  /**
+   * Provides a way to safely get this applications options given an accessor string which describes the
+   * entries to walk. To access deeper entries into the object format the accessor string with `.` between entries
+   * to walk.
+   *
+   * @privateRemarks
+   * TODO: DOCUMENT the accessor in more detail.
+   *
+   * @param {string}   accessor - The path / key to set. You can set multiple levels.
+   *
+   * @param {*}        [defaultValue] - A default value returned if the accessor is not found.
+   *
+   * @returns {*} Value at the accessor.
+   */
+  getOptions(accessor, defaultValue) {
+    return safeAccess(this.#application.options, accessor, defaultValue);
+  }
+  /**
+   * Provides a way to merge `options` into the application options and update the appOptions store.
+   *
+   * @param {object}   options - The options object to merge with `this.options`.
+   */
+  mergeOptions(options) {
+    this.#storeAppOptionsUpdate((instanceOptions) => deepMerge(instanceOptions, options));
+  }
+  /**
+   * Provides a way to safely set the application options given an accessor string which describes the
+   * entries to walk. To access deeper entries into the object format, the accessor string with `.` between entries
+   * to walk.
+   *
+   * Additionally, if an application shell Svelte component is mounted and exports the `appOptions` property, then
+   * the application options are set to `appOptions` potentially updating the application shell / Svelte component.
+   *
+   * @param {string}   accessor - The path / key to set. You can set multiple levels.
+   *
+   * @param {any}      value - Value to set.
+   */
+  setOptions(accessor, value) {
+    const success = safeSet(this.#application.options, accessor, value, { createMissing: true });
+    if (success) {
+      this.#storeAppOptionsUpdate(() => this.#application.options);
+    }
+  }
+  /**
+   * Serializes the main {@link SvelteApp.Options} for common application state.
+   *
+   * @returns {import('../../types').SvelteApp.API.Reactive.SerializedData} Common application state.
+   */
+  toJSON() {
+    return {
+      alwaysOnTop: this.#application?.options?.alwaysOnTop ?? false,
+      draggable: this.#application?.options?.draggable ?? true,
+      focusAuto: this.#application?.options?.focusAuto ?? true,
+      focusKeep: this.#application?.options?.focusKeep ?? false,
+      focusTrap: this.#application?.options?.focusTrap ?? true,
+      headerButtonNoClose: this.#application?.options?.headerButtonNoClose ?? false,
+      headerButtonNoLabel: this.#application?.options?.headerButtonNoLabel ?? false,
+      headerNoTitleMinimized: this.#application?.options?.headerNoTitleMinimized ?? false,
+      minimizable: this.#application?.options?.minimizable ?? true,
+      positionable: this.#application?.options?.positionable ?? true,
+      resizable: this.#application?.options?.resizable ?? true,
+      themeName: this.#application?.options?.themeName ?? void 0
+    };
+  }
+  /**
+   * Updates the UI Options store with the current header buttons. You may dynamically add / remove header buttons
+   * if using an application shell Svelte component. In either overriding `_getHeaderButtons` or responding to the
+   * Hooks fired return a new button array, and the uiOptions store is updated, and the application shell will render
+   * the new buttons.
+   *
+   * Optionally you can set in the SvelteApp app options {@link SvelteApp.Options.headerButtonNoClose}
+   * to remove the close button from the header buttons.
+   *
+   * @param {object} [opts] - Optional parameters (for internal use)
+   *
+   * @param {boolean} [opts.headerButtonNoClose] - The value for `headerButtonNoClose`.
+   */
+  updateHeaderButtons({ headerButtonNoClose = this.#application.options.headerButtonNoClose } = {}) {
+    queueMicrotask(() => {
+      let buttons = this.#application._getHeaderButtons();
+      if (typeof headerButtonNoClose === "boolean" && headerButtonNoClose) {
+        buttons = buttons.filter((button) => button.class !== "close");
+      }
+      const closeButton = buttons.find((button) => button.class === "close");
+      if (closeButton) {
+        closeButton.keepMinimized = true;
+        closeButton.label = "APPLICATION.TOOLS.Close";
+      }
+      this.#storeUIStateUpdate((options) => {
+        options.headerButtons = buttons;
+        return options;
+      });
+    });
+  }
+  // Internal implementation ----------------------------------------------------------------------------------------
+  /**
+   * Initializes the Svelte stores and derived stores for the application options and UI state.
+   *
+   * While writable stores are created, the update method is stored in private variables locally and derived Readable
+   * stores are provided for essential options which are commonly used.
+   *
+   * These stores are injected into all Svelte components mounted under the `external` context: `storeAppOptions` and
+   * `storeUIState`.
+   */
+  #storesInitialize() {
+    this.#activeClasses = new SvelteSet();
+    for (const entry of this.#application.options?.classes ?? []) {
+      if (typeof entry !== "string") {
+        continue;
+      }
+      if (entry === "themed" || entry.startsWith("theme-")) {
+        continue;
+      }
+      this.#activeClasses.add(entry);
+    }
+    const writableAppOptions = writable(this.#application.options);
+    this.#storeAppOptionsUpdate = writableAppOptions.update;
+    const storeAppOptions = {
+      subscribe: writableAppOptions.subscribe,
+      alwaysOnTop: (
+        /** @type {import('svelte/store').Writable<boolean>} */
+        propertyStore(writableAppOptions, "alwaysOnTop")
+      ),
+      containerQueryType: (
+        /** @type {import('svelte/store').Writable<string>} */
+        propertyStore(writableAppOptions, "containerQueryType")
+      ),
+      draggable: (
+        /** @type {import('svelte/store').Writable<boolean>} */
+        propertyStore(writableAppOptions, "draggable")
+      ),
+      focusAuto: (
+        /** @type {import('svelte/store').Writable<boolean>} */
+        propertyStore(writableAppOptions, "focusAuto")
+      ),
+      focusKeep: (
+        /** @type {import('svelte/store').Writable<boolean>} */
+        propertyStore(writableAppOptions, "focusKeep")
+      ),
+      focusTrap: (
+        /** @type {import('svelte/store').Writable<boolean>} */
+        propertyStore(writableAppOptions, "focusTrap")
+      ),
+      headerButtonNoClose: (
+        /** @type {import('svelte/store').Writable<boolean>} */
+        propertyStore(writableAppOptions, "headerButtonNoClose")
+      ),
+      headerButtonNoLabel: (
+        /** @type {import('svelte/store').Writable<boolean>} */
+        propertyStore(writableAppOptions, "headerButtonNoLabel")
+      ),
+      headerIcon: (
+        /** @type {import('svelte/store').Writable<string | undefined>} */
+        propertyStore(writableAppOptions, "headerIcon")
+      ),
+      headerNoTitleMinimized: (
+        /** @type {import('svelte/store').Writable<boolean>} */
+        propertyStore(writableAppOptions, "headerNoTitleMinimized")
+      ),
+      minimizable: (
+        /** @type {import('svelte/store').Writable<boolean>} */
+        propertyStore(writableAppOptions, "minimizable")
+      ),
+      popOut: (
+        /** @type {import('svelte/store').Writable<boolean>} */
+        propertyStore(writableAppOptions, "popOut")
+      ),
+      positionable: (
+        /** @type {import('svelte/store').Writable<boolean>} */
+        propertyStore(writableAppOptions, "positionable")
+      ),
+      resizable: (
+        /** @type {import('svelte/store').Writable<boolean>} */
+        propertyStore(writableAppOptions, "resizable")
+      ),
+      themeName: (
+        /** @type {import('svelte/store').Writable<string | undefined>} */
+        propertyStore(writableAppOptions, "themeName")
+      ),
+      title: (
+        /** @type {import('svelte/store').Writable<string>} */
+        propertyStore(writableAppOptions, "title")
+      )
+    };
+    Object.freeze(storeAppOptions);
+    this.#storeAppOptions = storeAppOptions;
+    this.#dataUIState = {
+      activeWindow: window,
+      dragging: false,
+      headerButtons: [],
+      minimized: this.#application._minimized,
+      resizing: false
+    };
+    const writableUIOptions = writable(this.#dataUIState);
+    this.#storeUIStateUpdate = writableUIOptions.update;
+    const storeUIState = {
+      subscribe: writableUIOptions.subscribe,
+      activeWindow: (
+        /** @type {import('svelte/store').Readable<Window>} */
+        derived(writableUIOptions, ($options, set) => set($options.activeWindow))
+      ),
+      detached: (
+        /** @type {import('svelte/store').Readable<boolean>} */
+        derived(writableUIOptions, ($options, set) => set($options.activeWindow !== globalThis))
+      ),
+      dragging: (
+        /** @type {import('svelte/store').Readable<boolean>} */
+        propertyStore(writableUIOptions, "dragging")
+      ),
+      headerButtons: (
+        /** @type {import('svelte/store').Readable<import('../../types').SvelteApp.HeaderButton>} */
+        derived(writableUIOptions, ($options, set) => set($options.headerButtons))
+      ),
+      minimized: (
+        /** @type {import('svelte/store').Readable<boolean>} */
+        derived(writableUIOptions, ($options, set) => set($options.minimized))
+      ),
+      resizing: (
+        /** @type {import('svelte/store').Readable<boolean>} */
+        propertyStore(writableUIOptions, "resizing")
+      )
+    };
+    Object.freeze(storeUIState);
+    this.#storeUIState = storeUIState;
+  }
+  /**
+   * Registers local store subscriptions for app options. `popOut` controls registering this app with `ui.windows`.
+   *
+   * @see SvelteApp._injectHTML
+   */
+  #storesSubscribe() {
+    this.#storeUnsubscribe.push(subscribeIgnoreFirst(
+      this.#storeAppOptions.alwaysOnTop,
+      (enabled) => handleAlwaysOnTop(this.#application, enabled, this.#initialPopOut)
+    ));
+    this.#storeUnsubscribe.push(subscribeIgnoreFirst(this.#storeAppOptions.headerButtonNoClose, (value) => this.updateHeaderButtons({ headerButtonNoClose: value })));
+    this.#storeUnsubscribe.push(subscribeIgnoreFirst(this.#storeAppOptions.popOut, (value) => {
+      if (value) {
+        if (globalThis?.ui?.windows?.[this.#application.appId] !== this.#application) {
+          globalThis.ui.windows[this.#application.appId] = this.#application;
+        }
+      } else {
+        if (globalThis?.ui?.activeWindow === this.#application) {
+          globalThis.ui.activeWindow = null;
+        }
+        if (globalThis?.ui?.windows?.[this.#application.appId] === this.#application) {
+          delete globalThis.ui.windows[this.#application.appId];
+        }
+      }
+    }));
+  }
+  /**
+   * Unsubscribes from any locally monitored stores.
+   *
+   * @see SvelteApp.close
+   */
+  #storesUnsubscribe() {
+    this.#storeUnsubscribe.forEach((unsubscribe) => unsubscribe());
+    this.#storeUnsubscribe = [];
+  }
+}
 class TJSAppIndex {
   /**
    * Stores all visible / rendered apps.
@@ -13013,7 +15272,224 @@ class TJSAppIndex {
     return this.#visibleApps.values();
   }
 }
+class FoundryStyles {
+  /**
+   * Parsed Foundry core stylesheet.
+   *
+   * @type {StyleSheetResolve}
+   */
+  static #core;
+  /**
+   * Dummy / no-op instance when parsing or CORS / SecurityException occurs.
+   *
+   * @type {StyleSheetResolve}
+   */
+  static #dummy = new StyleSheetResolve().freeze();
+  /**
+   * Parsed Foundry core stylesheet with extended game system / module overrides.
+   *
+   * @type {StyleSheetResolve}
+   */
+  static #ext;
+  static #initialized = false;
+  /**
+   * @hideconstructor
+   */
+  constructor() {
+    throw new Error("FoundryStyles constructor: This is a static class and should not be constructed.");
+  }
+  /**
+   * @returns {StyleSheetResolve} Core parsed styles.
+   */
+  static get core() {
+    if (!this.#initialized) {
+      this.#initialize();
+    }
+    return this.#core ?? this.#dummy;
+  }
+  /**
+   * @returns {StyleSheetResolve} Core parsed styles with extended game system / module overrides.
+   */
+  static get ext() {
+    if (!this.#initialized) {
+      this.#initialize();
+    }
+    return this.#ext ?? this.#dummy;
+  }
+  // Internal Implementation ----------------------------------------------------------------------------------------
+  /**
+   * Find the core Foundry CSSStyleSheet instance and any 3rd party game system / module stylesheets.
+   *
+   * Resolve the core sheet and then create the extended resolved style sheet merging the core with all system / module
+   * sheets.
+   */
+  static #initialize() {
+    this.#initialized = true;
+    const styleSheets = Array.from(document.styleSheets);
+    let foundryStyleSheet;
+    const moduleSheets = [];
+    const systemSheets = [];
+    const failedSheets = [];
+    for (let i = 0; i < styleSheets.length; i++) {
+      const sheet = styleSheets[i];
+      if (typeof sheet?.href === "string") {
+        try {
+          if (sheet.href.endsWith("/css/foundry2.css") && sheet?.cssRules?.length) {
+            foundryStyleSheet = sheet;
+          }
+        } catch (err) {
+          if (CrossWindow.isDOMException(err, "SecurityException")) {
+            failedSheets.push({ href: sheet.href, core: true });
+          }
+        }
+      } else {
+        try {
+          if (sheet?.cssRules?.length) {
+            for (const rule of sheet.cssRules) {
+              if (!CrossWindow.isCSSImportRule(rule) || !CrossWindow.isCSSStyleSheet(rule?.styleSheet)) {
+                continue;
+              }
+              try {
+                switch (rule?.layerName) {
+                  case "modules":
+                    if (rule.styleSheet?.cssRules?.length) {
+                      moduleSheets.push(rule.styleSheet);
+                    }
+                    break;
+                  case "system":
+                    if (rule.styleSheet?.cssRules?.length) {
+                      systemSheets.push(rule.styleSheet);
+                    }
+                    break;
+                }
+              } catch (err) {
+                if (CrossWindow.isDOMException(err, "SecurityException")) {
+                  failedSheets.push({ href: rule.styleSheet.href, core: false, layer: rule.layerName });
+                }
+              }
+            }
+          }
+        } catch (err) {
+          if (CrossWindow.isDOMException(err, "SecurityException")) {
+            failedSheets.push({ href: "", core: false, layer: "inline-stylesheet" });
+          }
+        }
+      }
+    }
+    if (failedSheets.length) {
+      console.warn(`[TyphonJS Runtime] CORS / SecurityException error: FoundryStyles could not load style sheets: ${JSON.stringify(failedSheets, null, 2)}`);
+    }
+    if (!foundryStyleSheet) {
+      console.warn(`[TyphonJS Runtime] error: FoundryStyles could not load core style sheet.`);
+      return;
+    }
+    this.#resolveCore(foundryStyleSheet);
+    this.#resolveExt(moduleSheets, systemSheets);
+    this.#core.freeze();
+    this.#ext.freeze();
+  }
+  /**
+   * @param {CSSStyleSheet}  sheet - Foundry core style sheet.
+   */
+  static #resolveCore(sheet) {
+    this.#core = StyleSheetResolve.parse(sheet, {
+      // Exclude any selector parts that match the following.
+      excludeSelectorParts: [
+        />\s*[^ ]+/,
+        // Direct child selectors
+        /(^|\s)\*/,
+        // Universal selectors
+        /(^|\s)\.app(?![\w-])/,
+        // AppV1 class
+        /^\.application\.[a-z]/,
+        // All `.application.theme` / any specific core application.
+        /^body\.auth/,
+        /^body(?:\.[\w-]+)*\.application\b/,
+        // Remove unnecessary `body.<theme>.application` pairing.
+        /^\.\u037c\d/i,
+        // Code-mirror `.ͼ1`
+        /code-?mirror/i,
+        /(^|[^a-zA-Z0-9_-])#(?!context-menu\b)[\w-]+|[^ \t>+~]#context-menu\b/,
+        /^\.faded-ui/,
+        /(^|\s)kbd\b/,
+        /^input.placeholder-fa-solid\b/,
+        /(^|\s)label\b/,
+        /^\.mixin-theme/,
+        // Remove all mixin related styles left in by core.
+        /prose-?mirror/i,
+        /(^|\s)section\b/,
+        /\.window-app/,
+        // Exclude various core applications.
+        /^\.active-effect-config/,
+        /^\.adventure-importer/,
+        /^\.camera-view/,
+        /#camera-views/,
+        /^\.card-config/,
+        /^\.cards-config/,
+        /^\.category-browser/,
+        /^\.chat-message/,
+        /^\.chat-sidebar/,
+        /\.combat-sidebar/,
+        /\.compendium-directory/,
+        /\.compendium-sidebar/,
+        /^\.document-ownership/,
+        /^\.effects-tooltip/,
+        /^\.journal-category-config/,
+        /\.journal-entry-page/,
+        /^\.macro-config/,
+        /^\.package-list/,
+        /^\.playlists-sidebar/,
+        /\.placeable-hud/,
+        /^\.region-config/,
+        /^\.roll-table-sheet/,
+        /^\.scene-config/,
+        /^\.scenes-sidebar/,
+        /\.settings-sidebar/,
+        /^\.sheet.journal-entry/,
+        /^\.template-config/,
+        /^\.token-config/,
+        /^\.tour/,
+        /\.ui-control/,
+        /^\.wall-config/
+      ],
+      // Only parse CSS layers matching the following regexes.
+      includeCSSLayers: [
+        /^applications$/,
+        /^blocks.ui$/,
+        /^elements/,
+        /^variables\.base$/,
+        /^variables\.themes/
+      ]
+    });
+  }
+  /**
+   * @param {CSSStyleSheet[]}   moduleSheets - Module stylesheet data.
+   *
+   * @param {CSSStyleSheet[]}   systemSheets - System stylesheet data.
+   */
+  static #resolveExt(moduleSheets, systemSheets) {
+    const resolvedSheets = [];
+    const options = { includeSelectorPartSet: /* @__PURE__ */ new Set([...this.#core.keys()]) };
+    for (const sheet of systemSheets) {
+      resolvedSheets.push(StyleSheetResolve.parse(sheet, options));
+    }
+    for (const sheet of moduleSheets) {
+      resolvedSheets.push(StyleSheetResolve.parse(sheet, options));
+    }
+    this.#ext = this.#core.clone();
+    for (const sheet of resolvedSheets) {
+      this.#ext.merge(sheet);
+    }
+  }
+}
 class SvelteApp extends Application {
+  /**
+   * Disable Foundry v13+ warnings for AppV1.
+   *
+   * @type {boolean}
+   * @internal
+   */
+  static _warnedAppV1 = true;
   static #MIN_WINDOW_HEIGHT = 50;
   static #MIN_WINDOW_WIDTH = 200;
   /**
@@ -13048,6 +15524,10 @@ class SvelteApp extends Application {
    */
   #gateSetPosition = false;
   /**
+   * Tracks initial `popOut` state. `handleAlwaysOnTop` will return the `popOut` state to this value.
+   */
+  #initialPopOut;
+  /**
    * Stores initial z-index from `_renderOuter` to set to target element / Svelte component.
    *
    * @type {number}
@@ -13081,7 +15561,7 @@ class SvelteApp extends Application {
    * Provides a helper class that combines multiple methods for interacting with the mounted components tracked in
    * #svelteData.
    *
-   * @type {import('./types').SvelteApp.API.Svelte<Options>}
+   * @type {import('./types').SvelteApp.API.Svelte<import('./types').SvelteApp.Options>}
    */
   #getSvelteData = new GetSvelteData(this.#applicationShellHolder, this.#svelteData);
   /**
@@ -13098,6 +15578,12 @@ class SvelteApp extends Application {
     if (!isObject(this.options.svelte)) {
       throw new Error(`SvelteApp - constructor - No Svelte configuration object found in 'options'.`);
     }
+    if (Array.isArray(this.options.classes)) {
+      this.options.classes = this.options.classes.filter(
+        (entry) => entry !== "themed" && !entry?.startsWith("theme-")
+      );
+    }
+    this.#initialPopOut = this.popOut;
     this.#applicationState = new ApplicationState(this);
     this.#position = new TJSPosition(this, {
       ...this.position,
@@ -13115,7 +15601,7 @@ class SvelteApp extends Application {
         }
       }
     });
-    this.#reactive = new SvelteReactive(this);
+    this.#reactive = new SvelteReactive(this, this.#initialPopOut);
     this.#stores = this.#reactive.initialize();
   }
   /**
@@ -13128,12 +15614,16 @@ class SvelteApp extends Application {
     return (
       /** @type {import('./types').SvelteApp.Options} */
       deepMerge(super.defaultOptions, {
+        alwaysOnTop: false,
+        // Assigned to position. When true, the app window is floated always on top.
+        containerQueryType: "inline-size",
+        // App window content container query type.
         defaultCloseAnimation: true,
-        // If false the default slide close animation is not run.
+        // If false, the default slide close animation is not run.
         draggable: true,
-        // If true then application shells are draggable.
+        // If true, then application shells are draggable.
         focusAuto: true,
-        // When true auto-management of app focus is enabled.
+        // When true, auto-management of app focus is enabled.
         focusKeep: false,
         // When `focusAuto` and `focusKeep` is true; keeps internal focus.
         focusSource: void 0,
@@ -13141,29 +15631,35 @@ class SvelteApp extends Application {
         focusTrap: true,
         // When true focus trapping / wrapping is enabled keeping focus inside app.
         headerButtonNoClose: false,
-        // If true then the close header button is removed.
+        // If true, then the close header button is removed.
         headerButtonNoLabel: false,
-        // If true then header button labels are removed for application shells.
+        // If true, then the header button labels are removed for application shells.
         headerIcon: void 0,
         // Sets a header icon given an image URL.
         headerNoTitleMinimized: false,
-        // If true then header title is hidden when application is minimized.
+        // If true, then the header title is hidden when the application is minimized.
+        maxHeight: void 0,
+        // Assigned to position. Number specifying maximum window height.
+        maxWidth: void 0,
+        // Assigned to position. Number specifying maximum window width.
         minHeight: SvelteApp.#MIN_WINDOW_HEIGHT,
         // Assigned to position. Number specifying minimum window height.
         minWidth: SvelteApp.#MIN_WINDOW_WIDTH,
         // Assigned to position. Number specifying minimum window width.
         positionable: true,
-        // If false then `position.set` does not take effect.
+        // If false, then `position.set` does not take effect.
         positionInitial: TJSPosition.Initial.browserCentered,
         // A helper for initial position placement.
         positionOrtho: true,
-        // When true TJSPosition is optimized for orthographic use.
+        // When true, TJSPosition is optimized for orthographic use.
         positionValidator: TJSPosition.Validators.transformWindow,
         // A function providing the default validator.
         sessionStorage: void 0,
         // An instance of WebStorage (session) to share across SvelteApps.
         svelte: void 0,
         // A Svelte configuration object.
+        themeName: void 0,
+        // An explicit theme name to apply.
         transformOrigin: "top left"
         // By default, 'top / left' respects rotation when minimizing.
       })
@@ -13239,8 +15735,19 @@ class SvelteApp extends Application {
     if (this.reactive.activeWindow !== globalThis) {
       return;
     }
-    if (force || this.popOut) {
-      super.bringToTop();
+    if (typeof this?.options?.positionable === "boolean" && !this.options.positionable) {
+      return;
+    }
+    if (force || globalThis.ui.activeWindow !== this) {
+      const z = this.position.zIndex;
+      if (this.popOut && z < foundry.applications.api.ApplicationV2._maxZ) {
+        this.position.zIndex = Math.min(++foundry.applications.api.ApplicationV2._maxZ, 99999);
+      } else if (!this.popOut && this.options.alwaysOnTop) {
+        const newAlwaysOnTopZIndex = globalThis?.TRL_SVELTE_APP_DATA?.alwaysOnTop?.getAndIncrement();
+        if (typeof newAlwaysOnTopZIndex === "number") {
+          this.position.zIndex = newAlwaysOnTopZIndex;
+        }
+      }
     }
     const elementTarget = this.elementTarget;
     const activeElement = document.activeElement;
@@ -13356,7 +15863,15 @@ class SvelteApp extends Application {
    * @protected
    */
   _getHeaderButtons() {
-    return super._getHeaderButtons();
+    const buttons = super._getHeaderButtons();
+    const closeButton = buttons.find((entry) => entry?.class === "close");
+    if (closeButton) {
+      closeButton.onclick = () => {
+        globalThis?.game?.tooltip?.deactivate?.();
+        this.close();
+      };
+    }
+    return buttons;
   }
   /**
    * Inject the Svelte components defined in `this.options.svelte`. The Svelte component can attach to the existing
@@ -13421,7 +15936,7 @@ ${JSON.stringify(this.options.svelte)}`
    * @param {number}   [opts.duration=0.1] - Controls content area animation duration in seconds.
    */
   async maximize({ animate = true, duration = 0.1 } = {}) {
-    if (!this.popOut || [false, null].includes(this._minimized)) {
+    if (!this.popOut && !this.options.alwaysOnTop || [false, null].includes(this._minimized)) {
       return;
     }
     this._minimized = null;
@@ -13436,6 +15951,7 @@ ${JSON.stringify(this.options.svelte)}`
         async: true,
         animateTo: true,
         properties: ["width"],
+        cancelable: false,
         duration: 0.1
       });
     }
@@ -13451,6 +15967,7 @@ ${JSON.stringify(this.options.svelte)}`
         animateTo: true,
         properties: ["height"],
         remove: true,
+        cancelable: false,
         duration
       }));
     } else {
@@ -13491,7 +16008,7 @@ ${JSON.stringify(this.options.svelte)}`
    * @param {number}   [opts.duration=0.1] - Controls content area animation duration in seconds.
    */
   async minimize({ animate = true, duration = 0.1 } = {}) {
-    if (!this.rendered || !this.popOut || [true, null].includes(this._minimized)) {
+    if (!this.rendered || !this.popOut && !this.options.alwaysOnTop || [true, null].includes(this._minimized)) {
       return;
     }
     this.#stores.uiStateUpdate((options) => deepMerge(options, { minimized: true }));
@@ -13532,11 +16049,12 @@ ${JSON.stringify(this.options.svelte)}`
     const headerOffsetHeight = header.offsetHeight;
     this.position.minHeight = headerOffsetHeight;
     if (animate) {
-      await this.position.animate.to({ height: headerOffsetHeight }, { duration }).finished;
+      await this.position.animate.to({ height: headerOffsetHeight }, { cancelable: false, duration }).finished;
     }
     for (let cntr = header.children.length; --cntr >= 0; ) {
-      const className = header.children[cntr].className;
-      if (className.includes("window-title") || className.includes("close")) {
+      let className = header.children[cntr]?.className;
+      className = className?.baseVal ?? className;
+      if (typeof className !== "string" || className.includes("window-title") || className.includes("close")) {
         continue;
       }
       if (className.includes("keep-minimized")) {
@@ -13546,7 +16064,10 @@ ${JSON.stringify(this.options.svelte)}`
       header.children[cntr].style.display = "none";
     }
     if (animate) {
-      await this.position.animate.to({ width: SvelteApp.#MIN_WINDOW_WIDTH }, { duration: 0.1 }).finished;
+      await this.position.animate.to({ width: SvelteApp.#MIN_WINDOW_WIDTH }, {
+        cancelable: false,
+        duration: 0.1
+      }).finished;
     }
     element2.classList.add("minimized");
     this._minimized = true;
@@ -13607,7 +16128,8 @@ ${JSON.stringify(this.options.svelte)}`
       return;
     }
     this.#gateSetPosition = true;
-    await super._render(force, options);
+    const popOut = typeof this.options.alwaysOnTop === "boolean" && this.options.alwaysOnTop ? false : this.popOut;
+    await super._render(force, { ...options, popOut });
     this.#gateSetPosition = false;
     if ([Application.RENDER_STATES.CLOSING, Application.RENDER_STATES.RENDERING].includes(this._state)) {
       return;
@@ -13633,9 +16155,12 @@ ${JSON.stringify(this.options.svelte)}`
       });
     }
     if (!this.#onMount) {
-      TJSAppIndex.add(this);
-      this.onSvelteMount();
       this.#onMount = true;
+      TJSAppIndex.add(this);
+      if (typeof this.options.alwaysOnTop === "boolean" && this.options.alwaysOnTop) {
+        handleAlwaysOnTop(this, true, this.#initialPopOut);
+      }
+      nextAnimationFrame().then(() => this.onSvelteMount());
     }
   }
   /**
@@ -13699,7 +16224,13 @@ ${JSON.stringify(this.options.svelte)}`
         this.position.set(this.position.get());
       }
       super._activateCoreListeners([this.popOut ? this.#elementTarget?.firstChild : this.#elementTarget]);
-      this.onSvelteRemount();
+      if (typeof this.options.alwaysOnTop === "boolean" && this.options.alwaysOnTop) {
+        handleAlwaysOnTop(this, true, this.#initialPopOut);
+      }
+      nextAnimationFrame().then(() => {
+        this.render();
+        this.onSvelteRemount();
+      });
     }
   }
 }
@@ -13735,128 +16266,609 @@ class PopoutSupport {
     }
   }
 }
-class ThemeObserver {
+class SvelteAppData {
+  static #initialized = false;
   /**
-   * All readable theme stores.
-   *
-   * @type {Readonly<({
-   *    theme: Readonly<import('#svelte/store').Readable<'theme-dark' | 'theme-light'>>,
-   *    themeDark: Readonly<import('#svelte/store').Readable<boolean>>,
-   *    themeLight: Readonly<import('#svelte/store').Readable<boolean>>,
-   * })>}
+   * @returns {number} Version number for SvelteAppData.
    */
-  static #stores;
-  /**
-   * Internal setter for theme stores.
-   *
-   * @type {({
-   *    theme: Function,
-   *    themeDark: Function,
-   *    themeLight: Function,
-   * })}
-   */
-  static #storeSet;
-  /**
-   * Current theme.
-   *
-   * @type {string}
-   */
-  static #theme = "";
-  /**
-   * @returns {Readonly<({
-   *    theme: Readonly<import('#svelte/store').Readable<'theme-dark' | 'theme-light'>>,
-   *    themeDark: Readonly<import('#svelte/store').Readable<boolean>>,
-   *    themeLight: Readonly<import('#svelte/store').Readable<boolean>>,
-   * })>} Current core theme stores.
-   */
-  static get stores() {
-    return this.#stores;
+  static get VERSION() {
+    return 1;
   }
-  /**
-   * @returns {'theme-dark' | 'theme-light'} Current core theme.
-   */
-  static get theme() {
-    return this.#theme;
+  static get alwaysOnTop() {
+    return AlwaysOnTop;
   }
-  /**
-   * @returns {boolean} Is the core theme `dark`.
-   */
-  static get themeDark() {
-    return this.#theme === "theme-dark";
-  }
-  /**
-   * @returns {boolean} Is the core theme `light`.
-   */
-  static get themeLight() {
-    return this.#theme === "theme-light";
-  }
-  /**
-   * Helper to apply current core theme to a given SvelteApp optional classes.
-   *
-   * @param {import('@typhonjs-fvtt/runtime/svelte/application').SvelteApp} application - Svelte application.
-   *
-   * @param {object} [options] - Options.
-   *
-   * @param {boolean} [options.hasThemed] - Verify that the original application default options contains the `themed`
-   *        class otherwise do not add the core theme classes.
-   *
-   * @returns {string} App classes CSS string with current core theme applied.
-   */
-  static appClasses(application, { hasThemed = false } = {}) {
-    const classes = /* @__PURE__ */ new Set([
-      ...Array.isArray(application?.options?.classes) ? application.options.classes : []
-    ]);
-    classes.delete("themed");
-    classes.delete("theme-light");
-    if (!hasThemed) {
-      classes.add("themed");
-      classes.add(this.#theme);
-    } else {
-      const origOptions = application.constructor.defaultOptions;
-      if (origOptions?.classes?.includes("themed")) {
-        classes.add("themed");
-        classes.add(this.#theme);
-      }
-    }
-    return Array.from(classes).join(" ");
-  }
-  /**
-   * Initialize `document.body` theme observation.
-   */
   static initialize() {
-    if (this.#stores !== void 0) {
+    if (this.#initialized) {
       return;
     }
-    const themeStore = writable(this.#theme);
-    const themeDarkStore = writable(false);
-    const themeLightStore = writable(false);
-    this.#stores = Object.freeze({
-      theme: Object.freeze({ subscribe: themeStore.subscribe }),
-      themeDark: Object.freeze({ subscribe: themeDarkStore.subscribe }),
-      themeLight: Object.freeze({ subscribe: themeLightStore.subscribe })
-    });
-    this.#storeSet = {
-      theme: themeStore.set,
-      themeDark: themeDarkStore.set,
-      themeLight: themeLightStore.set
-    };
-    const observer = new MutationObserver(() => {
-      if (document.body.classList.contains("theme-light")) {
-        this.#theme = "theme-light";
-        this.#storeSet.themeDark(false);
-        this.#storeSet.themeLight(true);
-      } else if (document.body.classList.contains("theme-dark")) {
-        this.#theme = "theme-dark";
-        this.#storeSet.themeDark(true);
-        this.#storeSet.themeLight(false);
-      }
-      this.#storeSet.theme(this.#theme);
-    });
-    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    this.#initialized = true;
+    const currentVersion = globalThis?.TRL_SVELTE_APP_DATA?.VERSION;
+    if (typeof currentVersion !== "number" || currentVersion < this.VERSION) {
+      globalThis.TRL_SVELTE_APP_DATA = this;
+    }
   }
 }
+class AlwaysOnTop {
+  /**
+   * Stores the max z-index.
+   *
+   * @type {number}
+   */
+  static #max = 2 ** 31 - 1e3;
+  /**
+   * Stores the min z-index.
+   *
+   * @type {number}
+   */
+  static #min = 2 ** 31 - 1e5;
+  /**
+   * Stores the current z-index for the top most `alwaysOnTop` app.
+   *
+   * @type {number}
+   */
+  static #current = this.#min;
+  /**
+   * @returns {number} Increments the current always on top z-index and returns it.
+   */
+  static getAndIncrement() {
+    this.#current = Math.min(++this.#current, this.#max);
+    return this.#current;
+  }
+  static get current() {
+    return this.#current;
+  }
+  static get max() {
+    return this.#max;
+  }
+  static get min() {
+    return this.#min;
+  }
+}
+SvelteAppData.initialize();
 ThemeObserver.initialize();
 PopoutSupport.initialize();
+function getRoutePrefix(url) {
+  return globalThis.foundry.utils.getRoute(url);
+}
+const cursorCSSVariables = {
+  "--tjs-cursor-all-scroll": "all-scroll",
+  "--tjs-cursor-all-scroll-down": "all-scroll",
+  "--tjs-cursor-alias": "alias",
+  "--tjs-cursor-alias-down": "alias",
+  "--tjs-cursor-cell": "cell",
+  "--tjs-cursor-cell-down": "cell",
+  "--tjs-cursor-copy": "copy",
+  "--tjs-cursor-copy-down": "copy",
+  "--tjs-cursor-context-menu": "context-menu",
+  "--tjs-cursor-context-menu-down": "context-menu",
+  "--tjs-cursor-crosshair": "crosshair",
+  "--tjs-cursor-crosshair-down": "crosshair",
+  "--tjs-cursor-default": "default",
+  "--tjs-cursor-default-down": "default",
+  "--tjs-cursor-grab": "grab",
+  "--tjs-cursor-grab-down": "var(--tjs-cursor-grabbing, grabbing)",
+  "--tjs-cursor-grabbing": "grabbing",
+  "--tjs-cursor-grabbing-down": "grabbing",
+  "--tjs-cursor-help": "help",
+  "--tjs-cursor-help-down": "help",
+  "--tjs-cursor-pointer": "pointer",
+  "--tjs-cursor-pointer-down": "pointer",
+  "--tjs-cursor-move": "move",
+  "--tjs-cursor-move-down": "move",
+  "--tjs-cursor-no-drop": "no-drop",
+  "--tjs-cursor-no-drop-down": "no-drop",
+  "--tjs-cursor-not-allowed": "not-allowed",
+  "--tjs-cursor-not-allowed-down": "not-allowed",
+  "--tjs-cursor-progress": "progress",
+  "--tjs-cursor-progress-down": "progress",
+  "--tjs-cursor-resize-col": "col-resize",
+  "--tjs-cursor-resize-col-down": "col-resize",
+  "--tjs-cursor-resize-e": "e-resize",
+  "--tjs-cursor-resize-e-down": "e-resize",
+  "--tjs-cursor-resize-ew": "ew-resize",
+  "--tjs-cursor-resize-ew-down": "ew-resize",
+  "--tjs-cursor-resize-n": "n-resize",
+  "--tjs-cursor-resize-n-down": "n-resize",
+  "--tjs-cursor-resize-ne": "ne-resize",
+  "--tjs-cursor-resize-ne-down": "ne-resize",
+  "--tjs-cursor-resize-nesw": "nesw-resize",
+  "--tjs-cursor-resize-nesw-down": "nesw-resize",
+  "--tjs-cursor-resize-ns": "ns-resize",
+  "--tjs-cursor-resize-ns-down": "ns-resize",
+  "--tjs-cursor-resize-nw": "nw-resize",
+  "--tjs-cursor-resize-nw-down": "nw-resize",
+  "--tjs-cursor-resize-nwse": "nwse-resize",
+  "--tjs-cursor-resize-nwse-down": "nwse-resize",
+  "--tjs-cursor-resize-row": "row-resize",
+  "--tjs-cursor-resize-row-down": "row-resize",
+  "--tjs-cursor-resize-s": "s-resize",
+  "--tjs-cursor-resize-s-down": "s-resize",
+  "--tjs-cursor-resize-se": "se-resize",
+  "--tjs-cursor-resize-se-down": "se-resize",
+  "--tjs-cursor-resize-sw": "sw-resize",
+  "--tjs-cursor-resize-sw-down": "sw-resize",
+  "--tjs-cursor-resize-w": "w-resize",
+  "--tjs-cursor-resize-w-down": "w-resize",
+  "--tjs-cursor-text": "text",
+  "--tjs-cursor-text-down": "text",
+  "--tjs-cursor-text-vertical": "vertical-text",
+  "--tjs-cursor-text-vertical-down": "vertical-text",
+  "--tjs-cursor-wait": "wait",
+  "--tjs-cursor-wait-down": "wait",
+  "--tjs-cursor-zoom-in": "zoom-in",
+  "--tjs-cursor-zoom-in-down": "zoom-in",
+  "--tjs-cursor-zoom-out": "zoom-out",
+  "--tjs-cursor-zoom-out-down": "zoom-out"
+};
+class FVTTAppTheme {
+  /**
+   * Generate all app classes with applied core or explicitly set theme.
+   *
+   * @param {Set<string>} activeClasses - Active app classes Set.
+   *
+   * @param {string} coreTheme - Current core theme class.
+   *
+   * @param {string} appThemeName - Any explicitly set app theme name override.
+   *
+   * @returns {string} All app classes.
+   */
+  static appClasses(activeClasses, coreTheme, appThemeName) {
+    const classes = new Set(activeClasses);
+    for (const entry of classes) {
+      if (entry.startsWith("theme-")) {
+        classes.delete(entry);
+      }
+    }
+    classes.add("themed");
+    classes.add(appThemeName ? `theme-${appThemeName}` : coreTheme);
+    return Array.from(classes).join(" ");
+  }
+}
+class FVTTConfigure {
+  static #initialized = false;
+  static initialize() {
+    if (this.#initialized) {
+      return;
+    }
+    const manager = StyleManager.create({
+      id: "__tjs-runtime-vars",
+      version: "0.1.1",
+      layerName: "variables.tjs-runtime-vars",
+      rules: {
+        themeDark: "body, .themed.theme-dark",
+        themeLight: ".themed.theme-light"
+      }
+    });
+    if (!manager?.isConnected) {
+      this.#initialized = true;
+      return;
+    }
+    this.#initialized = true;
+    document?.["#__trl-root-styles"]?.remove?.();
+    const themeDarkRoot = manager.get("themeDark");
+    const themeLight = manager.get("themeLight");
+    Hooks.once("ready", () => this.#setCoreInlineStyles(themeDarkRoot));
+    themeDarkRoot.setProperties(cursorCSSVariables);
+    this.#app(themeDarkRoot, themeLight);
+    Hooks.on("PopOut:loading", (app, popout) => {
+      popout.document.addEventListener(
+        "DOMContentLoaded",
+        () => manager.clone({ document: popout.document, force: true })
+      );
+    });
+  }
+  /**
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}  themeDarkRoot -
+   *
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}  themeLight -
+   */
+  static #app(themeDarkRoot, themeLight) {
+    const opts = { camelCase: true };
+    const propsApp = FoundryStyles.ext.get(".application", opts);
+    const propsAppDark = FoundryStyles.ext.get(".application", { ...opts, resolve: [
+      ".themed.theme-dark .application"
+    ] });
+    const propsAppHeader = FoundryStyles.ext.get(".application .window-header", { ...opts, resolve: [
+      ".application",
+      ".themed.theme-dark .application"
+    ] });
+    const propsAppHeaderBtn = FoundryStyles.ext.get(".application .window-header button.header-control", opts);
+    const propsAppHandle = FoundryStyles.ext.get(".application .window-resize-handle", opts);
+    const propsAppHandleDark = FoundryStyles.ext.get(".themed.theme-dark.application .window-resize-handle", opts);
+    const propsBody = FoundryStyles.ext.get("body", opts);
+    themeDarkRoot.setProperties({
+      // `:root` properties applying to all themes ----------------------------------------------------------------
+      // For `TJSApplicationShell.svelte` app background.
+      "--tjs-app-background": `url(${getRoutePrefix("/ui/denim075.png")})`,
+      "--tjs-app-color": propsApp?.color ?? "var(--color-text-primary)",
+      "--tjs-app-font-family": propsBody?.fontFamily ?? "var(--font-body)",
+      "--tjs-app-font-size": propsApp?.fontSize ?? "var(--font-size-14)",
+      // For `TJSApplicationHeader.svelte`
+      "--tjs-app-header-flex": propsAppHeader?.flex ?? "0 0 var(--header-height)",
+      "--tjs-app-header-font-size": propsAppHeader?.fontSize ?? "var(--font-size-13)",
+      "--tjs-app-header-height": propsApp?.["--header-height"] ?? "36px",
+      // For `TJSHeaderButton.svelte / core only provides one set of properties across themes.
+      "--tjs-app-header-button-border": propsAppHeaderBtn?.border ?? "none",
+      "--tjs-app-header-button-margin": propsAppHeaderBtn?.margin ?? "0",
+      "--tjs-app-header-button-size": propsAppHeaderBtn?.["--button-size"] ?? "1.5rem",
+      "--tjs-app-header-button-color": propsAppHeaderBtn?.["--button-text-color"] ?? "var(--color-light-1)",
+      // For `ResizeHandle.svelte` / the resize handle.
+      "--tjs-app-resize-handle-background": propsAppHandle?.background ?? `url(${getRoutePrefix("/ui/resize-handle.webp")}) center center / contain no-repeat transparent`,
+      "--tjs-app-resize-handle-inset": propsAppHandle?.inset ?? "auto 1px 1px auto",
+      "--tjs-app-resize-handle-position": propsAppHandle?.position ?? "absolute",
+      "--tjs-app-resize-handle-height": propsAppHandle?.height ?? "11x",
+      "--tjs-app-resize-handle-width": propsAppHandle?.width ?? "11px",
+      // Explicit dark theme properties ---------------------------------------------------------------------------
+      // For `TJSApplicationShell.svelte`.
+      "--tjs-app-border": propsAppDark?.border ?? "1px solid var(--color-cool-4)",
+      // For `TJSApplicationHeader.svelte
+      "--tjs-app-header-background": propsAppHeader?.background ?? "rgba(0, 0, 0, 0.5)",
+      "--tjs-app-header-border-bottom": propsAppHeader?.borderBottom ?? "1px solid var(--color-cool-4)",
+      "--tjs-app-header-color": propsAppHeader?.color ?? "var(--color-light-1)",
+      // For `ResizeHandle.svelte` / invert the resize handle.
+      "--tjs-app-resize-handle-filter": propsAppHandleDark?.filter ?? "invert(1)"
+    });
+    const propsAppLight = FoundryStyles.ext.get(".application", {
+      camelCase: true,
+      resolve: "body.theme-light .application"
+    });
+    const propsAppHeaderLight = FoundryStyles.ext.get(".application .window-header", {
+      camelCase: true,
+      resolve: "body.theme-light .application"
+    });
+    themeLight.setProperties({
+      // For `TJSApplicationShell.svelte`.
+      "--tjs-app-border": propsAppLight?.border ?? "1px solid var(--color-cool-4)",
+      // For `TJSApplicationHeader.svelte`
+      "--tjs-app-header-background": propsAppHeaderLight?.background ?? "var(--color-dark-3)",
+      "--tjs-app-header-border-bottom": propsAppHeaderLight?.borderBottom ?? "1px solid green",
+      // '1px solid var(--color-cool-4)',
+      // For `ResizeHandle.svelte` / cancel invert of the resize handle / there is no core style to set.
+      "--tjs-app-resize-handle-filter": "none"
+    });
+  }
+  /**
+   * Sets any top level inline styles to TRL CSS variables defined in root `<html>` element by Foundry or game system
+   * override.
+   *
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}   ruleManager - Target rule manager.
+   */
+  static #setCoreInlineStyles(ruleManager) {
+    const htmlStyles = StyleParse.cssText(document.documentElement.style.cssText);
+    for (const key in htmlStyles) {
+      if (key.startsWith("--cursor-")) {
+        const tjsCursorKey = key.replace(/^--cursor-/, "--tjs-cursor-");
+        if (ruleManager.hasProperty(tjsCursorKey)) {
+          ruleManager.setProperty(tjsCursorKey, htmlStyles[key]);
+        }
+      }
+    }
+  }
+}
+class ResizeObserverManager {
+  /** @type {Map<HTMLElement, import('./types-local').ResizeObserverSubscriber[]>} */
+  #elMap = /* @__PURE__ */ new Map();
+  /** @type {ResizeObserver} */
+  #resizeObserver;
+  /**
+   * Defines the various shape / update type of the given target.
+   *
+   * @type {{ [key: string]: number }}
+   */
+  static #updateTypes = Object.freeze({
+    none: 0,
+    attribute: 1,
+    function: 2,
+    resizeObserved: 3,
+    setContentBounds: 4,
+    setDimension: 5,
+    storeObject: 6,
+    storesObject: 7
+  });
+  constructor() {
+    this.#resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const subscribers = this.#elMap.get(entry?.target);
+        if (Array.isArray(subscribers)) {
+          const contentWidth = entry.contentRect.width;
+          const contentHeight = entry.contentRect.height;
+          for (const subscriber of subscribers) {
+            ResizeObserverManager.#updateSubscriber(subscriber, contentWidth, contentHeight);
+          }
+        }
+      }
+    });
+  }
+  /**
+   * Add an {@link HTMLElement} and {@link ResizeObserverData.ResizeTarget} instance for monitoring. Create cached
+   * style attributes for the given element include border & padding dimensions for offset width / height calculations.
+   *
+   * @param {HTMLElement}    el - The element to observe.
+   *
+   * @param {import('./types').ResizeObserverData.ResizeTarget} target - A target that contains one of several
+   *        mechanisms for updating resize data.
+   */
+  add(el, target) {
+    if (!CrossWindow.isHTMLElement(el)) {
+      throw new TypeError(`ResizeObserverManager.add error: 'el' is not a HTMLElement.`);
+    }
+    if (this.#hasTarget(el, target)) {
+      return;
+    }
+    const updateType = ResizeObserverManager.#getUpdateType(target);
+    if (updateType === 0) {
+      throw new Error(`ResizeObserverManager.add error: 'target' is not a valid ResizeObserverManager target.`);
+    }
+    const computed = globalThis.getComputedStyle(el);
+    const borderBottom = StyleParse.pixels(el.style.borderBottom) ?? StyleParse.pixels(computed.borderBottom) ?? 0;
+    const borderLeft = StyleParse.pixels(el.style.borderLeft) ?? StyleParse.pixels(computed.borderLeft) ?? 0;
+    const borderRight = StyleParse.pixels(el.style.borderRight) ?? StyleParse.pixels(computed.borderRight) ?? 0;
+    const borderTop = StyleParse.pixels(el.style.borderTop) ?? StyleParse.pixels(computed.borderTop) ?? 0;
+    const paddingBottom = StyleParse.pixels(el.style.paddingBottom) ?? StyleParse.pixels(computed.paddingBottom) ?? 0;
+    const paddingLeft = StyleParse.pixels(el.style.paddingLeft) ?? StyleParse.pixels(computed.paddingLeft) ?? 0;
+    const paddingRight = StyleParse.pixels(el.style.paddingRight) ?? StyleParse.pixels(computed.paddingRight) ?? 0;
+    const paddingTop = StyleParse.pixels(el.style.paddingTop) ?? StyleParse.pixels(computed.paddingTop) ?? 0;
+    const data = {
+      updateType,
+      target,
+      // Stores most recent contentRect.width and contentRect.height values from ResizeObserver.
+      contentWidth: 0,
+      contentHeight: 0,
+      // Convenience data for total border & padding for offset width & height calculations.
+      styles: {
+        additionalWidth: borderLeft + borderRight + paddingLeft + paddingRight,
+        additionalHeight: borderTop + borderBottom + paddingTop + paddingBottom
+      }
+    };
+    if (this.#elMap.has(el)) {
+      const subscribers = this.#elMap.get(el);
+      subscribers.push(data);
+    } else {
+      this.#elMap.set(el, [data]);
+    }
+    this.#resizeObserver.observe(el);
+  }
+  /**
+   * Clears and unobserves all currently tracked elements and managed targets.
+   */
+  clear() {
+    for (const el of this.#elMap.keys()) {
+      this.#resizeObserver.unobserve(el);
+    }
+    this.#elMap.clear();
+  }
+  /**
+   * Removes all {@link ResizeObserverData.ResizeTarget} instances for the given element from monitoring when just an
+   * element is provided otherwise removes a specific target from the monitoring map. If no more targets remain then
+   * the element is removed from monitoring.
+   *
+   * @param {HTMLElement} el - Element to remove from monitoring.
+   *
+   * @param {import('./types').ResizeObserverData.ResizeTarget} [target] - A specific target to remove from monitoring.
+   */
+  remove(el, target = void 0) {
+    const subscribers = this.#elMap.get(el);
+    if (Array.isArray(subscribers)) {
+      if (target !== void 0) {
+        const index = subscribers.findIndex((entry) => entry.target === target);
+        if (index >= 0) {
+          subscribers.splice(index, 1);
+        }
+      } else {
+        subscribers.length = 0;
+      }
+      if (subscribers.length === 0) {
+        this.#elMap.delete(el);
+        this.#resizeObserver.unobserve(el);
+      }
+    }
+  }
+  /**
+   * Provides a function that when invoked with an element updates the cached styles for each subscriber of the
+   * element.
+   *
+   * The style attributes cached to calculate offset height / width include border & padding dimensions. You only need
+   * to update the cache if you change border or padding attributes of the element.
+   *
+   * @param {HTMLElement} el - A HTML element.
+   */
+  updateCache(el) {
+    const subscribers = this.#elMap.get(el);
+    if (Array.isArray(subscribers)) {
+      const computed = globalThis.getComputedStyle(el);
+      const borderBottom = StyleParse.pixels(el.style.borderBottom) ?? StyleParse.pixels(computed.borderBottom) ?? 0;
+      const borderLeft = StyleParse.pixels(el.style.borderLeft) ?? StyleParse.pixels(computed.borderLeft) ?? 0;
+      const borderRight = StyleParse.pixels(el.style.borderRight) ?? StyleParse.pixels(computed.borderRight) ?? 0;
+      const borderTop = StyleParse.pixels(el.style.borderTop) ?? StyleParse.pixels(computed.borderTop) ?? 0;
+      const paddingBottom = StyleParse.pixels(el.style.paddingBottom) ?? StyleParse.pixels(computed.paddingBottom) ?? 0;
+      const paddingLeft = StyleParse.pixels(el.style.paddingLeft) ?? StyleParse.pixels(computed.paddingLeft) ?? 0;
+      const paddingRight = StyleParse.pixels(el.style.paddingRight) ?? StyleParse.pixels(computed.paddingRight) ?? 0;
+      const paddingTop = StyleParse.pixels(el.style.paddingTop) ?? StyleParse.pixels(computed.paddingTop) ?? 0;
+      const additionalWidth = borderLeft + borderRight + paddingLeft + paddingRight;
+      const additionalHeight = borderTop + borderBottom + paddingTop + paddingBottom;
+      for (const subscriber of subscribers) {
+        subscriber.styles.additionalWidth = additionalWidth;
+        subscriber.styles.additionalHeight = additionalHeight;
+        ResizeObserverManager.#updateSubscriber(subscriber, subscriber.contentWidth, subscriber.contentHeight);
+      }
+    }
+  }
+  // Internal implementation ----------------------------------------------------------------------------------------
+  /**
+   * Determines the shape of the target instance regarding valid update mechanisms to set width & height changes.
+   *
+   * @param {import('./types').ResizeObserverData.ResizeTarget}  target - The target instance.
+   *
+   * @returns {number} Update type value.
+   */
+  static #getUpdateType(target) {
+    if (typeof target?.resizeObserved === "function") {
+      return this.#updateTypes.resizeObserved;
+    }
+    if (typeof target?.setDimension === "function") {
+      return this.#updateTypes.setDimension;
+    }
+    if (typeof target?.setContentBounds === "function") {
+      return this.#updateTypes.setContentBounds;
+    }
+    const targetType = typeof target;
+    if (targetType !== null && (targetType === "object" || targetType === "function")) {
+      if (isWritableStore(target.resizeObserved)) {
+        return this.#updateTypes.storeObject;
+      }
+      const stores = target?.stores;
+      if (isObject(stores) || typeof stores === "function") {
+        if (isWritableStore(stores.resizeObserved)) {
+          return this.#updateTypes.storesObject;
+        }
+      }
+    }
+    if (targetType !== null && targetType === "object") {
+      return this.#updateTypes.attribute;
+    }
+    if (targetType === "function") {
+      return this.#updateTypes.function;
+    }
+    return this.#updateTypes.none;
+  }
+  /**
+   * Determines if a given element and target is already being observed.
+   *
+   * @param {HTMLElement} el - A HTMLElement.
+   *
+   * @param {import('./types').ResizeObserverData.ResizeTarget} [target] - A specific target to find.
+   *
+   * @returns {boolean} Whether the target is already being tracked for the given element.
+   */
+  #hasTarget(el, target) {
+    if (target === void 0 || target === null) {
+      return false;
+    }
+    const subscribers = this.#elMap.get(el);
+    if (Array.isArray(subscribers)) {
+      return subscribers.findIndex((entry) => entry.target === target) >= 0;
+    }
+    return false;
+  }
+  /**
+   * Updates a subscriber target with given content width & height values. Offset width & height is calculated from
+   * the content values + cached styles.
+   *
+   * @param {import('./types-local').ResizeObserverSubscriber} subscriber - Internal data about subscriber.
+   *
+   * @param {number|undefined}  contentWidth - ResizeObserver `contentRect.width` value or undefined.
+   *
+   * @param {number|undefined}  contentHeight - ResizeObserver `contentRect.height` value or undefined.
+   */
+  static #updateSubscriber(subscriber, contentWidth, contentHeight) {
+    const styles = subscriber.styles;
+    subscriber.contentWidth = contentWidth;
+    subscriber.contentHeight = contentHeight;
+    const offsetWidth = Number.isFinite(contentWidth) ? contentWidth + styles.additionalWidth : void 0;
+    const offsetHeight = Number.isFinite(contentHeight) ? contentHeight + styles.additionalHeight : void 0;
+    const target = subscriber.target;
+    switch (subscriber.updateType) {
+      case this.#updateTypes.attribute:
+        target.contentWidth = contentWidth;
+        target.contentHeight = contentHeight;
+        target.offsetWidth = offsetWidth;
+        target.offsetHeight = offsetHeight;
+        break;
+      case this.#updateTypes.function:
+        target?.(offsetWidth, offsetHeight, contentWidth, contentHeight);
+        break;
+      case this.#updateTypes.resizeObserved:
+        target.resizeObserved?.(offsetWidth, offsetHeight, contentWidth, contentHeight);
+        break;
+      case this.#updateTypes.setContentBounds:
+        target.setContentBounds?.(contentWidth, contentHeight);
+        break;
+      case this.#updateTypes.setDimension:
+        target.setDimension?.(offsetWidth, offsetHeight);
+        break;
+      case this.#updateTypes.storeObject:
+        target.resizeObserved.update((object) => {
+          object.contentHeight = contentHeight;
+          object.contentWidth = contentWidth;
+          object.offsetHeight = offsetHeight;
+          object.offsetWidth = offsetWidth;
+          return object;
+        });
+        break;
+      case this.#updateTypes.storesObject:
+        target.stores.resizeObserved.update((object) => {
+          object.contentHeight = contentHeight;
+          object.contentWidth = contentWidth;
+          object.offsetHeight = offsetHeight;
+          object.offsetWidth = offsetWidth;
+          return object;
+        });
+        break;
+    }
+  }
+}
+const resizeObserverActionManager = new ResizeObserverManager();
+function resizeObserver(node, target) {
+  resizeObserverActionManager.add(node, target);
+  return {
+    /**
+     * @param {import('#runtime/util/dom/observer').ResizeObserverData.ResizeTarget} newTarget - A
+     *        {@link ResizeObserverManager} target to update with observed width & height changes.
+     */
+    update: (newTarget) => {
+      resizeObserverActionManager.remove(node, target);
+      target = newTarget;
+      resizeObserverActionManager.add(node, target);
+    },
+    destroy: () => {
+      resizeObserverActionManager.remove(node, target);
+    }
+  };
+}
+resizeObserver.updateCache = function(el) {
+  resizeObserverActionManager.updateCache(el);
+};
+function dynamicAction(node, { action, data } = {}) {
+  let actionResult;
+  if (typeof action === "function") {
+    actionResult = action(node, data);
+  }
+  return {
+    /**
+     * @param {import('./types').DynamicActionOptions} newOptions - Defines the new action to dynamically mount.
+     */
+    update: (newOptions) => {
+      if (!isObject(newOptions)) {
+        actionResult?.destroy?.();
+        action = void 0;
+        data = void 0;
+        return;
+      }
+      const { action: newAction, data: newData } = newOptions;
+      if (typeof newAction !== "function") {
+        console.warn(`dynamicAction.update warning: Aborting as 'action' is not a function.`);
+        return;
+      }
+      const hasNewData = newData !== data;
+      if (hasNewData) {
+        data = newData;
+      }
+      if (newAction !== action) {
+        actionResult?.destroy?.();
+        action = newAction;
+        actionResult = action(node, data);
+      } else if (hasNewData) {
+        actionResult?.update?.(data);
+      }
+    },
+    destroy: () => {
+      actionResult?.destroy?.();
+      action = void 0;
+      data = void 0;
+      actionResult = void 0;
+    }
+  };
+}
 class TJSDefaultTransition {
   static #options = {};
   static #default = () => void 0;
@@ -13874,10 +16886,16 @@ class TJSDefaultTransition {
   }
 }
 class AppShellContextInternal {
-  /** @type {import('./types').AppShell.Context.Internal.stores} */
+  /** @type {import('./types').AppShell.Context.InternalAppStores} */
   #stores;
   constructor() {
     this.#stores = {
+      // When app shell has content resize observation enabled these stores are updated.
+      contentOffsetWidth: writable(0),
+      contentOffsetHeight: writable(0),
+      contentWidth: writable(0),
+      contentHeight: writable(0),
+      cqEnabled: writable(false),
       elementContent: writable(void 0),
       elementRoot: writable(void 0)
     };
@@ -13885,124 +16903,459 @@ class AppShellContextInternal {
     Object.seal(this);
   }
   /**
-   * @returns {import('./types').AppShell.Context.Internal.stores} The internal context stores for `elementContent` /
-   *          `elementRoot`
+   * @returns {import('./types').AppShell.Context.InternalAppStores} The internal context stores:
+   * - `cqEnabled` - Container query enabled state.
+   * - `elementContent` - The bound elementContent element reference.
+   * - `elementRoot` - The bound elementRoot element reference.
    */
   get stores() {
     return this.#stores;
   }
 }
-function create_fragment$5(ctx) {
-  let button_1;
-  let button_1_class_value;
-  let button_1_data_action_value;
-  let button_1_data_tooltip_value;
-  let applyStyles_action;
+const DIMENSION_REGEX = /^([+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?)\s*([a-zA-Z%]+)?$/;
+function extractDimensionNumberAndUnit(dimension) {
+  const [, num, unit = ""] = dimension.trim().match(DIMENSION_REGEX) ?? [];
+  return { number: parseInt(num, 10), unit };
+}
+function calculateNewDimensions(base, constraint) {
+  const { width, height } = base;
+  if ("width" in constraint) {
+    const { width: constraintWidth } = constraint;
+    return {
+      width: constraintWidth,
+      height: constraintWidth / width * height
+    };
+  }
+  const { height: constraintHeight } = constraint;
+  return {
+    width: constraintHeight / height * width,
+    height: constraintHeight
+  };
+}
+function calculateDimensions(local, remote) {
+  const lWidthStr = local.getAttribute("width");
+  const lHeightStr = local.getAttribute("height");
+  if (lWidthStr && lHeightStr) {
+    return { width: lWidthStr, height: lHeightStr };
+  }
+  const lDimension = { width: lWidthStr || "", height: lHeightStr || "" };
+  const rWidthStr = remote.getAttribute("width");
+  const rHeightStr = remote.getAttribute("height");
+  const rViewBox = remote.getAttribute("viewBox");
+  if (!(rWidthStr && rHeightStr || rViewBox)) {
+    return lDimension;
+  }
+  let rWidth = 0;
+  let rHeight = 0;
+  let rWidthUnit = "";
+  let rHeightUnit = "";
+  if (rWidthStr && rHeightStr) {
+    ({ number: rWidth, unit: rWidthUnit } = extractDimensionNumberAndUnit(rWidthStr));
+    ({ number: rHeight, unit: rHeightUnit } = extractDimensionNumberAndUnit(rHeightStr));
+  } else if (rViewBox) {
+    [, , rWidth, rHeight] = rViewBox.split(" ").map((s) => parseInt(s, 10));
+  }
+  if (rWidthUnit !== rHeightUnit) {
+    return {
+      width: lWidthStr || rWidthStr || "",
+      height: lHeightStr || rHeightStr || ""
+    };
+  }
+  if (lWidthStr) {
+    const { number, unit } = extractDimensionNumberAndUnit(lWidthStr);
+    const cDimension = calculateNewDimensions(
+      { width: rWidth, height: rHeight },
+      { width: number }
+    );
+    const cUnit = unit || rWidthUnit;
+    return {
+      width: cDimension.width.toFixed(2) + cUnit,
+      height: cDimension.height.toFixed(2) + cUnit
+    };
+  }
+  if (lHeightStr) {
+    const { number, unit } = extractDimensionNumberAndUnit(lHeightStr);
+    const cDimension = calculateNewDimensions(
+      { width: rWidth, height: rHeight },
+      { height: number }
+    );
+    const cUnit = unit || rHeightUnit;
+    return {
+      width: cDimension.width.toFixed(2) + cUnit,
+      height: cDimension.height.toFixed(2) + cUnit
+    };
+  }
+  return {
+    width: rWidth + rWidthUnit,
+    height: rHeight + rHeightUnit
+  };
+}
+function inlineSvg(node, param) {
+  let config = resolveConfig(param);
+  async function op() {
+    if (config.src) {
+      const response = await fetch(config.src, { cache: config.cache });
+      const str = config.transform(await response.text());
+      const svg = new DOMParser().parseFromString(str, "image/svg+xml").documentElement;
+      for (let i = 0; i < svg.attributes.length; i++) {
+        const attr2 = svg.attributes[i];
+        if (!node.hasAttribute(attr2.name) && !["width", "height"].includes(attr2.name)) {
+          node.setAttribute(attr2.name, attr2.value);
+        }
+      }
+      if (config.autoDimensions) {
+        const dimensions = calculateDimensions(node, svg);
+        node.setAttribute("width", dimensions.width);
+        node.setAttribute("height", dimensions.height);
+      } else {
+        node.setAttribute("width", node.getAttribute("width") || "");
+        node.setAttribute("height", node.getAttribute("height") || "");
+      }
+      node.innerHTML = svg.innerHTML;
+    }
+  }
+  op();
+  return {
+    update(update2) {
+      config = resolveConfig(update2);
+      op();
+    }
+  };
+}
+const DEFAULT_INLINE_SVG_ACTION_CONFIG = {
+  src: "",
+  cache: "no-cache",
+  autoDimensions: true,
+  transform: (svg) => svg
+};
+function resolveConfig(param = "") {
+  if (typeof param === "string") {
+    return {
+      ...DEFAULT_INLINE_SVG_ACTION_CONFIG,
+      src: param
+    };
+  }
+  return {
+    ...DEFAULT_INLINE_SVG_ACTION_CONFIG,
+    ...param
+  };
+}
+function popoverTooltip(node, { cssClass, direction, isHTML, locked, tooltip }) {
+  function setAttributes() {
+    if (typeof tooltip === "string") {
+      if (isHTML) {
+        node.setAttribute("data-tooltip-html", tooltip);
+        node.removeAttribute("data-tooltip");
+      } else {
+        node.setAttribute("data-tooltip", tooltip);
+        node.removeAttribute("data-tooltip-html");
+      }
+    } else {
+      node.removeAttribute("data-tooltip");
+      node.removeAttribute("data-tooltip-html");
+    }
+    if (typeof cssClass === "string") {
+      node.setAttribute("data-tooltip-class", cssClass);
+    } else {
+      node.removeAttribute("data-tooltip-class");
+    }
+    if (typeof direction === "string") {
+      node.setAttribute("data-tooltip-direction", direction);
+    } else {
+      node.removeAttribute("data-tooltip-direction");
+    }
+    if (typeof locked === "boolean" && locked) {
+      node.setAttribute("data-locked", String(locked));
+    } else {
+      node.removeAttribute("data-locked");
+    }
+    if (node === globalThis?.game?.tooltip?.element) {
+      globalThis?.game?.tooltip?.activate(node);
+    }
+  }
+  setAttributes();
+  return {
+    /**
+     * @param {TooltipOptions}  options - Update tooltip.
+     */
+    update: (options) => {
+      cssClass = typeof options?.cssClass === "string" ? options.cssClass : void 0;
+      direction = typeof options?.direction === "string" ? options.direction : void 0;
+      isHTML = typeof options?.isHTML === "boolean" ? options.isHTML : void 0;
+      locked = typeof options?.locked === "boolean" ? options.locked : void 0;
+      tooltip = typeof options?.tooltip === "string" ? options.tooltip : void 0;
+      setAttributes();
+    }
+  };
+}
+function create_if_block$6(ctx) {
+  let if_block_anchor;
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*iconType*/
+      ctx2[3] === "font"
+    ) return create_if_block_1$1;
+    if (
+      /*iconType*/
+      ctx2[3] === "img"
+    ) return create_if_block_2$1;
+    if (
+      /*iconType*/
+      ctx2[3] === "svg"
+    ) return create_if_block_3;
+  }
+  let current_block_type = select_block_type(ctx);
+  let if_block = current_block_type && current_block_type(ctx);
+  return {
+    c() {
+      if (if_block) if_block.c();
+      if_block_anchor = empty();
+    },
+    m(target, anchor) {
+      if (if_block) if_block.m(target, anchor);
+      insert(target, if_block_anchor, anchor);
+    },
+    p(ctx2, dirty) {
+      if (current_block_type === (current_block_type = select_block_type(ctx2)) && if_block) {
+        if_block.p(ctx2, dirty);
+      } else {
+        if (if_block) if_block.d(1);
+        if_block = current_block_type && current_block_type(ctx2);
+        if (if_block) {
+          if_block.c();
+          if_block.m(if_block_anchor.parentNode, if_block_anchor);
+        }
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(if_block_anchor);
+      }
+      if (if_block) {
+        if_block.d(detaching);
+      }
+    }
+  };
+}
+function create_if_block_3(ctx) {
+  let svg;
+  let inlineSvg_action;
   let mounted;
   let dispose;
   return {
     c() {
+      svg = svg_element("svg");
+      attr(svg, "class", "icon-int svelte-guag71");
+    },
+    m(target, anchor) {
+      insert(target, svg, anchor);
+      if (!mounted) {
+        dispose = action_destroyer(inlineSvg_action = inlineSvg.call(null, svg, { src: (
+          /*icon*/
+          ctx[2]
+        ) }));
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (inlineSvg_action && is_function(inlineSvg_action.update) && dirty & /*icon*/
+      4) inlineSvg_action.update.call(null, { src: (
+        /*icon*/
+        ctx2[2]
+      ) });
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(svg);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_if_block_2$1(ctx) {
+  let img;
+  let img_src_value;
+  return {
+    c() {
+      img = element("img");
+      if (!src_url_equal(img.src, img_src_value = /*icon*/
+      ctx[2])) attr(img, "src", img_src_value);
+      attr(img, "alt", "");
+      attr(img, "class", "icon-int svelte-guag71");
+    },
+    m(target, anchor) {
+      insert(target, img, anchor);
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*icon*/
+      4 && !src_url_equal(img.src, img_src_value = /*icon*/
+      ctx2[2])) {
+        attr(img, "src", img_src_value);
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(img);
+      }
+    }
+  };
+}
+function create_if_block_1$1(ctx) {
+  let i;
+  let i_class_value;
+  return {
+    c() {
+      i = element("i");
+      attr(i, "class", i_class_value = null_to_empty(
+        /*icon*/
+        ctx[2]
+      ) + " svelte-guag71");
+    },
+    m(target, anchor) {
+      insert(target, i, anchor);
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*icon*/
+      4 && i_class_value !== (i_class_value = null_to_empty(
+        /*icon*/
+        ctx2[2]
+      ) + " svelte-guag71")) {
+        attr(i, "class", i_class_value);
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(i);
+      }
+    }
+  };
+}
+function create_fragment$a(ctx) {
+  let button_1;
+  let button_1_class_value;
+  let applyStyles_action;
+  let popoverTooltip_action;
+  let mounted;
+  let dispose;
+  let if_block = (
+    /*icon*/
+    ctx[2] && create_if_block$6(ctx)
+  );
+  return {
+    c() {
       button_1 = element("button");
+      if (if_block) if_block.c();
       attr(button_1, "type", "button");
-      attr(button_1, "class", button_1_class_value = "header-control icon " + /*icon*/
-      ctx[5] + " " + /*button*/
-      ctx[0].class);
-      attr(button_1, "data-action", button_1_data_action_value = /*button*/
-      ctx[0].class);
-      attr(button_1, "data-tooltip", button_1_data_tooltip_value = /*$storeHeaderButtonNoLabel*/
-      ctx[6] ? null : (
-        /*label*/
-        ctx[4]
-      ));
-      attr(
-        button_1,
-        "aria-label",
-        /*label*/
-        ctx[4]
-      );
+      attr(button_1, "class", button_1_class_value = "header-control icon" + (typeof /*button*/
+      ctx[0].class === "string" ? ` ${/*button*/
+      ctx[0].class}` : "") + " svelte-guag71");
       toggle_class(
         button_1,
         "keep-minimized",
         /*keepMinimized*/
-        ctx[3]
+        ctx[5]
       );
     },
     m(target, anchor) {
       insert(target, button_1, anchor);
+      if (if_block) if_block.m(button_1, null);
       if (!mounted) {
         dispose = [
           listen(button_1, "click", stop_propagation(prevent_default(
             /*onClick*/
-            ctx[7]
+            ctx[9]
           ))),
           listen(button_1, "contextmenu", stop_propagation(prevent_default(
             /*onContextMenu*/
-            ctx[8]
+            ctx[10]
           ))),
           listen(
             button_1,
             "keydown",
             /*onKeydown*/
-            ctx[9]
+            ctx[11]
           ),
           listen(
             button_1,
             "keyup",
             /*onKeyup*/
-            ctx[10]
+            ctx[12]
           ),
           action_destroyer(applyStyles_action = applyStyles.call(
             null,
             button_1,
             /*styles*/
-            ctx[2]
-          ))
+            ctx[4]
+          )),
+          action_destroyer(popoverTooltip_action = popoverTooltip.call(null, button_1, {
+            ariaLabel: true,
+            tooltip: (
+              /*$storeHeaderButtonNoLabel*/
+              ctx[8] ? void 0 : (
+                /*label*/
+                ctx[7]
+              )
+            ),
+            direction: (
+              /*tooltipDirection*/
+              ctx[6]
+            )
+          }))
         ];
         mounted = true;
       }
     },
     p(ctx2, [dirty]) {
-      if (dirty & /*icon, button*/
-      33 && button_1_class_value !== (button_1_class_value = "header-control icon " + /*icon*/
-      ctx2[5] + " " + /*button*/
-      ctx2[0].class)) {
-        attr(button_1, "class", button_1_class_value);
+      if (
+        /*icon*/
+        ctx2[2]
+      ) {
+        if (if_block) {
+          if_block.p(ctx2, dirty);
+        } else {
+          if_block = create_if_block$6(ctx2);
+          if_block.c();
+          if_block.m(button_1, null);
+        }
+      } else if (if_block) {
+        if_block.d(1);
+        if_block = null;
       }
       if (dirty & /*button*/
-      1 && button_1_data_action_value !== (button_1_data_action_value = /*button*/
-      ctx2[0].class)) {
-        attr(button_1, "data-action", button_1_data_action_value);
-      }
-      if (dirty & /*$storeHeaderButtonNoLabel, label*/
-      80 && button_1_data_tooltip_value !== (button_1_data_tooltip_value = /*$storeHeaderButtonNoLabel*/
-      ctx2[6] ? null : (
-        /*label*/
-        ctx2[4]
-      ))) {
-        attr(button_1, "data-tooltip", button_1_data_tooltip_value);
-      }
-      if (dirty & /*label*/
-      16) {
-        attr(
-          button_1,
-          "aria-label",
-          /*label*/
-          ctx2[4]
-        );
+      1 && button_1_class_value !== (button_1_class_value = "header-control icon" + (typeof /*button*/
+      ctx2[0].class === "string" ? ` ${/*button*/
+      ctx2[0].class}` : "") + " svelte-guag71")) {
+        attr(button_1, "class", button_1_class_value);
       }
       if (applyStyles_action && is_function(applyStyles_action.update) && dirty & /*styles*/
-      4) applyStyles_action.update.call(
+      16) applyStyles_action.update.call(
         null,
         /*styles*/
-        ctx2[2]
+        ctx2[4]
       );
-      if (dirty & /*icon, button, keepMinimized*/
-      41) {
+      if (popoverTooltip_action && is_function(popoverTooltip_action.update) && dirty & /*$storeHeaderButtonNoLabel, label, tooltipDirection*/
+      448) popoverTooltip_action.update.call(null, {
+        ariaLabel: true,
+        tooltip: (
+          /*$storeHeaderButtonNoLabel*/
+          ctx2[8] ? void 0 : (
+            /*label*/
+            ctx2[7]
+          )
+        ),
+        direction: (
+          /*tooltipDirection*/
+          ctx2[6]
+        )
+      });
+      if (dirty & /*button, keepMinimized*/
+      33) {
         toggle_class(
           button_1,
           "keep-minimized",
           /*keepMinimized*/
-          ctx2[3]
+          ctx2[5]
         );
       }
     },
@@ -14012,22 +17365,25 @@ function create_fragment$5(ctx) {
       if (detaching) {
         detach(button_1);
       }
+      if (if_block) if_block.d();
       mounted = false;
       run_all(dispose);
     }
   };
 }
-function instance$5($$self, $$props, $$invalidate) {
+function instance$a($$self, $$props, $$invalidate) {
   let icon;
   let label;
+  let tooltipDirection;
   let keepMinimized;
   let keyCode;
   let styles;
-  let $storeHeaderButtonNoLabel, $$unsubscribe_storeHeaderButtonNoLabel = noop, $$subscribe_storeHeaderButtonNoLabel = () => ($$unsubscribe_storeHeaderButtonNoLabel(), $$unsubscribe_storeHeaderButtonNoLabel = subscribe(storeHeaderButtonNoLabel, ($$value) => $$invalidate(6, $storeHeaderButtonNoLabel = $$value)), storeHeaderButtonNoLabel);
+  let $storeHeaderButtonNoLabel, $$unsubscribe_storeHeaderButtonNoLabel = noop, $$subscribe_storeHeaderButtonNoLabel = () => ($$unsubscribe_storeHeaderButtonNoLabel(), $$unsubscribe_storeHeaderButtonNoLabel = subscribe(storeHeaderButtonNoLabel, ($$value) => $$invalidate(8, $storeHeaderButtonNoLabel = $$value)), storeHeaderButtonNoLabel);
   $$self.$$.on_destroy.push(() => $$unsubscribe_storeHeaderButtonNoLabel());
   let { button = void 0 } = $$props;
   let { storeHeaderButtonNoLabel = void 0 } = $$props;
   $$subscribe_storeHeaderButtonNoLabel();
+  let iconType;
   function onClick(event) {
     const invoke = button?.onPress ?? button?.onclick;
     if (typeof invoke === "function") {
@@ -14065,15 +17421,19 @@ function instance$5($$self, $$props, $$invalidate) {
   $$self.$$.update = () => {
     if ($$self.$$.dirty & /*button*/
     1) {
-      $$invalidate(5, icon = isObject(button) && typeof button.icon === "string" ? button.icon : void 0);
+      $$invalidate(2, icon = isObject(button) && typeof button.icon === "string" ? button.icon : void 0);
     }
     if ($$self.$$.dirty & /*button*/
     1) {
-      $$invalidate(4, label = isObject(button) && typeof button.label === "string" ? localize(button.label) : void 0);
+      $$invalidate(7, label = isObject(button) && typeof button.label === "string" ? localize$1(button.label) : void 0);
     }
     if ($$self.$$.dirty & /*button*/
     1) {
-      $$invalidate(3, keepMinimized = isObject(button) && typeof button.keepMinimized === "boolean" ? button.keepMinimized : false);
+      $$invalidate(6, tooltipDirection = isObject(button) && typeof button.tooltipDirection === "string" ? button.tooltipDirection : void 0);
+    }
+    if ($$self.$$.dirty & /*button*/
+    1) {
+      $$invalidate(5, keepMinimized = isObject(button) && typeof button.keepMinimized === "boolean" ? button.keepMinimized : false);
     }
     if ($$self.$$.dirty & /*button*/
     1) {
@@ -14081,16 +17441,28 @@ function instance$5($$self, $$props, $$invalidate) {
     }
     if ($$self.$$.dirty & /*button*/
     1) {
-      $$invalidate(2, styles = isObject(button) && isObject(button.styles) ? button.styles : void 0);
+      $$invalidate(4, styles = isObject(button) && isObject(button.styles) ? button.styles : void 0);
+    }
+    if ($$self.$$.dirty & /*icon*/
+    4) {
+      {
+        const result = AssetValidator.parseMedia({
+          url: icon,
+          mediaTypes: AssetValidator.MediaTypes.img_svg
+        });
+        $$invalidate(3, iconType = result.valid ? result.elementType : "font");
+      }
     }
   };
   return [
     button,
     storeHeaderButtonNoLabel,
+    icon,
+    iconType,
     styles,
     keepMinimized,
+    tooltipDirection,
     label,
-    icon,
     $storeHeaderButtonNoLabel,
     onClick,
     onContextMenu,
@@ -14101,7 +17473,7 @@ function instance$5($$self, $$props, $$invalidate) {
 class TJSHeaderButton extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$5, create_fragment$5, safe_not_equal, { button: 0, storeHeaderButtonNoLabel: 1 });
+    init(this, options, instance$a, create_fragment$a, safe_not_equal, { button: 0, storeHeaderButtonNoLabel: 1 });
   }
   get button() {
     return this.$$.ctx[0];
@@ -14118,15 +17490,51 @@ class TJSHeaderButton extends SvelteComponent {
     flush();
   }
 }
-function get_each_context(ctx, list, i) {
+function get_each_context$4(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[34] = list[i];
+  child_ctx[40] = list[i];
   return child_ctx;
 }
 function get_each_context_1(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[34] = list[i];
+  child_ctx[40] = list[i];
   return child_ctx;
+}
+function create_if_block_2(ctx) {
+  let svg;
+  let inlineSvg_action;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      svg = svg_element("svg");
+      attr(svg, "class", "tjs-app-icon keep-minimized svelte-1n4tpql");
+    },
+    m(target, anchor) {
+      insert(target, svg, anchor);
+      if (!mounted) {
+        dispose = action_destroyer(inlineSvg_action = inlineSvg.call(null, svg, { src: (
+          /*$storeHeaderIcon*/
+          ctx[4]
+        ) }));
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (inlineSvg_action && is_function(inlineSvg_action.update) && dirty[0] & /*$storeHeaderIcon*/
+      16) inlineSvg_action.update.call(null, { src: (
+        /*$storeHeaderIcon*/
+        ctx2[4]
+      ) });
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(svg);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
 }
 function create_if_block_1(ctx) {
   let i;
@@ -14135,15 +17543,15 @@ function create_if_block_1(ctx) {
     c() {
       i = element("i");
       attr(i, "class", i_class_value = "window-icon keep-minimized " + /*$storeHeaderIcon*/
-      ctx[3] + " svelte-1nljvaj");
+      ctx[4] + " svelte-1n4tpql");
     },
     m(target, anchor) {
       insert(target, i, anchor);
     },
     p(ctx2, dirty) {
       if (dirty[0] & /*$storeHeaderIcon*/
-      8 && i_class_value !== (i_class_value = "window-icon keep-minimized " + /*$storeHeaderIcon*/
-      ctx2[3] + " svelte-1nljvaj")) {
+      16 && i_class_value !== (i_class_value = "window-icon keep-minimized " + /*$storeHeaderIcon*/
+      ctx2[4] + " svelte-1n4tpql")) {
         attr(i, "class", i_class_value);
       }
     },
@@ -14154,16 +17562,16 @@ function create_if_block_1(ctx) {
     }
   };
 }
-function create_if_block$1(ctx) {
+function create_if_block$5(ctx) {
   let img;
   let img_src_value;
   return {
     c() {
       img = element("img");
-      attr(img, "class", "tjs-app-icon keep-minimized svelte-1nljvaj");
-      if (!src_url_equal(img.src, img_src_value = globalThis.foundry.utils.getRoute(
+      attr(img, "class", "tjs-app-icon keep-minimized svelte-1n4tpql");
+      if (!src_url_equal(img.src, img_src_value = getRoutePrefix(
         /*$storeHeaderIcon*/
-        ctx[3]
+        ctx[4]
       ))) attr(img, "src", img_src_value);
       attr(img, "alt", "icon");
     },
@@ -14172,9 +17580,9 @@ function create_if_block$1(ctx) {
     },
     p(ctx2, dirty) {
       if (dirty[0] & /*$storeHeaderIcon*/
-      8 && !src_url_equal(img.src, img_src_value = globalThis.foundry.utils.getRoute(
+      16 && !src_url_equal(img.src, img_src_value = getRoutePrefix(
         /*$storeHeaderIcon*/
-        ctx2[3]
+        ctx2[4]
       ))) {
         attr(img, "src", img_src_value);
       }
@@ -14192,11 +17600,11 @@ function create_each_block_1(ctx) {
   let current;
   const switch_instance_spread_levels = [
     /*button*/
-    ctx[34].props
+    ctx[40].props
   ];
   var switch_value = (
     /*button*/
-    ctx[34].class
+    ctx[40].class
   );
   function switch_props(ctx2, dirty) {
     let switch_instance_props = {};
@@ -14204,10 +17612,10 @@ function create_each_block_1(ctx) {
       switch_instance_props = assign(switch_instance_props, switch_instance_spread_levels[i]);
     }
     if (dirty !== void 0 && dirty[0] & /*buttonsLeft*/
-    2) {
+    4) {
       switch_instance_props = assign(switch_instance_props, get_spread_update(switch_instance_spread_levels, [get_spread_object(
         /*button*/
-        ctx2[34].props
+        ctx2[40].props
       )]));
     }
     return { props: switch_instance_props };
@@ -14227,8 +17635,8 @@ function create_each_block_1(ctx) {
     },
     p(ctx2, dirty) {
       if (dirty[0] & /*buttonsLeft*/
-      2 && switch_value !== (switch_value = /*button*/
-      ctx2[34].class)) {
+      4 && switch_value !== (switch_value = /*button*/
+      ctx2[40].class)) {
         if (switch_instance) {
           group_outros();
           const old_component = switch_instance;
@@ -14247,9 +17655,9 @@ function create_each_block_1(ctx) {
         }
       } else if (switch_value) {
         const switch_instance_changes = dirty[0] & /*buttonsLeft*/
-        2 ? get_spread_update(switch_instance_spread_levels, [get_spread_object(
+        4 ? get_spread_update(switch_instance_spread_levels, [get_spread_object(
           /*button*/
-          ctx2[34].props
+          ctx2[40].props
         )]) : {};
         switch_instance.$set(switch_instance_changes);
       }
@@ -14271,17 +17679,17 @@ function create_each_block_1(ctx) {
     }
   };
 }
-function create_each_block(ctx) {
+function create_each_block$4(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
   const switch_instance_spread_levels = [
     /*button*/
-    ctx[34].props
+    ctx[40].props
   ];
   var switch_value = (
     /*button*/
-    ctx[34].class
+    ctx[40].class
   );
   function switch_props(ctx2, dirty) {
     let switch_instance_props = {};
@@ -14289,10 +17697,10 @@ function create_each_block(ctx) {
       switch_instance_props = assign(switch_instance_props, switch_instance_spread_levels[i]);
     }
     if (dirty !== void 0 && dirty[0] & /*buttonsRight*/
-    4) {
+    8) {
       switch_instance_props = assign(switch_instance_props, get_spread_update(switch_instance_spread_levels, [get_spread_object(
         /*button*/
-        ctx2[34].props
+        ctx2[40].props
       )]));
     }
     return { props: switch_instance_props };
@@ -14312,8 +17720,8 @@ function create_each_block(ctx) {
     },
     p(ctx2, dirty) {
       if (dirty[0] & /*buttonsRight*/
-      4 && switch_value !== (switch_value = /*button*/
-      ctx2[34].class)) {
+      8 && switch_value !== (switch_value = /*button*/
+      ctx2[40].class)) {
         if (switch_instance) {
           group_outros();
           const old_component = switch_instance;
@@ -14332,9 +17740,9 @@ function create_each_block(ctx) {
         }
       } else if (switch_value) {
         const switch_instance_changes = dirty[0] & /*buttonsRight*/
-        4 ? get_spread_update(switch_instance_spread_levels, [get_spread_object(
+        8 ? get_spread_update(switch_instance_spread_levels, [get_spread_object(
           /*button*/
-          ctx2[34].props
+          ctx2[40].props
         )]) : {};
         switch_instance.$set(switch_instance_changes);
       }
@@ -14359,10 +17767,10 @@ function create_each_block(ctx) {
 function create_key_block(ctx) {
   let header;
   let t0;
-  let h4;
-  let t1_value = localize(
+  let h1;
+  let t1_value = localize$1(
     /*$storeTitle*/
-    ctx[9]
+    ctx[10]
   ) + "";
   let t1;
   let t2;
@@ -14377,18 +17785,22 @@ function create_key_block(ctx) {
   function select_block_type(ctx2, dirty) {
     if (
       /*mediaType*/
-      ctx2[7] === "img"
-    ) return create_if_block$1;
+      ctx2[8] === "img"
+    ) return create_if_block$5;
     if (
       /*mediaType*/
-      ctx2[7] === "font"
+      ctx2[8] === "font"
     ) return create_if_block_1;
+    if (
+      /*mediaType*/
+      ctx2[8] === "svg"
+    ) return create_if_block_2;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type && current_block_type(ctx);
   let each_value_1 = ensure_array_like(
     /*buttonsLeft*/
-    ctx[1]
+    ctx[2]
   );
   let each_blocks_1 = [];
   for (let i = 0; i < each_value_1.length; i += 1) {
@@ -14399,11 +17811,11 @@ function create_key_block(ctx) {
   });
   let each_value = ensure_array_like(
     /*buttonsRight*/
-    ctx[2]
+    ctx[3]
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
+    each_blocks[i] = create_each_block$4(get_each_context$4(ctx, each_value, i));
   }
   const out_1 = (i) => transition_out(each_blocks[i], 1, 1, () => {
     each_blocks[i] = null;
@@ -14413,7 +17825,7 @@ function create_key_block(ctx) {
       header = element("header");
       if (if_block) if_block.c();
       t0 = space();
-      h4 = element("h4");
+      h1 = element("h1");
       t1 = text(t1_value);
       t2 = space();
       for (let i = 0; i < each_blocks_1.length; i += 1) {
@@ -14425,24 +17837,24 @@ function create_key_block(ctx) {
       for (let i = 0; i < each_blocks.length; i += 1) {
         each_blocks[i].c();
       }
-      attr(h4, "class", "window-title svelte-1nljvaj");
+      attr(h1, "class", "window-title svelte-1n4tpql");
       set_style(
-        h4,
+        h1,
         "display",
         /*displayHeaderTitle*/
-        ctx[6]
+        ctx[7]
       );
-      attr(span, "class", "tjs-window-header-spacer keep-minimized svelte-1nljvaj");
-      attr(header, "class", "window-header flexrow svelte-1nljvaj");
+      attr(span, "class", "tjs-window-header-spacer keep-minimized svelte-1n4tpql");
+      attr(header, "class", "window-header svelte-1n4tpql");
       toggle_class(header, "not-draggable", !/*$storeDraggable*/
-      ctx[4]);
+      ctx[5]);
     },
     m(target, anchor) {
       insert(target, header, anchor);
       if (if_block) if_block.m(header, null);
       append(header, t0);
-      append(header, h4);
-      append(h4, t1);
+      append(header, h1);
+      append(h1, t1);
       append(header, t2);
       for (let i = 0; i < each_blocks_1.length; i += 1) {
         if (each_blocks_1[i]) {
@@ -14457,6 +17869,7 @@ function create_key_block(ctx) {
           each_blocks[i].m(header, null);
         }
       }
+      ctx[31](header);
       current = true;
       if (!mounted) {
         dispose = [
@@ -14464,21 +17877,21 @@ function create_key_block(ctx) {
             header,
             "pointerdown",
             /*onPointerdown*/
-            ctx[21]
+            ctx[24]
           ),
           action_destroyer(draggable_action = /*draggable*/
           ctx[0].call(
             null,
             header,
             /*dragOptions*/
-            ctx[5]
+            ctx[6]
           )),
           action_destroyer(minimizable_action = /*minimizable*/
-          ctx[20].call(
+          ctx[23].call(
             null,
             header,
             /*$storeMinimizable*/
-            ctx[8]
+            ctx[9]
           ))
         ];
         mounted = true;
@@ -14496,24 +17909,24 @@ function create_key_block(ctx) {
         }
       }
       if ((!current || dirty[0] & /*$storeTitle*/
-      512) && t1_value !== (t1_value = localize(
+      1024) && t1_value !== (t1_value = localize$1(
         /*$storeTitle*/
-        ctx2[9]
+        ctx2[10]
       ) + "")) set_data(t1, t1_value);
       if (dirty[0] & /*displayHeaderTitle*/
-      64) {
+      128) {
         set_style(
-          h4,
+          h1,
           "display",
           /*displayHeaderTitle*/
-          ctx2[6]
+          ctx2[7]
         );
       }
       if (dirty[0] & /*buttonsLeft*/
-      2) {
+      4) {
         each_value_1 = ensure_array_like(
           /*buttonsLeft*/
-          ctx2[1]
+          ctx2[2]
         );
         let i;
         for (i = 0; i < each_value_1.length; i += 1) {
@@ -14535,19 +17948,19 @@ function create_key_block(ctx) {
         check_outros();
       }
       if (dirty[0] & /*buttonsRight*/
-      4) {
+      8) {
         each_value = ensure_array_like(
           /*buttonsRight*/
-          ctx2[2]
+          ctx2[3]
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context(ctx2, each_value, i);
+          const child_ctx = get_each_context$4(ctx2, each_value, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
             transition_in(each_blocks[i], 1);
           } else {
-            each_blocks[i] = create_each_block(child_ctx);
+            each_blocks[i] = create_each_block$4(child_ctx);
             each_blocks[i].c();
             transition_in(each_blocks[i], 1);
             each_blocks[i].m(header, null);
@@ -14560,21 +17973,21 @@ function create_key_block(ctx) {
         check_outros();
       }
       if (draggable_action && is_function(draggable_action.update) && dirty[0] & /*dragOptions*/
-      32) draggable_action.update.call(
+      64) draggable_action.update.call(
         null,
         /*dragOptions*/
-        ctx2[5]
+        ctx2[6]
       );
       if (minimizable_action && is_function(minimizable_action.update) && dirty[0] & /*$storeMinimizable*/
-      256) minimizable_action.update.call(
+      512) minimizable_action.update.call(
         null,
         /*$storeMinimizable*/
-        ctx2[8]
+        ctx2[9]
       );
       if (!current || dirty[0] & /*$storeDraggable*/
-      16) {
+      32) {
         toggle_class(header, "not-draggable", !/*$storeDraggable*/
-        ctx2[4]);
+        ctx2[5]);
       }
     },
     i(local) {
@@ -14607,12 +18020,13 @@ function create_key_block(ctx) {
       }
       destroy_each(each_blocks_1, detaching);
       destroy_each(each_blocks, detaching);
+      ctx[31](null);
       mounted = false;
       run_all(dispose);
     }
   };
 }
-function create_fragment$4(ctx) {
+function create_fragment$9(ctx) {
   let previous_key = (
     /*draggable*/
     ctx[0]
@@ -14662,7 +18076,7 @@ function create_fragment$4(ctx) {
     }
   };
 }
-function instance$4($$self, $$props, $$invalidate) {
+function instance$9($$self, $$props, $$invalidate) {
   let $focusKeep;
   let $focusAuto;
   let $elementRoot;
@@ -14671,39 +18085,52 @@ function instance$4($$self, $$props, $$invalidate) {
   let $storeMinimized;
   let $storeHeaderNoTitleMinimized;
   let $storeDraggable;
+  let $storeDetached;
+  let $storeAlwaysOnTop;
   let $storeMinimizable;
   let $storeTitle;
   let { draggable: draggable$1 = void 0 } = $$props;
   let { draggableOptions = void 0 } = $$props;
   const application = getContext("#external")?.application;
   const { focusAuto, focusKeep } = application.reactive.storeAppOptions;
-  component_subscribe($$self, focusAuto, (value) => $$invalidate(27, $focusAuto = value));
-  component_subscribe($$self, focusKeep, (value) => $$invalidate(26, $focusKeep = value));
+  component_subscribe($$self, focusAuto, (value) => $$invalidate(33, $focusAuto = value));
+  component_subscribe($$self, focusKeep, (value) => $$invalidate(32, $focusKeep = value));
   const { elementRoot } = getContext("#internal").stores;
-  component_subscribe($$self, elementRoot, (value) => $$invalidate(28, $elementRoot = value));
-  const storeTitle = application.reactive.storeAppOptions.title;
-  component_subscribe($$self, storeTitle, (value) => $$invalidate(9, $storeTitle = value));
+  component_subscribe($$self, elementRoot, (value) => $$invalidate(34, $elementRoot = value));
+  const storeAlwaysOnTop = application.reactive.storeAppOptions.alwaysOnTop;
+  component_subscribe($$self, storeAlwaysOnTop, (value) => $$invalidate(30, $storeAlwaysOnTop = value));
   const storeDraggable = application.reactive.storeAppOptions.draggable;
-  component_subscribe($$self, storeDraggable, (value) => $$invalidate(4, $storeDraggable = value));
+  component_subscribe($$self, storeDraggable, (value) => $$invalidate(5, $storeDraggable = value));
+  const storeDetached = application.reactive.storeUIState.detached;
+  component_subscribe($$self, storeDetached, (value) => $$invalidate(29, $storeDetached = value));
   const storeDragging = application.reactive.storeUIState.dragging;
   const storeHeaderButtons = application.reactive.storeUIState.headerButtons;
-  component_subscribe($$self, storeHeaderButtons, (value) => $$invalidate(23, $storeHeaderButtons = value));
+  component_subscribe($$self, storeHeaderButtons, (value) => $$invalidate(26, $storeHeaderButtons = value));
   const storeHeaderButtonNoLabel = application.reactive.storeAppOptions.headerButtonNoLabel;
   const storeHeaderIcon = application.reactive.storeAppOptions.headerIcon;
-  component_subscribe($$self, storeHeaderIcon, (value) => $$invalidate(3, $storeHeaderIcon = value));
+  component_subscribe($$self, storeHeaderIcon, (value) => $$invalidate(4, $storeHeaderIcon = value));
   const storeHeaderNoTitleMinimized = application.reactive.storeAppOptions.headerNoTitleMinimized;
-  component_subscribe($$self, storeHeaderNoTitleMinimized, (value) => $$invalidate(25, $storeHeaderNoTitleMinimized = value));
+  component_subscribe($$self, storeHeaderNoTitleMinimized, (value) => $$invalidate(28, $storeHeaderNoTitleMinimized = value));
   const storeMinimizable = application.reactive.storeAppOptions.minimizable;
-  component_subscribe($$self, storeMinimizable, (value) => $$invalidate(8, $storeMinimizable = value));
+  component_subscribe($$self, storeMinimizable, (value) => $$invalidate(9, $storeMinimizable = value));
   const storeMinimized = application.reactive.storeUIState.minimized;
-  component_subscribe($$self, storeMinimized, (value) => $$invalidate(24, $storeMinimized = value));
+  component_subscribe($$self, storeMinimized, (value) => $$invalidate(27, $storeMinimized = value));
+  const storeTitle = application.reactive.storeAppOptions.title;
+  component_subscribe($$self, storeTitle, (value) => $$invalidate(10, $storeTitle = value));
   const s_DRAG_TARGET_CLASSLIST = Object.freeze(["tjs-app-icon", "tjs-window-header-spacer", "window-header", "window-title"]);
+  let headerEl;
+  function checkAlwaysOnTop(hide) {
+    if (hide) {
+      headerEl?.querySelector(".popout-module-button")?.setAttribute("hidden", "");
+    } else {
+      headerEl?.querySelector(".popout-module-button")?.removeAttribute("hidden");
+    }
+  }
   let dragOptions;
   let displayHeaderTitle;
   let buttonsLeft;
   let buttonsRight;
   let mediaType = void 0;
-  const validExt = /* @__PURE__ */ new Set(["jpg", "jpeg", "png", "webp"]);
   function minimizable(node, booleanStore) {
     const callback = (event) => {
       if (event.target.classList.contains("window-title") || event.target.classList.contains("window-header") || event.target.classList.contains("keep-minimized")) {
@@ -14747,18 +18174,30 @@ function instance$4($$self, $$props, $$invalidate) {
       }
     }
   }
+  function header_binding($$value) {
+    binding_callbacks[$$value ? "unshift" : "push"](() => {
+      headerEl = $$value;
+      $$invalidate(1, headerEl);
+    });
+  }
   $$self.$$set = ($$props2) => {
     if ("draggable" in $$props2) $$invalidate(0, draggable$1 = $$props2.draggable);
-    if ("draggableOptions" in $$props2) $$invalidate(22, draggableOptions = $$props2.draggableOptions);
+    if ("draggableOptions" in $$props2) $$invalidate(25, draggableOptions = $$props2.draggableOptions);
   };
   $$self.$$.update = () => {
+    if ($$self.$$.dirty[0] & /*headerEl, $storeAlwaysOnTop, $storeDetached*/
+    1610612738) {
+      if (headerEl) {
+        checkAlwaysOnTop($storeAlwaysOnTop && !$storeDetached);
+      }
+    }
     if ($$self.$$.dirty[0] & /*draggable*/
     1) {
       $$invalidate(0, draggable$1 = typeof draggable$1 === "function" ? draggable$1 : draggable);
     }
     if ($$self.$$.dirty[0] & /*draggableOptions, $storeDraggable*/
-    4194320) {
-      $$invalidate(5, dragOptions = Object.assign(
+    33554464) {
+      $$invalidate(6, dragOptions = Object.assign(
         {},
         {
           tween: true,
@@ -14774,14 +18213,14 @@ function instance$4($$self, $$props, $$invalidate) {
       ));
     }
     if ($$self.$$.dirty[0] & /*$storeHeaderNoTitleMinimized, $storeMinimized*/
-    50331648) {
-      $$invalidate(6, displayHeaderTitle = $storeHeaderNoTitleMinimized && $storeMinimized ? "none" : null);
+    402653184) {
+      $$invalidate(7, displayHeaderTitle = $storeHeaderNoTitleMinimized && $storeMinimized ? "none" : null);
     }
     if ($$self.$$.dirty[0] & /*$storeHeaderButtons, buttonsLeft, buttonsRight*/
-    8388614) {
+    67108876) {
       {
-        $$invalidate(1, buttonsLeft = []);
-        $$invalidate(2, buttonsRight = []);
+        $$invalidate(2, buttonsLeft = []);
+        $$invalidate(3, buttonsRight = []);
         for (const button of $storeHeaderButtons) {
           const buttonsList = typeof button?.alignLeft === "boolean" && button?.alignLeft ? buttonsLeft : buttonsRight;
           buttonsList.push(TJSSvelte.config.isConfigEmbed(button?.svelte) ? { ...button.svelte } : {
@@ -14792,18 +18231,21 @@ function instance$4($$self, $$props, $$invalidate) {
       }
     }
     if ($$self.$$.dirty[0] & /*$storeHeaderIcon*/
-    8) {
+    16) {
       if (typeof $storeHeaderIcon === "string") {
-        const extensionMatch = $storeHeaderIcon.match(/\.([a-z]+)$/);
-        const extension = extensionMatch ? extensionMatch[1].toLowerCase() : null;
-        $$invalidate(7, mediaType = validExt.has(extension) ? "img" : "font");
+        const result = AssetValidator.parseMedia({
+          url: $storeHeaderIcon,
+          mediaTypes: AssetValidator.MediaTypes.img_svg
+        });
+        $$invalidate(8, mediaType = result.valid ? result.elementType : "font");
       } else {
-        $$invalidate(7, mediaType = void 0);
+        $$invalidate(8, mediaType = void 0);
       }
     }
   };
   return [
     draggable$1,
+    headerEl,
     buttonsLeft,
     buttonsRight,
     $storeHeaderIcon,
@@ -14816,25 +18258,30 @@ function instance$4($$self, $$props, $$invalidate) {
     focusAuto,
     focusKeep,
     elementRoot,
-    storeTitle,
+    storeAlwaysOnTop,
     storeDraggable,
+    storeDetached,
     storeHeaderButtons,
     storeHeaderIcon,
     storeHeaderNoTitleMinimized,
     storeMinimizable,
     storeMinimized,
+    storeTitle,
     minimizable,
     onPointerdown,
     draggableOptions,
     $storeHeaderButtons,
     $storeMinimized,
-    $storeHeaderNoTitleMinimized
+    $storeHeaderNoTitleMinimized,
+    $storeDetached,
+    $storeAlwaysOnTop,
+    header_binding
   ];
 }
 class TJSApplicationHeader extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$4, create_fragment$4, safe_not_equal, { draggable: 0, draggableOptions: 22 }, null, [-1, -1]);
+    init(this, options, instance$9, create_fragment$9, safe_not_equal, { draggable: 0, draggableOptions: 25 }, null, [-1, -1]);
   }
 }
 class ResizeHandleTransform {
@@ -14891,7 +18338,7 @@ class ResizeHandleTransform {
     return this.#pDeltaLocal;
   }
 }
-function create_fragment$3(ctx) {
+function create_fragment$8(ctx) {
   let div;
   let resizable_action;
   let mounted;
@@ -14900,28 +18347,29 @@ function create_fragment$3(ctx) {
     c() {
       div = element("div");
       div.innerHTML = ``;
-      attr(div, "class", "window-resize-handle svelte-n0c9z4");
+      attr(div, "class", "window-resize-handle svelte-1kzx9yd");
     },
     m(target, anchor) {
       insert(target, div, anchor);
-      ctx[11](div);
+      ctx[13](div);
       if (!mounted) {
         dispose = [
           listen(
             div,
             "pointerdown",
             /*onPointerdown*/
-            ctx[6]
+            ctx[8]
           ),
           action_destroyer(resizable_action = /*resizable*/
-          ctx[7].call(null, div, {
+          ctx[9].call(null, div, {
             active: (
               /*$storeResizable*/
-              ctx[1]
+              ctx[1] && !/*$storeDetached*/
+              ctx[2]
             ),
             storeResizing: (
               /*storeResizing*/
-              ctx[5]
+              ctx[7]
             )
           }))
         ];
@@ -14929,15 +18377,16 @@ function create_fragment$3(ctx) {
       }
     },
     p(ctx2, [dirty]) {
-      if (resizable_action && is_function(resizable_action.update) && dirty & /*$storeResizable*/
-      2) resizable_action.update.call(null, {
+      if (resizable_action && is_function(resizable_action.update) && dirty & /*$storeResizable, $storeDetached*/
+      6) resizable_action.update.call(null, {
         active: (
           /*$storeResizable*/
-          ctx2[1]
+          ctx2[1] && !/*$storeDetached*/
+          ctx2[2]
         ),
         storeResizing: (
           /*storeResizing*/
-          ctx2[5]
+          ctx2[7]
         )
       });
     },
@@ -14947,24 +18396,27 @@ function create_fragment$3(ctx) {
       if (detaching) {
         detach(div);
       }
-      ctx[11](null);
+      ctx[13](null);
       mounted = false;
       run_all(dispose);
     }
   };
 }
-function instance$3($$self, $$props, $$invalidate) {
+function instance$8($$self, $$props, $$invalidate) {
   let $storeElementRoot;
   let $storeMinimized;
   let $storeResizable;
+  let $storeDetached;
   let { isResizable = false } = $$props;
   const application = getContext("#external")?.application;
   const storeElementRoot = getContext("#internal").stores.elementRoot;
-  component_subscribe($$self, storeElementRoot, (value) => $$invalidate(9, $storeElementRoot = value));
+  component_subscribe($$self, storeElementRoot, (value) => $$invalidate(11, $storeElementRoot = value));
   const storeResizable = application.reactive.storeAppOptions.resizable;
   component_subscribe($$self, storeResizable, (value) => $$invalidate(1, $storeResizable = value));
+  const storeDetached = application.reactive.storeUIState.detached;
+  component_subscribe($$self, storeDetached, (value) => $$invalidate(2, $storeDetached = value));
   const storeMinimized = application.reactive.storeUIState.minimized;
-  component_subscribe($$self, storeMinimized, (value) => $$invalidate(10, $storeMinimized = value));
+  component_subscribe($$self, storeMinimized, (value) => $$invalidate(12, $storeMinimized = value));
   const storeResizing = application.reactive.storeUIState.resizing;
   let elementResize;
   function onPointerdown() {
@@ -14982,7 +18434,7 @@ function instance$3($$self, $$props, $$invalidate) {
     };
     function activateListeners() {
       node.addEventListener(...handlers.resizeDown);
-      $$invalidate(8, isResizable = true);
+      $$invalidate(10, isResizable = true);
       node.style.display = "block";
     }
     function removeListeners() {
@@ -14993,7 +18445,7 @@ function instance$3($$self, $$props, $$invalidate) {
       node.removeEventListener(...handlers.resizeMove);
       node.removeEventListener(...handlers.resizeUp);
       node.style.display = "none";
-      $$invalidate(8, isResizable = false);
+      $$invalidate(10, isResizable = false);
     }
     if (active2) {
       activateListeners();
@@ -15052,15 +18504,15 @@ function instance$3($$self, $$props, $$invalidate) {
   function div_binding($$value) {
     binding_callbacks[$$value ? "unshift" : "push"](() => {
       elementResize = $$value;
-      $$invalidate(0, elementResize), $$invalidate(8, isResizable), $$invalidate(10, $storeMinimized), $$invalidate(9, $storeElementRoot);
+      $$invalidate(0, elementResize), $$invalidate(10, isResizable), $$invalidate(12, $storeMinimized), $$invalidate(11, $storeElementRoot);
     });
   }
   $$self.$$set = ($$props2) => {
-    if ("isResizable" in $$props2) $$invalidate(8, isResizable = $$props2.isResizable);
+    if ("isResizable" in $$props2) $$invalidate(10, isResizable = $$props2.isResizable);
   };
   $$self.$$.update = () => {
     if ($$self.$$.dirty & /*elementResize, isResizable, $storeMinimized, $storeElementRoot*/
-    1793) {
+    7169) {
       if (elementResize) {
         $$invalidate(0, elementResize.style.display = isResizable && !$storeMinimized ? "block" : "none", elementResize);
         const elementRoot = $storeElementRoot;
@@ -15073,8 +18525,10 @@ function instance$3($$self, $$props, $$invalidate) {
   return [
     elementResize,
     $storeResizable,
+    $storeDetached,
     storeElementRoot,
     storeResizable,
+    storeDetached,
     storeMinimized,
     storeResizing,
     onPointerdown,
@@ -15088,10 +18542,10 @@ function instance$3($$self, $$props, $$invalidate) {
 class ResizableHandle extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$3, create_fragment$3, safe_not_equal, { isResizable: 8 });
+    init(this, options, instance$8, create_fragment$8, safe_not_equal, { isResizable: 10 });
   }
 }
-function create_fragment$2(ctx) {
+function create_fragment$7(ctx) {
   let div;
   let mounted;
   let dispose;
@@ -15127,7 +18581,7 @@ function create_fragment$2(ctx) {
     }
   };
 }
-function instance$2($$self, $$props, $$invalidate) {
+function instance$7($$self, $$props, $$invalidate) {
   let { elementRoot = void 0 } = $$props;
   let { enabled = true } = $$props;
   let ignoreElements, wrapEl;
@@ -15167,10 +18621,10 @@ function instance$2($$self, $$props, $$invalidate) {
 class TJSFocusWrap extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$2, create_fragment$2, safe_not_equal, { elementRoot: 2, enabled: 3 });
+    init(this, options, instance$7, create_fragment$7, safe_not_equal, { elementRoot: 2, enabled: 3 });
   }
 }
-function create_else_block(ctx) {
+function create_else_block$2(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -15202,13 +18656,13 @@ function create_else_block(ctx) {
   });
   const default_slot_template = (
     /*#slots*/
-    ctx[40].default
+    ctx[51].default
   );
   const default_slot = create_slot(
     default_slot_template,
     ctx,
     /*$$scope*/
-    ctx[39],
+    ctx[50],
     null
   );
   resizablehandle = new ResizableHandle({});
@@ -15220,7 +18674,7 @@ function create_else_block(ctx) {
       ),
       enabled: (
         /*focusWrapEnabled*/
-        ctx[11]
+        ctx[12]
       )
     }
   });
@@ -15235,16 +18689,30 @@ function create_else_block(ctx) {
       create_component(resizablehandle.$$.fragment);
       t2 = space();
       create_component(tjsfocuswrap.$$.fragment);
-      attr(section, "class", "window-content svelte-c7odu8");
+      attr(section, "class", "window-content svelte-xfthie");
       attr(section, "tabindex", "-1");
       attr(div, "id", div_id_value = /*application*/
       ctx[10].id);
-      attr(div, "class", div_class_value = "application " + /*appClasses*/
-      ctx[12] + " svelte-c7odu8");
+      attr(div, "class", div_class_value = "application tjs-app " + /*appClasses*/
+      ctx[14] + " svelte-xfthie");
       attr(div, "data-appid", div_data_appid_value = /*application*/
       ctx[10].appId);
       attr(div, "role", "application");
       attr(div, "tabindex", "-1");
+      toggle_class(
+        div,
+        "tjs-cq-inline-size",
+        /*cqEnabled*/
+        ctx[13] && /*$containerQueryType*/
+        ctx[11] === "inline-size"
+      );
+      toggle_class(
+        div,
+        "tjs-cq-size",
+        /*cqEnabled*/
+        ctx[13] && /*$containerQueryType*/
+        ctx[11] === "size"
+      );
     },
     m(target, anchor) {
       insert(target, div, anchor);
@@ -15254,12 +18722,12 @@ function create_else_block(ctx) {
       if (default_slot) {
         default_slot.m(section, null);
       }
-      ctx[43](section);
+      ctx[54](section);
       append(div, t1);
       mount_component(resizablehandle, div, null);
       append(div, t2);
       mount_component(tjsfocuswrap, div, null);
-      ctx[44](div);
+      ctx[55](div);
       current = true;
       if (!mounted) {
         dispose = [
@@ -15267,7 +18735,7 @@ function create_else_block(ctx) {
             section,
             "pointerdown",
             /*onPointerdownContent*/
-            ctx[24]
+            ctx[30]
           ),
           action_destroyer(applyStyles_action = applyStyles.call(
             null,
@@ -15277,28 +18745,28 @@ function create_else_block(ctx) {
           )),
           action_destroyer(
             /*contentResizeObserver*/
-            ctx[19].call(
+            ctx[23].call(
               null,
               section,
               /*resizeObservedContent*/
-              ctx[25]
+              ctx[31]
             )
           ),
           listen(div, "close:popup", stop_propagation(prevent_default(
             /*onClosePopup*/
-            ctx[21]
+            ctx[27]
           ))),
           listen(
             div,
             "keydown",
             /*onKeydown*/
-            ctx[22]
+            ctx[28]
           ),
           listen(
             div,
             "pointerdown",
-            /*onPointerdownApp*/
-            ctx[23],
+            /*onPointerdownAppCapture*/
+            ctx[29],
             true
           ),
           action_destroyer(applyStyles_action_1 = applyStyles.call(
@@ -15311,7 +18779,7 @@ function create_else_block(ctx) {
             null,
             div,
             /*appResizeObserver*/
-            ctx[13]
+            ctx[15]
           ))
         ];
         mounted = true;
@@ -15328,20 +18796,20 @@ function create_else_block(ctx) {
       tjsapplicationheader.$set(tjsapplicationheader_changes);
       if (default_slot) {
         if (default_slot.p && (!current || dirty[1] & /*$$scope*/
-        256)) {
+        524288)) {
           update_slot_base(
             default_slot,
             default_slot_template,
             ctx2,
             /*$$scope*/
-            ctx2[39],
+            ctx2[50],
             !current ? get_all_dirty_from_scope(
               /*$$scope*/
-              ctx2[39]
+              ctx2[50]
             ) : get_slot_changes(
               default_slot_template,
               /*$$scope*/
-              ctx2[39],
+              ctx2[50],
               dirty,
               null
             ),
@@ -15360,8 +18828,8 @@ function create_else_block(ctx) {
       2) tjsfocuswrap_changes.elementRoot = /*elementRoot*/
       ctx2[1];
       if (dirty[0] & /*focusWrapEnabled*/
-      2048) tjsfocuswrap_changes.enabled = /*focusWrapEnabled*/
-      ctx2[11];
+      4096) tjsfocuswrap_changes.enabled = /*focusWrapEnabled*/
+      ctx2[12];
       tjsfocuswrap.$set(tjsfocuswrap_changes);
       if (!current || dirty[0] & /*application*/
       1024 && div_id_value !== (div_id_value = /*application*/
@@ -15369,8 +18837,8 @@ function create_else_block(ctx) {
         attr(div, "id", div_id_value);
       }
       if (!current || dirty[0] & /*appClasses*/
-      4096 && div_class_value !== (div_class_value = "application " + /*appClasses*/
-      ctx2[12] + " svelte-c7odu8")) {
+      16384 && div_class_value !== (div_class_value = "application tjs-app " + /*appClasses*/
+      ctx2[14] + " svelte-xfthie")) {
         attr(div, "class", div_class_value);
       }
       if (!current || dirty[0] & /*application*/
@@ -15385,11 +18853,31 @@ function create_else_block(ctx) {
         ctx2[8]
       );
       if (dynamicAction_action && is_function(dynamicAction_action.update) && dirty[0] & /*appResizeObserver*/
-      8192) dynamicAction_action.update.call(
+      32768) dynamicAction_action.update.call(
         null,
         /*appResizeObserver*/
-        ctx2[13]
+        ctx2[15]
       );
+      if (!current || dirty[0] & /*appClasses, cqEnabled, $containerQueryType*/
+      26624) {
+        toggle_class(
+          div,
+          "tjs-cq-inline-size",
+          /*cqEnabled*/
+          ctx2[13] && /*$containerQueryType*/
+          ctx2[11] === "inline-size"
+        );
+      }
+      if (!current || dirty[0] & /*appClasses, cqEnabled, $containerQueryType*/
+      26624) {
+        toggle_class(
+          div,
+          "tjs-cq-size",
+          /*cqEnabled*/
+          ctx2[13] && /*$containerQueryType*/
+          ctx2[11] === "size"
+        );
+      }
     },
     i(local) {
       if (current) return;
@@ -15412,16 +18900,16 @@ function create_else_block(ctx) {
       }
       destroy_component(tjsapplicationheader);
       if (default_slot) default_slot.d(detaching);
-      ctx[43](null);
+      ctx[54](null);
       destroy_component(resizablehandle);
       destroy_component(tjsfocuswrap);
-      ctx[44](null);
+      ctx[55](null);
       mounted = false;
       run_all(dispose);
     }
   };
 }
-function create_if_block(ctx) {
+function create_if_block$4(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -15455,13 +18943,13 @@ function create_if_block(ctx) {
   });
   const default_slot_template = (
     /*#slots*/
-    ctx[40].default
+    ctx[51].default
   );
   const default_slot = create_slot(
     default_slot_template,
     ctx,
     /*$$scope*/
-    ctx[39],
+    ctx[50],
     null
   );
   resizablehandle = new ResizableHandle({});
@@ -15482,16 +18970,30 @@ function create_if_block(ctx) {
       create_component(resizablehandle.$$.fragment);
       t2 = space();
       create_component(tjsfocuswrap.$$.fragment);
-      attr(section, "class", "window-content svelte-c7odu8");
+      attr(section, "class", "window-content svelte-xfthie");
       attr(section, "tabindex", "-1");
       attr(div, "id", div_id_value = /*application*/
       ctx[10].id);
-      attr(div, "class", div_class_value = "application " + /*appClasses*/
-      ctx[12] + " svelte-c7odu8");
+      attr(div, "class", div_class_value = "application tjs-app " + /*appClasses*/
+      ctx[14] + " svelte-xfthie");
       attr(div, "data-appid", div_data_appid_value = /*application*/
       ctx[10].appId);
       attr(div, "role", "application");
       attr(div, "tabindex", "-1");
+      toggle_class(
+        div,
+        "tjs-cq-inline-size",
+        /*cqEnabled*/
+        ctx[13] && /*$containerQueryType*/
+        ctx[11] === "inline-size"
+      );
+      toggle_class(
+        div,
+        "tjs-cq-size",
+        /*cqEnabled*/
+        ctx[13] && /*$containerQueryType*/
+        ctx[11] === "size"
+      );
     },
     m(target, anchor) {
       insert(target, div, anchor);
@@ -15501,12 +19003,12 @@ function create_if_block(ctx) {
       if (default_slot) {
         default_slot.m(section, null);
       }
-      ctx[41](section);
+      ctx[52](section);
       append(div, t1);
       mount_component(resizablehandle, div, null);
       append(div, t2);
       mount_component(tjsfocuswrap, div, null);
-      ctx[42](div);
+      ctx[53](div);
       current = true;
       if (!mounted) {
         dispose = [
@@ -15514,7 +19016,7 @@ function create_if_block(ctx) {
             section,
             "pointerdown",
             /*onPointerdownContent*/
-            ctx[24]
+            ctx[30]
           ),
           action_destroyer(applyStyles_action = applyStyles.call(
             null,
@@ -15524,28 +19026,28 @@ function create_if_block(ctx) {
           )),
           action_destroyer(
             /*contentResizeObserver*/
-            ctx[19].call(
+            ctx[23].call(
               null,
               section,
               /*resizeObservedContent*/
-              ctx[25]
+              ctx[31]
             )
           ),
           listen(div, "close:popup", stop_propagation(prevent_default(
             /*onClosePopup*/
-            ctx[21]
+            ctx[27]
           ))),
           listen(
             div,
             "keydown",
             /*onKeydown*/
-            ctx[22]
+            ctx[28]
           ),
           listen(
             div,
             "pointerdown",
-            /*onPointerdownApp*/
-            ctx[23],
+            /*onPointerdownAppCapture*/
+            ctx[29],
             true
           ),
           action_destroyer(applyStyles_action_1 = applyStyles.call(
@@ -15558,7 +19060,7 @@ function create_if_block(ctx) {
             null,
             div,
             /*appResizeObserver*/
-            ctx[13]
+            ctx[15]
           ))
         ];
         mounted = true;
@@ -15576,20 +19078,20 @@ function create_if_block(ctx) {
       tjsapplicationheader.$set(tjsapplicationheader_changes);
       if (default_slot) {
         if (default_slot.p && (!current || dirty[1] & /*$$scope*/
-        256)) {
+        524288)) {
           update_slot_base(
             default_slot,
             default_slot_template,
             ctx,
             /*$$scope*/
-            ctx[39],
+            ctx[50],
             !current ? get_all_dirty_from_scope(
               /*$$scope*/
-              ctx[39]
+              ctx[50]
             ) : get_slot_changes(
               default_slot_template,
               /*$$scope*/
-              ctx[39],
+              ctx[50],
               dirty,
               null
             ),
@@ -15614,8 +19116,8 @@ function create_if_block(ctx) {
         attr(div, "id", div_id_value);
       }
       if (!current || dirty[0] & /*appClasses*/
-      4096 && div_class_value !== (div_class_value = "application " + /*appClasses*/
-      ctx[12] + " svelte-c7odu8")) {
+      16384 && div_class_value !== (div_class_value = "application tjs-app " + /*appClasses*/
+      ctx[14] + " svelte-xfthie")) {
         attr(div, "class", div_class_value);
       }
       if (!current || dirty[0] & /*application*/
@@ -15630,11 +19132,31 @@ function create_if_block(ctx) {
         ctx[8]
       );
       if (dynamicAction_action && is_function(dynamicAction_action.update) && dirty[0] & /*appResizeObserver*/
-      8192) dynamicAction_action.update.call(
+      32768) dynamicAction_action.update.call(
         null,
         /*appResizeObserver*/
-        ctx[13]
+        ctx[15]
       );
+      if (!current || dirty[0] & /*appClasses, cqEnabled, $containerQueryType*/
+      26624) {
+        toggle_class(
+          div,
+          "tjs-cq-inline-size",
+          /*cqEnabled*/
+          ctx[13] && /*$containerQueryType*/
+          ctx[11] === "inline-size"
+        );
+      }
+      if (!current || dirty[0] & /*appClasses, cqEnabled, $containerQueryType*/
+      26624) {
+        toggle_class(
+          div,
+          "tjs-cq-size",
+          /*cqEnabled*/
+          ctx[13] && /*$containerQueryType*/
+          ctx[11] === "size"
+        );
+      }
     },
     i(local) {
       if (current) return;
@@ -15677,22 +19199,22 @@ function create_if_block(ctx) {
       }
       destroy_component(tjsapplicationheader);
       if (default_slot) default_slot.d(detaching);
-      ctx[41](null);
+      ctx[52](null);
       destroy_component(resizablehandle);
       destroy_component(tjsfocuswrap);
-      ctx[42](null);
+      ctx[53](null);
       if (detaching && div_outro) div_outro.end();
       mounted = false;
       run_all(dispose);
     }
   };
 }
-function create_fragment$1(ctx) {
+function create_fragment$6(ctx) {
   let current_block_type_index;
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block, create_else_block];
+  const if_block_creators = [create_if_block$4, create_else_block$2];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -15753,11 +19275,16 @@ function create_fragment$1(ctx) {
     }
   };
 }
-function instance$1($$self, $$props, $$invalidate) {
+function instance$6($$self, $$props, $$invalidate) {
   let appResizeObserver;
+  let appClasses;
   let $focusKeep;
   let $focusAuto;
-  let $themeStore;
+  let $containerQueryType;
+  let $cqTypes;
+  let $appThemeName;
+  let $themeTokenStore;
+  let $activeClasses;
   let $minimized;
   let $focusTrap;
   let $resizeObservable;
@@ -15769,20 +19296,25 @@ function instance$1($$self, $$props, $$invalidate) {
   let { stylesApp = void 0 } = $$props;
   let { stylesContent = void 0 } = $$props;
   const application = getContext("#external")?.application;
-  const { focusAuto, focusKeep, focusTrap } = application.reactive.storeAppOptions;
-  component_subscribe($$self, focusAuto, (value) => $$invalidate(34, $focusAuto = value));
-  component_subscribe($$self, focusKeep, (value) => $$invalidate(45, $focusKeep = value));
-  component_subscribe($$self, focusTrap, (value) => $$invalidate(37, $focusTrap = value));
+  const { containerQueryType, focusAuto, focusKeep, focusTrap } = application.reactive.storeAppOptions;
+  component_subscribe($$self, containerQueryType, (value) => $$invalidate(11, $containerQueryType = value));
+  component_subscribe($$self, focusAuto, (value) => $$invalidate(42, $focusAuto = value));
+  component_subscribe($$self, focusKeep, (value) => $$invalidate(56, $focusKeep = value));
+  component_subscribe($$self, focusTrap, (value) => $$invalidate(48, $focusTrap = value));
   const { minimized } = application.reactive.storeUIState;
-  component_subscribe($$self, minimized, (value) => $$invalidate(36, $minimized = value));
+  component_subscribe($$self, minimized, (value) => $$invalidate(47, $minimized = value));
   const { resizeObservable } = application.position.stores;
-  component_subscribe($$self, resizeObservable, (value) => $$invalidate(38, $resizeObservable = value));
+  component_subscribe($$self, resizeObservable, (value) => $$invalidate(49, $resizeObservable = value));
+  const cqTypes = new CQPositionValidate(application.position);
+  component_subscribe($$self, cqTypes, (value) => $$invalidate(43, $cqTypes = value));
   let { appOffsetHeight = false } = $$props;
   let { appOffsetWidth = false } = $$props;
   const initialAppResizeObserver = !!appOffsetHeight || !!appOffsetWidth;
   let { contentOffsetHeight = false } = $$props;
   let { contentOffsetWidth = false } = $$props;
-  const contentResizeObserver = !!contentOffsetHeight || !!contentOffsetWidth ? resizeObserver : () => null;
+  let { contentHeight = false } = $$props;
+  let { contentWidth = false } = $$props;
+  const contentResizeObserver = !!contentOffsetHeight || !!contentOffsetWidth || !!contentHeight || !!contentWidth ? resizeObserver : () => null;
   const internal = new AppShellContextInternal();
   const s_IGNORE_CLASSES = { ignoreClasses: ["tjs-focus-wrap"] };
   setContext("#internal", internal);
@@ -15795,10 +19327,18 @@ function instance$1($$self, $$props, $$invalidate) {
   let { outTransitionOptions = TJSDefaultTransition.options } = $$props;
   let oldTransition = TJSDefaultTransition.default;
   let oldTransitionOptions = void 0;
-  const themeStore = ThemeObserver.stores.theme;
-  component_subscribe($$self, themeStore, (value) => $$invalidate(35, $themeStore = value));
-  let appClasses = "";
-  onMount(() => elementRoot.focus());
+  const themeTokenStore = ThemeObserver.stores.themeToken;
+  component_subscribe($$self, themeTokenStore, (value) => $$invalidate(45, $themeTokenStore = value));
+  const activeClasses = application.reactive.activeClasses;
+  component_subscribe($$self, activeClasses, (value) => $$invalidate(46, $activeClasses = value));
+  const appThemeName = application.reactive.storeAppOptions.themeName;
+  component_subscribe($$self, appThemeName, (value) => $$invalidate(44, $appThemeName = value));
+  onMount(() => {
+    if ($focusAuto) {
+      elementRoot.focus();
+    }
+  });
+  let cqEnabled = false;
   function onClosePopup(event) {
     if (!$focusAuto) {
       return;
@@ -15824,7 +19364,8 @@ function instance$1($$self, $$props, $$invalidate) {
     }
   }
   function onKeydown(event) {
-    if ((event.target === elementRoot || event.target === elementContent) && KeyboardManager && KeyboardManager?._getMatchingActions?.(KeyboardManager?.getKeyboardEventContext?.(event))?.length) {
+    const FVTTKeyboardManager = foundry.helpers.interaction.KeyboardManager;
+    if ((event.target === elementRoot || event.target === elementContent) && FVTTKeyboardManager && FVTTKeyboardManager?._getMatchingActions?.(FVTTKeyboardManager?.getKeyboardEventContext?.(event))?.length) {
       event.target?.blur();
       return;
     }
@@ -15841,14 +19382,10 @@ function instance$1($$self, $$props, $$invalidate) {
         event.stopPropagation();
       }
     }
-    if (typeof application?.options?.popOut === "boolean" && application.options.popOut && application !== globalThis.ui?.activeWindow) {
-      application.bringToTop.call(application);
-    }
+    application.bringToTop.call(application);
   }
-  function onPointerdownApp() {
-    if (typeof application?.options?.popOut === "boolean" && application.options.popOut && application !== globalThis.ui?.activeWindow) {
-      application.bringToTop.call(application);
-    }
+  function onPointerdownAppCapture() {
+    application.bringToTop.call(application);
   }
   function onPointerdownContent(event) {
     const focusable = A11yHelper.isFocusable(event.target);
@@ -15866,20 +19403,26 @@ function instance$1($$self, $$props, $$invalidate) {
       }
     }
   }
-  function resizeObservedContent(offsetWidth, offsetHeight) {
-    $$invalidate(29, contentOffsetWidth = offsetWidth);
-    $$invalidate(28, contentOffsetHeight = offsetHeight);
-  }
-  function resizeObservedApp(offsetWidth, offsetHeight, contentWidth, contentHeight) {
+  function resizeObservedApp(offsetWidth, offsetHeight, width, height) {
     application.position.stores.resizeObserved.update((object) => {
-      object.contentWidth = contentWidth;
-      object.contentHeight = contentHeight;
+      object.contentWidth = width;
+      object.contentHeight = height;
       object.offsetWidth = offsetWidth;
       object.offsetHeight = offsetHeight;
       return object;
     });
-    $$invalidate(26, appOffsetHeight = offsetHeight);
-    $$invalidate(27, appOffsetWidth = offsetWidth);
+    $$invalidate(32, appOffsetHeight = offsetHeight);
+    $$invalidate(33, appOffsetWidth = offsetWidth);
+  }
+  function resizeObservedContent(offsetWidth, offsetHeight, width, height) {
+    $$invalidate(35, contentOffsetWidth = offsetWidth);
+    $$invalidate(34, contentOffsetHeight = offsetHeight);
+    $$invalidate(37, contentWidth = width);
+    $$invalidate(36, contentHeight = height);
+    internal.stores.contentOffsetWidth.set(contentOffsetWidth);
+    internal.stores.contentOffsetHeight.set(contentOffsetHeight);
+    internal.stores.contentWidth.set(contentWidth);
+    internal.stores.contentHeight.set(contentHeight);
   }
   function section_binding($$value) {
     binding_callbacks[$$value ? "unshift" : "push"](() => {
@@ -15912,22 +19455,24 @@ function instance$1($$self, $$props, $$invalidate) {
     if ("draggableOptions" in $$props2) $$invalidate(7, draggableOptions = $$props2.draggableOptions);
     if ("stylesApp" in $$props2) $$invalidate(8, stylesApp = $$props2.stylesApp);
     if ("stylesContent" in $$props2) $$invalidate(9, stylesContent = $$props2.stylesContent);
-    if ("appOffsetHeight" in $$props2) $$invalidate(26, appOffsetHeight = $$props2.appOffsetHeight);
-    if ("appOffsetWidth" in $$props2) $$invalidate(27, appOffsetWidth = $$props2.appOffsetWidth);
-    if ("contentOffsetHeight" in $$props2) $$invalidate(28, contentOffsetHeight = $$props2.contentOffsetHeight);
-    if ("contentOffsetWidth" in $$props2) $$invalidate(29, contentOffsetWidth = $$props2.contentOffsetWidth);
-    if ("transition" in $$props2) $$invalidate(30, transition = $$props2.transition);
+    if ("appOffsetHeight" in $$props2) $$invalidate(32, appOffsetHeight = $$props2.appOffsetHeight);
+    if ("appOffsetWidth" in $$props2) $$invalidate(33, appOffsetWidth = $$props2.appOffsetWidth);
+    if ("contentOffsetHeight" in $$props2) $$invalidate(34, contentOffsetHeight = $$props2.contentOffsetHeight);
+    if ("contentOffsetWidth" in $$props2) $$invalidate(35, contentOffsetWidth = $$props2.contentOffsetWidth);
+    if ("contentHeight" in $$props2) $$invalidate(36, contentHeight = $$props2.contentHeight);
+    if ("contentWidth" in $$props2) $$invalidate(37, contentWidth = $$props2.contentWidth);
+    if ("transition" in $$props2) $$invalidate(38, transition = $$props2.transition);
     if ("inTransition" in $$props2) $$invalidate(2, inTransition = $$props2.inTransition);
     if ("outTransition" in $$props2) $$invalidate(3, outTransition = $$props2.outTransition);
-    if ("transitionOptions" in $$props2) $$invalidate(31, transitionOptions = $$props2.transitionOptions);
+    if ("transitionOptions" in $$props2) $$invalidate(39, transitionOptions = $$props2.transitionOptions);
     if ("inTransitionOptions" in $$props2) $$invalidate(4, inTransitionOptions = $$props2.inTransitionOptions);
     if ("outTransitionOptions" in $$props2) $$invalidate(5, outTransitionOptions = $$props2.outTransitionOptions);
-    if ("$$scope" in $$props2) $$invalidate(39, $$scope = $$props2.$$scope);
+    if ("$$scope" in $$props2) $$invalidate(50, $$scope = $$props2.$$scope);
   };
   $$self.$$.update = () => {
     if ($$self.$$.dirty[1] & /*$resizeObservable*/
-    128) {
-      $$invalidate(13, appResizeObserver = initialAppResizeObserver || $resizeObservable ? {
+    262144) {
+      $$invalidate(15, appResizeObserver = initialAppResizeObserver || $resizeObservable ? {
         action: resizeObserver,
         data: resizeObservedApp
       } : void 0);
@@ -15935,36 +19480,35 @@ function instance$1($$self, $$props, $$invalidate) {
     if ($$self.$$.dirty[0] & /*elementContent*/
     1) {
       if (elementContent !== void 0 && elementContent !== null) {
-        getContext("#internal").stores.elementContent.set(elementContent);
+        internal.stores.elementContent.set(elementContent);
       }
     }
     if ($$self.$$.dirty[0] & /*elementRoot*/
     2) {
       if (elementRoot !== void 0 && elementRoot !== null) {
-        getContext("#internal").stores.elementRoot.set(elementRoot);
+        internal.stores.elementRoot.set(elementRoot);
       }
     }
     if ($$self.$$.dirty[1] & /*$focusAuto, $focusTrap, $minimized*/
-    104) {
-      $$invalidate(11, focusWrapEnabled = $focusAuto && $focusTrap && !$minimized);
+    198656) {
+      $$invalidate(12, focusWrapEnabled = $focusAuto && $focusTrap && !$minimized);
     }
-    if ($$self.$$.dirty[0] & /*transition*/
-    1073741824 | $$self.$$.dirty[1] & /*oldTransition*/
-    2) {
+    if ($$self.$$.dirty[1] & /*oldTransition, transition*/
+    640) {
       if (oldTransition !== transition) {
         const newTransition = typeof transition === "function" ? transition : TJSDefaultTransition.default;
         $$invalidate(2, inTransition = newTransition);
         $$invalidate(3, outTransition = newTransition);
-        $$invalidate(32, oldTransition = newTransition);
+        $$invalidate(40, oldTransition = newTransition);
       }
     }
     if ($$self.$$.dirty[1] & /*oldTransitionOptions, transitionOptions*/
-    5) {
+    1280) {
       if (oldTransitionOptions !== transitionOptions) {
         const newOptions = transitionOptions !== TJSDefaultTransition.options && isObject(transitionOptions) ? transitionOptions : TJSDefaultTransition.options;
         $$invalidate(4, inTransitionOptions = newOptions);
         $$invalidate(5, outTransitionOptions = newOptions);
-        $$invalidate(33, oldTransitionOptions = newOptions);
+        $$invalidate(41, oldTransitionOptions = newOptions);
       }
     }
     if ($$self.$$.dirty[0] & /*inTransition*/
@@ -15997,11 +19541,19 @@ function instance$1($$self, $$props, $$invalidate) {
         $$invalidate(5, outTransitionOptions = TJSDefaultTransition.options);
       }
     }
-    if ($$self.$$.dirty[0] & /*application*/
-    1024 | $$self.$$.dirty[1] & /*$themeStore*/
-    16) {
-      if ($themeStore) {
-        $$invalidate(12, appClasses = ThemeObserver.appClasses(application));
+    if ($$self.$$.dirty[1] & /*$activeClasses, $themeTokenStore, $appThemeName*/
+    57344) {
+      $$invalidate(14, appClasses = FVTTAppTheme.appClasses($activeClasses, $themeTokenStore, $appThemeName));
+    }
+    if ($$self.$$.dirty[0] & /*$containerQueryType*/
+    2048 | $$self.$$.dirty[1] & /*$cqTypes*/
+    4096) {
+      if ($cqTypes.validate($containerQueryType)) {
+        internal.stores.cqEnabled.set(true);
+        requestAnimationFrame(() => $$invalidate(13, cqEnabled = true));
+      } else {
+        $$invalidate(13, cqEnabled = false);
+        internal.stores.cqEnabled.set(false);
       }
     }
   };
@@ -16017,31 +19569,42 @@ function instance$1($$self, $$props, $$invalidate) {
     stylesApp,
     stylesContent,
     application,
+    $containerQueryType,
     focusWrapEnabled,
+    cqEnabled,
     appClasses,
     appResizeObserver,
+    containerQueryType,
     focusAuto,
     focusKeep,
     focusTrap,
     minimized,
     resizeObservable,
+    cqTypes,
     contentResizeObserver,
-    themeStore,
+    themeTokenStore,
+    activeClasses,
+    appThemeName,
     onClosePopup,
     onKeydown,
-    onPointerdownApp,
+    onPointerdownAppCapture,
     onPointerdownContent,
     resizeObservedContent,
     appOffsetHeight,
     appOffsetWidth,
     contentOffsetHeight,
     contentOffsetWidth,
+    contentHeight,
+    contentWidth,
     transition,
     transitionOptions,
     oldTransition,
     oldTransitionOptions,
     $focusAuto,
-    $themeStore,
+    $cqTypes,
+    $appThemeName,
+    $themeTokenStore,
+    $activeClasses,
     $minimized,
     $focusTrap,
     $resizeObservable,
@@ -16059,8 +19622,8 @@ class ApplicationShell extends SvelteComponent {
     init(
       this,
       options,
-      instance$1,
-      create_fragment$1,
+      instance$6,
+      create_fragment$6,
       safe_not_equal,
       {
         elementContent: 0,
@@ -16069,14 +19632,16 @@ class ApplicationShell extends SvelteComponent {
         draggableOptions: 7,
         stylesApp: 8,
         stylesContent: 9,
-        appOffsetHeight: 26,
-        appOffsetWidth: 27,
-        contentOffsetHeight: 28,
-        contentOffsetWidth: 29,
-        transition: 30,
+        appOffsetHeight: 32,
+        appOffsetWidth: 33,
+        contentOffsetHeight: 34,
+        contentOffsetWidth: 35,
+        contentHeight: 36,
+        contentWidth: 37,
+        transition: 38,
         inTransition: 2,
         outTransition: 3,
-        transitionOptions: 31,
+        transitionOptions: 39,
         inTransitionOptions: 4,
         outTransitionOptions: 5
       },
@@ -16127,35 +19692,49 @@ class ApplicationShell extends SvelteComponent {
     flush();
   }
   get appOffsetHeight() {
-    return this.$$.ctx[26];
+    return this.$$.ctx[32];
   }
   set appOffsetHeight(appOffsetHeight) {
     this.$$set({ appOffsetHeight });
     flush();
   }
   get appOffsetWidth() {
-    return this.$$.ctx[27];
+    return this.$$.ctx[33];
   }
   set appOffsetWidth(appOffsetWidth) {
     this.$$set({ appOffsetWidth });
     flush();
   }
   get contentOffsetHeight() {
-    return this.$$.ctx[28];
+    return this.$$.ctx[34];
   }
   set contentOffsetHeight(contentOffsetHeight) {
     this.$$set({ contentOffsetHeight });
     flush();
   }
   get contentOffsetWidth() {
-    return this.$$.ctx[29];
+    return this.$$.ctx[35];
   }
   set contentOffsetWidth(contentOffsetWidth) {
     this.$$set({ contentOffsetWidth });
     flush();
   }
+  get contentHeight() {
+    return this.$$.ctx[36];
+  }
+  set contentHeight(contentHeight) {
+    this.$$set({ contentHeight });
+    flush();
+  }
+  get contentWidth() {
+    return this.$$.ctx[37];
+  }
+  set contentWidth(contentWidth) {
+    this.$$set({ contentWidth });
+    flush();
+  }
   get transition() {
-    return this.$$.ctx[30];
+    return this.$$.ctx[38];
   }
   set transition(transition) {
     this.$$set({ transition });
@@ -16176,7 +19755,7 @@ class ApplicationShell extends SvelteComponent {
     flush();
   }
   get transitionOptions() {
-    return this.$$.ctx[31];
+    return this.$$.ctx[39];
   }
   set transitionOptions(transitionOptions) {
     this.$$set({ transitionOptions });
@@ -16197,14 +19776,11 @@ class ApplicationShell extends SvelteComponent {
     flush();
   }
 }
-cssVariables.setProperties({
-  // TJSApplicationShell app background.
-  "--tjs-app-background-default": `url("${globalThis.foundry.utils.getRoute("/ui/denim075.png")}")`,
-  "--tjs-app-resize-handle-background-default": `transparent url("${globalThis.foundry.utils.getRoute("/ui/resize-handle.webp")}") no-repeat center / contain`
-}, false);
-const MODULE_ID = "foundryvtt-TJS-module-template";
-const MODULE_TITLE = "foundryvtt TJS module template";
-const LOG_PREFIX = "FOUNDRYVTTTJSMODULETEMPLATE |";
+Hooks.once("init", () => FVTTConfigure.initialize());
+const MODULE_ID = "foundryvtt-shop-studio";
+const MODULE_TITLE = "Aardvark Shop Studio";
+const MODULE_CODE = "GSS";
+const LOG_PREFIX = "GSS |";
 const log = {
   ASSERT: 1,
   ERROR: 2,
@@ -16231,30 +19807,51 @@ const log = {
     return this.loggingLevel;
   }
 };
-function create_default_slot(ctx) {
+function localize(string) {
+  if (typeof game === "undefined") return string;
+  return game.i18n.localize(`${MODULE_ID}.${string}`);
+}
+function safeGetSetting(moduleId, key, defaultValue = true) {
+  try {
+    const setting = game.settings.get(moduleId, key);
+    return setting !== void 0 ? setting : defaultValue;
+  } catch (err) {
+    return defaultValue;
+  }
+}
+function create_default_slot$1(ctx) {
   let main;
   let footer;
-  let p1;
-  let a;
+  let div0;
+  let div2;
+  let div1;
+  let a1;
   return {
     c() {
       main = element("main");
       main.innerHTML = `<p>Welcome</p>`;
       footer = element("footer");
-      p1 = element("p");
-      p1.textContent = `${MODULE_TITLE} is sponsored by `;
-      a = element("a");
-      a.textContent = "Round Table Games";
-      attr(main, "class", "svelte-1f5phzh");
-      attr(a, "href", "https://www.round-table.games");
-      attr(a, "class", "svelte-1f5phzh");
-      attr(footer, "class", "svelte-1f5phzh");
+      div0 = element("div");
+      div0.innerHTML = `<a href="https://www.aardvark.games" class="svelte-142wv8w"><img class="white" src="/modules/${MODULE_ID}/assets/aardvark-logo.webp" alt="Aardvark Game Studios Logo" height="50" width="50" style="fill: white; border: none; width: auto;"/></a>`;
+      div2 = element("div");
+      div1 = element("div");
+      div1.textContent = `${localize("Title")} ${localize("Welcome.CreatedBy")} `;
+      a1 = element("a");
+      a1.textContent = "Aardvark Game Studios";
+      attr(main, "class", "svelte-142wv8w");
+      attr(div0, "class", "logo");
+      attr(a1, "href", "https://www.aardvark.games");
+      attr(a1, "class", "svelte-142wv8w");
+      attr(div2, "class", "left");
+      attr(footer, "class", "svelte-142wv8w");
     },
     m(target, anchor) {
       insert(target, main, anchor);
       insert(target, footer, anchor);
-      append(footer, p1);
-      append(footer, a);
+      append(footer, div0);
+      append(footer, div2);
+      append(div2, div1);
+      append(div2, a1);
     },
     p: noop,
     d(detaching) {
@@ -16265,7 +19862,7 @@ function create_default_slot(ctx) {
     }
   };
 }
-function create_fragment(ctx) {
+function create_fragment$5(ctx) {
   let applicationshell;
   let updating_elementRoot;
   let current;
@@ -16273,7 +19870,7 @@ function create_fragment(ctx) {
     ctx[3](value);
   }
   let applicationshell_props = {
-    $$slots: { default: [create_default_slot] },
+    $$slots: { default: [create_default_slot$1] },
     $$scope: { ctx }
   };
   if (
@@ -16322,7 +19919,7 @@ function create_fragment(ctx) {
     }
   };
 }
-function instance($$self, $$props, $$invalidate) {
+function instance$5($$self, $$props, $$invalidate) {
   let { elementRoot = void 0 } = $$props;
   let { version: version2 = void 0 } = $$props;
   const application = getContext("#external").application;
@@ -16350,7 +19947,7 @@ function instance($$self, $$props, $$invalidate) {
 class WelcomeAppShell extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance, create_fragment, safe_not_equal, { elementRoot: 0, version: 1 });
+    init(this, options, instance$5, create_fragment$5, safe_not_equal, { elementRoot: 0, version: 1 });
   }
   get elementRoot() {
     return this.$$.ctx[0];
@@ -16378,12 +19975,12 @@ class WelcomeApplication extends SvelteApp {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       id: `${MODULE_ID}-welcome`,
-      classes: ["<s_SVELTE_HASH_ID>"],
+      classes: [MODULE_CODE],
       resizable: true,
       minimizable: true,
       width: 220,
       height: 400,
-      // headerIcon: 'path/to/img.svg',
+      headerIcon: "modules/foundryvtt-shop-studio/assets/shop-studio-logo-dragon-be7c41ff.webp",
       title: game.i18n.localize(`${MODULE_TITLE} v${version}`),
       svelte: {
         class: WelcomeAppShell,
@@ -16397,9 +19994,3781 @@ class WelcomeApplication extends SvelteApp {
     });
   }
 }
+class DynReducerUtils {
+  /**
+   * Checks for array equality between two arrays of numbers.
+   *
+   * @param a - Array A
+   *
+   * @param b - Array B
+   *
+   * @returns Arrays are equal.
+   */
+  static arrayEquals(a, b) {
+    if (a === b) {
+      return true;
+    }
+    if (a === null || b === null) {
+      return false;
+    }
+    if (a.length !== b.length) {
+      return false;
+    }
+    for (let cntr = a.length; --cntr >= 0; ) {
+      if (a[cntr] !== b[cntr]) {
+        return false;
+      }
+    }
+    return true;
+  }
+  /**
+   * Provides a solid string hashing algorithm.
+   *
+   * Sourced from: https://stackoverflow.com/a/52171480
+   *
+   * @param str - String to hash.
+   *
+   * @param seed - A seed value altering the hash.
+   *
+   * @returns Hash code.
+   */
+  static hashString(str, seed = 0) {
+    if (str === void 0 || str === null) {
+      return 0;
+    }
+    let h1 = 3735928559 ^ seed, h2 = 1103547991 ^ seed;
+    for (let ch, i = 0; i < str.length; i++) {
+      ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ h1 >>> 16, 2246822507) ^ Math.imul(h2 ^ h2 >>> 13, 3266489909);
+    h2 = Math.imul(h2 ^ h2 >>> 16, 2246822507) ^ Math.imul(h1 ^ h1 >>> 13, 3266489909);
+    return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+  }
+  /**
+   * Converts an unknown value for hashing purposes in {@link AdapterIndexer.calcHashUpdate}.
+   *
+   * Currently, objects / Map w/ object keys is not supported. Potentially can include `object-hash` to handle this
+   * case, but it is not common to use objects as keys in Maps.
+   *
+   * @param value - An unknown value to convert to a number.
+   */
+  static hashUnknown(value) {
+    if (value === null || value === void 0) {
+      return 0;
+    }
+    let result = 0;
+    switch (typeof value) {
+      case "boolean":
+        result = value ? 1 : 0;
+        break;
+      case "bigint":
+        result = Number(BigInt.asIntN(64, value));
+        break;
+      case "function":
+        result = this.hashString(value.name);
+        break;
+      case "number":
+        result = Number.isFinite(value) ? value : 0;
+        break;
+      case "object":
+        break;
+      case "string":
+        result = this.hashString(value);
+        break;
+      case "symbol":
+        result = this.hashString(Symbol.keyFor(value));
+        break;
+    }
+    return result;
+  }
+  /**
+   * @param target -
+   *
+   * @param Prototype -
+   *
+   * @returns target constructor function has Prototype.
+   */
+  static hasPrototype(target, Prototype) {
+    if (typeof target !== "function") {
+      return false;
+    }
+    if (target === Prototype) {
+      return true;
+    }
+    for (let proto = Object.getPrototypeOf(target); proto; proto = Object.getPrototypeOf(proto)) {
+      if (proto === Prototype) {
+        return true;
+      }
+    }
+    return false;
+  }
+  /**
+   * Provides a utility method to determine if the given data is iterable / implements iterator protocol.
+   *
+   * @param data - Data to verify as iterable.
+   *
+   * @returns Is data iterable.
+   */
+  static isIterable(data) {
+    return data !== null && data !== void 0 && typeof data === "object" && typeof data[Symbol.iterator] === "function";
+  }
+}
+class AdapterDerived {
+  #hostData;
+  #DerivedReducerCtor;
+  #parentIndex;
+  #derived = /* @__PURE__ */ new Map();
+  #destroyed = false;
+  /**
+   * @param hostData - Hosted data structure.
+   *
+   * @param parentIndex - Any associated parent index API.
+   *
+   * @param DerivedReducerCtor - The default derived reducer constructor function.
+   */
+  constructor(hostData, parentIndex, DerivedReducerCtor) {
+    this.#hostData = hostData;
+    this.#parentIndex = parentIndex;
+    this.#DerivedReducerCtor = DerivedReducerCtor;
+    Object.freeze(this);
+  }
+  /**
+   * Creates a new derived reducer.
+   *
+   * @param options - Options defining the new derived reducer.
+   *
+   * @returns Newly created derived reducer.
+   */
+  create(options) {
+    if (this.#destroyed || this.#hostData === null) {
+      throw Error(`AdapterDerived.create error: this instance has been destroyed.`);
+    }
+    let name;
+    let rest = {};
+    let ctor;
+    const DerivedReducerCtor = this.#DerivedReducerCtor;
+    if (typeof options === "string") {
+      name = options;
+      ctor = DerivedReducerCtor;
+    } else if (typeof options === "function" && DynReducerUtils.hasPrototype(options, DerivedReducerCtor)) {
+      ctor = options;
+    } else if (typeof options === "object" && options !== null) {
+      ({ name, ctor = DerivedReducerCtor, ...rest } = options);
+    } else {
+      throw new TypeError(`AdapterDerived.create error: 'options' does not conform to allowed parameters.`);
+    }
+    if (!DynReducerUtils.hasPrototype(ctor, DerivedReducerCtor)) {
+      throw new TypeError(`AdapterDerived.create error: 'ctor' is not a '${DerivedReducerCtor?.name}'.`);
+    }
+    name = name ?? ctor?.name;
+    if (typeof name !== "string") {
+      throw new TypeError(`AdapterDerived.create error: 'name' is not a string.`);
+    }
+    const derivedReducer = new ctor(this.#hostData, this.#parentIndex, rest);
+    this.#derived.set(name, derivedReducer);
+    if (this.#hasInitialize(derivedReducer)) {
+      const { filters, sort, ...optionsRest } = rest;
+      derivedReducer.initialize(optionsRest);
+    }
+    return derivedReducer;
+  }
+  /**
+   * Removes all derived reducers and associated subscriptions.
+   */
+  clear() {
+    if (this.#destroyed) {
+      return;
+    }
+    for (const reducer of this.#derived.values()) {
+      reducer.destroy();
+    }
+    this.#derived.clear();
+  }
+  /**
+   * Deletes and destroys a derived reducer by name.
+   *
+   * @param name - Name of the derived reducer.
+   *
+   * @returns true if an element in the Map existed and has been removed, or false if the element does not exist.
+   */
+  delete(name) {
+    if (this.#destroyed) {
+      throw Error(`AdapterDerived.delete error: this instance has been destroyed.`);
+    }
+    const reducer = this.#derived.get(name);
+    if (reducer) {
+      reducer.destroy();
+    }
+    return this.#derived.delete(name);
+  }
+  /**
+   * Removes all derived reducers, subscriptions, and cleans up all resources.
+   */
+  destroy() {
+    if (this.#destroyed) {
+      return;
+    }
+    this.clear();
+    this.#hostData = null;
+    this.#parentIndex = null;
+    this.#destroyed = true;
+  }
+  /**
+   * Returns an existing derived reducer.
+   *
+   * @param name - Name of derived reducer.
+   *
+   * @returns Any associated derived reducer.
+   */
+  get(name) {
+    if (this.#destroyed) {
+      throw Error(`AdapterDerived.get error: this instance has been destroyed.`);
+    }
+    return this.#derived.get(name);
+  }
+  /**
+   * Type guard to check for presence of `initialize` method.
+   *
+   * @param instance - Instance to check.
+   */
+  #hasInitialize(instance2) {
+    return typeof instance2?.initialize === "function";
+  }
+  /**
+   * Updates all managed derived reducer indexes.
+   *
+   * @param [force=false] - Force an update to subscribers.
+   */
+  update(force = false) {
+    if (this.#destroyed) {
+      return;
+    }
+    for (const reducer of this.#derived.values()) {
+      reducer.index.update(force);
+    }
+  }
+}
+class AdapterFilters {
+  #filtersData;
+  #indexUpdate;
+  #mapUnsubscribe = /* @__PURE__ */ new Map();
+  constructor(indexUpdate, filtersAdapter) {
+    this.#indexUpdate = indexUpdate;
+    this.#filtersData = filtersAdapter;
+    Object.freeze(this);
+  }
+  get length() {
+    return this.#filtersData.filters.length;
+  }
+  *[Symbol.iterator]() {
+    if (this.#filtersData.filters.length === 0) {
+      return;
+    }
+    for (const entry of this.#filtersData.filters) {
+      yield { ...entry };
+    }
+  }
+  add(...filters) {
+    let subscribeCount = 0;
+    for (const filter of filters) {
+      const filterType = typeof filter;
+      if (filterType !== "function" && (filterType !== "object" || filter === null)) {
+        throw new TypeError(`AdapterFilters error: 'filter' is not a function or object.`);
+      }
+      let data;
+      let subscribeFn;
+      if (filterType === "function") {
+        data = {
+          id: void 0,
+          filter,
+          weight: 1
+        };
+        subscribeFn = filter.subscribe;
+      } else if (filterType === "object") {
+        if ("filter" in filter) {
+          if (typeof filter.filter !== "function") {
+            throw new TypeError(`AdapterFilters error: 'filter' attribute is not a function.`);
+          }
+          if (filter.weight !== void 0 && (typeof filter.weight !== "number" || filter.weight < 0 || filter.weight > 1)) {
+            throw new TypeError(`AdapterFilters error: 'weight' attribute is not a number between '0 - 1' inclusive.`);
+          }
+          data = {
+            id: filter.id !== void 0 ? filter.id : void 0,
+            filter: filter.filter,
+            weight: filter.weight || 1
+          };
+          subscribeFn = filter.filter.subscribe ?? filter.subscribe;
+        } else {
+          throw new TypeError(`AdapterFilters error: 'filter' attribute is not a function.`);
+        }
+      } else {
+        throw new TypeError(`AdapterFilters error: 'filter' is not defined.`);
+      }
+      const index = this.#filtersData.filters.findIndex((value) => {
+        return data.weight < value.weight;
+      });
+      if (index >= 0) {
+        this.#filtersData.filters.splice(index, 0, data);
+      } else {
+        this.#filtersData.filters.push(data);
+      }
+      if (typeof subscribeFn === "function") {
+        const unsubscribe = subscribeFn(this.#indexUpdate);
+        if (typeof unsubscribe !== "function") {
+          throw new TypeError("AdapterFilters error: Filter has subscribe function, but no unsubscribe function is returned.");
+        }
+        if (this.#mapUnsubscribe.has(data.filter)) {
+          throw new Error("AdapterFilters error: Filter added already has an unsubscribe function registered.");
+        }
+        this.#mapUnsubscribe.set(data.filter, unsubscribe);
+        subscribeCount++;
+      }
+    }
+    if (subscribeCount < filters.length) {
+      this.#indexUpdate(true);
+    }
+  }
+  clear() {
+    this.#filtersData.filters.length = 0;
+    for (const unsubscribe of this.#mapUnsubscribe.values()) {
+      unsubscribe();
+    }
+    this.#mapUnsubscribe.clear();
+    this.#indexUpdate();
+  }
+  remove(...filters) {
+    const length = this.#filtersData.filters.length;
+    if (length === 0) {
+      return;
+    }
+    for (const data of filters) {
+      const actualFilter = typeof data === "function" ? data : data !== null && typeof data === "object" ? data.filter : void 0;
+      if (!actualFilter) {
+        continue;
+      }
+      for (let cntr = this.#filtersData.filters.length; --cntr >= 0; ) {
+        if (this.#filtersData.filters[cntr].filter === actualFilter) {
+          this.#filtersData.filters.splice(cntr, 1);
+          let unsubscribe;
+          if (typeof (unsubscribe = this.#mapUnsubscribe.get(actualFilter)) === "function") {
+            unsubscribe();
+            this.#mapUnsubscribe.delete(actualFilter);
+          }
+        }
+      }
+    }
+    if (length !== this.#filtersData.filters.length) {
+      this.#indexUpdate(true);
+    }
+  }
+  removeBy(callback) {
+    const length = this.#filtersData.filters.length;
+    if (length === 0) {
+      return;
+    }
+    if (typeof callback !== "function") {
+      throw new TypeError(`AdapterFilters error: 'callback' is not a function.`);
+    }
+    this.#filtersData.filters = this.#filtersData.filters.filter((data) => {
+      const remove = callback.call(callback, { ...data });
+      if (remove) {
+        let unsubscribe;
+        if (typeof (unsubscribe = this.#mapUnsubscribe.get(data.filter)) === "function") {
+          unsubscribe();
+          this.#mapUnsubscribe.delete(data.filter);
+        }
+      }
+      return !remove;
+    });
+    if (length !== this.#filtersData.filters.length) {
+      this.#indexUpdate(true);
+    }
+  }
+  removeById(...ids) {
+    const length = this.#filtersData.filters.length;
+    if (length === 0) {
+      return;
+    }
+    this.#filtersData.filters = this.#filtersData.filters.filter((data) => {
+      let remove = 0;
+      for (const id of ids) {
+        remove |= data.id === id ? 1 : 0;
+      }
+      if (!!remove) {
+        let unsubscribe;
+        if (typeof (unsubscribe = this.#mapUnsubscribe.get(data.filter)) === "function") {
+          unsubscribe();
+          this.#mapUnsubscribe.delete(data.filter);
+        }
+      }
+      return !remove;
+    });
+    if (length !== this.#filtersData.filters.length) {
+      this.#indexUpdate(true);
+    }
+  }
+}
+class AdapterIndexer {
+  derivedAdapter;
+  filtersData;
+  hostData;
+  hostUpdate;
+  indexData;
+  sortData;
+  sortFn;
+  destroyed = false;
+  /**
+   * @param hostData - Hosted data structure.
+   *
+   * @param hostUpdate - Host update function invoked on index updates.
+   *
+   * @param [parentIndexer] - Any associated parent index API.
+   *
+   * @returns Indexer adapter instance.
+   */
+  constructor(hostData, hostUpdate, parentIndexer) {
+    this.hostData = hostData;
+    this.hostUpdate = hostUpdate;
+    this.indexData = { index: null, hash: null, reversed: false, parent: parentIndexer };
+  }
+  /**
+   * @returns Returns whether the index is active.
+   */
+  get active() {
+    return this.filtersData.filters.length > 0 || this.sortData.compareFn !== null || this.indexData.parent?.active === true;
+  }
+  /**
+   * @returns Returns length of reduced index.
+   */
+  get length() {
+    return this.indexData.index ? this.indexData.index.length : 0;
+  }
+  // -------------------------------------------------------------------------------------------------------------------
+  /**
+   * Calculates a new hash value for the new index array if any. If the new index array is null then the hash value
+   * is set to null. Set calculated new hash value to the index adapter hash value.
+   *
+   * After hash generation compare old and new hash values and perform an update if they are different. If they are
+   * equal check for array equality between the old and new index array and perform an update if they are not equal.
+   *
+   * @param oldIndex - Old index array.
+   *
+   * @param oldHash - Old index hash value.
+   *
+   * @param [force=false] - When true forces an update to subscribers.
+   */
+  calcHashUpdate(oldIndex, oldHash, force = false) {
+    const actualForce = typeof force === "boolean" ? force : (
+      /* c8 ignore next */
+      false
+    );
+    let newHash = null;
+    const newIndex = this.indexData.index;
+    if (newIndex) {
+      for (let cntr = newIndex.length; --cntr >= 0; ) {
+        newHash ^= DynReducerUtils.hashUnknown(newIndex[cntr]) + 2654435769 + (newHash << 6) + (newHash >> 2);
+      }
+    }
+    this.indexData.hash = newHash;
+    if (actualForce || (oldHash === newHash ? !DynReducerUtils.arrayEquals(oldIndex, newIndex) : true)) {
+      this.hostUpdate();
+    }
+  }
+  /**
+   * Destroys all resources.
+   */
+  destroy() {
+    if (this.destroyed) {
+      return;
+    }
+    this.hostData = null;
+    this.indexData.index = null;
+    this.indexData.hash = null;
+    this.indexData.reversed = false;
+    this.indexData.parent = null;
+    this.destroyed = true;
+  }
+  /**
+   * Store associated filter and sort data that are constructed after the indexer.
+   *
+   * @param filtersData - Associated AdapterFilters instance.
+   *
+   * @param sortData - Associated AdapterSort instance.
+   *
+   * @param derivedAdapter - Associated AdapterDerived instance.
+   */
+  initAdapters(filtersData, sortData, derivedAdapter) {
+    this.filtersData = filtersData;
+    this.sortData = sortData;
+    this.derivedAdapter = derivedAdapter;
+    this.sortFn = this.createSortFn();
+  }
+}
+class AdapterSort {
+  #sortData;
+  #indexUpdate;
+  #unsubscribe;
+  constructor(indexUpdate, sortData) {
+    this.#indexUpdate = indexUpdate;
+    this.#sortData = sortData;
+    Object.freeze(this);
+  }
+  clear() {
+    const oldCompareFn = this.#sortData.compareFn;
+    this.#sortData.compareFn = null;
+    if (typeof this.#unsubscribe === "function") {
+      this.#unsubscribe();
+      this.#unsubscribe = void 0;
+    }
+    if (typeof oldCompareFn === "function") {
+      this.#indexUpdate(true);
+    }
+  }
+  set(sort) {
+    if (typeof this.#unsubscribe === "function") {
+      this.#unsubscribe();
+      this.#unsubscribe = void 0;
+    }
+    let compareFn;
+    let subscribeFn;
+    switch (typeof sort) {
+      case "function":
+        compareFn = sort;
+        subscribeFn = sort.subscribe;
+        break;
+      case "object":
+        if (sort === null) {
+          break;
+        }
+        if (typeof sort.compare !== "function") {
+          throw new TypeError(`AdapterSort error: 'compare' attribute is not a function.`);
+        }
+        compareFn = sort.compare;
+        subscribeFn = sort.compare.subscribe ?? sort.subscribe;
+        break;
+    }
+    if (typeof compareFn === "function") {
+      this.#sortData.compareFn = compareFn;
+    } else {
+      const oldCompareFn = this.#sortData.compareFn;
+      this.#sortData.compareFn = null;
+      if (typeof oldCompareFn === "function") {
+        this.#indexUpdate();
+      }
+      return;
+    }
+    if (typeof subscribeFn === "function") {
+      this.#unsubscribe = subscribeFn(this.#indexUpdate);
+      if (typeof this.#unsubscribe !== "function") {
+        throw new Error(`AdapterSort error: sort has 'subscribe' function, but no 'unsubscribe' function is returned.`);
+      }
+    } else {
+      this.#indexUpdate(true);
+    }
+  }
+}
+class IndexerAPI {
+  #indexData;
+  /**
+   * Provides a getter to determine if the index is active.
+   */
+  active;
+  /**
+   * Provides length of reduced / indexed elements.
+   */
+  length;
+  /**
+   * Manually invoke an update of the index.
+   *
+   * @param force - Force update to any subscribers.
+   */
+  update;
+  constructor(adapterIndexer) {
+    this.#indexData = adapterIndexer.indexData;
+    this.update = adapterIndexer.update.bind(adapterIndexer);
+    Object.defineProperties(this, {
+      active: { get: () => adapterIndexer.active },
+      length: { get: () => adapterIndexer.length }
+    });
+    Object.freeze(this);
+  }
+  get hash() {
+    return this.#indexData.hash;
+  }
+  *[Symbol.iterator]() {
+    const indexData = this.#indexData;
+    if (!indexData.index) {
+      return;
+    }
+    const reversed = indexData.reversed;
+    const length = indexData.index.length;
+    if (reversed) {
+      for (let cntr = length; --cntr >= 0; ) {
+        yield indexData.index[cntr];
+      }
+    } else {
+      for (let cntr = 0; cntr < length; cntr++) {
+        yield indexData.index[cntr];
+      }
+    }
+  }
+}
+class MapIndexer extends AdapterIndexer {
+  /**
+   * @inheritDoc
+   */
+  createSortFn() {
+    return (a, b) => {
+      const data = this.hostData?.[0];
+      const dataA = data?.get(a);
+      const dataB = data?.get(b);
+      return dataA && dataB ? this.sortData.compareFn(dataA, dataB) : 0;
+    };
+  }
+  /**
+   * Provides the custom filter / reduce step that is ~25-40% faster than implementing with `Array.reduce`.
+   *
+   * Note: Other loop unrolling techniques like Duff's Device gave a slight faster lower bound on large data sets,
+   * but the maintenance factor is not worth the extra complication.
+   *
+   * @returns New filtered index array.
+   */
+  reduceImpl() {
+    const data = [];
+    const map = this.hostData?.[0];
+    if (!map) {
+      return data;
+    }
+    const filters = this.filtersData.filters;
+    let include = true;
+    const parentIndex = this.indexData.parent;
+    if (DynReducerUtils.isIterable(parentIndex) && parentIndex.active) {
+      for (const key of parentIndex) {
+        const value = map.get(key);
+        include = true;
+        if (value === void 0) {
+          continue;
+        }
+        for (let filCntr = 0, filLength = filters.length; filCntr < filLength; filCntr++) {
+          if (!filters[filCntr].filter(value)) {
+            include = false;
+            break;
+          }
+        }
+        if (include) {
+          data.push(key);
+        }
+      }
+    } else {
+      for (const key of map.keys()) {
+        include = true;
+        const value = map.get(key);
+        if (value === void 0) {
+          continue;
+        }
+        for (let filCntr = 0, filLength = filters.length; filCntr < filLength; filCntr++) {
+          if (!filters[filCntr].filter(value)) {
+            include = false;
+            break;
+          }
+        }
+        if (include) {
+          data.push(key);
+        }
+      }
+    }
+    return data;
+  }
+  /**
+   * Update the reducer indexes. If there are changes subscribers are notified. If data order is changed externally
+   * pass in true to force an update to subscribers.
+   *
+   * @param [force=false] - When true forces an update to subscribers.
+   */
+  update(force = false) {
+    if (this.destroyed) {
+      return;
+    }
+    const oldIndex = this.indexData.index;
+    const oldHash = this.indexData.hash;
+    const map = this.hostData?.[0];
+    const parentIndex = this.indexData.parent;
+    if (this.filtersData.filters.length === 0 && !this.sortData.compareFn || this.indexData.index && map?.size !== this.indexData.index.length) {
+      this.indexData.index = null;
+    }
+    if (this.filtersData.filters.length > 0) {
+      this.indexData.index = this.reduceImpl();
+    }
+    if (!this.indexData.index && parentIndex?.active) {
+      this.indexData.index = [...parentIndex];
+    }
+    if (this.sortData.compareFn && map instanceof Map) {
+      if (!this.indexData.index) {
+        this.indexData.index = [...map.keys()];
+      }
+      this.indexData.index.sort(this.sortFn);
+    }
+    this.calcHashUpdate(oldIndex, oldHash, force);
+    this.derivedAdapter?.update(force);
+  }
+}
+class DerivedMapAPI {
+  clear;
+  create;
+  delete;
+  destroy;
+  get;
+  constructor(adapterDerived) {
+    this.clear = adapterDerived.clear.bind(adapterDerived);
+    this.create = adapterDerived.create.bind(adapterDerived);
+    this.delete = adapterDerived.delete.bind(adapterDerived);
+    this.destroy = adapterDerived.destroy.bind(adapterDerived);
+    this.get = adapterDerived.get.bind(adapterDerived);
+    Object.freeze(this);
+  }
+}
+class DynMapReducerDerived {
+  #map;
+  #derived;
+  #derivedPublicAPI;
+  #filters;
+  #filtersData = { filters: [] };
+  #index;
+  #indexPublicAPI;
+  #sort;
+  #sortData = { compareFn: null };
+  #subscribers = [];
+  #destroyed = false;
+  /**
+   * @param map - Data host Map.
+   *
+   * @param parentIndex - Parent indexer.
+   *
+   * @param options - Any filters and sort functions to apply.
+   *
+   * @typeParam K `unknown` - Key type.
+   *
+   * @typeParam T `unknown` - Type of data.
+   *
+   * @private
+   */
+  constructor(map, parentIndex, options) {
+    this.#map = map;
+    this.#index = new MapIndexer(this.#map, this.#updateSubscribers.bind(this), parentIndex);
+    this.#indexPublicAPI = new IndexerAPI(this.#index);
+    this.#filters = new AdapterFilters(this.#indexPublicAPI.update, this.#filtersData);
+    this.#sort = new AdapterSort(this.#indexPublicAPI.update, this.#sortData);
+    this.#derived = new AdapterDerived(this.#map, this.#indexPublicAPI, DynMapReducerDerived);
+    this.#derivedPublicAPI = new DerivedMapAPI(this.#derived);
+    this.#index.initAdapters(this.#filtersData, this.#sortData, this.#derived);
+    const { filters, sort } = options;
+    if (filters !== void 0) {
+      if (!DynReducerUtils.isIterable(filters)) {
+        throw new TypeError(`DerivedMapReducer error (DataDerivedOptions): 'filters' attribute is not iterable.`);
+      }
+      this.filters.add(...filters);
+    }
+    if (sort !== void 0) {
+      if (typeof sort !== "function" && (typeof sort !== "object" || sort === null)) {
+        throw new TypeError(`DerivedMapReducer error (DataDerivedOptions): 'sort' attribute is not a function or object.`);
+      }
+      this.sort.set(sort);
+    }
+  }
+  /**
+   * @returns Derived public API.
+   */
+  get derived() {
+    return this.#derivedPublicAPI;
+  }
+  /**
+   * @returns The filters adapter.
+   */
+  get filters() {
+    return this.#filters;
+  }
+  /**
+   * @returns Returns the Indexer public API; is also iterable.
+   */
+  get index() {
+    return this.#indexPublicAPI;
+  }
+  /**
+   * @returns Returns whether this derived reducer is destroyed.
+   */
+  get destroyed() {
+    return this.#destroyed;
+  }
+  /**
+   * @returns Returns the main data items or indexed items length.
+   */
+  get length() {
+    const map = this.#map?.[0];
+    return this.#index.active ? this.index.length : map ? map.size : 0;
+  }
+  /**
+   * @returns Returns current reversed state.
+   */
+  get reversed() {
+    return this.#index.indexData.reversed;
+  }
+  /**
+   * @returns Returns the sort adapter.
+   */
+  get sort() {
+    return this.#sort;
+  }
+  /**
+   * Sets reversed state and notifies subscribers.
+   *
+   * @param reversed - New reversed state.
+   */
+  set reversed(reversed) {
+    if (typeof reversed !== "boolean") {
+      throw new TypeError(`DerivedMapReducer.reversed error: 'reversed' is not a boolean.`);
+    }
+    this.#index.indexData.reversed = reversed;
+    this.index.update(true);
+  }
+  /**
+   * Removes all derived reducers, subscriptions, and cleans up all resources.
+   */
+  destroy() {
+    this.#destroyed = true;
+    this.#map = [null];
+    this.#index.update(true);
+    this.#subscribers.length = 0;
+    this.#derived.destroy();
+    this.#index.destroy();
+    this.#filters.clear();
+    this.#sort.clear();
+  }
+  /**
+   * Provides a callback for custom derived reducers to initialize any data / custom configuration. This allows
+   * child classes to avoid implementing the constructor.
+   *
+   * @param [optionsRest] - Any additional custom options passed beyond {@link DynDataOptions}.
+   *
+   * @protected
+   */
+  initialize(optionsRest) {
+  }
+  /**
+   * Provides an iterator for data stored in DynMapReducerDerived.
+   *
+   * @returns Iterator for data stored in DynMapReducerDerived.
+   */
+  *[Symbol.iterator]() {
+    const map = this.#map?.[0] ?? null;
+    if (this.#destroyed || map === null || map?.size === 0) {
+      return;
+    }
+    if (this.#index.active) {
+      for (const key of this.index) {
+        yield map.get(key);
+      }
+    } else {
+      if (this.reversed) {
+        const values = [...map.values()];
+        for (let cntr = values.length; --cntr >= 0; ) {
+          yield values[cntr];
+        }
+      } else {
+        for (const value of map.values()) {
+          yield value;
+        }
+      }
+    }
+  }
+  // -------------------------------------------------------------------------------------------------------------------
+  /**
+   * Subscribe to this DerivedMapReducer.
+   *
+   * @param handler - Callback function that is invoked on update / changes. Receives `this` reference.
+   *
+   * @returns Unsubscribe function.
+   */
+  subscribe(handler) {
+    const currentIdx = this.#subscribers.findIndex((entry) => entry === handler);
+    if (currentIdx === -1) {
+      this.#subscribers.push(handler);
+      handler(this);
+    }
+    return () => {
+      const existingIdx = this.#subscribers.findIndex((entry) => entry === handler);
+      if (existingIdx !== -1) {
+        this.#subscribers.splice(existingIdx, 1);
+      }
+    };
+  }
+  /**
+   * Updates subscribers on changes.
+   */
+  #updateSubscribers() {
+    for (let cntr = 0; cntr < this.#subscribers.length; cntr++) {
+      this.#subscribers[cntr](this);
+    }
+  }
+}
+class DynMapReducer {
+  #map = [null];
+  #derived;
+  #derivedPublicAPI;
+  #filters;
+  #filtersData = { filters: [] };
+  #index;
+  #indexPublicAPI;
+  #sort;
+  #sortData = { compareFn: null };
+  #subscribers = [];
+  #destroyed = false;
+  /**
+   * Initializes DynMapReducer. Any iterable is supported for initial data. Take note that if `data` is an array it
+   * will be used as the host array and not copied. All non-array iterables otherwise create a new array / copy.
+   *
+   * @param [data] - Data iterable to store if array or copy otherwise.
+   *
+   * @typeParam K `unknown` - Key type.
+   *
+   * @typeParam T `unknown` - Type of data.
+   */
+  constructor(data) {
+    let dataMap;
+    let filters;
+    let sort;
+    if (data === null) {
+      throw new TypeError(`DynMapReducer error: 'data' is not an object or Map.`);
+    }
+    if (data !== void 0 && typeof data !== "object" && !(data instanceof Map)) {
+      throw new TypeError(`DynMapReducer error: 'data' is not an object or Map.`);
+    }
+    if (data !== void 0 && data instanceof Map) {
+      dataMap = data;
+    } else if (data !== void 0 && ("data" in data || "filters" in data || "sort" in data)) {
+      if (data.data !== void 0 && !(data.data instanceof Map)) {
+        throw new TypeError(`DynMapReducer error (DataDynMap): 'data' attribute is not a Map.`);
+      }
+      if (data.data instanceof Map) {
+        dataMap = data.data;
+      }
+      if (data.filters !== void 0) {
+        if (DynReducerUtils.isIterable(data.filters)) {
+          filters = data.filters;
+        } else {
+          throw new TypeError(`DynMapReducer error (DataDynMap): 'filters' attribute is not iterable.`);
+        }
+      }
+      if (data.sort !== void 0) {
+        if (typeof data.sort === "function") {
+          sort = data.sort;
+        } else if (typeof data.sort === "object" && data.sort !== null) {
+          sort = data.sort;
+        } else {
+          throw new TypeError(`DynMapReducer error (DataDynMap): 'sort' attribute is not a function or object.`);
+        }
+      }
+    }
+    if (dataMap) {
+      this.#map[0] = dataMap;
+    }
+    this.#index = new MapIndexer(this.#map, this.#updateSubscribers.bind(this));
+    this.#indexPublicAPI = new IndexerAPI(this.#index);
+    this.#filters = new AdapterFilters(this.#indexPublicAPI.update, this.#filtersData);
+    this.#sort = new AdapterSort(this.#indexPublicAPI.update, this.#sortData);
+    this.#derived = new AdapterDerived(this.#map, this.#indexPublicAPI, DynMapReducerDerived);
+    this.#derivedPublicAPI = new DerivedMapAPI(this.#derived);
+    this.#index.initAdapters(this.#filtersData, this.#sortData, this.#derived);
+    if (filters) {
+      this.filters.add(...filters);
+    }
+    if (sort) {
+      this.sort.set(sort);
+    }
+  }
+  /**
+   * Returns the internal data of this instance. Be careful!
+   *
+   * Note: When a map is set as data then that map is used as the internal data. If any changes are performed to the
+   * data externally do invoke `update` via {@link DynMapReducer.index} with `true` to recalculate the  index and
+   * notify all subscribers.
+   *
+   * @returns The internal data.
+   */
+  get data() {
+    return this.#map[0];
+  }
+  /**
+   * @returns Derived public API.
+   */
+  get derived() {
+    return this.#derivedPublicAPI;
+  }
+  /**
+   * @returns The filters adapter.
+   */
+  get filters() {
+    return this.#filters;
+  }
+  /**
+   * @returns Returns the Indexer public API; is also iterable.
+   */
+  get index() {
+    return this.#indexPublicAPI;
+  }
+  /**
+   * @returns Returns whether this instance is destroyed.
+   */
+  get destroyed() {
+    return this.#destroyed;
+  }
+  /**
+   * @returns Returns the main data items or indexed items length.
+   */
+  get length() {
+    const map = this.#map[0];
+    return this.#index.active ? this.#indexPublicAPI.length : map ? map.size : 0;
+  }
+  /**
+   * @returns Returns current reversed state.
+   */
+  get reversed() {
+    return this.#index.indexData.reversed;
+  }
+  /**
+   * @returns The sort adapter.
+   */
+  get sort() {
+    return this.#sort;
+  }
+  /**
+   * Sets reversed state and notifies subscribers.
+   *
+   * @param reversed - New reversed state.
+   */
+  set reversed(reversed) {
+    if (typeof reversed !== "boolean") {
+      throw new TypeError(`DynMapReducer.reversed error: 'reversed' is not a boolean.`);
+    }
+    this.#index.indexData.reversed = reversed;
+    this.index.update(true);
+  }
+  /**
+   * Removes all derived reducers, subscriptions, and cleans up all resources.
+   */
+  destroy() {
+    if (this.#destroyed) {
+      return;
+    }
+    this.#destroyed = true;
+    this.#derived.destroy();
+    this.#map = [null];
+    this.index.update(true);
+    this.#subscribers.length = 0;
+    this.#filters.clear();
+    this.#sort.clear();
+    this.#index.destroy();
+  }
+  /**
+   * Provides a callback for custom reducers to initialize any data / custom configuration. Depending on the consumer
+   * of `dynamic-reducer` this may be utilized allowing child classes to avoid implementing the constructor.
+   *
+   * @param [optionsRest] - Any additional custom options passed beyond {@link DynReducer.Options.Common}.
+   *
+   * @protected
+   */
+  /* c8 ignore next */
+  initialize(optionsRest) {
+  }
+  /**
+   * Removes internal data and pushes new data. This does not destroy any initial array set to internal data unless
+   * `replace` is set to true.
+   *
+   * @param data - New data to set to internal data.
+   *
+   * @param [replace=false] - New data to set to internal data.
+   */
+  setData(data, replace = false) {
+    if (data !== null && !(data instanceof Map)) {
+      throw new TypeError(`DynMapReducer.setData error: 'data' is not iterable.`);
+    }
+    if (typeof replace !== "boolean") {
+      throw new TypeError(`DynMapReducer.setData error: 'replace' is not a boolean.`);
+    }
+    const map = this.#map[0];
+    if (!(map instanceof Map) || replace) {
+      this.#map[0] = data instanceof Map ? data : null;
+    } else if (data instanceof Map && map instanceof Map) {
+      const removeKeySet = new Set(map.keys());
+      for (const key of data.keys()) {
+        map.set(key, data.get(key));
+        if (removeKeySet.has(key)) {
+          removeKeySet.delete(key);
+        }
+      }
+      for (const key of removeKeySet) {
+        map.delete(key);
+      }
+    } else if (data === null) {
+      this.#map[0] = null;
+    }
+    this.#index.indexData.index = null;
+    this.index.update(true);
+  }
+  /**
+   * Add a subscriber to this DynMapReducer instance.
+   *
+   * @param handler - Callback function that is invoked on update / changes. Receives `this` reference.
+   *
+   * @returns Unsubscribe function.
+   */
+  subscribe(handler) {
+    const currentIdx = this.#subscribers.findIndex((entry) => entry === handler);
+    if (currentIdx === -1) {
+      this.#subscribers.push(handler);
+      handler(this);
+    }
+    return () => {
+      const existingIdx = this.#subscribers.findIndex((entry) => entry === handler);
+      if (existingIdx !== -1) {
+        this.#subscribers.splice(existingIdx, 1);
+      }
+    };
+  }
+  /**
+   * Updates subscribers on changes.
+   */
+  #updateSubscribers() {
+    for (let cntr = 0; cntr < this.#subscribers.length; cntr++) {
+      this.#subscribers[cntr](this);
+    }
+  }
+  /**
+   * Provides an iterator for data stored in DynMapReducer.
+   *
+   * @returns Iterator for data stored in DynMapReducer.
+   */
+  *[Symbol.iterator]() {
+    const map = this.#map[0];
+    if (this.#destroyed || map === null || map?.size === 0) {
+      return;
+    }
+    if (this.#index.active) {
+      for (const key of this.index) {
+        yield map.get(key);
+      }
+    } else {
+      if (this.reversed) {
+        const values = [...map.values()];
+        for (let cntr = values.length; --cntr >= 0; ) {
+          yield values[cntr];
+        }
+      } else {
+        for (const value of map.values()) {
+          yield value;
+        }
+      }
+    }
+  }
+}
+function isDocument(doc) {
+  return doc !== void 0 && doc !== null && doc instanceof foundry.abstract.Document;
+}
+class EmbeddedStoreManager {
+  /**
+   * RegExp for detecting CRUD updates for the associated document.
+   */
+  static #updateActionRegex = /(?<action>create|delete|update)(?<sep>\.?)(?<name>\w+)/;
+  /**
+   */
+  #name = /* @__PURE__ */ new Map();
+  /**
+   * Source document.
+   */
+  #document;
+  /**
+   * Reverse lookup for older Foundry versions.
+   */
+  #collectionToDocName = /* @__PURE__ */ new Map();
+  /**
+   * Valid embedded collection actions.
+   */
+  #embeddedNames = /* @__PURE__ */ new Set();
+  /**
+   * @param document - The associated document holder.
+   */
+  constructor(document2) {
+    this.#document = document2;
+    this.handleDocChange();
+    Object.seal(this);
+  }
+  /**
+   * Create a reactive embedded collection store. When no options are provided the name of the embedded collection
+   * matches the document name.
+   *
+   * @param FoundryDoc - A Foundry document.
+   *
+   * @param [options] - Dynamic reducer create options.
+   *
+   * @typeParam D `Foundry Document`.
+   *
+   * @typeParam O `CreateOptions` - Embedded API create options.
+   */
+  create(FoundryDoc, options) {
+    const docName = FoundryDoc?.documentName;
+    if (typeof docName !== "string") {
+      throw new TypeError(`EmbeddedStoreManager.create error: 'FoundryDoc' does not have a valid 'documentName' property.`);
+    }
+    const doc = this.#document[0];
+    let collection = null;
+    if (doc) {
+      try {
+        collection = doc.getEmbeddedCollection(docName);
+      } catch (err) {
+        console.warn(`EmbeddedStoreManager.create error: No valid embedded collection for: ${docName}`);
+      }
+    }
+    let embeddedData = this.#name.get(docName);
+    if (!embeddedData) {
+      embeddedData = {
+        collection,
+        stores: /* @__PURE__ */ new Map()
+      };
+      this.#name.set(docName, embeddedData);
+    }
+    let name;
+    let rest = {};
+    let ctor;
+    if (typeof options === "string") {
+      name = options;
+      ctor = DynMapReducer;
+    } else if (typeof options === "function" && hasPrototype(options, DynMapReducer)) {
+      ctor = options;
+    } else if (isObject(options)) {
+      ({ name, ctor = DynMapReducer, ...rest } = options);
+    } else {
+      name = docName;
+      ctor = DynMapReducer;
+    }
+    if (!hasPrototype(ctor, DynMapReducer)) {
+      throw new TypeError(`EmbeddedStoreManager.create error: 'ctor' is not a 'DynMapReducer'.`);
+    }
+    name = name ?? ctor?.name;
+    if (typeof name !== "string") {
+      throw new TypeError(`EmbeddedStoreManager.create error: 'name' is not a string.`);
+    }
+    if (embeddedData.stores.has(name)) {
+      return embeddedData.stores.get(name);
+    } else {
+      const reducerOptions = collection ? { data: collection, ...rest } : { ...rest };
+      const instance2 = new ctor(reducerOptions);
+      embeddedData.stores.set(name, instance2);
+      if (typeof instance2?.initialize === "function") {
+        instance2.initialize(rest);
+      }
+      return instance2;
+    }
+  }
+  /**
+   * Destroys one or more embedded collection reducers. When no `reducerName` is provided all reactive embedded
+   * collections are destroyed for the given document type.
+   *
+   * @param FoundryDoc - A Foundry document class constructor.
+   *
+   * @param [reducerName] - Optional name of a specific reducer to destroy.
+   *
+   * @typeParam D `Foundry Document`.
+   */
+  destroy(FoundryDoc, reducerName) {
+    let count = 0;
+    if (FoundryDoc === void 0) {
+      for (const embeddedData of this.#name.values()) {
+        embeddedData.collection = null;
+        for (const store of embeddedData.stores.values()) {
+          store.destroy();
+          count++;
+        }
+      }
+      this.#name.clear();
+    } else {
+      const docName = FoundryDoc?.documentName;
+      if (typeof docName !== "string") {
+        throw new TypeError(`EmbeddedStoreManager.delete error: 'FoundryDoc' does not have a valid 'documentName' property.`);
+      }
+      if (reducerName === void 0) {
+        const embeddedData = this.#name.get(docName);
+        if (embeddedData) {
+          embeddedData.collection = null;
+          for (const store of embeddedData.stores.values()) {
+            store.destroy();
+            count++;
+          }
+        }
+        this.#name.delete(docName);
+      } else if (reducerName === "string") {
+        const embeddedData = this.#name.get(docName);
+        if (embeddedData) {
+          const store = embeddedData.stores.get(reducerName);
+          if (store) {
+            store.destroy();
+            count++;
+          }
+        }
+      }
+    }
+    return count > 0;
+  }
+  /**
+   * Returns a specific existing embedded collection store. When no `reducerName` is provided the document name
+   * is used instead.
+   *
+   * @param FoundryDoc - A Foundry document class constructor.
+   *
+   * @param [reducerName] - Optional name of a specific reducer to get.
+   *
+   * @typeParam D `Foundry Document`.
+   *
+   * @returns The associated reactive embedded collection / reducer.
+   */
+  get(FoundryDoc, reducerName) {
+    const docName = FoundryDoc?.documentName;
+    if (typeof docName !== "string") {
+      throw new TypeError(`EmbeddedStoreManager.get error: 'FoundryDoc' does not have a valid 'documentName' property.`);
+    }
+    const embeddedData = this.#name.get(docName);
+    if (embeddedData) {
+      return embeddedData.stores.get(reducerName ?? docName);
+    }
+  }
+  /**
+   * Updates all existing embedded collection stores with the associated embedded collection
+   */
+  handleDocChange() {
+    const doc = this.#document[0];
+    if (isDocument(doc)) {
+      const existingEmbeddedNames = new Set(this.#name.keys());
+      const embeddedNames = Object.entries(doc.constructor?.metadata?.embedded ?? []);
+      this.#collectionToDocName.clear();
+      this.#embeddedNames.clear();
+      for (const [docName, collectionName] of embeddedNames) {
+        existingEmbeddedNames.delete(docName);
+        this.#embeddedNames.add(`create${docName}`);
+        this.#embeddedNames.add(`delete${docName}`);
+        this.#embeddedNames.add(`update${docName}`);
+        this.#embeddedNames.add(`create.${collectionName}`);
+        this.#embeddedNames.add(`delete.${collectionName}`);
+        this.#embeddedNames.add(`update.${collectionName}`);
+        this.#embeddedNames.add(`create${collectionName}`);
+        this.#embeddedNames.add(`delete${collectionName}`);
+        this.#embeddedNames.add(`update${collectionName}`);
+        this.#collectionToDocName.set(docName, docName);
+        this.#collectionToDocName.set(collectionName, docName);
+        let collection = null;
+        try {
+          collection = doc.getEmbeddedCollection(docName);
+        } catch (err) {
+          console.warn(`EmbeddedStoreManager.handleDocUpdate error: No valid embedded collection for: ${docName}`);
+        }
+        const embeddedData = this.#name.get(docName);
+        if (embeddedData) {
+          embeddedData.collection = collection;
+          for (const store of embeddedData.stores.values()) {
+            store.setData(embeddedData.collection, true);
+          }
+        }
+      }
+      for (const embeddedName of existingEmbeddedNames) {
+        const embeddedData = this.#name.get(embeddedName);
+        if (embeddedData) {
+          embeddedData.collection = null;
+          for (const store of embeddedData.stores.values()) {
+            store.setData(null, true);
+          }
+        }
+      }
+    } else {
+      this.#collectionToDocName.clear();
+      this.#embeddedNames.clear();
+      for (const embeddedData of this.#name.values()) {
+        embeddedData.collection = null;
+        for (const store of embeddedData.stores.values()) {
+          store.setData(null, true);
+        }
+      }
+    }
+  }
+  /**
+   * Handles updates to embedded stores parsing the document update action for valid embedded store types.
+   *
+   * On create, delete, update parse the type being modified then force index updates for the embedded type.
+   *
+   * @param action - Update action from document.
+   */
+  handleUpdate(action) {
+    if (!this.#embeddedNames.has(action)) {
+      return;
+    }
+    const match = EmbeddedStoreManager.#updateActionRegex.exec(action);
+    if (match && match.groups) {
+      const docOrCollectionName = match.groups.name;
+      const embeddedName = this.#collectionToDocName.get(docOrCollectionName);
+      const embeddedData = this.#name.get(embeddedName);
+      if (embeddedData) {
+        for (const store of embeddedData.stores.values()) {
+          store.index.update(true);
+        }
+      }
+    }
+  }
+}
+class TJSDocument {
+  /**
+   * Fake Application API that ClientDocumentMixin uses for document model callbacks.
+   */
+  #callbackAPI;
+  /**
+   * Wrapped document.
+   */
+  #document = [void 0];
+  /**
+   *
+   */
+  #embeddedStoreManager;
+  /**
+   *
+   */
+  #embeddedAPI;
+  /**
+   * UUIDv4 assigned to this instance.
+   */
+  #uuidv4;
+  /**
+   *
+   */
+  #options = {};
+  /**
+   * All current subscribers.
+   */
+  #subscribers = [];
+  /**
+   * Latest update options processed.
+   */
+  #updateOptions;
+  /**
+   * @param [document] - Document to wrap or TJSDocumentOptions.
+   *
+   * @param [options] - TJSDocument options.
+   */
+  constructor(document2, options = {}) {
+    this.#uuidv4 = `tjs-document-${Hashing.uuidv4()}`;
+    this.#callbackAPI = {
+      close: this.#deleted.bind(this),
+      render: this.#updateSubscribers.bind(this)
+    };
+    if (isPlainObject(document2)) {
+      this.setOptions(document2);
+    } else {
+      this.setOptions(options);
+      this.set(document2);
+    }
+  }
+  /**
+   * @returns {import('./types').EmbeddedAPI} Embedded store manager.
+   */
+  get embedded() {
+    if (!this.#embeddedAPI) {
+      this.#embeddedStoreManager = new EmbeddedStoreManager(this.#document);
+      this.#embeddedAPI = {
+        create: (doc, options) => this.#embeddedStoreManager.create(doc, options),
+        destroy: (doc, storeName) => this.#embeddedStoreManager.destroy(doc, storeName),
+        get: (doc, storeName) => this.#embeddedStoreManager.get(doc, storeName)
+      };
+    }
+    return this.#embeddedAPI;
+  }
+  /**
+   * @returns Returns the options passed on last update.
+   */
+  get updateOptions() {
+    return this.#updateOptions ?? { action: "unknown", data: [] };
+  }
+  /**
+   * @returns Returns the UUIDv4 assigned to this store.
+   */
+  get uuidv4() {
+    return this.#uuidv4;
+  }
+  /**
+   * Register the callback API with the underlying Foundry document.
+   */
+  #callbackRegister() {
+    const doc = this.#document[0];
+    if (isDocument(doc) && isObject(doc?.apps) && !doc.apps[this.#uuidv4]) {
+      doc.apps[this.#uuidv4] = this.#callbackAPI;
+    }
+  }
+  /**
+   * Unregister the callback API with the underlying Foundry document.
+   */
+  #callbackUnregister() {
+    const doc = this.#document[0];
+    if (isDocument(doc)) {
+      delete doc?.apps?.[this.#uuidv4];
+    }
+  }
+  /**
+   * Handles cleanup when the document is deleted. Invoking any optional delete function set in the constructor.
+   *
+   * @returns Promise when completed.
+   */
+  async #deleted() {
+    const doc = this.#document[0];
+    if (isDocument(doc) && !doc?.collection?.has(doc.id)) {
+      this.#setDocument(void 0);
+      if (typeof this.#options.preDelete === "function") {
+        await this.#options.preDelete(doc);
+      }
+      this.#updateSubscribers(false, { action: "delete" });
+      if (typeof this.#options.delete === "function") {
+        await this.#options.delete(doc);
+      }
+      await tick();
+      this.#updateOptions = void 0;
+    }
+  }
+  /**
+   * Completely removes all internal subscribers, any optional delete callback, and unregisters from the
+   * ClientDocumentMixin `apps` tracking object.
+   */
+  destroy() {
+    if (this.#embeddedStoreManager) {
+      this.#embeddedStoreManager.destroy();
+      this.#embeddedStoreManager = void 0;
+      this.#embeddedAPI = void 0;
+    }
+    this.#setDocument(void 0);
+    this.#options.delete = void 0;
+    this.#options.preDelete = void 0;
+    this.#subscribers.length = 0;
+  }
+  /**
+   * @returns Current document
+   */
+  get() {
+    return this.#document[0];
+  }
+  /**
+   * Attempts to create a Foundry UUID from standard drop data. This may not work for all systems.
+   *
+   * @param data - Drop transfer data.
+   *
+   * @param [opts] - Optional parameters.
+   *
+   * @param [opts.compendium=true] - Accept compendium documents.
+   *
+   * @param [opts.world=true] - Accept world documents.
+   *
+   * @param [opts.types] - Require the `data.type` to match entry in `types`.
+   *
+   * @returns Foundry UUID for drop data.
+   */
+  static getUUIDFromDataTransfer(data, { compendium = true, world = true, types = void 0 } = {}) {
+    if (!isObject(data)) {
+      return void 0;
+    }
+    if (Array.isArray(types) && !types.includes(data.type)) {
+      return void 0;
+    }
+    let uuid = void 0;
+    if (typeof data.uuid === "string") {
+      const isCompendium = data.uuid.startsWith("Compendium");
+      if (isCompendium && compendium) {
+        uuid = data.uuid;
+      } else if (world) {
+        uuid = data.uuid;
+      }
+    }
+    return uuid;
+  }
+  /**
+   * Sets a new document target to be monitored. To unset use `undefined` or `null`.
+   *
+   * @param doc - New document to set.
+   *
+   * @param [options] - New document update options to set.
+   */
+  set(doc, options = {}) {
+    if (doc !== void 0 && doc !== null && !isDocument(doc)) {
+      throw new TypeError(`TJSDocument set error: 'document' is not a valid Document or undefined / null.`);
+    }
+    if (!isObject(options)) {
+      throw new TypeError(`TJSDocument set error: 'options' is not an object.`);
+    }
+    if (this.#setDocument(doc)) {
+      if (isDocument(doc) && this.#subscribers.length) {
+        this.#callbackRegister();
+      }
+      this.#updateSubscribers(false, {
+        ...options,
+        action: `tjs-set-${doc === void 0 || doc === null ? "undefined" : "new"}`
+      });
+    }
+  }
+  /**
+   * Internally sets the new document being tracked.
+   *
+   * @param doc -
+   *
+   * @returns {boolean} Whether the document changed.
+   */
+  #setDocument(doc) {
+    const changed = doc !== this.#document[0];
+    if (changed) {
+      this.#callbackUnregister();
+    }
+    this.#document[0] = doc === void 0 || doc === null ? void 0 : doc;
+    if (changed && this.#embeddedStoreManager) {
+      this.#embeddedStoreManager.handleDocChange();
+    }
+    return changed;
+  }
+  /**
+   * Potentially sets new document from data transfer object.
+   *
+   * @param data - Document transfer data.
+   *
+   * @param [options] - Optional parameters for {@link TJSDocument.getUUIDFromDataTransfer}.
+   *
+   * @returns Returns true if new document set from data transfer blob.
+   */
+  async setFromDataTransfer(data, options) {
+    return this.setFromUUID(TJSDocument.getUUIDFromDataTransfer(data, options));
+  }
+  /**
+   * Sets the document by Foundry UUID performing a lookup and setting the document if found.
+   *
+   * @param {string}   uuid - A Foundry UUID to lookup.
+   *
+   * @param {import('./types').TJSDocumentUpdateOptions}   [options] - New document update options to set.
+   *
+   * @returns {Promise<boolean>} True if successfully set document from UUID.
+   */
+  async setFromUUID(uuid, options) {
+    if (typeof uuid !== "string" || uuid.length === 0) {
+      return false;
+    }
+    try {
+      const doc = await globalThis.fromUuid(uuid);
+      if (doc) {
+        this.set(doc, options);
+        return true;
+      }
+    } catch (err) {
+    }
+    return false;
+  }
+  /**
+   * Sets options for this document wrapper / store.
+   *
+   * @param options - Options for TJSDocument.
+   */
+  setOptions(options) {
+    if (!isObject(options)) {
+      throw new TypeError(`TJSDocument error: 'options' is not a plain object.`);
+    }
+    if (options.delete !== void 0 && options.delete !== null && typeof options.delete !== "function") {
+      throw new TypeError(`TJSDocument error: 'delete' attribute in options is not a function or null.`);
+    }
+    if (options.preDelete !== void 0 && options.preDelete !== null && typeof options.preDelete !== "function") {
+      throw new TypeError(`TJSDocument error: 'preDelete' attribute in options is not a function or null.`);
+    }
+    if (options.delete !== void 0) {
+      this.#options.delete = options.delete ?? void 0;
+    }
+    if (options.preDelete !== void 0) {
+      this.#options.preDelete = options.preDelete ?? void 0;
+    }
+  }
+  /**
+   * @param handler - Callback function that is invoked on update / changes.
+   *
+   * @returns Unsubscribe function.
+   */
+  subscribe(handler) {
+    let addedSubscriber = false;
+    const currentIdx = this.#subscribers.findIndex((entry) => entry === handler);
+    if (currentIdx === -1) {
+      this.#subscribers.push(handler);
+      addedSubscriber = true;
+    }
+    if (addedSubscriber) {
+      if (this.#subscribers.length === 1) {
+        this.#callbackRegister();
+      }
+      const updateOptions = { action: "tjs-subscribe", data: [] };
+      handler(this.#document[0], updateOptions);
+    }
+    return () => {
+      const index = this.#subscribers.findIndex((sub) => sub === handler);
+      if (index !== -1) {
+        this.#subscribers.splice(index, 1);
+      }
+      if (this.#subscribers.length === 0) {
+        this.#callbackUnregister();
+      }
+    };
+  }
+  /**
+   * @param [force] - unused - signature from Foundry render function.
+   *
+   * @param [options] - Options from render call; will have document update context.
+   */
+  #updateSubscribers(force, options = {}) {
+    const optionsRemap = {
+      action: options.action ?? options.renderContext ?? "tjs-unknown",
+      data: options.data ?? options.renderData ?? []
+    };
+    if (!Array.isArray(optionsRemap.data)) {
+      optionsRemap.data = [optionsRemap.data];
+    }
+    this.#updateOptions = optionsRemap;
+    const subscribers = this.#subscribers;
+    const doc = this.#document[0];
+    for (let cntr = 0; cntr < subscribers.length; cntr++) {
+      subscribers[cntr](doc, optionsRemap);
+    }
+    if (this.#embeddedStoreManager) {
+      this.#embeddedStoreManager.handleUpdate(optionsRemap.action);
+    }
+  }
+}
+function get_each_context$3(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[6] = list[i];
+  return child_ctx;
+}
+function create_each_block$3(ctx) {
+  let button;
+  let t_value = (
+    /*tab*/
+    ctx[6].label + ""
+  );
+  let t;
+  let button_class_value;
+  let mounted;
+  let dispose;
+  function click_handler() {
+    return (
+      /*click_handler*/
+      ctx[5](
+        /*tab*/
+        ctx[6]
+      )
+    );
+  }
+  return {
+    c() {
+      button = element("button");
+      t = text(t_value);
+      attr(button, "class", button_class_value = null_to_empty(
+        /*activeTab*/
+        ctx[0] === /*tab*/
+        ctx[6].id ? "active" : ""
+      ) + " svelte-13pma25");
+      attr(button, "type", "button");
+    },
+    m(target, anchor) {
+      insert(target, button, anchor);
+      append(button, t);
+      if (!mounted) {
+        dispose = listen(button, "click", click_handler);
+        mounted = true;
+      }
+    },
+    p(new_ctx, dirty) {
+      ctx = new_ctx;
+      if (dirty & /*tabs*/
+      2 && t_value !== (t_value = /*tab*/
+      ctx[6].label + "")) set_data(t, t_value);
+      if (dirty & /*activeTab, tabs*/
+      3 && button_class_value !== (button_class_value = null_to_empty(
+        /*activeTab*/
+        ctx[0] === /*tab*/
+        ctx[6].id ? "active" : ""
+      ) + " svelte-13pma25")) {
+        attr(button, "class", button_class_value);
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(button);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_if_block$3(ctx) {
+  let switch_instance;
+  let switch_instance_anchor;
+  let current;
+  var switch_value = (
+    /*activeComponent*/
+    ctx[3]
+  );
+  function switch_props(ctx2, dirty) {
+    return {
+      props: { sharedProps: (
+        /*sharedProps*/
+        ctx2[2]
+      ) }
+    };
+  }
+  if (switch_value) {
+    switch_instance = construct_svelte_component(switch_value, switch_props(ctx));
+  }
+  return {
+    c() {
+      if (switch_instance) create_component(switch_instance.$$.fragment);
+      switch_instance_anchor = empty();
+    },
+    m(target, anchor) {
+      if (switch_instance) mount_component(switch_instance, target, anchor);
+      insert(target, switch_instance_anchor, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*activeComponent*/
+      8 && switch_value !== (switch_value = /*activeComponent*/
+      ctx2[3])) {
+        if (switch_instance) {
+          group_outros();
+          const old_component = switch_instance;
+          transition_out(old_component.$$.fragment, 1, 0, () => {
+            destroy_component(old_component, 1);
+          });
+          check_outros();
+        }
+        if (switch_value) {
+          switch_instance = construct_svelte_component(switch_value, switch_props(ctx2));
+          create_component(switch_instance.$$.fragment);
+          transition_in(switch_instance.$$.fragment, 1);
+          mount_component(switch_instance, switch_instance_anchor.parentNode, switch_instance_anchor);
+        } else {
+          switch_instance = null;
+        }
+      } else if (switch_value) {
+        const switch_instance_changes = {};
+        if (dirty & /*sharedProps*/
+        4) switch_instance_changes.sharedProps = /*sharedProps*/
+        ctx2[2];
+        switch_instance.$set(switch_instance_changes);
+      }
+    },
+    i(local) {
+      if (current) return;
+      if (switch_instance) transition_in(switch_instance.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      if (switch_instance) transition_out(switch_instance.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(switch_instance_anchor);
+      }
+      if (switch_instance) destroy_component(switch_instance, detaching);
+    }
+  };
+}
+function create_fragment$4(ctx) {
+  let div2;
+  let div0;
+  let div1;
+  let div2_class_value;
+  let current;
+  let each_value = ensure_array_like(
+    /*tabs*/
+    ctx[1]
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value.length; i += 1) {
+    each_blocks[i] = create_each_block$3(get_each_context$3(ctx, each_value, i));
+  }
+  let if_block = (
+    /*activeComponent*/
+    ctx[3] && create_if_block$3(ctx)
+  );
+  return {
+    c() {
+      div2 = element("div");
+      div0 = element("div");
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      div1 = element("div");
+      if (if_block) if_block.c();
+      attr(div0, "class", "tabs-list svelte-13pma25");
+      attr(div1, "class", "tab-content svelte-13pma25");
+      attr(div2, "class", div2_class_value = "tabs " + /*$$restProps*/
+      ctx[4].class + " svelte-13pma25");
+    },
+    m(target, anchor) {
+      insert(target, div2, anchor);
+      append(div2, div0);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(div0, null);
+        }
+      }
+      append(div2, div1);
+      if (if_block) if_block.m(div1, null);
+      current = true;
+    },
+    p(ctx2, [dirty]) {
+      if (dirty & /*activeTab, tabs*/
+      3) {
+        each_value = ensure_array_like(
+          /*tabs*/
+          ctx2[1]
+        );
+        let i;
+        for (i = 0; i < each_value.length; i += 1) {
+          const child_ctx = get_each_context$3(ctx2, each_value, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block$3(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(div0, null);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value.length;
+      }
+      if (
+        /*activeComponent*/
+        ctx2[3]
+      ) {
+        if (if_block) {
+          if_block.p(ctx2, dirty);
+          if (dirty & /*activeComponent*/
+          8) {
+            transition_in(if_block, 1);
+          }
+        } else {
+          if_block = create_if_block$3(ctx2);
+          if_block.c();
+          transition_in(if_block, 1);
+          if_block.m(div1, null);
+        }
+      } else if (if_block) {
+        group_outros();
+        transition_out(if_block, 1, 1, () => {
+          if_block = null;
+        });
+        check_outros();
+      }
+      if (!current || dirty & /*$$restProps*/
+      16 && div2_class_value !== (div2_class_value = "tabs " + /*$$restProps*/
+      ctx2[4].class + " svelte-13pma25")) {
+        attr(div2, "class", div2_class_value);
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(if_block);
+      current = true;
+    },
+    o(local) {
+      transition_out(if_block);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div2);
+      }
+      destroy_each(each_blocks, detaching);
+      if (if_block) if_block.d();
+    }
+  };
+}
+function instance$4($$self, $$props, $$invalidate) {
+  let activeComponent;
+  const omit_props_names = ["tabs", "activeTab", "sharedProps"];
+  let $$restProps = compute_rest_props($$props, omit_props_names);
+  let { tabs = [] } = $$props;
+  let { activeTab = void 0 } = $$props;
+  let { sharedProps = {} } = $$props;
+  const click_handler = (tab) => $$invalidate(0, activeTab = tab.id);
+  $$self.$$set = ($$new_props) => {
+    $$props = assign(assign({}, $$props), exclude_internal_props($$new_props));
+    $$invalidate(4, $$restProps = compute_rest_props($$props, omit_props_names));
+    if ("tabs" in $$new_props) $$invalidate(1, tabs = $$new_props.tabs);
+    if ("activeTab" in $$new_props) $$invalidate(0, activeTab = $$new_props.activeTab);
+    if ("sharedProps" in $$new_props) $$invalidate(2, sharedProps = $$new_props.sharedProps);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*tabs, activeTab*/
+    3) {
+      $$invalidate(3, activeComponent = tabs.find((tab) => tab.id === activeTab)?.component);
+    }
+  };
+  return [activeTab, tabs, sharedProps, activeComponent, $$restProps, click_handler];
+}
+class Tabs extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$4, create_fragment$4, safe_not_equal, { tabs: 1, activeTab: 0, sharedProps: 2 });
+  }
+}
+function get_each_context$2(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[3] = list[i];
+  child_ctx[5] = i;
+  return child_ctx;
+}
+function create_else_block$1(ctx) {
+  let p;
+  return {
+    c() {
+      p = element("p");
+      p.textContent = "No associated actors yet.";
+      attr(p, "class", "no-items");
+    },
+    m(target, anchor) {
+      insert(target, p, anchor);
+    },
+    p: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(p);
+      }
+    }
+  };
+}
+function create_if_block$2(ctx) {
+  let ul;
+  let each_value = ensure_array_like(
+    /*sharedProps*/
+    ctx[0].associatedActors
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value.length; i += 1) {
+    each_blocks[i] = create_each_block$2(get_each_context$2(ctx, each_value, i));
+  }
+  return {
+    c() {
+      ul = element("ul");
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      attr(ul, "class", "associated-list");
+    },
+    m(target, anchor) {
+      insert(target, ul, anchor);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(ul, null);
+        }
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*sharedProps*/
+      1) {
+        each_value = ensure_array_like(
+          /*sharedProps*/
+          ctx2[0].associatedActors
+        );
+        let i;
+        for (i = 0; i < each_value.length; i += 1) {
+          const child_ctx = get_each_context$2(ctx2, each_value, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block$2(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(ul, null);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value.length;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(ul);
+      }
+      destroy_each(each_blocks, detaching);
+    }
+  };
+}
+function create_each_block$2(ctx) {
+  let li;
+  let span;
+  let t0_value = (
+    /*sharedProps*/
+    ctx[0].getActorName(
+      /*assoc*/
+      ctx[3]
+    ) + ""
+  );
+  let t0;
+  let button;
+  let mounted;
+  let dispose;
+  function click_handler() {
+    return (
+      /*click_handler*/
+      ctx[2](
+        /*index*/
+        ctx[5]
+      )
+    );
+  }
+  return {
+    c() {
+      li = element("li");
+      span = element("span");
+      t0 = text(t0_value);
+      button = element("button");
+      button.textContent = "×";
+      attr(button, "class", "remove-btn");
+      attr(button, "type", "button");
+    },
+    m(target, anchor) {
+      insert(target, li, anchor);
+      append(li, span);
+      append(span, t0);
+      append(li, button);
+      if (!mounted) {
+        dispose = listen(button, "click", click_handler);
+        mounted = true;
+      }
+    },
+    p(new_ctx, dirty) {
+      ctx = new_ctx;
+      if (dirty & /*sharedProps*/
+      1 && t0_value !== (t0_value = /*sharedProps*/
+      ctx[0].getActorName(
+        /*assoc*/
+        ctx[3]
+      ) + "")) set_data(t0, t0_value);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(li);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_fragment$3(ctx) {
+  let div5;
+  let div4;
+  let div0;
+  let h20;
+  let t0_value = (
+    /*sharedProps*/
+    ctx[0].localize("ProfileImage") + ""
+  );
+  let t0;
+  let img;
+  let img_src_value;
+  let button;
+  let div1;
+  let h21;
+  let t2_value = (
+    /*sharedProps*/
+    ctx[0].localize("Description") + ""
+  );
+  let t2;
+  let textarea;
+  let textarea_value_value;
+  let div3;
+  let h22;
+  let t3_value = (
+    /*sharedProps*/
+    ctx[0].localize("AssociatedActors") + ""
+  );
+  let t3;
+  let div2;
+  let p0;
+  let t4_value = (
+    /*sharedProps*/
+    ctx[0].localize("DragActorsHere") + ""
+  );
+  let t4;
+  let p1;
+  let mounted;
+  let dispose;
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*sharedProps*/
+      ctx2[0].associatedActors && /*sharedProps*/
+      ctx2[0].associatedActors.length > 0
+    ) return create_if_block$2;
+    return create_else_block$1;
+  }
+  let current_block_type = select_block_type(ctx);
+  let if_block = current_block_type(ctx);
+  return {
+    c() {
+      div5 = element("div");
+      div4 = element("div");
+      div0 = element("div");
+      h20 = element("h2");
+      t0 = text(t0_value);
+      img = element("img");
+      button = element("button");
+      button.textContent = "Change Image";
+      div1 = element("div");
+      h21 = element("h2");
+      t2 = text(t2_value);
+      textarea = element("textarea");
+      div3 = element("div");
+      h22 = element("h2");
+      t3 = text(t3_value);
+      div2 = element("div");
+      p0 = element("p");
+      t4 = text(t4_value);
+      p1 = element("p");
+      p1.textContent = "(Drag actor tokens or from actor directory)";
+      if_block.c();
+      attr(img, "class", "profile-img");
+      if (!src_url_equal(img.src, img_src_value = /*sharedProps*/
+      ctx[0].actor?.img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
+      attr(img, "alt", "Shop Profile");
+      attr(button, "type", "button");
+      attr(div0, "class", "profile-section");
+      attr(textarea, "class", "description-text");
+      textarea.value = textarea_value_value = /*sharedProps*/
+      ctx[0].descriptionValue;
+      attr(textarea, "placeholder", "Describe your shop...");
+      attr(div1, "class", "description-section");
+      attr(p0, "class", "drag-hint");
+      attr(p1, "class", "small");
+      attr(div2, "class", "drag-drop-area");
+      attr(div2, "role", "region");
+      attr(div2, "aria-label", "Associated actors drop zone");
+      attr(div3, "class", "associated-actors-section");
+      attr(div4, "class", "shopfront-grid");
+      attr(div5, "class", "shopfront-tab");
+    },
+    m(target, anchor) {
+      insert(target, div5, anchor);
+      append(div5, div4);
+      append(div4, div0);
+      append(div0, h20);
+      append(h20, t0);
+      append(div0, img);
+      append(div0, button);
+      append(div4, div1);
+      append(div1, h21);
+      append(h21, t2);
+      append(div1, textarea);
+      append(div4, div3);
+      append(div3, h22);
+      append(h22, t3);
+      append(div3, div2);
+      append(div2, p0);
+      append(p0, t4);
+      append(div2, p1);
+      if_block.m(div3, null);
+      if (!mounted) {
+        dispose = [
+          listen(button, "click", function() {
+            if (is_function(
+              /*sharedProps*/
+              ctx[0].openImageEditor
+            )) ctx[0].openImageEditor.apply(this, arguments);
+          }),
+          listen(
+            textarea,
+            "input",
+            /*input_handler*/
+            ctx[1]
+          ),
+          listen(div2, "dragover", prevent_default(function() {
+            if (is_function(
+              /*sharedProps*/
+              ctx[0].handleDragOver
+            )) ctx[0].handleDragOver.apply(this, arguments);
+          })),
+          listen(div2, "drop", prevent_default(function() {
+            if (is_function(
+              /*sharedProps*/
+              ctx[0].handleActorDrop
+            )) ctx[0].handleActorDrop.apply(this, arguments);
+          }))
+        ];
+        mounted = true;
+      }
+    },
+    p(new_ctx, [dirty]) {
+      ctx = new_ctx;
+      if (dirty & /*sharedProps*/
+      1 && t0_value !== (t0_value = /*sharedProps*/
+      ctx[0].localize("ProfileImage") + "")) set_data(t0, t0_value);
+      if (dirty & /*sharedProps*/
+      1 && !src_url_equal(img.src, img_src_value = /*sharedProps*/
+      ctx[0].actor?.img || "icons/svg/mystery-man.svg")) {
+        attr(img, "src", img_src_value);
+      }
+      if (dirty & /*sharedProps*/
+      1 && t2_value !== (t2_value = /*sharedProps*/
+      ctx[0].localize("Description") + "")) set_data(t2, t2_value);
+      if (dirty & /*sharedProps*/
+      1 && textarea_value_value !== (textarea_value_value = /*sharedProps*/
+      ctx[0].descriptionValue)) {
+        textarea.value = textarea_value_value;
+      }
+      if (dirty & /*sharedProps*/
+      1 && t3_value !== (t3_value = /*sharedProps*/
+      ctx[0].localize("AssociatedActors") + "")) set_data(t3, t3_value);
+      if (dirty & /*sharedProps*/
+      1 && t4_value !== (t4_value = /*sharedProps*/
+      ctx[0].localize("DragActorsHere") + "")) set_data(t4, t4_value);
+      if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block) {
+        if_block.p(ctx, dirty);
+      } else {
+        if_block.d(1);
+        if_block = current_block_type(ctx);
+        if (if_block) {
+          if_block.c();
+          if_block.m(div3, null);
+        }
+      }
+    },
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(div5);
+      }
+      if_block.d();
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function instance$3($$self, $$props, $$invalidate) {
+  let { sharedProps = {} } = $$props;
+  const input_handler = (e) => sharedProps.onDescriptionChange?.(e.target.value);
+  const click_handler = (index) => sharedProps.removeAssociated(index);
+  $$self.$$set = ($$props2) => {
+    if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
+  };
+  return [sharedProps, input_handler, click_handler];
+}
+class ShopfrontTab extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$3, create_fragment$3, safe_not_equal, { sharedProps: 0 });
+  }
+}
+function get_each_context$1(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[3] = list[i];
+  return child_ctx;
+}
+function create_if_block$1(ctx) {
+  let div;
+  let span0;
+  let t0_value = (
+    /*item*/
+    ctx[3].name + ""
+  );
+  let t0;
+  let span1;
+  let t1;
+  let t2_value = (
+    /*sharedProps*/
+    ctx[0].calculatePrice(
+      /*item*/
+      ctx[3].system?.price?.value || /*item*/
+      ctx[3].system?.price || 0
+    ) + ""
+  );
+  let t2;
+  let t3;
+  let button;
+  let mounted;
+  let dispose;
+  function click_handler() {
+    return (
+      /*click_handler*/
+      ctx[2](
+        /*item*/
+        ctx[3]
+      )
+    );
+  }
+  return {
+    c() {
+      div = element("div");
+      span0 = element("span");
+      t0 = text(t0_value);
+      span1 = element("span");
+      t1 = text("$");
+      t2 = text(t2_value);
+      t3 = text(" gp");
+      button = element("button");
+      button.textContent = "View";
+      attr(span0, "class", "item-name");
+      attr(span1, "class", "item-price");
+      attr(button, "type", "button");
+      attr(div, "class", "inventory-item");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      append(div, span0);
+      append(span0, t0);
+      append(div, span1);
+      append(span1, t1);
+      append(span1, t2);
+      append(span1, t3);
+      append(div, button);
+      if (!mounted) {
+        dispose = listen(button, "click", click_handler);
+        mounted = true;
+      }
+    },
+    p(new_ctx, dirty) {
+      ctx = new_ctx;
+      if (dirty & /*sharedProps*/
+      1 && t0_value !== (t0_value = /*item*/
+      ctx[3].name + "")) set_data(t0, t0_value);
+      if (dirty & /*sharedProps*/
+      1 && t2_value !== (t2_value = /*sharedProps*/
+      ctx[0].calculatePrice(
+        /*item*/
+        ctx[3].system?.price?.value || /*item*/
+        ctx[3].system?.price || 0
+      ) + "")) set_data(t2, t2_value);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_each_block$1(ctx) {
+  let show_if = !/*sharedProps*/
+  ctx[0].filterText || /*item*/
+  ctx[3].name && /*item*/
+  ctx[3].name.toLowerCase().includes(
+    /*sharedProps*/
+    ctx[0].filterText.toLowerCase()
+  );
+  let if_block_anchor;
+  let if_block = show_if && create_if_block$1(ctx);
+  return {
+    c() {
+      if (if_block) if_block.c();
+      if_block_anchor = empty();
+    },
+    m(target, anchor) {
+      if (if_block) if_block.m(target, anchor);
+      insert(target, if_block_anchor, anchor);
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*sharedProps*/
+      1) show_if = !/*sharedProps*/
+      ctx2[0].filterText || /*item*/
+      ctx2[3].name && /*item*/
+      ctx2[3].name.toLowerCase().includes(
+        /*sharedProps*/
+        ctx2[0].filterText.toLowerCase()
+      );
+      if (show_if) {
+        if (if_block) {
+          if_block.p(ctx2, dirty);
+        } else {
+          if_block = create_if_block$1(ctx2);
+          if_block.c();
+          if_block.m(if_block_anchor.parentNode, if_block_anchor);
+        }
+      } else if (if_block) {
+        if_block.d(1);
+        if_block = null;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(if_block_anchor);
+      }
+      if (if_block) if_block.d(detaching);
+    }
+  };
+}
+function create_fragment$2(ctx) {
+  let div2;
+  let div0;
+  let input;
+  let input_value_value;
+  let input_placeholder_value;
+  let button;
+  let div1;
+  let mounted;
+  let dispose;
+  let each_value = ensure_array_like(
+    /*sharedProps*/
+    ctx[0].items || []
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value.length; i += 1) {
+    each_blocks[i] = create_each_block$1(get_each_context$1(ctx, each_value, i));
+  }
+  return {
+    c() {
+      div2 = element("div");
+      div0 = element("div");
+      input = element("input");
+      button = element("button");
+      button.textContent = "Clear";
+      div1 = element("div");
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      attr(input, "class", "filter-input");
+      attr(input, "type", "text");
+      input.value = input_value_value = /*sharedProps*/
+      ctx[0].filterText;
+      attr(input, "placeholder", input_placeholder_value = /*sharedProps*/
+      ctx[0].localize("FilterInventory"));
+      attr(button, "type", "button");
+      attr(div0, "class", "inventory-controls");
+      attr(div1, "class", "inventory-list");
+      attr(div2, "class", "inventory-tab");
+    },
+    m(target, anchor) {
+      insert(target, div2, anchor);
+      append(div2, div0);
+      append(div0, input);
+      append(div0, button);
+      append(div2, div1);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(div1, null);
+        }
+      }
+      if (!mounted) {
+        dispose = [
+          listen(
+            input,
+            "input",
+            /*input_handler*/
+            ctx[1]
+          ),
+          listen(button, "click", function() {
+            if (is_function(
+              /*sharedProps*/
+              ctx[0].clearFilter
+            )) ctx[0].clearFilter.apply(this, arguments);
+          })
+        ];
+        mounted = true;
+      }
+    },
+    p(new_ctx, [dirty]) {
+      ctx = new_ctx;
+      if (dirty & /*sharedProps*/
+      1 && input_value_value !== (input_value_value = /*sharedProps*/
+      ctx[0].filterText) && input.value !== input_value_value) {
+        input.value = input_value_value;
+      }
+      if (dirty & /*sharedProps*/
+      1 && input_placeholder_value !== (input_placeholder_value = /*sharedProps*/
+      ctx[0].localize("FilterInventory"))) {
+        attr(input, "placeholder", input_placeholder_value);
+      }
+      if (dirty & /*sharedProps*/
+      1) {
+        each_value = ensure_array_like(
+          /*sharedProps*/
+          ctx[0].items || []
+        );
+        let i;
+        for (i = 0; i < each_value.length; i += 1) {
+          const child_ctx = get_each_context$1(ctx, each_value, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block$1(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(div1, null);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value.length;
+      }
+    },
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(div2);
+      }
+      destroy_each(each_blocks, detaching);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function instance$2($$self, $$props, $$invalidate) {
+  let { sharedProps = {} } = $$props;
+  const input_handler = (e) => sharedProps.onFilterChange?.(e.target.value);
+  const click_handler = (item) => sharedProps.openItemSheet(item);
+  $$self.$$set = ($$props2) => {
+    if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
+  };
+  return [sharedProps, input_handler, click_handler];
+}
+class InventoryTab extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$2, create_fragment$2, safe_not_equal, { sharedProps: 0 });
+  }
+}
+function get_each_context(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[6] = list[i];
+  child_ctx[8] = i;
+  return child_ctx;
+}
+function create_else_block(ctx) {
+  let p;
+  return {
+    c() {
+      p = element("p");
+      p.textContent = "No roll tables configured. Drag some here to enable provisioning.";
+      attr(p, "class", "no-items");
+    },
+    m(target, anchor) {
+      insert(target, p, anchor);
+    },
+    p: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(p);
+      }
+    }
+  };
+}
+function create_if_block(ctx) {
+  let ul;
+  let each_value = ensure_array_like(
+    /*sharedProps*/
+    ctx[0].rollTables
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value.length; i += 1) {
+    each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
+  }
+  return {
+    c() {
+      ul = element("ul");
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      attr(ul, "class", "rolltable-list");
+    },
+    m(target, anchor) {
+      insert(target, ul, anchor);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(ul, null);
+        }
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*sharedProps*/
+      1) {
+        each_value = ensure_array_like(
+          /*sharedProps*/
+          ctx2[0].rollTables
+        );
+        let i;
+        for (i = 0; i < each_value.length; i += 1) {
+          const child_ctx = get_each_context(ctx2, each_value, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(ul, null);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value.length;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(ul);
+      }
+      destroy_each(each_blocks, detaching);
+    }
+  };
+}
+function create_each_block(ctx) {
+  let li;
+  let span;
+  let t0_value = (
+    /*sharedProps*/
+    ctx[0].getRollTableName(
+      /*rtUuid*/
+      ctx[6]
+    ) + ""
+  );
+  let t0;
+  let button;
+  let mounted;
+  let dispose;
+  function click_handler() {
+    return (
+      /*click_handler*/
+      ctx[5](
+        /*index*/
+        ctx[8]
+      )
+    );
+  }
+  return {
+    c() {
+      li = element("li");
+      span = element("span");
+      t0 = text(t0_value);
+      button = element("button");
+      button.textContent = "×";
+      attr(button, "class", "remove-btn");
+      attr(button, "type", "button");
+    },
+    m(target, anchor) {
+      insert(target, li, anchor);
+      append(li, span);
+      append(span, t0);
+      append(li, button);
+      if (!mounted) {
+        dispose = listen(button, "click", click_handler);
+        mounted = true;
+      }
+    },
+    p(new_ctx, dirty) {
+      ctx = new_ctx;
+      if (dirty & /*sharedProps*/
+      1 && t0_value !== (t0_value = /*sharedProps*/
+      ctx[0].getRollTableName(
+        /*rtUuid*/
+        ctx[6]
+      ) + "")) set_data(t0, t0_value);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(li);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_fragment$1(ctx) {
+  let div4;
+  let div3;
+  let label0;
+  let t0_value = (
+    /*sharedProps*/
+    ctx[0].localize("PricingFactor") + ""
+  );
+  let t0;
+  let input0;
+  let input0_value_value;
+  let span0;
+  let label1;
+  let t2_value = (
+    /*sharedProps*/
+    ctx[0].localize("PriceVariance") + ""
+  );
+  let t2;
+  let input1;
+  let input1_value_value;
+  let span1;
+  let label2;
+  let t4_value = (
+    /*sharedProps*/
+    ctx[0].localize("VariancePeriod") + ""
+  );
+  let t4;
+  let select;
+  let option0;
+  let t5_value = (
+    /*sharedProps*/
+    ctx[0].localize("Daily") + ""
+  );
+  let t5;
+  let option1;
+  let t6_value = (
+    /*sharedProps*/
+    ctx[0].localize("Weekly") + ""
+  );
+  let t6;
+  let option2;
+  let t7_value = (
+    /*sharedProps*/
+    ctx[0].localize("Monthly") + ""
+  );
+  let t7;
+  let select_value_value;
+  let label3;
+  let t8_value = (
+    /*sharedProps*/
+    ctx[0].localize("Atrophy") + ""
+  );
+  let t8;
+  let input2;
+  let input2_value_value;
+  let span2;
+  let div1;
+  let h3;
+  let t10_value = (
+    /*sharedProps*/
+    ctx[0].localize("RollTables") + ""
+  );
+  let t10;
+  let div0;
+  let p;
+  let t11_value = (
+    /*sharedProps*/
+    ctx[0].localize("DragRollTablesHere") + ""
+  );
+  let t11;
+  let t12;
+  let div2;
+  let button0;
+  let t13_value = (
+    /*sharedProps*/
+    ctx[0].localize("ProvisionStore") + ""
+  );
+  let t13;
+  let button1;
+  let mounted;
+  let dispose;
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*sharedProps*/
+      ctx2[0].rollTables && /*sharedProps*/
+      ctx2[0].rollTables.length > 0
+    ) return create_if_block;
+    return create_else_block;
+  }
+  let current_block_type = select_block_type(ctx);
+  let if_block = current_block_type(ctx);
+  return {
+    c() {
+      div4 = element("div");
+      div3 = element("div");
+      label0 = element("label");
+      t0 = text(t0_value);
+      input0 = element("input");
+      span0 = element("span");
+      span0.textContent = "% (affects all prices)";
+      label1 = element("label");
+      t2 = text(t2_value);
+      input1 = element("input");
+      span1 = element("span");
+      span1.textContent = "% (random element per item)";
+      label2 = element("label");
+      t4 = text(t4_value);
+      select = element("select");
+      option0 = element("option");
+      t5 = text(t5_value);
+      option1 = element("option");
+      t6 = text(t6_value);
+      option2 = element("option");
+      t7 = text(t7_value);
+      label3 = element("label");
+      t8 = text(t8_value);
+      input2 = element("input");
+      span2 = element("span");
+      span2.textContent = "% (chance to remove old stock on provision)";
+      div1 = element("div");
+      h3 = element("h3");
+      t10 = text(t10_value);
+      div0 = element("div");
+      p = element("p");
+      t11 = text(t11_value);
+      t12 = text(" (from compendium or tables sidebar)");
+      if_block.c();
+      div2 = element("div");
+      button0 = element("button");
+      t13 = text(t13_value);
+      button1 = element("button");
+      button1.textContent = "Save Settings";
+      attr(input0, "type", "number");
+      input0.value = input0_value_value = /*sharedProps*/
+      ctx[0].pricingFactor;
+      attr(input0, "min", "50");
+      attr(input0, "max", "200");
+      attr(input0, "step", "1");
+      attr(input1, "type", "number");
+      input1.value = input1_value_value = /*sharedProps*/
+      ctx[0].priceVariance;
+      attr(input1, "min", "0");
+      attr(input1, "max", "50");
+      attr(input1, "step", "1");
+      option0.__value = "daily";
+      set_input_value(option0, option0.__value);
+      option1.__value = "weekly";
+      set_input_value(option1, option1.__value);
+      option2.__value = "monthly";
+      set_input_value(option2, option2.__value);
+      attr(input2, "type", "number");
+      input2.value = input2_value_value = /*sharedProps*/
+      ctx[0].atrophyPercent;
+      attr(input2, "min", "0");
+      attr(input2, "max", "30");
+      attr(input2, "step", "1");
+      attr(p, "class", "drag-hint");
+      attr(div0, "class", "drag-drop-area");
+      attr(div0, "role", "region");
+      attr(div0, "aria-label", "Roll table drop zone");
+      attr(div1, "class", "rolltables-section");
+      attr(button0, "class", "provision-btn");
+      attr(button0, "type", "button");
+      attr(button1, "class", "save-btn");
+      attr(button1, "type", "button");
+      attr(div2, "class", "actions");
+      attr(div3, "class", "settings-form");
+      attr(div4, "class", "settings-tab");
+    },
+    m(target, anchor) {
+      insert(target, div4, anchor);
+      append(div4, div3);
+      append(div3, label0);
+      append(label0, t0);
+      append(label0, input0);
+      append(label0, span0);
+      append(div3, label1);
+      append(label1, t2);
+      append(label1, input1);
+      append(label1, span1);
+      append(div3, label2);
+      append(label2, t4);
+      append(label2, select);
+      append(select, option0);
+      append(option0, t5);
+      append(select, option1);
+      append(option1, t6);
+      append(select, option2);
+      append(option2, t7);
+      select_option(
+        select,
+        /*sharedProps*/
+        ctx[0].variancePeriod
+      );
+      append(div3, label3);
+      append(label3, t8);
+      append(label3, input2);
+      append(label3, span2);
+      append(div3, div1);
+      append(div1, h3);
+      append(h3, t10);
+      append(div1, div0);
+      append(div0, p);
+      append(p, t11);
+      append(p, t12);
+      if_block.m(div1, null);
+      append(div3, div2);
+      append(div2, button0);
+      append(button0, t13);
+      append(div2, button1);
+      if (!mounted) {
+        dispose = [
+          listen(
+            input0,
+            "input",
+            /*input_handler*/
+            ctx[1]
+          ),
+          listen(
+            input1,
+            "input",
+            /*input_handler_1*/
+            ctx[2]
+          ),
+          listen(
+            select,
+            "change",
+            /*change_handler*/
+            ctx[3]
+          ),
+          listen(
+            input2,
+            "input",
+            /*input_handler_2*/
+            ctx[4]
+          ),
+          listen(div0, "dragover", prevent_default(function() {
+            if (is_function(
+              /*sharedProps*/
+              ctx[0].handleDragOver
+            )) ctx[0].handleDragOver.apply(this, arguments);
+          })),
+          listen(div0, "drop", prevent_default(function() {
+            if (is_function(
+              /*sharedProps*/
+              ctx[0].handleRollTableDrop
+            )) ctx[0].handleRollTableDrop.apply(this, arguments);
+          })),
+          listen(button0, "click", function() {
+            if (is_function(
+              /*sharedProps*/
+              ctx[0].provisionStore
+            )) ctx[0].provisionStore.apply(this, arguments);
+          }),
+          listen(button1, "click", function() {
+            if (is_function(
+              /*sharedProps*/
+              ctx[0].saveSettings
+            )) ctx[0].saveSettings.apply(this, arguments);
+          })
+        ];
+        mounted = true;
+      }
+    },
+    p(new_ctx, [dirty]) {
+      ctx = new_ctx;
+      if (dirty & /*sharedProps*/
+      1 && t0_value !== (t0_value = /*sharedProps*/
+      ctx[0].localize("PricingFactor") + "")) set_data(t0, t0_value);
+      if (dirty & /*sharedProps*/
+      1 && input0_value_value !== (input0_value_value = /*sharedProps*/
+      ctx[0].pricingFactor) && input0.value !== input0_value_value) {
+        input0.value = input0_value_value;
+      }
+      if (dirty & /*sharedProps*/
+      1 && t2_value !== (t2_value = /*sharedProps*/
+      ctx[0].localize("PriceVariance") + "")) set_data(t2, t2_value);
+      if (dirty & /*sharedProps*/
+      1 && input1_value_value !== (input1_value_value = /*sharedProps*/
+      ctx[0].priceVariance) && input1.value !== input1_value_value) {
+        input1.value = input1_value_value;
+      }
+      if (dirty & /*sharedProps*/
+      1 && t4_value !== (t4_value = /*sharedProps*/
+      ctx[0].localize("VariancePeriod") + "")) set_data(t4, t4_value);
+      if (dirty & /*sharedProps*/
+      1 && t5_value !== (t5_value = /*sharedProps*/
+      ctx[0].localize("Daily") + "")) set_data(t5, t5_value);
+      if (dirty & /*sharedProps*/
+      1 && t6_value !== (t6_value = /*sharedProps*/
+      ctx[0].localize("Weekly") + "")) set_data(t6, t6_value);
+      if (dirty & /*sharedProps*/
+      1 && t7_value !== (t7_value = /*sharedProps*/
+      ctx[0].localize("Monthly") + "")) set_data(t7, t7_value);
+      if (dirty & /*sharedProps*/
+      1 && select_value_value !== (select_value_value = /*sharedProps*/
+      ctx[0].variancePeriod)) {
+        select_option(
+          select,
+          /*sharedProps*/
+          ctx[0].variancePeriod
+        );
+      }
+      if (dirty & /*sharedProps*/
+      1 && t8_value !== (t8_value = /*sharedProps*/
+      ctx[0].localize("Atrophy") + "")) set_data(t8, t8_value);
+      if (dirty & /*sharedProps*/
+      1 && input2_value_value !== (input2_value_value = /*sharedProps*/
+      ctx[0].atrophyPercent) && input2.value !== input2_value_value) {
+        input2.value = input2_value_value;
+      }
+      if (dirty & /*sharedProps*/
+      1 && t10_value !== (t10_value = /*sharedProps*/
+      ctx[0].localize("RollTables") + "")) set_data(t10, t10_value);
+      if (dirty & /*sharedProps*/
+      1 && t11_value !== (t11_value = /*sharedProps*/
+      ctx[0].localize("DragRollTablesHere") + "")) set_data(t11, t11_value);
+      if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block) {
+        if_block.p(ctx, dirty);
+      } else {
+        if_block.d(1);
+        if_block = current_block_type(ctx);
+        if (if_block) {
+          if_block.c();
+          if_block.m(div1, null);
+        }
+      }
+      if (dirty & /*sharedProps*/
+      1 && t13_value !== (t13_value = /*sharedProps*/
+      ctx[0].localize("ProvisionStore") + "")) set_data(t13, t13_value);
+    },
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(div4);
+      }
+      if_block.d();
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function instance$1($$self, $$props, $$invalidate) {
+  let { sharedProps = {} } = $$props;
+  const input_handler = (e) => sharedProps.onPricingFactorChange?.(e.target.value);
+  const input_handler_1 = (e) => sharedProps.onPriceVarianceChange?.(e.target.value);
+  const change_handler = (e) => sharedProps.onVariancePeriodChange?.(e.target.value);
+  const input_handler_2 = (e) => sharedProps.onAtrophyPercentChange?.(e.target.value);
+  const click_handler = (index) => sharedProps.removeRollTable(index);
+  $$self.$$set = ($$props2) => {
+    if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
+  };
+  return [
+    sharedProps,
+    input_handler,
+    input_handler_1,
+    change_handler,
+    input_handler_2,
+    click_handler
+  ];
+}
+class SettingsTab extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$1, create_fragment$1, safe_not_equal, { sharedProps: 0 });
+  }
+}
+const THEME_DARK = "theme-dark";
+const THEME_LIGHT = "theme-light";
+function themeRoots() {
+  const roots = [document.body, document.documentElement];
+  return roots.filter(Boolean);
+}
+function bodyHasExplicitTheme() {
+  return themeRoots().some(
+    (el) => el.classList.contains(THEME_DARK) || el.classList.contains(THEME_LIGHT)
+  );
+}
+function resolveFoundryTheme() {
+  for (const el of themeRoots()) {
+    if (el.classList.contains(THEME_DARK)) return "dark";
+    if (el.classList.contains(THEME_LIGHT)) return "light";
+  }
+  if (typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)")?.matches) {
+    return "dark";
+  }
+  return "light";
+}
+function applyAppTheme(elementRoot, theme) {
+  if (!elementRoot) return;
+  elementRoot.classList.add("themed");
+  if (theme === "dark") {
+    elementRoot.classList.add(THEME_DARK);
+    elementRoot.classList.remove(THEME_LIGHT);
+  } else {
+    elementRoot.classList.add(THEME_LIGHT);
+    elementRoot.classList.remove(THEME_DARK);
+  }
+}
+function observeFoundryBodyTheme(elementRoot) {
+  if (!elementRoot) {
+    return () => {
+    };
+  }
+  const sync = () => applyAppTheme(elementRoot, resolveFoundryTheme());
+  sync();
+  const bodyObserver = new MutationObserver(sync);
+  for (const root of themeRoots()) {
+    bodyObserver.observe(root, { attributes: true, attributeFilter: ["class"] });
+  }
+  let mediaQuery = null;
+  let onMediaChange = null;
+  if (!bodyHasExplicitTheme() && typeof window !== "undefined" && window.matchMedia) {
+    mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    onMediaChange = () => {
+      if (!bodyHasExplicitTheme()) sync();
+    };
+    mediaQuery.addEventListener("change", onMediaChange);
+  }
+  return () => {
+    bodyObserver.disconnect();
+    if (mediaQuery && onMediaChange) {
+      mediaQuery.removeEventListener("change", onMediaChange);
+    }
+  };
+}
+function create_default_slot(ctx) {
+  let section;
+  let main;
+  let tabs_1;
+  let updating_activeTab;
+  let current;
+  function tabs_1_activeTab_binding(value) {
+    ctx[17](value);
+  }
+  let tabs_1_props = {
+    class: "gas-tabs",
+    tabs: (
+      /*tabs*/
+      ctx[4]
+    ),
+    sharedProps: (
+      /*tabProps*/
+      ctx[3]
+    )
+  };
+  if (
+    /*activeTab*/
+    ctx[2] !== void 0
+  ) {
+    tabs_1_props.activeTab = /*activeTab*/
+    ctx[2];
+  }
+  tabs_1 = new Tabs({ props: tabs_1_props });
+  binding_callbacks.push(() => bind(tabs_1, "activeTab", tabs_1_activeTab_binding));
+  return {
+    c() {
+      section = element("section");
+      main = element("main");
+      create_component(tabs_1.$$.fragment);
+      attr(main, "class", "shop-sheet__body svelte-1wn8t4w");
+      attr(section, "class", "shop-sheet svelte-1wn8t4w");
+    },
+    m(target, anchor) {
+      insert(target, section, anchor);
+      append(section, main);
+      mount_component(tabs_1, main, null);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      const tabs_1_changes = {};
+      if (dirty[0] & /*tabs*/
+      16) tabs_1_changes.tabs = /*tabs*/
+      ctx2[4];
+      if (dirty[0] & /*tabProps*/
+      8) tabs_1_changes.sharedProps = /*tabProps*/
+      ctx2[3];
+      if (!updating_activeTab && dirty[0] & /*activeTab*/
+      4) {
+        updating_activeTab = true;
+        tabs_1_changes.activeTab = /*activeTab*/
+        ctx2[2];
+        add_flush_callback(() => updating_activeTab = false);
+      }
+      tabs_1.$set(tabs_1_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tabs_1.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tabs_1.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(section);
+      }
+      destroy_component(tabs_1);
+    }
+  };
+}
+function create_fragment(ctx) {
+  let applicationshell;
+  let updating_elementRoot;
+  let current;
+  function applicationshell_elementRoot_binding(value) {
+    ctx[18](value);
+  }
+  let applicationshell_props = {
+    $$slots: { default: [create_default_slot] },
+    $$scope: { ctx }
+  };
+  if (
+    /*elementRoot*/
+    ctx[0] !== void 0
+  ) {
+    applicationshell_props.elementRoot = /*elementRoot*/
+    ctx[0];
+  }
+  applicationshell = new ApplicationShell({ props: applicationshell_props });
+  binding_callbacks.push(() => bind(applicationshell, "elementRoot", applicationshell_elementRoot_binding));
+  return {
+    c() {
+      create_component(applicationshell.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(applicationshell, target, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      const applicationshell_changes = {};
+      if (dirty[0] & /*tabs, tabProps, activeTab*/
+      28 | dirty[1] & /*$$scope*/
+      2) {
+        applicationshell_changes.$$scope = { dirty, ctx: ctx2 };
+      }
+      if (!updating_elementRoot && dirty[0] & /*elementRoot*/
+      1) {
+        updating_elementRoot = true;
+        applicationshell_changes.elementRoot = /*elementRoot*/
+        ctx2[0];
+        add_flush_callback(() => updating_elementRoot = false);
+      }
+      applicationshell.$set(applicationshell_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(applicationshell.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(applicationshell.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(applicationshell, detaching);
+    }
+  };
+}
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "copy";
+}
+function openItemSheet(item) {
+  item.sheet?.render(true);
+}
+function getActorName(uuidOrId) {
+  const a = game.actors.get(uuidOrId) || game.actors.getName(uuidOrId);
+  return a?.name || uuidOrId.split(".").pop() || "Unknown Actor";
+}
+function getRollTableName(uuid) {
+  const rt = game.tables.get(uuid) || game.tables.getName(uuid.split(".").pop());
+  return rt?.name || "Unknown Table";
+}
+function instance($$self, $$props, $$invalidate) {
+  let actor;
+  let config;
+  let tabs;
+  let tabProps;
+  let $documentStore, $$unsubscribe_documentStore = noop, $$subscribe_documentStore = () => ($$unsubscribe_documentStore(), $$unsubscribe_documentStore = subscribe(documentStore, ($$value) => $$invalidate(16, $documentStore = $$value)), documentStore);
+  $$self.$$.on_destroy.push(() => $$unsubscribe_documentStore());
+  let { elementRoot } = $$props;
+  let { documentStore } = $$props;
+  $$subscribe_documentStore();
+  setContext("#doc", documentStore);
+  const application = getContext("#external").application;
+  let activeTab = "shopfront";
+  let filterText = "";
+  let associatedActors = [];
+  let rollTables = [];
+  let pricingFactor = 100;
+  let priceVariance = 10;
+  let variancePeriod = "daily";
+  let atrophyPercent = 5;
+  let descriptionValue = "";
+  let initializedActorId = null;
+  let disconnectFoundryTheme = () => {
+  };
+  async function saveSettings() {
+    if (!actor?.isOwner) {
+      ui.notifications.warn(localize("NoPermission"));
+      return;
+    }
+    await actor.updateShopConfiguration({
+      pricingFactor: parseFloat(pricingFactor),
+      priceVariance: parseFloat(priceVariance),
+      variancePeriod,
+      atrophyPercent: parseFloat(atrophyPercent),
+      associatedActors,
+      rollTables
+    });
+    ui.notifications.info(localize("SettingsSaved"));
+  }
+  async function provisionStore() {
+    if (!actor?.isOwner) return;
+    ui.notifications.info("Provisioning store... This will roll on configured tables, apply pricing variance, and update inventory.");
+    const numToAdd = 5;
+    ui.notifications.info(`Added ${numToAdd} items to inventory.`);
+  }
+  function handleDrop(e, dropType) {
+    e.preventDefault();
+    try {
+      const data = JSON.parse(e.dataTransfer.getData("text/plain") || "{}");
+      if (dropType === "actor" && data.type === "Actor" && data.uuid) {
+        const actorId = data.uuid || data.id;
+        if (!associatedActors.includes(actorId)) {
+          $$invalidate(6, associatedActors = [...associatedActors, actorId]);
+          saveSettings();
+        }
+      } else if (dropType === "rolltable" && data.type === "RollTable" && data.uuid) {
+        if (!rollTables.includes(data.uuid)) {
+          $$invalidate(7, rollTables = [...rollTables, data.uuid]);
+          saveSettings();
+        }
+      }
+    } catch (err) {
+      console.error("Drop error:", err);
+    }
+  }
+  function handleActorDrop(e) {
+    handleDrop(e, "actor");
+  }
+  function handleRollTableDrop(e) {
+    handleDrop(e, "rolltable");
+  }
+  function removeAssociated(index) {
+    $$invalidate(6, associatedActors = associatedActors.filter((_, i) => i !== index));
+    saveSettings();
+  }
+  function removeRollTable(index) {
+    $$invalidate(7, rollTables = rollTables.filter((_, i) => i !== index));
+    saveSettings();
+  }
+  function clearFilter() {
+    $$invalidate(5, filterText = "");
+  }
+  function openImageEditor() {
+    actor?.sheet?._onEditImage?.();
+  }
+  function calculatePrice(basePrice = 0) {
+    const factor = pricingFactor / 100;
+    const variance = (Math.random() * 2 - 1) * (priceVariance / 100);
+    return Math.round(basePrice * factor * (1 + variance));
+  }
+  onMount(() => {
+    disconnectFoundryTheme = observeFoundryBodyTheme(elementRoot);
+    application.reactive.draggable = true;
+    log?.d("ShopSheet mounted for actor", actor?.name);
+  });
+  onDestroy(() => {
+    disconnectFoundryTheme();
+  });
+  function tabs_1_activeTab_binding(value) {
+    activeTab = value;
+    $$invalidate(2, activeTab);
+  }
+  function applicationshell_elementRoot_binding(value) {
+    elementRoot = value;
+    $$invalidate(0, elementRoot);
+  }
+  $$self.$$set = ($$props2) => {
+    if ("elementRoot" in $$props2) $$invalidate(0, elementRoot = $$props2.elementRoot);
+    if ("documentStore" in $$props2) $$subscribe_documentStore($$invalidate(1, documentStore = $$props2.documentStore));
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty[0] & /*$documentStore*/
+    65536) {
+      $$invalidate(14, actor = $documentStore);
+    }
+    if ($$self.$$.dirty[0] & /*actor*/
+    16384) {
+      actor?.name ?? game.i18n.localize("foundryvtt-shop-studio.ShopSheetTitle");
+    }
+    if ($$self.$$.dirty[0] & /*actor*/
+    16384) {
+      $$invalidate(15, config = actor?.shopConfiguration ?? {});
+    }
+    if ($$self.$$.dirty[0] & /*actor, initializedActorId, config*/
+    57344) {
+      if (actor?.id && actor.id !== initializedActorId) {
+        $$invalidate(8, pricingFactor = config.pricingFactor ?? 100);
+        $$invalidate(9, priceVariance = config.priceVariance ?? 10);
+        $$invalidate(10, variancePeriod = config.variancePeriod ?? "daily");
+        $$invalidate(11, atrophyPercent = config.atrophyPercent ?? 5);
+        $$invalidate(6, associatedActors = config.associatedActors ?? []);
+        $$invalidate(7, rollTables = config.rollTables ?? []);
+        $$invalidate(12, descriptionValue = actor?.system?.details?.biography?.value || "");
+        $$invalidate(13, initializedActorId = actor.id);
+      }
+    }
+    if ($$self.$$.dirty[0] & /*actor, descriptionValue, associatedActors, filterText, pricingFactor, priceVariance, variancePeriod, atrophyPercent, rollTables*/
+    24544) {
+      $$invalidate(3, tabProps = {
+        actor,
+        descriptionValue,
+        associatedActors,
+        filterText,
+        items: actor?.items || [],
+        pricingFactor,
+        priceVariance,
+        variancePeriod,
+        atrophyPercent,
+        onDescriptionChange: (value) => {
+          $$invalidate(12, descriptionValue = value);
+        },
+        onFilterChange: (value) => {
+          $$invalidate(5, filterText = value);
+        },
+        onPricingFactorChange: (value) => {
+          $$invalidate(8, pricingFactor = Number(value));
+        },
+        onPriceVarianceChange: (value) => {
+          $$invalidate(9, priceVariance = Number(value));
+        },
+        onVariancePeriodChange: (value) => {
+          $$invalidate(10, variancePeriod = value);
+        },
+        onAtrophyPercentChange: (value) => {
+          $$invalidate(11, atrophyPercent = Number(value));
+        },
+        rollTables,
+        localize,
+        openImageEditor,
+        handleDragOver,
+        handleActorDrop,
+        handleRollTableDrop,
+        getActorName,
+        getRollTableName,
+        removeAssociated,
+        removeRollTable,
+        clearFilter,
+        calculatePrice,
+        openItemSheet,
+        provisionStore,
+        saveSettings
+      });
+    }
+  };
+  $$invalidate(4, tabs = [
+    {
+      id: "shopfront",
+      label: localize("Shopfront"),
+      component: ShopfrontTab
+    },
+    {
+      id: "inventory",
+      label: localize("Inventory"),
+      component: InventoryTab
+    },
+    {
+      id: "settings",
+      label: localize("Settings"),
+      component: SettingsTab
+    }
+  ]);
+  return [
+    elementRoot,
+    documentStore,
+    activeTab,
+    tabProps,
+    tabs,
+    filterText,
+    associatedActors,
+    rollTables,
+    pricingFactor,
+    priceVariance,
+    variancePeriod,
+    atrophyPercent,
+    descriptionValue,
+    initializedActorId,
+    actor,
+    config,
+    $documentStore,
+    tabs_1_activeTab_binding,
+    applicationshell_elementRoot_binding
+  ];
+}
+class ShopSheet extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance, create_fragment, safe_not_equal, { elementRoot: 0, documentStore: 1 }, null, [-1, -1]);
+  }
+  get elementRoot() {
+    return this.$$.ctx[0];
+  }
+  set elementRoot(elementRoot) {
+    this.$$set({ elementRoot });
+    flush();
+  }
+  get documentStore() {
+    return this.$$.ctx[1];
+  }
+  set documentStore(documentStore) {
+    this.$$set({ documentStore });
+    flush();
+  }
+}
+class SvelteDocumentSheet extends SvelteApp {
+  #documentStore = new TJSDocument(void 0, { delete: this.close.bind(this) });
+  constructor(object) {
+    super(object);
+    Object.defineProperty(this.reactive, "document", {
+      get: () => this.#documentStore.get(),
+      set: (document2) => {
+        this.#documentStore.set(document2);
+      }
+    });
+    this.reactive.document = object;
+  }
+  static get defaultOptions() {
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      width: 640,
+      height: 720,
+      resizable: true,
+      minimizable: true,
+      svelte: {
+        class: ShopSheet,
+        target: document.body,
+        props: function() {
+          return { documentStore: this.#documentStore, document: this.reactive.document };
+        }
+      }
+    });
+  }
+}
+class ShopActorSheet extends SvelteDocumentSheet {
+  static get defaultOptions() {
+    const classes = [MODULE_CODE, MODULE_ID, "shop-actor-sheet"];
+    if (Number(game.version) >= 13) {
+      classes.push("gas-v13-plus");
+    }
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      id: "foundryvtt-shop-studio-sheet",
+      classes,
+      width: 640,
+      height: 720,
+      resizable: true,
+      minimizable: true,
+      headerButtonNoLabel: false,
+      headerIcon: "modules/foundryvtt-shop-studio/assets/shop-studio-logo-dragon-be7c41ff.webp",
+      dragDrop: [{ dragSelector: ".directory-list .item", dropSelector: null }]
+    });
+  }
+  get title() {
+    const shopName = this.reactive.document?.name || game.i18n.localize("foundryvtt-shop-studio.ShopSheetTitle");
+    const systemVersion = game.system?.version || "";
+    return `${shopName} | Shop Studio v${version} | Foundry: ${game.version || ""} | ${game.system?.id || ""}: ${systemVersion}`;
+  }
+}
+const LEGACY_SHOP_ACTOR_TYPE = "shop";
+const SHOP_ACTOR_TYPE = "npc";
+const SHOP_IDENTITY_KIND = `${MODULE_ID}.shop`;
+const SHOP_FLAG_SCOPE = MODULE_ID;
+const SHOP_FLAG_KEYS = Object.freeze({
+  configuration: "configuration",
+  stock: "stock",
+  transactions: "transactions",
+  identity: "identity"
+});
+const DEFAULT_SHOP_CONFIGURATION = Object.freeze({
+  pricingFactor: 100,
+  priceVariance: 10,
+  variancePeriod: "daily",
+  atrophyPercent: 5,
+  associatedActors: [],
+  rollTables: []
+});
+let RegisteredShopActor = null;
+function registerShopActor() {
+  const BaseActorClass = CONFIG.Actor.documentClass;
+  if (RegisteredShopActor) {
+    return RegisteredShopActor;
+  }
+  class ShopActor extends BaseActorClass {
+    /**
+     * Indicates whether the Actor is managed by Shop Studio.
+     * @returns {boolean}
+     */
+    get isShop() {
+      if (this.type === LEGACY_SHOP_ACTOR_TYPE) {
+        return true;
+      }
+      const identity2 = this.getFlag(MODULE_ID, SHOP_FLAG_KEYS.identity);
+      return identity2?.isShop === true || identity2?.kind === SHOP_IDENTITY_KIND;
+    }
+    /**
+     * Retrieves configuration flags for this shop.
+     * @returns {Record<string, unknown>}
+     */
+    get shopConfiguration() {
+      const stored = this.getFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.configuration) ?? {};
+      return foundry.utils.mergeObject(DEFAULT_SHOP_CONFIGURATION, stored, { inplace: false });
+    }
+    /**
+     * Updates shop configuration flags.
+     * @param {Record<string, unknown>} update
+     */
+    async updateShopConfiguration(update2) {
+      const merged = foundry.utils.mergeObject(this.shopConfiguration, update2 ?? {}, { inplace: false });
+      return this.setFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.configuration, merged);
+    }
+    /**
+     * Returns the persisted stock snapshot for the shop.
+     * @returns {Array<Record<string, unknown>>}
+     */
+    get stockSnapshot() {
+      return this.getFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.stock) ?? [];
+    }
+    /**
+     * Persists a new stock snapshot.
+     * @param {Array<Record<string, unknown>>} stock
+     */
+    async setStockSnapshot(stock) {
+      return this.setFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.stock, stock ?? []);
+    }
+    /**
+     * Marks the actor as a shop when the underlying system does not support a custom type.
+     * @returns {Promise<foundry.abstract.Document>} update result
+     */
+    async setShopIdentity() {
+      return this.setFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.identity, {
+        isShop: true,
+        kind: SHOP_IDENTITY_KIND
+      });
+    }
+    /**
+     * Prepare baseline data for shop actors ensuring required structures exist.
+     */
+    prepareBaseData() {
+      super.prepareBaseData();
+      if (!this.isShop) {
+        return;
+      }
+      this.system ??= {};
+      this.system.details ??= {};
+      this.system.details.biography ??= "";
+      this.system.currency ??= {};
+    }
+  }
+  CONFIG.Actor.documentClass = ShopActor;
+  RegisteredShopActor = ShopActor;
+  return ShopActor;
+}
 function registerSettings(app) {
   log.i("Building module settings");
+  debugSetting();
+  debugHooksSetting();
+  registerUISettings();
   dontShowWelcome();
+}
+function registerUISettings() {
+  game.settings.register(MODULE_ID, "showButtonInSideBar", {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.showButtonInSideBar.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.showButtonInSideBar.Hint`),
+    scope: "world",
+    config: true,
+    default: true,
+    type: Boolean
+  });
 }
 function dontShowWelcome() {
   game.settings.register(MODULE_ID, "dontShowWelcome", {
@@ -16411,11 +23780,288 @@ function dontShowWelcome() {
     type: Boolean
   });
 }
+function debugSetting() {
+  game.settings.register(MODULE_ID, "debug", {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.Debug.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.Debug.Hint`),
+    scope: "world",
+    config: true,
+    default: false,
+    type: Boolean,
+    onChange: () => {
+      Dialog.confirm({
+        title: game.i18n.localize(`${MODULE_ID}.Setting.ReloadRequiredTitle`),
+        content: `<p>${game.i18n.localize(`${MODULE_ID}.Setting.ReloadRequiredContent`)}</p>`,
+        yes: () => window.location.reload(),
+        no: () => {
+        },
+        defaultYes: true
+      });
+    }
+  });
+}
+function debugHooksSetting() {
+  game.settings.register(MODULE_ID, "debug.hooks", {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.DebugHooks.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.DebugHooks.Hint`),
+    scope: "world",
+    config: true,
+    default: false,
+    type: Boolean,
+    onChange: () => {
+      Dialog.confirm({
+        title: game.i18n.localize(`${MODULE_ID}.Setting.ReloadRequiredTitle`),
+        content: `<p>${game.i18n.localize(`${MODULE_ID}.Setting.ReloadRequiredContent`)}</p>`,
+        yes: () => window.location.reload(),
+        no: () => {
+        },
+        defaultYes: true
+      });
+    }
+  });
+}
+const EVENT_HANDLERS = /* @__PURE__ */ new Map();
+const SHOP_DIALOG_TYPE = `${MODULE_ID}.shop`;
+const SHOP_DIALOG_FIELD_ATTR = "data-gss-shop-field";
+function isCreateActorDialog(app) {
+  const createNewActorLocalized = game.i18n.format("DOCUMENT.Create", {
+    type: game.i18n.localize("DOCUMENT.Actor")
+  });
+  return app?.title === createNewActorLocalized;
+}
+function getDialogRootElement(app, html) {
+  if (html instanceof HTMLElement) return html;
+  if (html?.[0] instanceof HTMLElement) return html[0];
+  if (app?.element instanceof HTMLElement) return app.element;
+  if (app?.element?.[0] instanceof HTMLElement) return app.element[0];
+  return null;
+}
+function getCreateActorForm(app, html) {
+  const root = getDialogRootElement(app, html);
+  if (!root) return null;
+  if (root.matches?.("form#document-create")) return root;
+  return root.querySelector("form#document-create") || root.querySelector("form");
+}
+function getSelectedType(form) {
+  const selectedRadio = form.querySelector('input[name="type"]:checked');
+  if (selectedRadio) return selectedRadio.value;
+  const select = form.querySelector('select[name="type"]');
+  return select?.value ?? null;
+}
+function setSelectedType(form, type) {
+  const selectedRadio = form.querySelector(`input[name="type"][value="${type}"]`);
+  if (selectedRadio) selectedRadio.checked = true;
+  const select = form.querySelector('select[name="type"]');
+  if (select) select.value = type;
+}
+function clearShopHiddenFields(form) {
+  for (const node of form.querySelectorAll(`input[${SHOP_DIALOG_FIELD_ATTR}]`)) {
+    node.remove();
+  }
+}
+function ensureShopHiddenField(form, name, value, dataType = null) {
+  let input = form.querySelector(`input[${SHOP_DIALOG_FIELD_ATTR}][name="${name}"]`);
+  if (!input) {
+    input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.setAttribute(SHOP_DIALOG_FIELD_ATTR, "");
+    form.appendChild(input);
+  }
+  input.value = value;
+  if (dataType) {
+    input.dataset.dtype = dataType;
+  }
+}
+function applyShopCreationFields(form) {
+  ensureShopHiddenField(form, "flags.core.sheetClass", `${MODULE_ID}.ShopActorSheet`);
+  ensureShopHiddenField(form, `flags.${SHOP_FLAG_SCOPE}.${SHOP_FLAG_KEYS.identity}.isShop`, "true", "Boolean");
+  ensureShopHiddenField(form, `flags.${SHOP_FLAG_SCOPE}.${SHOP_FLAG_KEYS.identity}.kind`, SHOP_IDENTITY_KIND);
+}
+function addShopTypeToRadioList(form) {
+  const list = form.querySelector("ol.unlist.card, ol.card, ol.unlist");
+  const npcInput = form.querySelector(`input[name="type"][value="${SHOP_ACTOR_TYPE}"]`);
+  if (!list || !npcInput) return;
+  if (form.querySelector(`input[name="type"][value="${SHOP_DIALOG_TYPE}"]`)) return;
+  const li = document.createElement("li");
+  li.className = "gss-shop-type-option";
+  const label = document.createElement("label");
+  const icon = document.createElement("img");
+  icon.src = `modules/${MODULE_ID}/assets/shop-studio-logo-dragon-be7c41ff.webp`;
+  icon.alt = game.i18n.localize(`${MODULE_ID}.ShopSheetTitle`);
+  icon.width = 28;
+  icon.height = 28;
+  icon.style.border = "none";
+  const text2 = document.createElement("span");
+  text2.textContent = game.i18n.localize(`${MODULE_ID}.ShopSheetTitle`);
+  const input = document.createElement("input");
+  input.type = "radio";
+  input.name = "type";
+  input.value = SHOP_DIALOG_TYPE;
+  input.required = true;
+  label.append(icon, text2, input);
+  li.appendChild(label);
+  const npcRow = npcInput.closest("li");
+  if (npcRow?.parentNode) {
+    npcRow.parentNode.insertBefore(li, npcRow.nextSibling);
+  } else {
+    list.appendChild(li);
+  }
+}
+function addShopTypeToSelect(form) {
+  const select = form.querySelector('select[name="type"]');
+  if (!select) return;
+  if (select.querySelector(`option[value="${SHOP_DIALOG_TYPE}"]`)) return;
+  const option = document.createElement("option");
+  option.value = SHOP_DIALOG_TYPE;
+  option.textContent = game.i18n.localize(`${MODULE_ID}.ShopSheetTitle`);
+  select.appendChild(option);
+}
+function renderShopTypeInCreateActorApplication(app, html) {
+  if (!game.modules.get(MODULE_ID)?.active) return;
+  if (!isCreateActorDialog(app)) return;
+  const form = getCreateActorForm(app, html);
+  if (!form) return;
+  addShopTypeToRadioList(form);
+  addShopTypeToSelect(form);
+  if (form.dataset.gssShopTypeBound === "true") return;
+  form.addEventListener("submit", () => {
+    const selectedType = getSelectedType(form);
+    if (selectedType !== SHOP_DIALOG_TYPE) {
+      clearShopHiddenFields(form);
+      return;
+    }
+    setSelectedType(form, SHOP_ACTOR_TYPE);
+    applyShopCreationFields(form);
+  }, true);
+  form.dataset.gssShopTypeBound = "true";
+}
+function cleanupEventHandlers(elementId) {
+  if (EVENT_HANDLERS.has(elementId)) {
+    const handlers = EVENT_HANDLERS.get(elementId);
+    for (const [el, type, handler] of handlers) {
+      el.removeEventListener(type, handler);
+    }
+    EVENT_HANDLERS.delete(elementId);
+  }
+}
+function storeEventHandler(elementId, element2, type, handler) {
+  if (!EVENT_HANDLERS.has(elementId)) {
+    EVENT_HANDLERS.set(elementId, []);
+  }
+  EVENT_HANDLERS.get(elementId).push([element2, type, handler]);
+}
+function getShopStudioButton(buttonId) {
+  const button = document.createElement("button");
+  button.id = buttonId;
+  button.type = "button";
+  button.className = "dialog-button default bright";
+  button.setAttribute("data-shop-start", "");
+  button.setAttribute("tabindex", "0");
+  const img = document.createElement("img");
+  img.src = `modules/${MODULE_ID}/assets/shop-studio-be7c41ff.webp`;
+  img.alt = "Shop Studio";
+  img.style.height = "100%";
+  img.style.maxHeight = "30px";
+  img.style.border = "none";
+  img.style.width = "auto";
+  button.appendChild(img);
+  return button;
+}
+const renderShopStudioSidebarButton = (app) => {
+  if (!game.modules.get(MODULE_ID)?.active) return;
+  if (!safeGetSetting(MODULE_ID, "showButtonInSideBar", true)) return;
+  if (!app || app.constructor.name !== "ActorDirectory" && app.constructor.name !== "ActorDirectoryV2") return;
+  const element2 = game.version >= 13 ? app.element : app._element || app.element || $(app.element);
+  if (!element2) return;
+  const elementId = `shop-sidebar-${app.id || "default"}`;
+  cleanupEventHandlers(elementId);
+  const existingSelector = "#geoidesic-shop-studio-sidebar-button";
+  if (game.version >= 13) {
+    const existing = element2.querySelector(existingSelector);
+    if (existing) existing.remove();
+  } else if (typeof $ !== "undefined") {
+    element2.find(existingSelector).remove();
+  }
+  const shopButton = getShopStudioButton("geoidesic-shop-studio-sidebar-button");
+  if (game.version >= 13) {
+    let headerActions = element2.querySelector("header.directory-header .header-actions");
+    if (!headerActions) {
+      headerActions = element2.querySelector(".directory-header .header-actions");
+    }
+    if (headerActions && headerActions.parentNode) {
+      headerActions.parentNode.insertBefore(shopButton, headerActions.nextSibling);
+    } else {
+      const header = element2.querySelector("header.directory-header, .directory-header");
+      if (header) header.append(shopButton);
+    }
+  } else if (typeof $ !== "undefined") {
+    const header = element2.find("header.directory-header");
+    if (header.length > 0) {
+      header.append(shopButton);
+    }
+  }
+  const clickHandler = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    Hooks.callAll("gss.openShopStudio");
+    createOrOpenShop();
+  };
+  shopButton.addEventListener("click", clickHandler);
+  storeEventHandler(elementId, shopButton, "click", clickHandler);
+};
+async function createOrOpenShop() {
+  let shopActor = game.actors.find((a) => a.isOwner && a.isShop);
+  if (!shopActor) {
+    try {
+      shopActor = await Actor.create({
+        name: game.i18n.localize("foundryvtt-shop-studio.ShopSheetTitle") || "New Shop",
+        type: SHOP_ACTOR_TYPE,
+        flags: {
+          core: {
+            sheetClass: `${MODULE_ID}.ShopActorSheet`
+          },
+          [SHOP_FLAG_SCOPE]: {
+            [SHOP_FLAG_KEYS.identity]: {
+              isShop: true,
+              kind: SHOP_IDENTITY_KIND
+            },
+            [SHOP_FLAG_KEYS.configuration]: DEFAULT_SHOP_CONFIGURATION
+          }
+        },
+        img: `modules/${MODULE_ID}/assets/shop-studio-logo-dragon-be7c41ff.webp`
+      }, { renderSheet: true });
+      ui.notifications.info("New shop created and opened.");
+    } catch (err) {
+      ui.notifications.error("Failed to create shop actor.");
+      console.error(err);
+    }
+  } else {
+    if (shopActor.getFlag("core", "sheetClass") !== `${MODULE_ID}.ShopActorSheet`) {
+      await shopActor.setFlag("core", "sheetClass", `${MODULE_ID}.ShopActorSheet`);
+    }
+    shopActor.sheet.render(true, { focus: true });
+  }
+}
 window.log = log;
 log.level = log.DEBUG;
 Hooks.once("init", (app, html, data) => {
   log.i("Initialising");
   CONFIG.debug.hooks = true;
+  registerShopActor();
+  CONFIG.Actor.typeLabels ??= {};
+  if (!CONFIG.Actor.typeLabels[LEGACY_SHOP_ACTOR_TYPE]) {
+    CONFIG.Actor.typeLabels[LEGACY_SHOP_ACTOR_TYPE] = "Shop (Legacy)";
+  }
+  Actors.registerSheet(MODULE_ID, ShopActorSheet, {
+    types: [SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE],
+    makeDefault: false,
+    label: "Shop Studio"
+  });
+  if (game.version > 13) {
+    window.MIN_WINDOW_WIDTH = 200;
+    window.MIN_WINDOW_HEIGHT = 50;
+  }
   registerSettings();
 });
 Hooks.once("ready", (app, html, data) => {
@@ -16426,5 +24072,30 @@ Hooks.once("ready", (app, html, data) => {
   if (!game.settings.get(MODULE_ID, "dontShowWelcome")) {
     new WelcomeApplication().render(true, { focus: true });
   }
+});
+Hooks.on("renderSettingsConfig", (app, html, context) => {
+  if (game.user.isGM) {
+    const uiSettingElement = $(`[data-setting-id="${MODULE_ID}.showButtonInSideBar"]`, html);
+    if (uiSettingElement.length) {
+      uiSettingElement.before(
+        `<h4 class="gas-settings-h4">${game.i18n.localize(`${MODULE_ID}.Setting.UI.Name`)}</h4>`
+      );
+    }
+  }
+});
+Hooks.on("activateActorDirectory", async (app) => {
+  renderShopStudioSidebarButton(app);
+});
+Hooks.on("renderActorDirectory", async (app, html) => {
+  renderShopStudioSidebarButton(app);
+});
+Hooks.on("renderApplication", (app, html) => {
+  renderShopTypeInCreateActorApplication(app, html);
+});
+Hooks.on("renderApplicationV2", (app, html) => {
+  renderShopTypeInCreateActorApplication(app, html);
+});
+Hooks.on("gss.openShopStudio", () => {
+  log.i("Shop Studio opened via sidebar button");
 });
 //# sourceMappingURL=index.js.map

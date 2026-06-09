@@ -1,0 +1,138 @@
+// Dark Actor Studio — scoped via gas-app-scope. Window shell uses gas-app-dark-window-shell (app IDs only).
+
+@import '../gas-app-scope.sass'
+
+@include gas-app-dark-window-shell
+
+@include gas-app-themed-dark
+  .gas-tabs.tabs,
+  .tabs.gas-tabs
+    border: none !important
+    border-color: transparent !important
+
+  .gas-tabs .tabs-list,
+  .tabs .tabs-list
+    border-bottom-color: var(--gas-sheet-chrome-border, #3a3a3a) !important
+
+  .border-right.right-border-gradient-mask
+    border-right-color: var(--gas-sheet-chrome-border, #3a3a3a) !important
+
+  main,
+  section.a
+    background-color: transparent
+    color: var(--gas-color-text)
+    
+  section.b
+    background-color: rgba(0,0,0,0.5)
+    border-radius: var(--border-radius)
+    color: var(--gas-color-text)
+
+  .tab-content
+    background-color: var(--gas-tabs-content-background)
+    border-color: transparent
+
+  .content,
+  .col-a,
+  .col-b
+    color: var(--gas-color-text)
+
+  .gas-tabs .tabs-list button
+    &.active
+      color: var(--gas-tab-active-color) !important
+
+  input,
+  input[type="number"],
+  input[type="text"],
+  input[type="search"],
+  select,
+  textarea
+    background-color: var(--gas-input-background) !important
+    color: var(--gas-color-text) !important
+    border-color: var(--gas-input-border) !important
+
+  input:disabled,
+  input[disabled]
+    background-color: var(--gas-input-disabled-background) !important
+    color: var(--gas-color-text) !important
+    -webkit-text-fill-color: var(--gas-color-text)
+
+  .score-cell,
+  input.mainscore,
+  input.score,
+  table input
+    background-color: var(--gas-input-disabled-background) !important
+    color: var(--gas-color-text) !important
+
+  .properties-list > li
+    background: var(--gas-li-background) !important
+    border-color: var(--gas-properties-list-border, rgba(255, 255, 255, 0.2)) !important
+    color: var(--gas-color-text)
+
+  table,
+  .attribute-entry table
+    border-color: var(--gas-input-border) !important
+    background-color: transparent
+
+    th,
+    td
+      border-color: var(--gas-input-border) !important
+      background-color: transparent
+
+    thead th
+      background-color: var(--gas-tab-active-background, #2a2a2a)
+
+    tbody tr:nth-child(even) td
+      background-color: rgba(255, 255, 255, 0.03)
+
+  hr
+    border-color: var(--gas-sheet-chrome-border, #3a3a3a)
+
+  .custom-select .selected-option,
+  .custom-select .options-dropdown,
+  .custom-select .search-input
+    background-color: var(--gas-input-background) !important
+    border-color: var(--gas-input-border) !important
+    color: var(--gas-color-text) !important
+
+  .footer-container
+    background-color: transparent
+
+    label.character-name-label
+      color: var(--dnd5e-color-gold, #b59e54)
+
+    .character-name-input-container
+      background: var(--gas-footer-input-background)
+      border-color: var(--gas-footer-input-border)
+      color: var(--gas-color-text)
+      box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.35)
+
+      input.character-name-input
+        color: var(--gas-color-text) !important
+
+  .content > .flexrow > .col-a:only-child,
+  .content > .flexrow > .flex2:only-child
+    flex: 1 1 100%
+    max-width: 100%
+
+  .description-fill,
+  .illuminated-description
+    width: 100%
+    max-width: 100%
+    color: var(--gas-color-text)
+    display: flow-root
+
+    p, li, span, div, h1, h2, h3, h4, h5, h6
+      color: inherit
+
+    a.content-link
+      color: var(--gas-tab-active-color)
+
+    .journal-sheet,
+    .journal-entry-content,
+    .journal-page-content
+      background: transparent !important
+      color: var(--gas-color-text) !important
+
+    img
+      max-width: 100%
+      height: auto

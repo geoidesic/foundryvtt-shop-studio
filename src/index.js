@@ -7,7 +7,7 @@ import { registerShopActor, SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE } from '~/sr
 import { MODULE_ID } from '~/src/helpers/constants';
 import { log, safeGetSetting } from '~/src/helpers/utility';
 import { registerSettings } from '~/src/settings';
-import { renderShopStudioSidebarButton } from '~/src/hooks/shopStudioButtons.js';
+import { renderShopStudioSidebarButton, renderShopTypeInCreateActorApplication } from '~/src/hooks/shopStudioButtons.js';
 
 window.log = log;
 log.level = log.DEBUG;
@@ -71,6 +71,15 @@ Hooks.on('activateActorDirectory', async (app) => {
 //- For Foundry V12
 Hooks.on('renderActorDirectory', async (app, html) => {
   renderShopStudioSidebarButton(app, html);
+});
+
+// Add a Shop option in the Create Actor dialog and map it to npc + shop identity flags.
+Hooks.on('renderApplication', (app, html) => {
+  renderShopTypeInCreateActorApplication(app, html);
+});
+
+Hooks.on('renderApplicationV2', (app, html) => {
+  renderShopTypeInCreateActorApplication(app, html);
 });
 
 Hooks.on('gss.openShopStudio', () => {

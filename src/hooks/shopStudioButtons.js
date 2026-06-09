@@ -9,6 +9,148 @@ import {
 } from '~/src/actors/ShopActor';
 
 const EVENT_HANDLERS = new Map();
+const SHOP_DIALOG_TYPE = `${MODULE_ID}.shop`;
+const SHOP_DIALOG_FIELD_ATTR = 'data-gss-shop-field';
+
+function isCreateActorDialog(app) {
+  const createNewActorLocalized = game.i18n.format('DOCUMENT.Create', {
+    type: game.i18n.localize('DOCUMENT.Actor')
+  });
+  return app?.title === createNewActorLocalized;
+}
+
+function getDialogRootElement(app, html) {
+  if (html instanceof HTMLElement) return html;
+  if (html?.[0] instanceof HTMLElement) return html[0];
+  if (app?.element instanceof HTMLElement) return app.element;
+  if (app?.element?.[0] instanceof HTMLElement) return app.element[0];
+  return null;
+}
+
+function getCreateActorForm(app, html) {
+  const root = getDialogRootElement(app, html);
+  if (!root) return null;
+  if (root.matches?.('form#document-create')) return root;
+  return root.querySelector('form#document-create') || root.querySelector('form');
+}
+
+function getSelectedType(form) {
+  const selectedRadio = form.querySelector('input[name="type"]:checked');
+  if (selectedRadio) return selectedRadio.value;
+
+  const select = form.querySelector('select[name="type"]');
+  return select?.value ?? null;
+}
+
+function setSelectedType(form, type) {
+  const selectedRadio = form.querySelector(`input[name="type"][value="${type}"]`);
+  if (selectedRadio) selectedRadio.checked = true;
+
+  const select = form.querySelector('select[name="type"]');
+  if (select) select.value = type;
+}
+
+function clearShopHiddenFields(form) {
+  for (const node of form.querySelectorAll(`input[${SHOP_DIALOG_FIELD_ATTR}]`)) {
+    node.remove();
+  }
+}
+
+function ensureShopHiddenField(form, name, value, dataType = null) {
+  let input = form.querySelector(`input[${SHOP_DIALOG_FIELD_ATTR}][name="${name}"]`);
+  if (!input) {
+    input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.setAttribute(SHOP_DIALOG_FIELD_ATTR, '');
+    form.appendChild(input);
+  }
+
+  input.value = value;
+  if (dataType) {
+    input.dataset.dtype = dataType;
+  }
+}
+
+function applyShopCreationFields(form) {
+  ensureShopHiddenField(form, 'flags.core.sheetClass', `${MODULE_ID}.ShopActorSheet`);
+  ensureShopHiddenField(form, `flags.${SHOP_FLAG_SCOPE}.${SHOP_FLAG_KEYS.identity}.isShop`, 'true', 'Boolean');
+  ensureShopHiddenField(form, `flags.${SHOP_FLAG_SCOPE}.${SHOP_FLAG_KEYS.identity}.kind`, SHOP_IDENTITY_KIND);
+}
+
+function addShopTypeToRadioList(form) {
+  const list = form.querySelector('ol.unlist.card, ol.card, ol.unlist');
+  const npcInput = form.querySelector(`input[name="type"][value="${SHOP_ACTOR_TYPE}"]`);
+  if (!list || !npcInput) return;
+  if (form.querySelector(`input[name="type"][value="${SHOP_DIALOG_TYPE}"]`)) return;
+
+  const li = document.createElement('li');
+  li.className = 'gss-shop-type-option';
+
+  const label = document.createElement('label');
+  const icon = document.createElement('img');
+  icon.src = `modules/${MODULE_ID}/assets/shop-studio-logo-dragon-be7c41ff.webp`;
+  icon.alt = game.i18n.localize(`${MODULE_ID}.ShopSheetTitle`);
+  icon.width = 28;
+  icon.height = 28;
+  icon.style.border = 'none';
+
+  const text = document.createElement('span');
+  text.textContent = game.i18n.localize(`${MODULE_ID}.ShopSheetTitle`);
+
+  const input = document.createElement('input');
+  input.type = 'radio';
+  input.name = 'type';
+  input.value = SHOP_DIALOG_TYPE;
+  input.required = true;
+
+  label.append(icon, text, input);
+  li.appendChild(label);
+
+  const npcRow = npcInput.closest('li');
+  if (npcRow?.parentNode) {
+    npcRow.parentNode.insertBefore(li, npcRow.nextSibling);
+  } else {
+    list.appendChild(li);
+  }
+}
+
+function addShopTypeToSelect(form) {
+  const select = form.querySelector('select[name="type"]');
+  if (!select) return;
+  if (select.querySelector(`option[value="${SHOP_DIALOG_TYPE}"]`)) return;
+
+  const option = document.createElement('option');
+  option.value = SHOP_DIALOG_TYPE;
+  option.textContent = game.i18n.localize(`${MODULE_ID}.ShopSheetTitle`);
+  select.appendChild(option);
+}
+
+export function renderShopTypeInCreateActorApplication(app, html) {
+  if (!game.modules.get(MODULE_ID)?.active) return;
+  if (!isCreateActorDialog(app)) return;
+
+  const form = getCreateActorForm(app, html);
+  if (!form) return;
+
+  addShopTypeToRadioList(form);
+  addShopTypeToSelect(form);
+
+  if (form.dataset.gssShopTypeBound === 'true') return;
+
+  form.addEventListener('submit', () => {
+    const selectedType = getSelectedType(form);
+    if (selectedType !== SHOP_DIALOG_TYPE) {
+      clearShopHiddenFields(form);
+      return;
+    }
+
+    setSelectedType(form, SHOP_ACTOR_TYPE);
+    applyShopCreationFields(form);
+  }, true);
+
+  form.dataset.gssShopTypeBound = 'true';
+}
 
 function cleanupEventHandlers(elementId) {
   if (EVENT_HANDLERS.has(elementId)) {
