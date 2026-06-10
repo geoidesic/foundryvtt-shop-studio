@@ -20,20 +20,23 @@
   let filterText = '';
   let associatedActors = [];
   let rollTables = [];
-  let pricingFactor = 100;
+  let salePriceFactor = 100;
+  let buyPriceFactor = 50;
   let priceVariance = 10;
   let variancePeriod = 'daily';
   let atrophyPercent = 5;
   let descriptionValue = '';
   let initializedActorId = null;
   let disconnectFoundryTheme = () => {};
+  let _filePickerInstance = {};
 
   $: actor = $documentStore;
   $: sheetTitle = actor?.name ?? game.i18n.localize('foundryvtt-shop-studio.ShopSheetTitle');
   $: config = actor?.shopConfiguration ?? {};
 
   $: if (actor?.id && actor.id !== initializedActorId) {
-    pricingFactor = config.pricingFactor ?? 100;
+    salePriceFactor = config.salePriceFactor ?? 100;
+    buyPriceFactor = config.buyPriceFactor ?? 50;
     priceVariance = config.priceVariance ?? 10;
     variancePeriod = config.variancePeriod ?? 'daily';
     atrophyPercent = config.atrophyPercent ?? 5;
@@ -55,7 +58,8 @@
     associatedActors,
     filterText,
     items: actor?.items || [],
-    pricingFactor,
+    salePriceFactor,
+    buyPriceFactor,
     priceVariance,
     variancePeriod,
     atrophyPercent,
@@ -65,8 +69,11 @@
     onFilterChange: (value) => {
       filterText = value;
     },
-    onPricingFactorChange: (value) => {
-      pricingFactor = Number(value);
+    salePriceFactorChange: (value) => {
+      salePriceFactor = Number(value);
+    },
+    buyPriceFactorChange: (value) => {
+      buyPriceFactor = Number(value);
     },
     onPriceVarianceChange: (value) => {
       priceVariance = Number(value);
@@ -88,7 +95,7 @@
     removeAssociated,
     removeRollTable,
     clearFilter,
-    calculatePrice,
+    calculateSalePrice,
     openItemSheet,
     provisionStore,
     saveSettings,
@@ -100,7 +107,7 @@
       return;
     }
     await actor.updateShopConfiguration({
-      pricingFactor: parseFloat(pricingFactor),
+      salePriceFactor: parseFloat(salePriceFactor),
       priceVariance: parseFloat(priceVariance),
       variancePeriod,
       atrophyPercent: parseFloat(atrophyPercent),
@@ -170,7 +177,22 @@
   }
 
   function openImageEditor() {
-    actor?.sheet?._onEditImage?.();
+    const current = actor?.img;
+    if (_filePickerInstance instanceof FilePicker && !_filePickerInstance?.rendered) {
+      _filePickerInstance.render(true);
+      return;
+    }
+
+    _filePickerInstance = new FilePicker({
+      type: 'image',
+      current,
+      callback: (path) => {
+        $documentStore.update({ img: path });
+      },
+      top: application.position.top + 40,
+      left: application.position.left + 10,
+    });
+    return _filePickerInstance.browse();
   }
 
   function getActorName(uuidOrId) {
@@ -183,8 +205,8 @@
     return rt?.name || 'Unknown Table';
   }
 
-  function calculatePrice(basePrice = 0) {
-    const factor = pricingFactor / 100;
+  function calculateSalePrice(basePrice = 0) {
+    const factor = salePriceFactor / 100;
     const variance = (Math.random() * 2 - 1) * (priceVariance / 100);
     return Math.round(basePrice * factor * (1 + variance));
   }
@@ -208,7 +230,8 @@
 </template>
 
 <style lang="sass">
-  @import "../../styles/Mixins.sass"
+@import "../../styles/Mixins.sass"
+#foundryvtt-shop-studio-sheet
 
   .shop-sheet
     display: flex
@@ -221,11 +244,6 @@
     &__body
       flex: 1
       min-height: 0
-
-  :global(.shopfront-grid)
-    display: grid
-    grid-template-columns: minmax(220px, 1fr) minmax(280px, 1.7fr)
-    gap: var(--size-md)
 
 
   :global(.profile-section),
@@ -384,7 +402,4 @@
     border-radius: var(--border-radius)
     background: color-mix(in srgb, var(--gas-li-background) 70%, transparent)
 
-  @media (max-width: 960px)
-    :global(.shopfront-grid)
-      grid-template-columns: 1fr
 </style>

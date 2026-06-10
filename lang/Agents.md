@@ -1,9 +1,3 @@
----
-description: i18n localization rules for FoundryVTT Actor Studio
-globs: 
-alwaysApply: false
----
-
 # i18n Localization Rules
 
 ## localize() Helper Usage

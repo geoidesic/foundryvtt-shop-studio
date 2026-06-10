@@ -14,8 +14,7 @@ export const cartTotal = derived(shopCart, ($shopCart) => {
 });
 
 export function initialiseShopState(actor) {
-  const identityFlag = actor?.getFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.identity);
-  const isShopActor = actor?.type === SHOP_ACTOR_TYPE || identityFlag?.isShop === true;
+  const isShopActor = actor?.isShop;
 
   if (!actor || !isShopActor) {
     resetShopState();

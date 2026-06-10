@@ -1,5 +1,6 @@
 import { log } from '~/src/helpers/utility';
 import { MODULE_ID } from '~/src/helpers/constants';
+import ItemSourcesButton from './ItemSourcesButton';
 
 
 export function registerSettings(app) {
@@ -9,6 +10,7 @@ export function registerSettings(app) {
   debugSetting();
   debugHooksSetting();
   registerUISettings();
+  registerItemSourcesSettings();
   /** User settings */
   dontShowWelcome()
 
@@ -22,6 +24,35 @@ function registerUISettings() {
     config: true,
     default: true,
     type: Boolean,
+  });
+}
+
+function registerItemSourcesSettings() {
+  game.settings.register(MODULE_ID, 'itemSources', {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.Hint`),
+    scope: 'world',
+    config: false,
+    default: [],
+    type: Array,
+  });
+
+  game.settings.register(MODULE_ID, 'listableItemTypes', {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.ListableItemTypesName`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.ListableItemTypesHint`),
+    scope: 'world',
+    config: false,
+    default: null,
+    type: Array,
+  });
+
+  game.settings.registerMenu(MODULE_ID, 'itemSources', {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.Hint`),
+    label: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.Label`),
+    icon: 'fas fa-atlas',
+    type: ItemSourcesButton,
+    restricted: true,
   });
 }
 

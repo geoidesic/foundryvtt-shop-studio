@@ -63,7 +63,21 @@ function get_slot_context(definition, ctx, $$scope, fn) {
   return definition[1] && fn ? assign($$scope.ctx.slice(), definition[1](fn(ctx))) : $$scope.ctx;
 }
 function get_slot_changes(definition, $$scope, dirty, fn) {
-  if (definition[2] && fn) ;
+  if (definition[2] && fn) {
+    const lets = definition[2](fn(dirty));
+    if ($$scope.dirty === void 0) {
+      return lets;
+    }
+    if (typeof lets === "object") {
+      const merged = [];
+      const len = Math.max($$scope.dirty.length, lets.length);
+      for (let i = 0; i < len; i += 1) {
+        merged[i] = $$scope.dirty[i] | lets[i];
+      }
+      return merged;
+    }
+    return $$scope.dirty | lets;
+  }
   return $$scope.dirty;
 }
 function update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn) {
@@ -93,6 +107,13 @@ function compute_rest_props(props, keys) {
   keys = new Set(keys);
   for (const k in props) if (!keys.has(k) && k[0] !== "$") rest[k] = props[k];
   return rest;
+}
+function compute_slots(slots) {
+  const result = {};
+  for (const key in slots) {
+    result[key] = true;
+  }
+  return result;
 }
 function null_to_empty(value) {
   return value == null ? "" : value;
@@ -202,6 +223,26 @@ function attr(node, attribute, value) {
   if (value == null) node.removeAttribute(attribute);
   else if (node.getAttribute(attribute) !== value) node.setAttribute(attribute, value);
 }
+const always_set_through_set_attribute = ["width", "height"];
+function set_attributes(node, attributes) {
+  const descriptors = Object.getOwnPropertyDescriptors(node.__proto__);
+  for (const key in attributes) {
+    if (attributes[key] == null) {
+      node.removeAttribute(key);
+    } else if (key === "style") {
+      node.style.cssText = attributes[key];
+    } else if (key === "__value") {
+      node.value = node[key] = attributes[key];
+    } else if (descriptors[key] && descriptors[key].set && always_set_through_set_attribute.indexOf(key) === -1) {
+      node[key] = attributes[key];
+    } else {
+      attr(node, key, attributes[key]);
+    }
+  }
+}
+function to_number(value) {
+  return value === "" ? null : +value;
+}
 function children(element2) {
   return Array.from(element2.childNodes);
 }
@@ -229,9 +270,13 @@ function select_option(select, value, mounting) {
       return;
     }
   }
-  {
+  if (!mounting || value !== void 0) {
     select.selectedIndex = -1;
   }
+}
+function select_value(select) {
+  const selected_option = select.querySelector(":checked");
+  return selected_option && selected_option.__value;
 }
 function toggle_class(element2, name, toggle) {
   element2.classList.toggle(name, !!toggle);
@@ -314,12 +359,37 @@ function onMount(fn) {
 function onDestroy(fn) {
   get_current_component().$$.on_destroy.push(fn);
 }
+function createEventDispatcher() {
+  const component = get_current_component();
+  return (type, detail, { cancelable = false } = {}) => {
+    const callbacks = component.$$.callbacks[type];
+    if (callbacks) {
+      const event = custom_event(
+        /** @type {string} */
+        type,
+        detail,
+        { cancelable }
+      );
+      callbacks.slice().forEach((fn) => {
+        fn.call(component, event);
+      });
+      return !event.defaultPrevented;
+    }
+    return true;
+  };
+}
 function setContext(key, context) {
   get_current_component().$$.context.set(key, context);
   return context;
 }
 function getContext(key) {
   return get_current_component().$$.context.get(key);
+}
+function bubble(component, event) {
+  const callbacks = component.$$.callbacks[event.type];
+  if (callbacks) {
+    callbacks.slice().forEach((fn) => fn.call(this, event));
+  }
 }
 const dirty_components = [];
 const binding_callbacks = [];
@@ -1011,6 +1081,36 @@ class Hashing {
     return ("10000000-1000-4000-8000" + -1e11).replace(/[018]/g, (c) => (c ^ (globalThis.crypto ?? globalThis.msCrypto).getRandomValues(
       new Uint8Array(1)
     )[0] & 15 >> c / 4).toString(16));
+  }
+}
+class Strings {
+  /**
+   * @hideconstructor
+   */
+  constructor() {
+    throw new Error("Strings constructor: This is a static class and should not be constructed.");
+  }
+  /**
+   * Escape a given input string prefacing special characters with backslashes for use in a regular expression.
+   *
+   * @param {string}   string - An un-escaped input string.
+   *
+   * @returns {string} The escaped string suitable for use in a regular expression.
+   */
+  static escape(string) {
+    return string.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+  }
+  /**
+   * Normalizes a string.
+   *
+   * @param {string}   string - A string to normalize for comparisons.
+   *
+   * @returns {string} Cleaned string.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/normalize
+   */
+  static normalize(string) {
+    return string.trim().normalize("NFD").replace(/[\x00-\x1F]/gm, "");
   }
 }
 function deepMerge(target, ...sourceObj) {
@@ -2139,6 +2239,28 @@ class ThemeObserver {
     }
     return output;
   }
+}
+function isReadableStore(store) {
+  if (store === null || store === void 0) {
+    return false;
+  }
+  switch (typeof store) {
+    case "function":
+    case "object":
+      return typeof store.subscribe === "function";
+  }
+  return false;
+}
+function isMinimalWritableStore(store) {
+  if (store === null || store === void 0) {
+    return false;
+  }
+  switch (typeof store) {
+    case "function":
+    case "object":
+      return typeof store.subscribe === "function" && typeof store.set === "function";
+  }
+  return false;
 }
 function isWritableStore(store) {
   if (store === null || store === void 0) {
@@ -16424,7 +16546,7 @@ class FVTTAppTheme {
     return Array.from(classes).join(" ");
   }
 }
-class FVTTConfigure {
+let FVTTConfigure$1 = class FVTTConfigure {
   static #initialized = false;
   static initialize() {
     if (this.#initialized) {
@@ -16544,7 +16666,7 @@ class FVTTConfigure {
       }
     }
   }
-}
+};
 class ResizeObserverManager {
   /** @type {Map<HTMLElement, import('./types-local').ResizeObserverSubscriber[]>} */
   #elMap = /* @__PURE__ */ new Map();
@@ -17088,21 +17210,21 @@ function popoverTooltip(node, { cssClass, direction, isHTML, locked, tooltip }) 
     }
   };
 }
-function create_if_block$6(ctx) {
+function create_if_block$b(ctx) {
   let if_block_anchor;
   function select_block_type(ctx2, dirty) {
     if (
       /*iconType*/
       ctx2[3] === "font"
-    ) return create_if_block_1$1;
+    ) return create_if_block_1$6;
     if (
       /*iconType*/
       ctx2[3] === "img"
-    ) return create_if_block_2$1;
+    ) return create_if_block_2$4;
     if (
       /*iconType*/
       ctx2[3] === "svg"
-    ) return create_if_block_3;
+    ) return create_if_block_3$1;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type && current_block_type(ctx);
@@ -17137,7 +17259,7 @@ function create_if_block$6(ctx) {
     }
   };
 }
-function create_if_block_3(ctx) {
+function create_if_block_3$1(ctx) {
   let svg;
   let inlineSvg_action;
   let mounted;
@@ -17173,7 +17295,7 @@ function create_if_block_3(ctx) {
     }
   };
 }
-function create_if_block_2$1(ctx) {
+function create_if_block_2$4(ctx) {
   let img;
   let img_src_value;
   return {
@@ -17201,7 +17323,7 @@ function create_if_block_2$1(ctx) {
     }
   };
 }
-function create_if_block_1$1(ctx) {
+function create_if_block_1$6(ctx) {
   let i;
   let i_class_value;
   return {
@@ -17231,7 +17353,7 @@ function create_if_block_1$1(ctx) {
     }
   };
 }
-function create_fragment$a(ctx) {
+function create_fragment$m(ctx) {
   let button_1;
   let button_1_class_value;
   let applyStyles_action;
@@ -17240,7 +17362,7 @@ function create_fragment$a(ctx) {
   let dispose;
   let if_block = (
     /*icon*/
-    ctx[2] && create_if_block$6(ctx)
+    ctx[2] && create_if_block$b(ctx)
   );
   return {
     c() {
@@ -17314,7 +17436,7 @@ function create_fragment$a(ctx) {
         if (if_block) {
           if_block.p(ctx2, dirty);
         } else {
-          if_block = create_if_block$6(ctx2);
+          if_block = create_if_block$b(ctx2);
           if_block.c();
           if_block.m(button_1, null);
         }
@@ -17371,7 +17493,7 @@ function create_fragment$a(ctx) {
     }
   };
 }
-function instance$a($$self, $$props, $$invalidate) {
+function instance$m($$self, $$props, $$invalidate) {
   let icon;
   let label;
   let tooltipDirection;
@@ -17473,7 +17595,7 @@ function instance$a($$self, $$props, $$invalidate) {
 class TJSHeaderButton extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$a, create_fragment$a, safe_not_equal, { button: 0, storeHeaderButtonNoLabel: 1 });
+    init(this, options, instance$m, create_fragment$m, safe_not_equal, { button: 0, storeHeaderButtonNoLabel: 1 });
   }
   get button() {
     return this.$$.ctx[0];
@@ -17490,17 +17612,17 @@ class TJSHeaderButton extends SvelteComponent {
     flush();
   }
 }
-function get_each_context$4(ctx, list, i) {
+function get_each_context$6(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[40] = list[i];
   return child_ctx;
 }
-function get_each_context_1(ctx, list, i) {
+function get_each_context_1$1(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[40] = list[i];
   return child_ctx;
 }
-function create_if_block_2(ctx) {
+function create_if_block_2$3(ctx) {
   let svg;
   let inlineSvg_action;
   let mounted;
@@ -17536,7 +17658,7 @@ function create_if_block_2(ctx) {
     }
   };
 }
-function create_if_block_1(ctx) {
+function create_if_block_1$5(ctx) {
   let i;
   let i_class_value;
   return {
@@ -17562,7 +17684,7 @@ function create_if_block_1(ctx) {
     }
   };
 }
-function create_if_block$5(ctx) {
+function create_if_block$a(ctx) {
   let img;
   let img_src_value;
   return {
@@ -17594,7 +17716,7 @@ function create_if_block$5(ctx) {
     }
   };
 }
-function create_each_block_1(ctx) {
+function create_each_block_1$1(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -17679,7 +17801,7 @@ function create_each_block_1(ctx) {
     }
   };
 }
-function create_each_block$4(ctx) {
+function create_each_block$6(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -17786,15 +17908,15 @@ function create_key_block(ctx) {
     if (
       /*mediaType*/
       ctx2[8] === "img"
-    ) return create_if_block$5;
+    ) return create_if_block$a;
     if (
       /*mediaType*/
       ctx2[8] === "font"
-    ) return create_if_block_1;
+    ) return create_if_block_1$5;
     if (
       /*mediaType*/
       ctx2[8] === "svg"
-    ) return create_if_block_2;
+    ) return create_if_block_2$3;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type && current_block_type(ctx);
@@ -17804,7 +17926,7 @@ function create_key_block(ctx) {
   );
   let each_blocks_1 = [];
   for (let i = 0; i < each_value_1.length; i += 1) {
-    each_blocks_1[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
+    each_blocks_1[i] = create_each_block_1$1(get_each_context_1$1(ctx, each_value_1, i));
   }
   const out = (i) => transition_out(each_blocks_1[i], 1, 1, () => {
     each_blocks_1[i] = null;
@@ -17815,7 +17937,7 @@ function create_key_block(ctx) {
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block$4(get_each_context$4(ctx, each_value, i));
+    each_blocks[i] = create_each_block$6(get_each_context$6(ctx, each_value, i));
   }
   const out_1 = (i) => transition_out(each_blocks[i], 1, 1, () => {
     each_blocks[i] = null;
@@ -17930,12 +18052,12 @@ function create_key_block(ctx) {
         );
         let i;
         for (i = 0; i < each_value_1.length; i += 1) {
-          const child_ctx = get_each_context_1(ctx2, each_value_1, i);
+          const child_ctx = get_each_context_1$1(ctx2, each_value_1, i);
           if (each_blocks_1[i]) {
             each_blocks_1[i].p(child_ctx, dirty);
             transition_in(each_blocks_1[i], 1);
           } else {
-            each_blocks_1[i] = create_each_block_1(child_ctx);
+            each_blocks_1[i] = create_each_block_1$1(child_ctx);
             each_blocks_1[i].c();
             transition_in(each_blocks_1[i], 1);
             each_blocks_1[i].m(header, t3);
@@ -17955,12 +18077,12 @@ function create_key_block(ctx) {
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context$4(ctx2, each_value, i);
+          const child_ctx = get_each_context$6(ctx2, each_value, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
             transition_in(each_blocks[i], 1);
           } else {
-            each_blocks[i] = create_each_block$4(child_ctx);
+            each_blocks[i] = create_each_block$6(child_ctx);
             each_blocks[i].c();
             transition_in(each_blocks[i], 1);
             each_blocks[i].m(header, null);
@@ -18026,7 +18148,7 @@ function create_key_block(ctx) {
     }
   };
 }
-function create_fragment$9(ctx) {
+function create_fragment$l(ctx) {
   let previous_key = (
     /*draggable*/
     ctx[0]
@@ -18076,7 +18198,7 @@ function create_fragment$9(ctx) {
     }
   };
 }
-function instance$9($$self, $$props, $$invalidate) {
+function instance$l($$self, $$props, $$invalidate) {
   let $focusKeep;
   let $focusAuto;
   let $elementRoot;
@@ -18281,7 +18403,7 @@ function instance$9($$self, $$props, $$invalidate) {
 class TJSApplicationHeader extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$9, create_fragment$9, safe_not_equal, { draggable: 0, draggableOptions: 25 }, null, [-1, -1]);
+    init(this, options, instance$l, create_fragment$l, safe_not_equal, { draggable: 0, draggableOptions: 25 }, null, [-1, -1]);
   }
 }
 class ResizeHandleTransform {
@@ -18338,7 +18460,7 @@ class ResizeHandleTransform {
     return this.#pDeltaLocal;
   }
 }
-function create_fragment$8(ctx) {
+function create_fragment$k(ctx) {
   let div;
   let resizable_action;
   let mounted;
@@ -18402,7 +18524,7 @@ function create_fragment$8(ctx) {
     }
   };
 }
-function instance$8($$self, $$props, $$invalidate) {
+function instance$k($$self, $$props, $$invalidate) {
   let $storeElementRoot;
   let $storeMinimized;
   let $storeResizable;
@@ -18542,10 +18664,10 @@ function instance$8($$self, $$props, $$invalidate) {
 class ResizableHandle extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$8, create_fragment$8, safe_not_equal, { isResizable: 10 });
+    init(this, options, instance$k, create_fragment$k, safe_not_equal, { isResizable: 10 });
   }
 }
-function create_fragment$7(ctx) {
+function create_fragment$j(ctx) {
   let div;
   let mounted;
   let dispose;
@@ -18581,7 +18703,7 @@ function create_fragment$7(ctx) {
     }
   };
 }
-function instance$7($$self, $$props, $$invalidate) {
+function instance$j($$self, $$props, $$invalidate) {
   let { elementRoot = void 0 } = $$props;
   let { enabled = true } = $$props;
   let ignoreElements, wrapEl;
@@ -18621,10 +18743,10 @@ function instance$7($$self, $$props, $$invalidate) {
 class TJSFocusWrap extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$7, create_fragment$7, safe_not_equal, { elementRoot: 2, enabled: 3 });
+    init(this, options, instance$j, create_fragment$j, safe_not_equal, { elementRoot: 2, enabled: 3 });
   }
 }
-function create_else_block$2(ctx) {
+function create_else_block$5(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -18909,7 +19031,7 @@ function create_else_block$2(ctx) {
     }
   };
 }
-function create_if_block$4(ctx) {
+function create_if_block$9(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -19209,12 +19331,12 @@ function create_if_block$4(ctx) {
     }
   };
 }
-function create_fragment$6(ctx) {
+function create_fragment$i(ctx) {
   let current_block_type_index;
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$4, create_else_block$2];
+  const if_block_creators = [create_if_block$9, create_else_block$5];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -19275,7 +19397,7 @@ function create_fragment$6(ctx) {
     }
   };
 }
-function instance$6($$self, $$props, $$invalidate) {
+function instance$i($$self, $$props, $$invalidate) {
   let appResizeObserver;
   let appClasses;
   let $focusKeep;
@@ -19622,8 +19744,8 @@ class ApplicationShell extends SvelteComponent {
     init(
       this,
       options,
-      instance$6,
-      create_fragment$6,
+      instance$i,
+      create_fragment$i,
       safe_not_equal,
       {
         elementContent: 0,
@@ -19776,11 +19898,1165 @@ class ApplicationShell extends SvelteComponent {
     flush();
   }
 }
-Hooks.once("init", () => FVTTConfigure.initialize());
+function create_else_block$4(ctx) {
+  let div;
+  let tjsapplicationheader;
+  let t0;
+  let section;
+  let applyStyles_action;
+  let t1;
+  let resizablehandle;
+  let t2;
+  let tjsfocuswrap;
+  let div_id_value;
+  let div_class_value;
+  let div_data_appid_value;
+  let applyStyles_action_1;
+  let dynamicAction_action;
+  let current;
+  let mounted;
+  let dispose;
+  tjsapplicationheader = new TJSApplicationHeader({
+    props: {
+      draggable: (
+        /*draggable*/
+        ctx[6]
+      ),
+      draggableOptions: (
+        /*draggableOptions*/
+        ctx[7]
+      )
+    }
+  });
+  const default_slot_template = (
+    /*#slots*/
+    ctx[51].default
+  );
+  const default_slot = create_slot(
+    default_slot_template,
+    ctx,
+    /*$$scope*/
+    ctx[50],
+    null
+  );
+  resizablehandle = new ResizableHandle({});
+  tjsfocuswrap = new TJSFocusWrap({
+    props: {
+      elementRoot: (
+        /*elementRoot*/
+        ctx[1]
+      ),
+      enabled: (
+        /*focusWrapEnabled*/
+        ctx[12]
+      )
+    }
+  });
+  return {
+    c() {
+      div = element("div");
+      create_component(tjsapplicationheader.$$.fragment);
+      t0 = space();
+      section = element("section");
+      if (default_slot) default_slot.c();
+      t1 = space();
+      create_component(resizablehandle.$$.fragment);
+      t2 = space();
+      create_component(tjsfocuswrap.$$.fragment);
+      attr(section, "class", "window-content svelte-FOU-105b5bp");
+      attr(section, "tabindex", "-1");
+      attr(div, "id", div_id_value = /*application*/
+      ctx[10].id);
+      attr(div, "class", div_class_value = "tjs-app tjs-window-app " + /*appClasses*/
+      ctx[14] + " svelte-FOU-105b5bp");
+      attr(div, "data-appid", div_data_appid_value = /*application*/
+      ctx[10].appId);
+      attr(div, "role", "application");
+      attr(div, "tabindex", "-1");
+      toggle_class(
+        div,
+        "tjs-cq-inline-size",
+        /*cqEnabled*/
+        ctx[13] && /*$containerQueryType*/
+        ctx[11] === "inline-size"
+      );
+      toggle_class(
+        div,
+        "tjs-cq-size",
+        /*cqEnabled*/
+        ctx[13] && /*$containerQueryType*/
+        ctx[11] === "size"
+      );
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      mount_component(tjsapplicationheader, div, null);
+      append(div, t0);
+      append(div, section);
+      if (default_slot) {
+        default_slot.m(section, null);
+      }
+      ctx[54](section);
+      append(div, t1);
+      mount_component(resizablehandle, div, null);
+      append(div, t2);
+      mount_component(tjsfocuswrap, div, null);
+      ctx[55](div);
+      current = true;
+      if (!mounted) {
+        dispose = [
+          listen(
+            section,
+            "pointerdown",
+            /*onPointerdownContent*/
+            ctx[30]
+          ),
+          action_destroyer(applyStyles_action = applyStyles.call(
+            null,
+            section,
+            /*stylesContent*/
+            ctx[9]
+          )),
+          action_destroyer(
+            /*contentResizeObserver*/
+            ctx[23].call(
+              null,
+              section,
+              /*resizeObservedContent*/
+              ctx[31]
+            )
+          ),
+          listen(div, "close:popup", stop_propagation(prevent_default(
+            /*onClosePopup*/
+            ctx[27]
+          ))),
+          listen(
+            div,
+            "keydown",
+            /*onKeydown*/
+            ctx[28]
+          ),
+          listen(
+            div,
+            "pointerdown",
+            /*onPointerdownAppCapture*/
+            ctx[29],
+            true
+          ),
+          action_destroyer(applyStyles_action_1 = applyStyles.call(
+            null,
+            div,
+            /*stylesApp*/
+            ctx[8]
+          )),
+          action_destroyer(dynamicAction_action = dynamicAction.call(
+            null,
+            div,
+            /*appResizeObserver*/
+            ctx[15]
+          ))
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      const tjsapplicationheader_changes = {};
+      if (dirty[0] & /*draggable*/
+      64) tjsapplicationheader_changes.draggable = /*draggable*/
+      ctx2[6];
+      if (dirty[0] & /*draggableOptions*/
+      128) tjsapplicationheader_changes.draggableOptions = /*draggableOptions*/
+      ctx2[7];
+      tjsapplicationheader.$set(tjsapplicationheader_changes);
+      if (default_slot) {
+        if (default_slot.p && (!current || dirty[1] & /*$$scope*/
+        524288)) {
+          update_slot_base(
+            default_slot,
+            default_slot_template,
+            ctx2,
+            /*$$scope*/
+            ctx2[50],
+            !current ? get_all_dirty_from_scope(
+              /*$$scope*/
+              ctx2[50]
+            ) : get_slot_changes(
+              default_slot_template,
+              /*$$scope*/
+              ctx2[50],
+              dirty,
+              null
+            ),
+            null
+          );
+        }
+      }
+      if (applyStyles_action && is_function(applyStyles_action.update) && dirty[0] & /*stylesContent*/
+      512) applyStyles_action.update.call(
+        null,
+        /*stylesContent*/
+        ctx2[9]
+      );
+      const tjsfocuswrap_changes = {};
+      if (dirty[0] & /*elementRoot*/
+      2) tjsfocuswrap_changes.elementRoot = /*elementRoot*/
+      ctx2[1];
+      if (dirty[0] & /*focusWrapEnabled*/
+      4096) tjsfocuswrap_changes.enabled = /*focusWrapEnabled*/
+      ctx2[12];
+      tjsfocuswrap.$set(tjsfocuswrap_changes);
+      if (!current || dirty[0] & /*application*/
+      1024 && div_id_value !== (div_id_value = /*application*/
+      ctx2[10].id)) {
+        attr(div, "id", div_id_value);
+      }
+      if (!current || dirty[0] & /*appClasses*/
+      16384 && div_class_value !== (div_class_value = "tjs-app tjs-window-app " + /*appClasses*/
+      ctx2[14] + " svelte-FOU-105b5bp")) {
+        attr(div, "class", div_class_value);
+      }
+      if (!current || dirty[0] & /*application*/
+      1024 && div_data_appid_value !== (div_data_appid_value = /*application*/
+      ctx2[10].appId)) {
+        attr(div, "data-appid", div_data_appid_value);
+      }
+      if (applyStyles_action_1 && is_function(applyStyles_action_1.update) && dirty[0] & /*stylesApp*/
+      256) applyStyles_action_1.update.call(
+        null,
+        /*stylesApp*/
+        ctx2[8]
+      );
+      if (dynamicAction_action && is_function(dynamicAction_action.update) && dirty[0] & /*appResizeObserver*/
+      32768) dynamicAction_action.update.call(
+        null,
+        /*appResizeObserver*/
+        ctx2[15]
+      );
+      if (!current || dirty[0] & /*appClasses, cqEnabled, $containerQueryType*/
+      26624) {
+        toggle_class(
+          div,
+          "tjs-cq-inline-size",
+          /*cqEnabled*/
+          ctx2[13] && /*$containerQueryType*/
+          ctx2[11] === "inline-size"
+        );
+      }
+      if (!current || dirty[0] & /*appClasses, cqEnabled, $containerQueryType*/
+      26624) {
+        toggle_class(
+          div,
+          "tjs-cq-size",
+          /*cqEnabled*/
+          ctx2[13] && /*$containerQueryType*/
+          ctx2[11] === "size"
+        );
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tjsapplicationheader.$$.fragment, local);
+      transition_in(default_slot, local);
+      transition_in(resizablehandle.$$.fragment, local);
+      transition_in(tjsfocuswrap.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tjsapplicationheader.$$.fragment, local);
+      transition_out(default_slot, local);
+      transition_out(resizablehandle.$$.fragment, local);
+      transition_out(tjsfocuswrap.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      destroy_component(tjsapplicationheader);
+      if (default_slot) default_slot.d(detaching);
+      ctx[54](null);
+      destroy_component(resizablehandle);
+      destroy_component(tjsfocuswrap);
+      ctx[55](null);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_if_block$8(ctx) {
+  let div;
+  let tjsapplicationheader;
+  let t0;
+  let section;
+  let applyStyles_action;
+  let t1;
+  let resizablehandle;
+  let t2;
+  let tjsfocuswrap;
+  let div_id_value;
+  let div_class_value;
+  let div_data_appid_value;
+  let applyStyles_action_1;
+  let dynamicAction_action;
+  let div_intro;
+  let div_outro;
+  let current;
+  let mounted;
+  let dispose;
+  tjsapplicationheader = new TJSApplicationHeader({
+    props: {
+      draggable: (
+        /*draggable*/
+        ctx[6]
+      ),
+      draggableOptions: (
+        /*draggableOptions*/
+        ctx[7]
+      )
+    }
+  });
+  const default_slot_template = (
+    /*#slots*/
+    ctx[51].default
+  );
+  const default_slot = create_slot(
+    default_slot_template,
+    ctx,
+    /*$$scope*/
+    ctx[50],
+    null
+  );
+  resizablehandle = new ResizableHandle({});
+  tjsfocuswrap = new TJSFocusWrap({
+    props: { elementRoot: (
+      /*elementRoot*/
+      ctx[1]
+    ) }
+  });
+  return {
+    c() {
+      div = element("div");
+      create_component(tjsapplicationheader.$$.fragment);
+      t0 = space();
+      section = element("section");
+      if (default_slot) default_slot.c();
+      t1 = space();
+      create_component(resizablehandle.$$.fragment);
+      t2 = space();
+      create_component(tjsfocuswrap.$$.fragment);
+      attr(section, "class", "window-content svelte-FOU-105b5bp");
+      attr(section, "tabindex", "-1");
+      attr(div, "id", div_id_value = /*application*/
+      ctx[10].id);
+      attr(div, "class", div_class_value = "tjs-app tjs-window-app " + /*appClasses*/
+      ctx[14] + " svelte-FOU-105b5bp");
+      attr(div, "data-appid", div_data_appid_value = /*application*/
+      ctx[10].appId);
+      attr(div, "role", "application");
+      attr(div, "tabindex", "-1");
+      toggle_class(
+        div,
+        "tjs-cq-inline-size",
+        /*cqEnabled*/
+        ctx[13] && /*$containerQueryType*/
+        ctx[11] === "inline-size"
+      );
+      toggle_class(
+        div,
+        "tjs-cq-size",
+        /*cqEnabled*/
+        ctx[13] && /*$containerQueryType*/
+        ctx[11] === "size"
+      );
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      mount_component(tjsapplicationheader, div, null);
+      append(div, t0);
+      append(div, section);
+      if (default_slot) {
+        default_slot.m(section, null);
+      }
+      ctx[52](section);
+      append(div, t1);
+      mount_component(resizablehandle, div, null);
+      append(div, t2);
+      mount_component(tjsfocuswrap, div, null);
+      ctx[53](div);
+      current = true;
+      if (!mounted) {
+        dispose = [
+          listen(
+            section,
+            "pointerdown",
+            /*onPointerdownContent*/
+            ctx[30]
+          ),
+          action_destroyer(applyStyles_action = applyStyles.call(
+            null,
+            section,
+            /*stylesContent*/
+            ctx[9]
+          )),
+          action_destroyer(
+            /*contentResizeObserver*/
+            ctx[23].call(
+              null,
+              section,
+              /*resizeObservedContent*/
+              ctx[31]
+            )
+          ),
+          listen(div, "close:popup", stop_propagation(prevent_default(
+            /*onClosePopup*/
+            ctx[27]
+          ))),
+          listen(
+            div,
+            "keydown",
+            /*onKeydown*/
+            ctx[28]
+          ),
+          listen(
+            div,
+            "pointerdown",
+            /*onPointerdownAppCapture*/
+            ctx[29],
+            true
+          ),
+          action_destroyer(applyStyles_action_1 = applyStyles.call(
+            null,
+            div,
+            /*stylesApp*/
+            ctx[8]
+          )),
+          action_destroyer(dynamicAction_action = dynamicAction.call(
+            null,
+            div,
+            /*appResizeObserver*/
+            ctx[15]
+          ))
+        ];
+        mounted = true;
+      }
+    },
+    p(new_ctx, dirty) {
+      ctx = new_ctx;
+      const tjsapplicationheader_changes = {};
+      if (dirty[0] & /*draggable*/
+      64) tjsapplicationheader_changes.draggable = /*draggable*/
+      ctx[6];
+      if (dirty[0] & /*draggableOptions*/
+      128) tjsapplicationheader_changes.draggableOptions = /*draggableOptions*/
+      ctx[7];
+      tjsapplicationheader.$set(tjsapplicationheader_changes);
+      if (default_slot) {
+        if (default_slot.p && (!current || dirty[1] & /*$$scope*/
+        524288)) {
+          update_slot_base(
+            default_slot,
+            default_slot_template,
+            ctx,
+            /*$$scope*/
+            ctx[50],
+            !current ? get_all_dirty_from_scope(
+              /*$$scope*/
+              ctx[50]
+            ) : get_slot_changes(
+              default_slot_template,
+              /*$$scope*/
+              ctx[50],
+              dirty,
+              null
+            ),
+            null
+          );
+        }
+      }
+      if (applyStyles_action && is_function(applyStyles_action.update) && dirty[0] & /*stylesContent*/
+      512) applyStyles_action.update.call(
+        null,
+        /*stylesContent*/
+        ctx[9]
+      );
+      const tjsfocuswrap_changes = {};
+      if (dirty[0] & /*elementRoot*/
+      2) tjsfocuswrap_changes.elementRoot = /*elementRoot*/
+      ctx[1];
+      tjsfocuswrap.$set(tjsfocuswrap_changes);
+      if (!current || dirty[0] & /*application*/
+      1024 && div_id_value !== (div_id_value = /*application*/
+      ctx[10].id)) {
+        attr(div, "id", div_id_value);
+      }
+      if (!current || dirty[0] & /*appClasses*/
+      16384 && div_class_value !== (div_class_value = "tjs-app tjs-window-app " + /*appClasses*/
+      ctx[14] + " svelte-FOU-105b5bp")) {
+        attr(div, "class", div_class_value);
+      }
+      if (!current || dirty[0] & /*application*/
+      1024 && div_data_appid_value !== (div_data_appid_value = /*application*/
+      ctx[10].appId)) {
+        attr(div, "data-appid", div_data_appid_value);
+      }
+      if (applyStyles_action_1 && is_function(applyStyles_action_1.update) && dirty[0] & /*stylesApp*/
+      256) applyStyles_action_1.update.call(
+        null,
+        /*stylesApp*/
+        ctx[8]
+      );
+      if (dynamicAction_action && is_function(dynamicAction_action.update) && dirty[0] & /*appResizeObserver*/
+      32768) dynamicAction_action.update.call(
+        null,
+        /*appResizeObserver*/
+        ctx[15]
+      );
+      if (!current || dirty[0] & /*appClasses, cqEnabled, $containerQueryType*/
+      26624) {
+        toggle_class(
+          div,
+          "tjs-cq-inline-size",
+          /*cqEnabled*/
+          ctx[13] && /*$containerQueryType*/
+          ctx[11] === "inline-size"
+        );
+      }
+      if (!current || dirty[0] & /*appClasses, cqEnabled, $containerQueryType*/
+      26624) {
+        toggle_class(
+          div,
+          "tjs-cq-size",
+          /*cqEnabled*/
+          ctx[13] && /*$containerQueryType*/
+          ctx[11] === "size"
+        );
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tjsapplicationheader.$$.fragment, local);
+      transition_in(default_slot, local);
+      transition_in(resizablehandle.$$.fragment, local);
+      transition_in(tjsfocuswrap.$$.fragment, local);
+      add_render_callback(() => {
+        if (!current) return;
+        if (div_outro) div_outro.end(1);
+        div_intro = create_in_transition(
+          div,
+          /*inTransition*/
+          ctx[2],
+          /*inTransitionOptions*/
+          ctx[4]
+        );
+        div_intro.start();
+      });
+      current = true;
+    },
+    o(local) {
+      transition_out(tjsapplicationheader.$$.fragment, local);
+      transition_out(default_slot, local);
+      transition_out(resizablehandle.$$.fragment, local);
+      transition_out(tjsfocuswrap.$$.fragment, local);
+      if (div_intro) div_intro.invalidate();
+      div_outro = create_out_transition(
+        div,
+        /*outTransition*/
+        ctx[3],
+        /*outTransitionOptions*/
+        ctx[5]
+      );
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      destroy_component(tjsapplicationheader);
+      if (default_slot) default_slot.d(detaching);
+      ctx[52](null);
+      destroy_component(resizablehandle);
+      destroy_component(tjsfocuswrap);
+      ctx[53](null);
+      if (detaching && div_outro) div_outro.end();
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_fragment$h(ctx) {
+  let current_block_type_index;
+  let if_block;
+  let if_block_anchor;
+  let current;
+  const if_block_creators = [create_if_block$8, create_else_block$4];
+  const if_blocks = [];
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*inTransition*/
+      ctx2[2] !== TJSDefaultTransition.default || /*outTransition*/
+      ctx2[3] !== TJSDefaultTransition.default
+    ) return 0;
+    return 1;
+  }
+  current_block_type_index = select_block_type(ctx);
+  if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
+  return {
+    c() {
+      if_block.c();
+      if_block_anchor = empty();
+    },
+    m(target, anchor) {
+      if_blocks[current_block_type_index].m(target, anchor);
+      insert(target, if_block_anchor, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      let previous_block_index = current_block_type_index;
+      current_block_type_index = select_block_type(ctx2);
+      if (current_block_type_index === previous_block_index) {
+        if_blocks[current_block_type_index].p(ctx2, dirty);
+      } else {
+        group_outros();
+        transition_out(if_blocks[previous_block_index], 1, 1, () => {
+          if_blocks[previous_block_index] = null;
+        });
+        check_outros();
+        if_block = if_blocks[current_block_type_index];
+        if (!if_block) {
+          if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx2);
+          if_block.c();
+        } else {
+          if_block.p(ctx2, dirty);
+        }
+        transition_in(if_block, 1);
+        if_block.m(if_block_anchor.parentNode, if_block_anchor);
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(if_block);
+      current = true;
+    },
+    o(local) {
+      transition_out(if_block);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(if_block_anchor);
+      }
+      if_blocks[current_block_type_index].d(detaching);
+    }
+  };
+}
+function instance$h($$self, $$props, $$invalidate) {
+  let appResizeObserver;
+  let appClasses;
+  let $focusKeep;
+  let $focusAuto;
+  let $containerQueryType;
+  let $cqTypes;
+  let $appThemeName;
+  let $themeTokenStore;
+  let $activeClasses;
+  let $minimized;
+  let $focusTrap;
+  let $resizeObservable;
+  let { $$slots: slots = {}, $$scope } = $$props;
+  let { elementContent = void 0 } = $$props;
+  let { elementRoot = void 0 } = $$props;
+  let { draggable: draggable2 = void 0 } = $$props;
+  let { draggableOptions = void 0 } = $$props;
+  let { stylesApp = void 0 } = $$props;
+  let { stylesContent = void 0 } = $$props;
+  const application = getContext("#external")?.application;
+  const { containerQueryType, focusAuto, focusKeep, focusTrap } = application.reactive.storeAppOptions;
+  component_subscribe($$self, containerQueryType, (value) => $$invalidate(11, $containerQueryType = value));
+  component_subscribe($$self, focusAuto, (value) => $$invalidate(42, $focusAuto = value));
+  component_subscribe($$self, focusKeep, (value) => $$invalidate(56, $focusKeep = value));
+  component_subscribe($$self, focusTrap, (value) => $$invalidate(48, $focusTrap = value));
+  const { minimized } = application.reactive.storeUIState;
+  component_subscribe($$self, minimized, (value) => $$invalidate(47, $minimized = value));
+  const { resizeObservable } = application.position.stores;
+  component_subscribe($$self, resizeObservable, (value) => $$invalidate(49, $resizeObservable = value));
+  const cqTypes = new CQPositionValidate(application.position);
+  component_subscribe($$self, cqTypes, (value) => $$invalidate(43, $cqTypes = value));
+  let { appOffsetHeight = false } = $$props;
+  let { appOffsetWidth = false } = $$props;
+  const initialAppResizeObserver = !!appOffsetHeight || !!appOffsetWidth;
+  let { contentOffsetHeight = false } = $$props;
+  let { contentOffsetWidth = false } = $$props;
+  let { contentHeight = false } = $$props;
+  let { contentWidth = false } = $$props;
+  const contentResizeObserver = !!contentOffsetHeight || !!contentOffsetWidth || !!contentHeight || !!contentWidth ? resizeObserver : () => null;
+  const internal = new AppShellContextInternal();
+  const s_IGNORE_CLASSES = { ignoreClasses: ["tjs-focus-wrap"] };
+  setContext("#internal", internal);
+  let focusWrapEnabled;
+  let { transition = TJSDefaultTransition.default } = $$props;
+  let { inTransition = TJSDefaultTransition.default } = $$props;
+  let { outTransition = TJSDefaultTransition.default } = $$props;
+  let { transitionOptions = void 0 } = $$props;
+  let { inTransitionOptions = TJSDefaultTransition.options } = $$props;
+  let { outTransitionOptions = TJSDefaultTransition.options } = $$props;
+  let oldTransition = TJSDefaultTransition.default;
+  let oldTransitionOptions = void 0;
+  const themeTokenStore = ThemeObserver.stores.themeToken;
+  component_subscribe($$self, themeTokenStore, (value) => $$invalidate(45, $themeTokenStore = value));
+  const activeClasses = application.reactive.activeClasses;
+  component_subscribe($$self, activeClasses, (value) => $$invalidate(46, $activeClasses = value));
+  const appThemeName = application.reactive.storeAppOptions.themeName;
+  component_subscribe($$self, appThemeName, (value) => $$invalidate(44, $appThemeName = value));
+  onMount(() => {
+    if ($focusAuto) {
+      elementRoot.focus();
+    }
+  });
+  let cqEnabled = false;
+  function onClosePopup(event) {
+    if (!$focusAuto) {
+      return;
+    }
+    const targetEl = event?.detail?.target;
+    if (!A11yHelper.isFocusTarget(targetEl)) {
+      return;
+    }
+    if (A11yHelper.isFocusable(targetEl)) {
+      return;
+    }
+    const elementRootContains = elementRoot.contains(targetEl);
+    if (targetEl === elementRoot) {
+      elementRoot.focus();
+    } else if (targetEl === elementContent) {
+      elementContent.focus();
+    } else if (elementRootContains) {
+      if (elementContent.contains(targetEl)) {
+        elementContent.focus();
+      } else {
+        elementRoot.focus();
+      }
+    }
+  }
+  function onKeydown(event) {
+    const FVTTKeyboardManager = foundry.helpers.interaction.KeyboardManager;
+    if ((event.target === elementRoot || event.target === elementContent) && FVTTKeyboardManager && FVTTKeyboardManager?._getMatchingActions?.(FVTTKeyboardManager?.getKeyboardEventContext?.(event))?.length) {
+      event.target?.blur();
+      return;
+    }
+    if (focusWrapEnabled && event.shiftKey && event.code === "Tab") {
+      const allFocusable = A11yHelper.getFocusableElements(elementRoot, s_IGNORE_CLASSES);
+      const firstFocusEl = allFocusable.length > 0 ? allFocusable[0] : void 0;
+      const lastFocusEl = allFocusable.length > 0 ? allFocusable[allFocusable.length - 1] : void 0;
+      const activeWindow = application.reactive.activeWindow;
+      if (elementRoot === activeWindow.document.activeElement || firstFocusEl === activeWindow.document.activeElement) {
+        if (A11yHelper.isFocusTarget(lastFocusEl) && firstFocusEl !== lastFocusEl) {
+          lastFocusEl.focus();
+        }
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }
+    application.bringToTop.call(application);
+  }
+  function onPointerdownAppCapture() {
+    application.bringToTop.call(application);
+  }
+  function onPointerdownContent(event) {
+    const focusable = A11yHelper.isFocusable(event.target);
+    if (!focusable && $focusAuto) {
+      if ($focusKeep) {
+        const activeWindow = application.reactive.activeWindow;
+        const focusOutside = !elementRoot.contains(activeWindow.document.activeElement);
+        if (focusOutside) {
+          elementContent.focus();
+        } else {
+          event.preventDefault();
+        }
+      } else {
+        elementContent.focus();
+      }
+    }
+  }
+  function resizeObservedApp(offsetWidth, offsetHeight, width, height) {
+    application.position.stores.resizeObserved.update((object) => {
+      object.contentWidth = width;
+      object.contentHeight = height;
+      object.offsetWidth = offsetWidth;
+      object.offsetHeight = offsetHeight;
+      return object;
+    });
+    $$invalidate(32, appOffsetHeight = offsetHeight);
+    $$invalidate(33, appOffsetWidth = offsetWidth);
+  }
+  function resizeObservedContent(offsetWidth, offsetHeight, width, height) {
+    $$invalidate(35, contentOffsetWidth = offsetWidth);
+    $$invalidate(34, contentOffsetHeight = offsetHeight);
+    $$invalidate(37, contentWidth = width);
+    $$invalidate(36, contentHeight = height);
+    internal.stores.contentOffsetWidth.set(contentOffsetWidth);
+    internal.stores.contentOffsetHeight.set(contentOffsetHeight);
+    internal.stores.contentWidth.set(contentWidth);
+    internal.stores.contentHeight.set(contentHeight);
+  }
+  function section_binding($$value) {
+    binding_callbacks[$$value ? "unshift" : "push"](() => {
+      elementContent = $$value;
+      $$invalidate(0, elementContent);
+    });
+  }
+  function div_binding($$value) {
+    binding_callbacks[$$value ? "unshift" : "push"](() => {
+      elementRoot = $$value;
+      $$invalidate(1, elementRoot);
+    });
+  }
+  function section_binding_1($$value) {
+    binding_callbacks[$$value ? "unshift" : "push"](() => {
+      elementContent = $$value;
+      $$invalidate(0, elementContent);
+    });
+  }
+  function div_binding_1($$value) {
+    binding_callbacks[$$value ? "unshift" : "push"](() => {
+      elementRoot = $$value;
+      $$invalidate(1, elementRoot);
+    });
+  }
+  $$self.$$set = ($$props2) => {
+    if ("elementContent" in $$props2) $$invalidate(0, elementContent = $$props2.elementContent);
+    if ("elementRoot" in $$props2) $$invalidate(1, elementRoot = $$props2.elementRoot);
+    if ("draggable" in $$props2) $$invalidate(6, draggable2 = $$props2.draggable);
+    if ("draggableOptions" in $$props2) $$invalidate(7, draggableOptions = $$props2.draggableOptions);
+    if ("stylesApp" in $$props2) $$invalidate(8, stylesApp = $$props2.stylesApp);
+    if ("stylesContent" in $$props2) $$invalidate(9, stylesContent = $$props2.stylesContent);
+    if ("appOffsetHeight" in $$props2) $$invalidate(32, appOffsetHeight = $$props2.appOffsetHeight);
+    if ("appOffsetWidth" in $$props2) $$invalidate(33, appOffsetWidth = $$props2.appOffsetWidth);
+    if ("contentOffsetHeight" in $$props2) $$invalidate(34, contentOffsetHeight = $$props2.contentOffsetHeight);
+    if ("contentOffsetWidth" in $$props2) $$invalidate(35, contentOffsetWidth = $$props2.contentOffsetWidth);
+    if ("contentHeight" in $$props2) $$invalidate(36, contentHeight = $$props2.contentHeight);
+    if ("contentWidth" in $$props2) $$invalidate(37, contentWidth = $$props2.contentWidth);
+    if ("transition" in $$props2) $$invalidate(38, transition = $$props2.transition);
+    if ("inTransition" in $$props2) $$invalidate(2, inTransition = $$props2.inTransition);
+    if ("outTransition" in $$props2) $$invalidate(3, outTransition = $$props2.outTransition);
+    if ("transitionOptions" in $$props2) $$invalidate(39, transitionOptions = $$props2.transitionOptions);
+    if ("inTransitionOptions" in $$props2) $$invalidate(4, inTransitionOptions = $$props2.inTransitionOptions);
+    if ("outTransitionOptions" in $$props2) $$invalidate(5, outTransitionOptions = $$props2.outTransitionOptions);
+    if ("$$scope" in $$props2) $$invalidate(50, $$scope = $$props2.$$scope);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty[1] & /*$resizeObservable*/
+    262144) {
+      $$invalidate(15, appResizeObserver = initialAppResizeObserver || $resizeObservable ? {
+        action: resizeObserver,
+        data: resizeObservedApp
+      } : void 0);
+    }
+    if ($$self.$$.dirty[0] & /*elementContent*/
+    1) {
+      if (elementContent !== void 0 && elementContent !== null) {
+        internal.stores.elementContent.set(elementContent);
+      }
+    }
+    if ($$self.$$.dirty[0] & /*elementRoot*/
+    2) {
+      if (elementRoot !== void 0 && elementRoot !== null) {
+        internal.stores.elementRoot.set(elementRoot);
+      }
+    }
+    if ($$self.$$.dirty[1] & /*$focusAuto, $focusTrap, $minimized*/
+    198656) {
+      $$invalidate(12, focusWrapEnabled = $focusAuto && $focusTrap && !$minimized);
+    }
+    if ($$self.$$.dirty[1] & /*oldTransition, transition*/
+    640) {
+      if (oldTransition !== transition) {
+        const newTransition = typeof transition === "function" ? transition : TJSDefaultTransition.default;
+        $$invalidate(2, inTransition = newTransition);
+        $$invalidate(3, outTransition = newTransition);
+        $$invalidate(40, oldTransition = newTransition);
+      }
+    }
+    if ($$self.$$.dirty[1] & /*oldTransitionOptions, transitionOptions*/
+    1280) {
+      if (oldTransitionOptions !== transitionOptions) {
+        const newOptions = transitionOptions !== TJSDefaultTransition.options && isObject(transitionOptions) ? transitionOptions : TJSDefaultTransition.options;
+        $$invalidate(4, inTransitionOptions = newOptions);
+        $$invalidate(5, outTransitionOptions = newOptions);
+        $$invalidate(41, oldTransitionOptions = newOptions);
+      }
+    }
+    if ($$self.$$.dirty[0] & /*inTransition*/
+    4) {
+      if (typeof inTransition !== "function") {
+        $$invalidate(2, inTransition = TJSDefaultTransition.default);
+      }
+    }
+    if ($$self.$$.dirty[0] & /*outTransition, application*/
+    1032) {
+      {
+        if (typeof outTransition !== "function") {
+          $$invalidate(3, outTransition = TJSDefaultTransition.default);
+        }
+        const defaultCloseAnimation = application?.options?.defaultCloseAnimation;
+        if (typeof defaultCloseAnimation === "boolean" && defaultCloseAnimation && outTransition !== TJSDefaultTransition.default) {
+          $$invalidate(10, application.options.defaultCloseAnimation = false, application);
+        }
+      }
+    }
+    if ($$self.$$.dirty[0] & /*inTransitionOptions*/
+    16) {
+      if (!isObject(inTransitionOptions)) {
+        $$invalidate(4, inTransitionOptions = TJSDefaultTransition.options);
+      }
+    }
+    if ($$self.$$.dirty[0] & /*outTransitionOptions*/
+    32) {
+      if (!isObject(outTransitionOptions)) {
+        $$invalidate(5, outTransitionOptions = TJSDefaultTransition.options);
+      }
+    }
+    if ($$self.$$.dirty[1] & /*$activeClasses, $themeTokenStore, $appThemeName*/
+    57344) {
+      $$invalidate(14, appClasses = FVTTAppTheme.appClasses($activeClasses, $themeTokenStore, $appThemeName));
+    }
+    if ($$self.$$.dirty[0] & /*$containerQueryType*/
+    2048 | $$self.$$.dirty[1] & /*$cqTypes*/
+    4096) {
+      if ($cqTypes.validate($containerQueryType)) {
+        internal.stores.cqEnabled.set(true);
+        requestAnimationFrame(() => $$invalidate(13, cqEnabled = true));
+      } else {
+        $$invalidate(13, cqEnabled = false);
+        internal.stores.cqEnabled.set(false);
+      }
+    }
+  };
+  return [
+    elementContent,
+    elementRoot,
+    inTransition,
+    outTransition,
+    inTransitionOptions,
+    outTransitionOptions,
+    draggable2,
+    draggableOptions,
+    stylesApp,
+    stylesContent,
+    application,
+    $containerQueryType,
+    focusWrapEnabled,
+    cqEnabled,
+    appClasses,
+    appResizeObserver,
+    containerQueryType,
+    focusAuto,
+    focusKeep,
+    focusTrap,
+    minimized,
+    resizeObservable,
+    cqTypes,
+    contentResizeObserver,
+    themeTokenStore,
+    activeClasses,
+    appThemeName,
+    onClosePopup,
+    onKeydown,
+    onPointerdownAppCapture,
+    onPointerdownContent,
+    resizeObservedContent,
+    appOffsetHeight,
+    appOffsetWidth,
+    contentOffsetHeight,
+    contentOffsetWidth,
+    contentHeight,
+    contentWidth,
+    transition,
+    transitionOptions,
+    oldTransition,
+    oldTransitionOptions,
+    $focusAuto,
+    $cqTypes,
+    $appThemeName,
+    $themeTokenStore,
+    $activeClasses,
+    $minimized,
+    $focusTrap,
+    $resizeObservable,
+    $$scope,
+    slots,
+    section_binding,
+    div_binding,
+    section_binding_1,
+    div_binding_1
+  ];
+}
+class TJSApplicationShell extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(
+      this,
+      options,
+      instance$h,
+      create_fragment$h,
+      safe_not_equal,
+      {
+        elementContent: 0,
+        elementRoot: 1,
+        draggable: 6,
+        draggableOptions: 7,
+        stylesApp: 8,
+        stylesContent: 9,
+        appOffsetHeight: 32,
+        appOffsetWidth: 33,
+        contentOffsetHeight: 34,
+        contentOffsetWidth: 35,
+        contentHeight: 36,
+        contentWidth: 37,
+        transition: 38,
+        inTransition: 2,
+        outTransition: 3,
+        transitionOptions: 39,
+        inTransitionOptions: 4,
+        outTransitionOptions: 5
+      },
+      null,
+      [-1, -1]
+    );
+  }
+  get elementContent() {
+    return this.$$.ctx[0];
+  }
+  set elementContent(elementContent) {
+    this.$$set({ elementContent });
+    flush();
+  }
+  get elementRoot() {
+    return this.$$.ctx[1];
+  }
+  set elementRoot(elementRoot) {
+    this.$$set({ elementRoot });
+    flush();
+  }
+  get draggable() {
+    return this.$$.ctx[6];
+  }
+  set draggable(draggable2) {
+    this.$$set({ draggable: draggable2 });
+    flush();
+  }
+  get draggableOptions() {
+    return this.$$.ctx[7];
+  }
+  set draggableOptions(draggableOptions) {
+    this.$$set({ draggableOptions });
+    flush();
+  }
+  get stylesApp() {
+    return this.$$.ctx[8];
+  }
+  set stylesApp(stylesApp) {
+    this.$$set({ stylesApp });
+    flush();
+  }
+  get stylesContent() {
+    return this.$$.ctx[9];
+  }
+  set stylesContent(stylesContent) {
+    this.$$set({ stylesContent });
+    flush();
+  }
+  get appOffsetHeight() {
+    return this.$$.ctx[32];
+  }
+  set appOffsetHeight(appOffsetHeight) {
+    this.$$set({ appOffsetHeight });
+    flush();
+  }
+  get appOffsetWidth() {
+    return this.$$.ctx[33];
+  }
+  set appOffsetWidth(appOffsetWidth) {
+    this.$$set({ appOffsetWidth });
+    flush();
+  }
+  get contentOffsetHeight() {
+    return this.$$.ctx[34];
+  }
+  set contentOffsetHeight(contentOffsetHeight) {
+    this.$$set({ contentOffsetHeight });
+    flush();
+  }
+  get contentOffsetWidth() {
+    return this.$$.ctx[35];
+  }
+  set contentOffsetWidth(contentOffsetWidth) {
+    this.$$set({ contentOffsetWidth });
+    flush();
+  }
+  get contentHeight() {
+    return this.$$.ctx[36];
+  }
+  set contentHeight(contentHeight) {
+    this.$$set({ contentHeight });
+    flush();
+  }
+  get contentWidth() {
+    return this.$$.ctx[37];
+  }
+  set contentWidth(contentWidth) {
+    this.$$set({ contentWidth });
+    flush();
+  }
+  get transition() {
+    return this.$$.ctx[38];
+  }
+  set transition(transition) {
+    this.$$set({ transition });
+    flush();
+  }
+  get inTransition() {
+    return this.$$.ctx[2];
+  }
+  set inTransition(inTransition) {
+    this.$$set({ inTransition });
+    flush();
+  }
+  get outTransition() {
+    return this.$$.ctx[3];
+  }
+  set outTransition(outTransition) {
+    this.$$set({ outTransition });
+    flush();
+  }
+  get transitionOptions() {
+    return this.$$.ctx[39];
+  }
+  set transitionOptions(transitionOptions) {
+    this.$$set({ transitionOptions });
+    flush();
+  }
+  get inTransitionOptions() {
+    return this.$$.ctx[4];
+  }
+  set inTransitionOptions(inTransitionOptions) {
+    this.$$set({ inTransitionOptions });
+    flush();
+  }
+  get outTransitionOptions() {
+    return this.$$.ctx[5];
+  }
+  set outTransitionOptions(outTransitionOptions) {
+    this.$$set({ outTransitionOptions });
+    flush();
+  }
+}
+Hooks.once("init", () => FVTTConfigure$1.initialize());
 const MODULE_ID = "foundryvtt-shop-studio";
 const MODULE_TITLE = "Aardvark Shop Studio";
 const MODULE_CODE = "GSS";
 const LOG_PREFIX = "GSS |";
+const DEFAULT_ITEM_SOURCES = [];
+const DEFAULT_LISTABLE_ITEM_TYPES = null;
 const log = {
   ASSERT: 1,
   ERROR: 2,
@@ -19819,7 +21095,7 @@ function safeGetSetting(moduleId, key, defaultValue = true) {
     return defaultValue;
   }
 }
-function create_default_slot$1(ctx) {
+function create_default_slot$8(ctx) {
   let main;
   let footer;
   let div0;
@@ -19862,7 +21138,7 @@ function create_default_slot$1(ctx) {
     }
   };
 }
-function create_fragment$5(ctx) {
+function create_fragment$g(ctx) {
   let applicationshell;
   let updating_elementRoot;
   let current;
@@ -19870,7 +21146,7 @@ function create_fragment$5(ctx) {
     ctx[3](value);
   }
   let applicationshell_props = {
-    $$slots: { default: [create_default_slot$1] },
+    $$slots: { default: [create_default_slot$8] },
     $$scope: { ctx }
   };
   if (
@@ -19919,7 +21195,7 @@ function create_fragment$5(ctx) {
     }
   };
 }
-function instance$5($$self, $$props, $$invalidate) {
+function instance$g($$self, $$props, $$invalidate) {
   let { elementRoot = void 0 } = $$props;
   let { version: version2 = void 0 } = $$props;
   const application = getContext("#external").application;
@@ -19947,7 +21223,7 @@ function instance$5($$self, $$props, $$invalidate) {
 class WelcomeAppShell extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$5, create_fragment$5, safe_not_equal, { elementRoot: 0, version: 1 });
+    init(this, options, instance$g, create_fragment$g, safe_not_equal, { elementRoot: 0, version: 1 });
   }
   get elementRoot() {
     return this.$$.ctx[0];
@@ -21743,12 +23019,12 @@ class TJSDocument {
     }
   }
 }
-function get_each_context$3(ctx, list, i) {
+function get_each_context$5(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[6] = list[i];
   return child_ctx;
 }
-function create_each_block$3(ctx) {
+function create_each_block$5(ctx) {
   let button;
   let t_value = (
     /*tab*/
@@ -21809,7 +23085,7 @@ function create_each_block$3(ctx) {
     }
   };
 }
-function create_if_block$3(ctx) {
+function create_if_block$7(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -21883,7 +23159,7 @@ function create_if_block$3(ctx) {
     }
   };
 }
-function create_fragment$4(ctx) {
+function create_fragment$f(ctx) {
   let div2;
   let div0;
   let div1;
@@ -21895,11 +23171,11 @@ function create_fragment$4(ctx) {
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block$3(get_each_context$3(ctx, each_value, i));
+    each_blocks[i] = create_each_block$5(get_each_context$5(ctx, each_value, i));
   }
   let if_block = (
     /*activeComponent*/
-    ctx[3] && create_if_block$3(ctx)
+    ctx[3] && create_if_block$7(ctx)
   );
   return {
     c() {
@@ -21936,11 +23212,11 @@ function create_fragment$4(ctx) {
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context$3(ctx2, each_value, i);
+          const child_ctx = get_each_context$5(ctx2, each_value, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
           } else {
-            each_blocks[i] = create_each_block$3(child_ctx);
+            each_blocks[i] = create_each_block$5(child_ctx);
             each_blocks[i].c();
             each_blocks[i].m(div0, null);
           }
@@ -21961,7 +23237,7 @@ function create_fragment$4(ctx) {
             transition_in(if_block, 1);
           }
         } else {
-          if_block = create_if_block$3(ctx2);
+          if_block = create_if_block$7(ctx2);
           if_block.c();
           transition_in(if_block, 1);
           if_block.m(div1, null);
@@ -21997,7 +23273,7 @@ function create_fragment$4(ctx) {
     }
   };
 }
-function instance$4($$self, $$props, $$invalidate) {
+function instance$f($$self, $$props, $$invalidate) {
   let activeComponent;
   const omit_props_names = ["tabs", "activeTab", "sharedProps"];
   let $$restProps = compute_rest_props($$props, omit_props_names);
@@ -22023,16 +23299,147 @@ function instance$4($$self, $$props, $$invalidate) {
 class Tabs extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$4, create_fragment$4, safe_not_equal, { tabs: 1, activeTab: 0, sharedProps: 2 });
+    init(this, options, instance$f, create_fragment$f, safe_not_equal, { tabs: 1, activeTab: 0, sharedProps: 2 });
   }
 }
-function get_each_context$2(ctx, list, i) {
+const ITEM_SOURCES_SETTING = "itemSources";
+const LISTABLE_ITEM_TYPES_SETTING = "listableItemTypes";
+function getAvailableItemTypes() {
+  const configured = CONFIG?.Item?.typeLabels ?? {};
+  const documentTypes = Array.isArray(game?.documentTypes?.Item) ? game.documentTypes.Item : [];
+  const modelTypes = CONFIG?.Item?.dataModels ? Object.keys(CONFIG.Item.dataModels) : [];
+  const metadataTypes = CONFIG?.Item?.documentClass?.metadata?.types ?? [];
+  const legacyTypes = Array.isArray(CONFIG?.Item?.types) ? CONFIG.Item.types : [];
+  const compendiumTypes = game.packs?.filter((pack) => pack.documentName === "Item").flatMap((pack) => Array.from(pack.index?.values?.() ?? []).map((entry) => entry?.type)) ?? [];
+  return Array.from(/* @__PURE__ */ new Set([
+    ...Object.keys(configured),
+    ...documentTypes,
+    ...modelTypes,
+    ...metadataTypes,
+    ...legacyTypes,
+    ...compendiumTypes
+  ])).filter(Boolean).map((type) => ({ type, label: getItemTypeLabel(type) })).sort((a, b) => a.label.localeCompare(b.label, game.i18n?.lang));
+}
+function getItemTypeLabel(type) {
+  const rawLabel = CONFIG?.Item?.typeLabels?.[type] || CONFIG?.Item?.typeHints?.[type];
+  if (rawLabel) return game.i18n.localize(rawLabel);
+  try {
+    return game.i18n.localize(type);
+  } catch (_) {
+    return type;
+  }
+}
+function getAllItemCompendia$1() {
+  return game.packs?.filter((pack) => pack.documentName === "Item") ?? [];
+}
+function getItemSourcePacks() {
+  const configured = safeGetSetting(MODULE_ID, ITEM_SOURCES_SETTING, DEFAULT_ITEM_SOURCES);
+  const collections = Array.isArray(configured) ? configured : configured?.items;
+  if (!Array.isArray(collections)) return [];
+  return collections.map((collection) => game.packs?.get(collection)).filter((pack) => pack?.documentName === "Item");
+}
+function getConfiguredListableItemTypes() {
+  const configured = safeGetSetting(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING, DEFAULT_LISTABLE_ITEM_TYPES);
+  const available = getAvailableItemTypes();
+  if (configured === null || configured === void 0) return available;
+  if (!Array.isArray(configured)) return [];
+  const allowed = new Set(configured);
+  return available.filter((entry) => allowed.has(entry.type));
+}
+function isItemTypeListable(type) {
+  const configured = safeGetSetting(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING, DEFAULT_LISTABLE_ITEM_TYPES);
+  if (configured === null || configured === void 0) return true;
+  return Array.isArray(configured) && configured.includes(type);
+}
+function autoAssignItemSources() {
+  return getAllItemCompendia$1().map((pack) => pack.collection);
+}
+const catalogItems = writable([]);
+const catalogLoading = writable(false);
+const catalogError = writable(null);
+function getNestedProperty(entry, path) {
+  return path.split(".").reduce((value, key) => value?.[key], entry);
+}
+function setNestedProperty(target, path, value) {
+  const keys = path.split(".");
+  const lastKey = keys.pop();
+  const parent = keys.reduce((current, key) => {
+    current[key] ??= {};
+    return current[key];
+  }, target);
+  parent[lastKey] = value;
+}
+function extractPackItems(pack, entries) {
+  const nonIndexKeys = [
+    "system.price.value",
+    "system.price.denomination",
+    "system.quantity"
+  ];
+  return entries.map((entry) => {
+    const item = {
+      _id: entry._id,
+      name: entry.name,
+      img: entry.img,
+      type: entry.type,
+      uuid: entry.uuid,
+      packName: pack.metadata.name,
+      packLabel: pack.metadata.label,
+      packPath: pack.metadata.path,
+      sourcePack: pack.metadata.label
+    };
+    for (const key of nonIndexKeys) {
+      if (entry[key] !== void 0) {
+        setNestedProperty(item, key, entry[key]);
+      } else {
+        setNestedProperty(item, key, getNestedProperty(entry, key));
+      }
+    }
+    return item;
+  });
+}
+async function loadCatalogItems() {
+  const packs = getItemSourcePacks();
+  getConfiguredListableItemTypes().map((entry) => entry.type);
+  catalogLoading.set(true);
+  catalogError.set(null);
+  try {
+    const nonIndexKeys = [
+      "system.price.value",
+      "system.price.denomination",
+      "system.quantity"
+    ];
+    const loadedItems = [];
+    for (const pack of packs) {
+      const index = await pack.getIndex({ fields: nonIndexKeys });
+      loadedItems.push(...extractPackItems(pack, Array.from(index.entries())));
+    }
+    const listableItems = loadedItems.filter((item) => isItemTypeListable(item.type)).sort((a, b) => a.name?.localeCompare(b.name, game.i18n?.lang) ?? 0);
+    const seen = /* @__PURE__ */ new Set();
+    const dedupedItems = [];
+    for (const item of listableItems) {
+      const key = item.uuid || `${item.packPath}.${item._id}`;
+      if (!seen.has(key)) {
+        dedupedItems.push(item);
+        seen.add(key);
+      }
+    }
+    catalogItems.set(dedupedItems);
+    return dedupedItems;
+  } catch (error) {
+    catalogError.set(error?.message ?? String(error));
+    catalogItems.set([]);
+    return [];
+  } finally {
+    catalogLoading.set(false);
+  }
+}
+function get_each_context$4(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[3] = list[i];
   child_ctx[5] = i;
   return child_ctx;
 }
-function create_else_block$1(ctx) {
+function create_else_block$3(ctx) {
   let p;
   return {
     c() {
@@ -22051,7 +23458,7 @@ function create_else_block$1(ctx) {
     }
   };
 }
-function create_if_block$2(ctx) {
+function create_if_block$6(ctx) {
   let ul;
   let each_value = ensure_array_like(
     /*sharedProps*/
@@ -22059,7 +23466,7 @@ function create_if_block$2(ctx) {
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block$2(get_each_context$2(ctx, each_value, i));
+    each_blocks[i] = create_each_block$4(get_each_context$4(ctx, each_value, i));
   }
   return {
     c() {
@@ -22086,11 +23493,11 @@ function create_if_block$2(ctx) {
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context$2(ctx2, each_value, i);
+          const child_ctx = get_each_context$4(ctx2, each_value, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
           } else {
-            each_blocks[i] = create_each_block$2(child_ctx);
+            each_blocks[i] = create_each_block$4(child_ctx);
             each_blocks[i].c();
             each_blocks[i].m(ul, null);
           }
@@ -22109,7 +23516,7 @@ function create_if_block$2(ctx) {
     }
   };
 }
-function create_each_block$2(ctx) {
+function create_each_block$4(ctx) {
   let li;
   let span;
   let t0_value = (
@@ -22126,7 +23533,7 @@ function create_each_block$2(ctx) {
   function click_handler() {
     return (
       /*click_handler*/
-      ctx[2](
+      ctx[1](
         /*index*/
         ctx[5]
       )
@@ -22170,9 +23577,10 @@ function create_each_block$2(ctx) {
     }
   };
 }
-function create_fragment$3(ctx) {
-  let div5;
-  let div4;
+function create_fragment$e(ctx) {
+  let div7;
+  let div6;
+  let div3;
   let div0;
   let h20;
   let t0_value = (
@@ -22183,30 +23591,31 @@ function create_fragment$3(ctx) {
   let img;
   let img_src_value;
   let button;
-  let div1;
+  let div2;
   let h21;
   let t2_value = (
     /*sharedProps*/
-    ctx[0].localize("Description") + ""
-  );
-  let t2;
-  let textarea;
-  let textarea_value_value;
-  let div3;
-  let h22;
-  let t3_value = (
-    /*sharedProps*/
     ctx[0].localize("AssociatedActors") + ""
   );
-  let t3;
-  let div2;
+  let t2;
+  let div1;
   let p0;
-  let t4_value = (
+  let t3_value = (
     /*sharedProps*/
     ctx[0].localize("DragActorsHere") + ""
   );
-  let t4;
+  let t3;
   let p1;
+  let div5;
+  let div4;
+  let h22;
+  let t5_value = (
+    /*sharedProps*/
+    ctx[0].localize("Description") + ""
+  );
+  let t5;
+  let textarea;
+  let textarea_value_value;
   let mounted;
   let dispose;
   function select_block_type(ctx2, dirty) {
@@ -22214,74 +23623,80 @@ function create_fragment$3(ctx) {
       /*sharedProps*/
       ctx2[0].associatedActors && /*sharedProps*/
       ctx2[0].associatedActors.length > 0
-    ) return create_if_block$2;
-    return create_else_block$1;
+    ) return create_if_block$6;
+    return create_else_block$3;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type(ctx);
   return {
     c() {
-      div5 = element("div");
-      div4 = element("div");
+      div7 = element("div");
+      div6 = element("div");
+      div3 = element("div");
       div0 = element("div");
       h20 = element("h2");
       t0 = text(t0_value);
       img = element("img");
       button = element("button");
       button.textContent = "Change Image";
-      div1 = element("div");
+      div2 = element("div");
       h21 = element("h2");
       t2 = text(t2_value);
-      textarea = element("textarea");
-      div3 = element("div");
-      h22 = element("h2");
-      t3 = text(t3_value);
-      div2 = element("div");
+      div1 = element("div");
       p0 = element("p");
-      t4 = text(t4_value);
+      t3 = text(t3_value);
       p1 = element("p");
       p1.textContent = "(Drag actor tokens or from actor directory)";
       if_block.c();
+      div5 = element("div");
+      div4 = element("div");
+      h22 = element("h2");
+      t5 = text(t5_value);
+      textarea = element("textarea");
       attr(img, "class", "profile-img");
       if (!src_url_equal(img.src, img_src_value = /*sharedProps*/
       ctx[0].actor?.img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
       attr(img, "alt", "Shop Profile");
       attr(button, "type", "button");
-      attr(div0, "class", "profile-section");
+      attr(div0, "class", "profile-section flex1");
+      attr(p0, "class", "drag-hint");
+      attr(p1, "class", "small");
+      attr(div1, "class", "drag-drop-area");
+      attr(div1, "role", "region");
+      attr(div1, "aria-label", "Associated actors drop zone");
+      attr(div2, "class", "associated-actors-section flex2");
+      attr(div3, "class", "flex1 flexcol gap-10");
       attr(textarea, "class", "description-text");
       textarea.value = textarea_value_value = /*sharedProps*/
       ctx[0].descriptionValue;
       attr(textarea, "placeholder", "Describe your shop...");
-      attr(div1, "class", "description-section");
-      attr(p0, "class", "drag-hint");
-      attr(p1, "class", "small");
-      attr(div2, "class", "drag-drop-area");
-      attr(div2, "role", "region");
-      attr(div2, "aria-label", "Associated actors drop zone");
-      attr(div3, "class", "associated-actors-section");
-      attr(div4, "class", "shopfront-grid");
-      attr(div5, "class", "shopfront-tab");
+      attr(div4, "class", "description-section");
+      attr(div5, "class", "flex2");
+      attr(div6, "class", "flexrow gap-10");
+      attr(div7, "class", "shopfront-tab");
     },
     m(target, anchor) {
-      insert(target, div5, anchor);
-      append(div5, div4);
-      append(div4, div0);
+      insert(target, div7, anchor);
+      append(div7, div6);
+      append(div6, div3);
+      append(div3, div0);
       append(div0, h20);
       append(h20, t0);
       append(div0, img);
       append(div0, button);
-      append(div4, div1);
-      append(div1, h21);
-      append(h21, t2);
-      append(div1, textarea);
-      append(div4, div3);
-      append(div3, h22);
-      append(h22, t3);
       append(div3, div2);
-      append(div2, p0);
-      append(p0, t4);
-      append(div2, p1);
-      if_block.m(div3, null);
+      append(div2, h21);
+      append(h21, t2);
+      append(div2, div1);
+      append(div1, p0);
+      append(p0, t3);
+      append(div1, p1);
+      if_block.m(div2, null);
+      append(div6, div5);
+      append(div5, div4);
+      append(div4, h22);
+      append(h22, t5);
+      append(div4, textarea);
       if (!mounted) {
         dispose = [
           listen(button, "click", function() {
@@ -22290,24 +23705,24 @@ function create_fragment$3(ctx) {
               ctx[0].openImageEditor
             )) ctx[0].openImageEditor.apply(this, arguments);
           }),
-          listen(
-            textarea,
-            "input",
-            /*input_handler*/
-            ctx[1]
-          ),
-          listen(div2, "dragover", prevent_default(function() {
+          listen(div1, "dragover", prevent_default(function() {
             if (is_function(
               /*sharedProps*/
               ctx[0].handleDragOver
             )) ctx[0].handleDragOver.apply(this, arguments);
           })),
-          listen(div2, "drop", prevent_default(function() {
+          listen(div1, "drop", prevent_default(function() {
             if (is_function(
               /*sharedProps*/
               ctx[0].handleActorDrop
             )) ctx[0].handleActorDrop.apply(this, arguments);
-          }))
+          })),
+          listen(
+            textarea,
+            "input",
+            /*input_handler*/
+            ctx[2]
+          )
         ];
         mounted = true;
       }
@@ -22324,18 +23739,10 @@ function create_fragment$3(ctx) {
       }
       if (dirty & /*sharedProps*/
       1 && t2_value !== (t2_value = /*sharedProps*/
-      ctx[0].localize("Description") + "")) set_data(t2, t2_value);
-      if (dirty & /*sharedProps*/
-      1 && textarea_value_value !== (textarea_value_value = /*sharedProps*/
-      ctx[0].descriptionValue)) {
-        textarea.value = textarea_value_value;
-      }
+      ctx[0].localize("AssociatedActors") + "")) set_data(t2, t2_value);
       if (dirty & /*sharedProps*/
       1 && t3_value !== (t3_value = /*sharedProps*/
-      ctx[0].localize("AssociatedActors") + "")) set_data(t3, t3_value);
-      if (dirty & /*sharedProps*/
-      1 && t4_value !== (t4_value = /*sharedProps*/
-      ctx[0].localize("DragActorsHere") + "")) set_data(t4, t4_value);
+      ctx[0].localize("DragActorsHere") + "")) set_data(t3, t3_value);
       if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block) {
         if_block.p(ctx, dirty);
       } else {
@@ -22343,15 +23750,23 @@ function create_fragment$3(ctx) {
         if_block = current_block_type(ctx);
         if (if_block) {
           if_block.c();
-          if_block.m(div3, null);
+          if_block.m(div2, null);
         }
+      }
+      if (dirty & /*sharedProps*/
+      1 && t5_value !== (t5_value = /*sharedProps*/
+      ctx[0].localize("Description") + "")) set_data(t5, t5_value);
+      if (dirty & /*sharedProps*/
+      1 && textarea_value_value !== (textarea_value_value = /*sharedProps*/
+      ctx[0].descriptionValue)) {
+        textarea.value = textarea_value_value;
       }
     },
     i: noop,
     o: noop,
     d(detaching) {
       if (detaching) {
-        detach(div5);
+        detach(div7);
       }
       if_block.d();
       mounted = false;
@@ -22359,120 +23774,501 @@ function create_fragment$3(ctx) {
     }
   };
 }
-function instance$3($$self, $$props, $$invalidate) {
+function instance$e($$self, $$props, $$invalidate) {
   let { sharedProps = {} } = $$props;
-  const input_handler = (e) => sharedProps.onDescriptionChange?.(e.target.value);
+  onMount(() => {
+    loadCatalogItems();
+  });
   const click_handler = (index) => sharedProps.removeAssociated(index);
+  const input_handler = (e) => sharedProps.onDescriptionChange?.(e.target.value);
   $$self.$$set = ($$props2) => {
     if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
   };
-  return [sharedProps, input_handler, click_handler];
+  return [sharedProps, click_handler, input_handler];
 }
 class ShopfrontTab extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$3, create_fragment$3, safe_not_equal, { sharedProps: 0 });
+    init(this, options, instance$e, create_fragment$e, safe_not_equal, { sharedProps: 0 });
   }
 }
-function get_each_context$1(ctx, list, i) {
-  const child_ctx = ctx.slice();
-  child_ctx[3] = list[i];
-  return child_ctx;
-}
-function create_if_block$1(ctx) {
-  let div;
-  let span0;
-  let t0_value = (
-    /*item*/
-    ctx[3].name + ""
-  );
-  let t0;
-  let span1;
-  let t1;
-  let t2_value = (
-    /*sharedProps*/
-    ctx[0].calculatePrice(
-      /*item*/
-      ctx[3].system?.price?.value || /*item*/
-      ctx[3].system?.price || 0
-    ) + ""
-  );
-  let t2;
-  let t3;
-  let button;
-  let mounted;
-  let dispose;
-  function click_handler() {
-    return (
-      /*click_handler*/
-      ctx[2](
-        /*item*/
-        ctx[3]
-      )
-    );
-  }
-  return {
-    c() {
-      div = element("div");
-      span0 = element("span");
-      t0 = text(t0_value);
-      span1 = element("span");
-      t1 = text("$");
-      t2 = text(t2_value);
-      t3 = text(" gp");
-      button = element("button");
-      button.textContent = "View";
-      attr(span0, "class", "item-name");
-      attr(span1, "class", "item-price");
-      attr(button, "type", "button");
-      attr(div, "class", "inventory-item");
-    },
-    m(target, anchor) {
-      insert(target, div, anchor);
-      append(div, span0);
-      append(span0, t0);
-      append(div, span1);
-      append(span1, t1);
-      append(span1, t2);
-      append(span1, t3);
-      append(div, button);
-      if (!mounted) {
-        dispose = listen(button, "click", click_handler);
-        mounted = true;
+function rippleFocus({ background = "rgba(255, 255, 255, 0.7)", duration = 300, enabled = true, selector } = {}) {
+  return (element2, initialOptions) => {
+    element2.style.overflow = "hidden";
+    const targetEl = typeof selector === "string" ? element2.querySelector(selector) : A11yHelper.isFocusTarget(element2.firstChild) ? element2.firstChild : element2;
+    let activeWindow = void 0;
+    let windowBlurActiveFocus = false;
+    let clientX = -1;
+    let clientY = -1;
+    const activeSpans = [];
+    function blurRipple(event, force = false) {
+      if (!enabled) {
+        return;
       }
-    },
-    p(new_ctx, dirty) {
-      ctx = new_ctx;
-      if (dirty & /*sharedProps*/
-      1 && t0_value !== (t0_value = /*item*/
-      ctx[3].name + "")) set_data(t0, t0_value);
-      if (dirty & /*sharedProps*/
-      1 && t2_value !== (t2_value = /*sharedProps*/
-      ctx[0].calculatePrice(
-        /*item*/
-        ctx[3].system?.price?.value || /*item*/
-        ctx[3].system?.price || 0
-      ) + "")) set_data(t2, t2_value);
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(div);
+      if (!force && (activeSpans.length === 0 || targetEl === CrossWindow.getActiveElement(targetEl))) {
+        return;
       }
-      mounted = false;
-      dispose();
+      for (const span of activeSpans) {
+        try {
+          const effect = new window.KeyframeEffect(
+            span,
+            [
+              {
+                // from
+                transform: "scale(3)",
+                opacity: 0.3
+              },
+              {
+                // to
+                transform: "scale(.7)",
+                opacity: 0
+              }
+            ],
+            {
+              duration,
+              fill: "forwards"
+            }
+          );
+          const animation = new window.Animation(effect);
+          animation.onfinish = () => {
+            if (span) {
+              span.remove();
+            }
+          };
+          animation.play();
+        } catch {
+          if (span) {
+            span.remove();
+          }
+        }
+      }
+      activeSpans.length = 0;
+      activeWindow?.removeEventListener?.("blur", blurRippleForced);
+      activeWindow = void 0;
     }
+    function blurRippleForced(event) {
+      if (CrossWindow.isActiveElement(targetEl)) {
+        windowBlurActiveFocus = true;
+      }
+      blurRipple(event, true);
+    }
+    async function focusRipple() {
+      if (windowBlurActiveFocus) {
+        windowBlurActiveFocus = false;
+        await nextAnimationFrame(2);
+        if (!CrossWindow.isActiveElement(targetEl)) {
+          return;
+        }
+      }
+      if (!enabled) {
+        return;
+      }
+      if (activeSpans.length > 0) {
+        return;
+      }
+      const elementRect = element2.getBoundingClientRect();
+      const actualX = clientX >= 0 ? clientX : elementRect.left + elementRect.width / 2;
+      const actualY = clientY >= 0 ? clientY : elementRect.top + elementRect.height / 2;
+      const diameter = Math.max(elementRect.width, elementRect.height);
+      const radius = diameter / 2;
+      const left = `${actualX - (elementRect.left + radius)}px`;
+      const top = `${actualY - (elementRect.top + radius)}px`;
+      const span = CrossWindow.getDocument(element2).createElement("span");
+      span.style.position = "absolute";
+      span.style.width = `${diameter}px`;
+      span.style.height = `${diameter}px`;
+      span.style.left = left;
+      span.style.top = top;
+      span.style.background = `var(--tjs-action-ripple-background-focus, var(--tjs-action-ripple-background, ${background}))`;
+      span.style.borderRadius = "50%";
+      span.style.pointerEvents = "none";
+      span.style.transform = "translateZ(-1px)";
+      element2.prepend(span);
+      try {
+        const effect = new window.KeyframeEffect(
+          span,
+          [
+            {
+              // from
+              transform: "scale(.7)",
+              opacity: 0.5
+            },
+            {
+              // to
+              transform: "scale(3)",
+              opacity: 0.3
+            }
+          ],
+          {
+            duration,
+            fill: "forwards"
+          }
+        );
+        const animation = new window.Animation(effect);
+        animation.play();
+        activeSpans.push(span);
+        activeWindow = targetEl.ownerDocument.defaultView;
+        activeWindow.addEventListener("blur", blurRippleForced, { once: true });
+      } catch {
+        if (span) {
+          span.remove();
+        }
+      }
+      clientX = clientY = -1;
+    }
+    function onPointerDown(e) {
+      if (!enabled) {
+        return;
+      }
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    function updateOptions(newOptions) {
+      if (typeof newOptions?.enabled === "boolean" && enabled !== newOptions?.enabled) {
+        enabled = newOptions.enabled;
+        if (!enabled) {
+          blurRipple();
+        }
+      }
+    }
+    targetEl.addEventListener("pointerdown", onPointerDown);
+    targetEl.addEventListener("blur", blurRipple);
+    targetEl.addEventListener("focus", focusRipple);
+    if (isObject(initialOptions)) {
+      updateOptions(initialOptions);
+    }
+    return {
+      update: updateOptions,
+      destroy: () => {
+        targetEl.removeEventListener("pointerdown", onPointerDown);
+        targetEl.removeEventListener("blur", blurRipple);
+        targetEl.removeEventListener("focus", focusRipple);
+        activeWindow?.removeEventListener?.("blur", blurRippleForced);
+        activeWindow = void 0;
+      }
+    };
   };
 }
-function create_each_block$1(ctx) {
-  let show_if = !/*sharedProps*/
-  ctx[0].filterText || /*item*/
-  ctx[3].name && /*item*/
-  ctx[3].name.toLowerCase().includes(
-    /*sharedProps*/
-    ctx[0].filterText.toLowerCase()
-  );
+class FVTTConfigure2 {
+  static #initialized = false;
+  static initialize() {
+    if (this.#initialized) {
+      return;
+    }
+    document?.["#__tjs-root-styles"]?.remove?.();
+    const manager = StyleManager.create({
+      id: "__tjs-standard-vars",
+      version: "0.0.2",
+      layerName: "variables.tjs-standard-vars",
+      rules: {
+        // Ideally `:root` would be used, but Foundry defines dark them CSS vars in `body`. For scoping reasons
+        // `body` must be used to make these core vars accessible to TRL CSS vars.
+        themeDark: "body, .themed.theme-dark",
+        themeLight: ".themed.theme-light"
+      }
+    });
+    if (!manager?.isConnected) {
+      this.#initialized = true;
+      return;
+    }
+    this.#initialized = true;
+    const themeDarkRoot = manager.get("themeDark");
+    const themeLight = manager.get("themeLight");
+    this.#rootConstants(themeDarkRoot);
+    this.#actions(themeDarkRoot, themeLight);
+    this.#buttons(themeDarkRoot, themeLight);
+    this.#component(themeDarkRoot, themeLight);
+    this.#form(themeDarkRoot, themeLight);
+    this.#popup(themeDarkRoot, themeLight);
+    Hooks.on("PopOut:loading", (app, popout) => {
+      popout.document.addEventListener(
+        "DOMContentLoaded",
+        () => manager.clone({ document: popout.document, force: true })
+      );
+    });
+  }
+  /**
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}  themeDarkRoot -
+   *
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}  themeLight -
+   */
+  static #actions(themeDarkRoot, themeLight) {
+    themeDarkRoot.setProperties({
+      "--tjs-action-ripple-background": "linear-gradient(64.5deg, rgba(245, 116, 185, 1) 40%, rgba(89, 97, 223, 1) 60%)"
+    });
+    themeLight.setProperties({
+      "--tjs-action-ripple-background": "rgba(0, 0, 0, 0.35)"
+    });
+  }
+  /**
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}  themeDarkRoot -
+   *
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}  themeLight -
+   */
+  static #buttons(themeDarkRoot, themeLight) {
+    const opts = { camelCase: true };
+    const propsDark = FoundryStyles.ext.get(".themed.theme-dark button", opts);
+    const propsLight = FoundryStyles.ext.get(".themed.theme-light button", opts);
+    const propsButton = FoundryStyles.ext.get("button", opts);
+    themeDarkRoot.setProperties({
+      // Constant properties
+      "--tjs-form-button-font-family": propsButton?.fontFamily ?? "var(--font-sans)",
+      "--tjs-form-button-font-size": propsButton?.fontSize ?? "var(--font-size-14)",
+      "--tjs-form-button-transition": propsButton?.transition ?? "0.5s",
+      // Unique TRL properties.
+      "--tjs-icon-button-background-hover": "rgba(255, 255, 255, 0.15)",
+      "--tjs-icon-button-background-selected": "rgba(255, 255, 255, 0.25)",
+      // Themed properties
+      "--tjs-icon-button-color": propsDark?.["--button-text-color"] ?? "var(--color-light-3)",
+      "--tjs-icon-button-color-hover": propsDark?.["--button-hover-text-color"] ?? "var(--color-light-1)"
+    });
+    themeLight.setProperties({
+      // Unique TRL properties.
+      "--tjs-icon-button-background-hover": "rgba(0, 0, 0, 0.15)",
+      "--tjs-icon-button-background-selected": "rgba(0, 0, 0, 0.25)",
+      // Themed properties
+      "--tjs-icon-button-color": propsLight?.["--button-text-color"] ?? "var(--color-dark-1)",
+      "--tjs-icon-button-color-hover": "var(--tjs-icon-button-color)"
+      // Core light theme doesn't have an appropriate highlight.
+    });
+  }
+  /**
+   * Generic reusable component variables.
+   *
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}  themeDarkRoot -
+   *
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}  themeLight -
+   */
+  static #component(themeDarkRoot, themeLight) {
+    {
+      const props = FoundryStyles.ext.get('input[type="text"]', {
+        camelCase: true,
+        resolve: ".themed.theme-dark input"
+      });
+      themeDarkRoot.setProperties({
+        // Constants across dark / light theme:
+        "--tjs-component-border-radius": props?.borderRadius ?? "4px",
+        "--tjs-side-slide-layer-item-border-color-hover": "var(--color-warm-2)",
+        "--tjs-side-slide-layer-item-color": "var(--color-text-secondary)",
+        "--tjs-side-slide-layer-item-color-hover": "var(--color-text-primary)",
+        "--tjs-side-slide-layer-item-host-color": "var(--color-text-primary)",
+        // Color / theme related.
+        "--tjs-component-border": "1px solid var(--color-cool-3)",
+        // Core dark theme does not have input borders.
+        "--tjs-component-overlay-background": "rgba(208, 184, 163, 0.1)",
+        "--tjs-side-slide-layer-item-background": "rgba(180, 180, 180, 0.3)",
+        "--tjs-side-slide-layer-item-border": "solid 2px rgba(60, 60, 60, 0.9)",
+        "--tjs-side-slide-layer-item-host-background": "linear-gradient(135deg, rgba(90, 90, 90, 0.95) 10%, rgba(52, 51, 52, 0.95) 90%)",
+        "--tjs-side-slide-layer-item-host-border": "solid 2px rgba(80, 80, 80, 0.9)"
+      });
+    }
+    {
+      const props = FoundryStyles.ext.get('input[type="text"]', {
+        camelCase: true,
+        resolve: ".themed.theme-light input"
+      });
+      themeLight.setProperties({
+        // Color / theme related.
+        "--tjs-component-border": props?.border ?? "1px solid var(--color-dark-6)",
+        "--tjs-component-overlay-background": "rgba(0, 0, 0, 0.1)",
+        "--tjs-side-slide-layer-item-background": "rgba(180, 180, 180, 0.7)",
+        "--tjs-side-slide-layer-item-border": "solid 2px rgba(100, 100, 100, 0.9)",
+        "--tjs-side-slide-layer-item-host-background": "linear-gradient(135deg, rgba(180, 180, 180, 0.9) 10%, rgba(217, 216, 200, 0.9) 90%)",
+        "--tjs-side-slide-layer-item-host-border": "solid 2px rgba(120, 120, 120, 0.9)"
+      });
+    }
+  }
+  /**
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}  themeDarkRoot -
+   *
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}  themeLight -
+   */
+  static #form(themeDarkRoot, themeLight) {
+    {
+      const props = FoundryStyles.ext.get('input[type="text"]', {
+        camelCase: true,
+        resolve: ".themed.theme-dark input"
+      });
+      const propsFocus = FoundryStyles.ext.get(['input[type="text"]', 'input[type="text"]:focus'], {
+        camelCase: true,
+        resolve: [".themed.theme-dark input", ".themed.theme-dark input:focus"]
+      });
+      const propsPlaceholder = FoundryStyles.ext.get("::placeholder", {
+        camelCase: true,
+        resolve: ".themed.theme-dark input"
+      });
+      themeDarkRoot.setProperties({
+        // Constants across dark / light theme:
+        "--tjs-input-height": props?.height ?? "var(--input-height)",
+        "--tjs-input-line-height": props?.lineHeight ?? "var(--input-height)",
+        "--tjs-input-padding": props?.padding ?? "0px 0.5rem",
+        "--tjs-input-width": props?.width ?? "100%",
+        "--tjs-input-border-radius": props?.borderRadius ?? "4px",
+        // Color / theme related.
+        "--tjs-input-background": props?.background ?? "var(--color-cool-4)",
+        "--tjs-input-color": props?.color ?? "var(--color-light-3)",
+        "--tjs-input-color-focus": propsFocus?.color ?? "var(--color-light-1)",
+        "--tjs-input-outline": props?.outline ?? "transparent solid 1px",
+        "--tjs-input-outline-focus": propsFocus?.outline ?? "2px solid var(--color-cool-3)",
+        "--tjs-input-outline-offset-focus": propsFocus?.outlineOffset ?? "-2px",
+        "--tjs-input-placeholder-color": propsPlaceholder?.color ?? "var(--color-light-5)",
+        "--tjs-input-transition": props?.transition ?? "outline-color 0.5s",
+        // Set default values that are only to be referenced and not set.
+        "--_tjs-default-input-height": props?.height ?? "var(--input-height)",
+        // Set directly / no lookup:
+        "--tjs-input-checkbox-border": "none",
+        "--tjs-input-range-border": "none"
+      });
+    }
+    {
+      const props = FoundryStyles.ext.get('input[type="text"]', {
+        camelCase: true,
+        resolve: ".themed.theme-light input"
+      });
+      const propsFocus = FoundryStyles.ext.get(['input[type="text"]', 'input[type="text"]:focus'], {
+        camelCase: true,
+        resolve: [".themed.theme-light input", ".themed.theme-light input:focus"]
+      });
+      const propsPlaceholder = FoundryStyles.ext.get("::placeholder", {
+        camelCase: true,
+        resolve: ".themed.theme-light input"
+      });
+      themeLight.setProperties({
+        // Color / theme related.
+        "--tjs-input-background": props?.background ?? "rgba(0, 0, 0, 0.1)",
+        "--tjs-input-border": props?.border ?? "1px solid var(--color-dark-6)",
+        "--tjs-input-color": props?.color ?? "var(--color-dark-2)",
+        "--tjs-input-color-focus": propsFocus?.color ?? "var(--color-dark-1)",
+        "--tjs-input-outline": props?.outline ?? "var(--color-warm-2)",
+        "--tjs-input-outline-focus": propsFocus?.outline ?? "2px solid var(--color-warm-2)",
+        "--tjs-input-outline-offset-focus": propsFocus?.outlineOffset ?? "-2px",
+        "--tjs-input-placeholder-color": propsPlaceholder?.color ?? "var(--color-dark-4)"
+      });
+    }
+  }
+  /**
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}  themeDarkRoot -
+   *
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}  themeLight -
+   */
+  static #popup(themeDarkRoot, themeLight) {
+    const propsMenuItem = FoundryStyles.ext.get("#context-menu li.context-item", { camelCase: true });
+    const propsMenuDark = FoundryStyles.ext.get("#context-menu", {
+      camelCase: true,
+      resolve: [".themed.theme-dark #context-menu"]
+    });
+    const propsMenuItemDark = FoundryStyles.ext.get("#context-menu li.context-item:hover", {
+      camelCase: true,
+      resolve: [".themed.theme-dark #context-menu"]
+    });
+    const propsMenuLight = FoundryStyles.ext.get("#context-menu", {
+      camelCase: true,
+      resolve: [".themed.theme-light #context-menu"]
+    });
+    const propsMenuItemLight = FoundryStyles.ext.get("#context-menu li.context-item:hover", {
+      camelCase: true,
+      resolve: [".themed.theme-light #context-menu"]
+    });
+    themeDarkRoot.setProperties({
+      // Direct mapping for TJSContextMenu overrides.
+      "--tjs-context-menu-background": "var(--tjs-menu-background)",
+      "--tjs-context-menu-border": "var(--tjs-menu-border)",
+      "--tjs-context-menu-border-radius": "var(--tjs-menu-border-radius)",
+      "--tjs-context-menu-box-shadow": "var(--tjs-menu-box-shadow)",
+      "--tjs-context-menu-color": "var(--tjs-menu-color)",
+      "--tjs-context-menu-font-size": "var(--tjs-menu-font-size)",
+      "--tjs-context-menu-item-background-highlight": "var(--tjs-menu-item-background-highlight)",
+      "--tjs-context-menu-item-border-highlight": "var(--tjs-menu-item-border-highlight)",
+      "--tjs-context-menu-item-color-highlight": "var(--tjs-menu-item-color-highlight)",
+      // Constant applied across dark / light
+      "--tjs-menu-item-border": propsMenuItem?.border ?? "1px solid transparent",
+      "--tjs-menu-item-line-height": propsMenuItem?.lineHeight ?? "15px",
+      "--tjs-menu-item-padding": propsMenuItem?.padding ?? "8px",
+      "--tjs-context-menu-item-border": "var(--tjs-menu-item-border)",
+      "--tjs-context-menu-item-line-height": "var(--tjs-menu-item-line-height)",
+      "--tjs-context-menu-item-padding": "var(--tjs-menu-item-padding)",
+      // Dark theme
+      "--tjs-menu-background": propsMenuDark?.background ?? "var(--color-cool-5)",
+      "--tjs-menu-border": propsMenuDark?.border ?? "1px solid var(--color-cool-3)",
+      "--tjs-menu-border-radius": propsMenuDark?.borderRadius ?? "5px",
+      "--tjs-menu-box-shadow": propsMenuDark?.boxShadow ?? "rgba(0, 0, 0, 0.45) 0px 3px 6px",
+      "--tjs-menu-color": propsMenuDark?.color ?? "var(--color-text-secondary)",
+      "--tjs-menu-font-size": propsMenuItem?.fontSize ?? "var(--font-size-12)",
+      "--tjs-menu-item-background-highlight": propsMenuItemDark?.background ?? "var(--color-dark-1)",
+      "--tjs-menu-item-border-highlight": propsMenuItemDark?.border ?? "1px solid var(--color-cool-4)",
+      "--tjs-menu-item-color-highlight": propsMenuItemDark?.color ?? "var(--color-text-emphatic)",
+      // `popup` is for components that are slightly elevated, but connected to an application;
+      // see: TJSMenu / TJSContextMenu / TJSColordPicker
+      "--tjs-default-popup-background": propsMenuDark?.background ?? "var(--color-cool-5)",
+      "--tjs-default-popup-border": propsMenuDark?.border ?? "1px solid var(--color-cool-3)",
+      "--tjs-default-popup-box-shadow": propsMenuDark?.boxShadow ?? "rgba(0, 0, 0, 0.45) 0px 3px 6px",
+      "--tjs-default-popup-primary-color": propsMenuDark?.color ?? "var(--color-text-secondary)",
+      "--tjs-default-popup-highlight-color": propsMenuItemDark?.color ?? "var(--color-text-emphatic)",
+      // `popover` is for components that are elevated and independent; see: TJSContextMenu
+      "--tjs-default-popover-border": propsMenuDark?.border ?? "1px solid var(--color-border-dark, #000)",
+      "--tjs-default-popover-box-shadow": "0 0 10px var(--color-shadow-dark, #000)"
+    });
+    themeLight.setProperties({
+      // Direct mapping for TJSContextMenu overrides.
+      "--tjs-context-menu-background": "var(--tjs-menu-background)",
+      "--tjs-context-menu-border": "var(--tjs-menu-border)",
+      "--tjs-context-menu-border-radius": "var(--tjs-menu-border-radius)",
+      "--tjs-context-menu-box-shadow": "var(--tjs-menu-box-shadow)",
+      "--tjs-context-menu-color": "var(--tjs-menu-color)",
+      "--tjs-context-menu-font-size": "var(--tjs-menu-font-size)",
+      "--tjs-context-menu-item-border": "var(--tjs-menu-item-border)",
+      "--tjs-context-menu-item-background-highlight": "var(--tjs-menu-item-background-highlight)",
+      "--tjs-context-menu-item-border-highlight": "var(--tjs-menu-item-border-highlight)",
+      "--tjs-context-menu-item-color-highlight": "var(--tjs-menu-item-color-highlight)",
+      "--tjs-menu-background": propsMenuLight?.background ?? "#d9d8c8",
+      "--tjs-menu-border": propsMenuLight?.border ?? "1px solid #999",
+      "--tjs-menu-border-radius": propsMenuLight?.borderRadius ?? "5px",
+      "--tjs-menu-box-shadow": propsMenuLight?.boxShadow ?? "rgba(0, 0, 0, 0.45) 0px 3px 6px",
+      "--tjs-menu-color": propsMenuLight?.color ?? "var(--color-text-secondary)",
+      "--tjs-menu-item-background-highlight": propsMenuItemLight?.background ?? "#f0f0e0",
+      "--tjs-menu-item-border-highlight": propsMenuItemLight?.border ?? "1px solid #999",
+      "--tjs-menu-item-color-highlight": propsMenuItemLight?.color ?? "var(--color-text-emphatic)",
+      "--tjs-default-popup-background": propsMenuLight?.background ?? "#d9d8c8",
+      "--tjs-default-popup-border": propsMenuLight?.border ?? "1px solid #999",
+      "--tjs-default-popup-box-shadow": propsMenuLight?.boxShadow ?? "rgba(0, 0, 0, 0.45) 0px 3px 6px",
+      "--tjs-default-popup-primary-color": propsMenuLight?.color ?? "var(--color-text-secondary)",
+      "--tjs-default-popup-highlight-color": propsMenuItemLight?.color ?? "var(--color-text-emphatic)"
+    });
+  }
+  /**
+   * @param {import('@typhonjs-fvtt/runtime/util/dom/style').StyleManager.RuleManager}  themeDarkRoot -
+   */
+  static #rootConstants(themeDarkRoot) {
+    themeDarkRoot.setProperties({
+      // For checkbox Foundry core styles override.
+      "--tjs-input-checkbox-appearance": "none"
+    });
+    themeDarkRoot.setProperties({
+      // For components w/ transparent background checkered pattern.
+      "--tjs-checkerboard-background-dark": "rgb(205, 205, 205)",
+      "--tjs-checkerboard-background-10": `url('data:image/svg+xml;utf8,<svg preserveAspectRatio="none"  viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="5" height="5" fill="transparent" /><rect x="5" y="5" width="5" height="5" fill="transparent" /><rect x="5" y="0" width="5" height="5" fill="white" /><rect x="0" y="5" width="5" height="5" fill="white" /></svg>') 0 0 / 10px 10px, var(--tjs-checkerboard-background-dark, rgb(205, 205, 205))`
+    });
+  }
+}
+FVTTConfigure2.initialize();
+function create_if_block_3(ctx) {
   let if_block_anchor;
-  let if_block = show_if && create_if_block$1(ctx);
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*iconType*/
+      ctx2[8] === "font"
+    ) return create_if_block_4;
+    if (
+      /*iconType*/
+      ctx2[8] === "img"
+    ) return create_if_block_5;
+    if (
+      /*iconType*/
+      ctx2[8] === "svg"
+    ) return create_if_block_6;
+  }
+  let current_block_type = select_block_type(ctx);
+  let if_block = current_block_type && current_block_type(ctx);
   return {
     c() {
       if (if_block) if_block.c();
@@ -22483,131 +24279,3134 @@ function create_each_block$1(ctx) {
       insert(target, if_block_anchor, anchor);
     },
     p(ctx2, dirty) {
-      if (dirty & /*sharedProps*/
-      1) show_if = !/*sharedProps*/
-      ctx2[0].filterText || /*item*/
-      ctx2[3].name && /*item*/
-      ctx2[3].name.toLowerCase().includes(
-        /*sharedProps*/
-        ctx2[0].filterText.toLowerCase()
-      );
-      if (show_if) {
+      if (current_block_type === (current_block_type = select_block_type(ctx2)) && if_block) {
+        if_block.p(ctx2, dirty);
+      } else {
+        if (if_block) if_block.d(1);
+        if_block = current_block_type && current_block_type(ctx2);
         if (if_block) {
-          if_block.p(ctx2, dirty);
-        } else {
-          if_block = create_if_block$1(ctx2);
           if_block.c();
           if_block.m(if_block_anchor.parentNode, if_block_anchor);
         }
-      } else if (if_block) {
-        if_block.d(1);
-        if_block = null;
       }
     },
     d(detaching) {
       if (detaching) {
         detach(if_block_anchor);
       }
-      if (if_block) if_block.d(detaching);
+      if (if_block) {
+        if_block.d(detaching);
+      }
     }
   };
 }
-function create_fragment$2(ctx) {
-  let div2;
-  let div0;
-  let input;
-  let input_value_value;
-  let input_placeholder_value;
-  let button;
-  let div1;
+function create_if_block_6(ctx) {
+  let svg;
+  let inlineSvg_action;
   let mounted;
   let dispose;
-  let each_value = ensure_array_like(
-    /*sharedProps*/
-    ctx[0].items || []
+  return {
+    c() {
+      svg = svg_element("svg");
+      attr(svg, "class", "icon svelte-FOU-1n18i9o");
+    },
+    m(target, anchor) {
+      insert(target, svg, anchor);
+      if (!mounted) {
+        dispose = action_destroyer(inlineSvg_action = inlineSvg.call(null, svg, { src: (
+          /*icon*/
+          ctx[1]
+        ) }));
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (inlineSvg_action && is_function(inlineSvg_action.update) && dirty & /*icon*/
+      2) inlineSvg_action.update.call(null, { src: (
+        /*icon*/
+        ctx2[1]
+      ) });
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(svg);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_if_block_5(ctx) {
+  let img;
+  let img_src_value;
+  return {
+    c() {
+      img = element("img");
+      if (!src_url_equal(img.src, img_src_value = /*icon*/
+      ctx[1])) attr(img, "src", img_src_value);
+      attr(img, "alt", "");
+      attr(img, "class", "icon svelte-FOU-1n18i9o");
+    },
+    m(target, anchor) {
+      insert(target, img, anchor);
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*icon*/
+      2 && !src_url_equal(img.src, img_src_value = /*icon*/
+      ctx2[1])) {
+        attr(img, "src", img_src_value);
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(img);
+      }
+    }
+  };
+}
+function create_if_block_4(ctx) {
+  let i;
+  let i_class_value;
+  return {
+    c() {
+      i = element("i");
+      attr(i, "class", i_class_value = null_to_empty(`icon ${/*icon*/
+      ctx[1]}`) + " svelte-FOU-1n18i9o");
+    },
+    m(target, anchor) {
+      insert(target, i, anchor);
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*icon*/
+      2 && i_class_value !== (i_class_value = null_to_empty(`icon ${/*icon*/
+      ctx2[1]}`) + " svelte-FOU-1n18i9o")) {
+        attr(i, "class", i_class_value);
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(i);
+      }
+    }
+  };
+}
+function create_if_block_2$2(ctx) {
+  let switch_instance;
+  let switch_instance_anchor;
+  let current;
+  const switch_instance_spread_levels = [
+    isObject(
+      /*label*/
+      ctx[2].props
+    ) ? (
+      /*label*/
+      ctx[2].props
+    ) : {}
+  ];
+  var switch_value = (
+    /*label*/
+    ctx[2].class
   );
-  let each_blocks = [];
-  for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block$1(get_each_context$1(ctx, each_value, i));
+  function switch_props(ctx2, dirty) {
+    let switch_instance_props = {};
+    for (let i = 0; i < switch_instance_spread_levels.length; i += 1) {
+      switch_instance_props = assign(switch_instance_props, switch_instance_spread_levels[i]);
+    }
+    if (dirty !== void 0 && dirty & /*label*/
+    4) {
+      switch_instance_props = assign(switch_instance_props, get_spread_update(switch_instance_spread_levels, [
+        get_spread_object(isObject(
+          /*label*/
+          ctx2[2].props
+        ) ? (
+          /*label*/
+          ctx2[2].props
+        ) : {})
+      ]));
+    }
+    return { props: switch_instance_props };
+  }
+  if (switch_value) {
+    switch_instance = construct_svelte_component(switch_value, switch_props(ctx));
   }
   return {
     c() {
-      div2 = element("div");
-      div0 = element("div");
-      input = element("input");
-      button = element("button");
-      button.textContent = "Clear";
-      div1 = element("div");
-      for (let i = 0; i < each_blocks.length; i += 1) {
-        each_blocks[i].c();
-      }
-      attr(input, "class", "filter-input");
-      attr(input, "type", "text");
-      input.value = input_value_value = /*sharedProps*/
-      ctx[0].filterText;
-      attr(input, "placeholder", input_placeholder_value = /*sharedProps*/
-      ctx[0].localize("FilterInventory"));
-      attr(button, "type", "button");
-      attr(div0, "class", "inventory-controls");
-      attr(div1, "class", "inventory-list");
-      attr(div2, "class", "inventory-tab");
+      if (switch_instance) create_component(switch_instance.$$.fragment);
+      switch_instance_anchor = empty();
     },
     m(target, anchor) {
-      insert(target, div2, anchor);
-      append(div2, div0);
-      append(div0, input);
-      append(div0, button);
-      append(div2, div1);
-      for (let i = 0; i < each_blocks.length; i += 1) {
-        if (each_blocks[i]) {
-          each_blocks[i].m(div1, null);
+      if (switch_instance) mount_component(switch_instance, target, anchor);
+      insert(target, switch_instance_anchor, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*label*/
+      4 && switch_value !== (switch_value = /*label*/
+      ctx2[2].class)) {
+        if (switch_instance) {
+          group_outros();
+          const old_component = switch_instance;
+          transition_out(old_component.$$.fragment, 1, 0, () => {
+            destroy_component(old_component, 1);
+          });
+          check_outros();
+        }
+        if (switch_value) {
+          switch_instance = construct_svelte_component(switch_value, switch_props(ctx2, dirty));
+          create_component(switch_instance.$$.fragment);
+          transition_in(switch_instance.$$.fragment, 1);
+          mount_component(switch_instance, switch_instance_anchor.parentNode, switch_instance_anchor);
+        } else {
+          switch_instance = null;
+        }
+      } else if (switch_value) {
+        const switch_instance_changes = dirty & /*label*/
+        4 ? get_spread_update(switch_instance_spread_levels, [
+          get_spread_object(isObject(
+            /*label*/
+            ctx2[2].props
+          ) ? (
+            /*label*/
+            ctx2[2].props
+          ) : {})
+        ]) : {};
+        switch_instance.$set(switch_instance_changes);
+      }
+    },
+    i(local) {
+      if (current) return;
+      if (switch_instance) transition_in(switch_instance.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      if (switch_instance) transition_out(switch_instance.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(switch_instance_anchor);
+      }
+      if (switch_instance) destroy_component(switch_instance, detaching);
+    }
+  };
+}
+function create_if_block_1$4(ctx) {
+  let t_value = localize$1(
+    /*label*/
+    ctx[2]
+  ) + "";
+  let t;
+  return {
+    c() {
+      t = text(t_value);
+    },
+    m(target, anchor) {
+      insert(target, t, anchor);
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*label*/
+      4 && t_value !== (t_value = localize$1(
+        /*label*/
+        ctx2[2]
+      ) + "")) set_data(t, t_value);
+    },
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(t);
+      }
+    }
+  };
+}
+function create_if_block$5(ctx) {
+  let current;
+  const default_slot_template = (
+    /*#slots*/
+    ctx[20].default
+  );
+  const default_slot = create_slot(
+    default_slot_template,
+    ctx,
+    /*$$scope*/
+    ctx[19],
+    null
+  );
+  return {
+    c() {
+      if (default_slot) default_slot.c();
+    },
+    m(target, anchor) {
+      if (default_slot) {
+        default_slot.m(target, anchor);
+      }
+      current = true;
+    },
+    p(ctx2, dirty) {
+      if (default_slot) {
+        if (default_slot.p && (!current || dirty & /*$$scope*/
+        524288)) {
+          update_slot_base(
+            default_slot,
+            default_slot_template,
+            ctx2,
+            /*$$scope*/
+            ctx2[19],
+            !current ? get_all_dirty_from_scope(
+              /*$$scope*/
+              ctx2[19]
+            ) : get_slot_changes(
+              default_slot_template,
+              /*$$scope*/
+              ctx2[19],
+              dirty,
+              null
+            ),
+            null
+          );
         }
       }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(default_slot, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(default_slot, local);
+      current = false;
+    },
+    d(detaching) {
+      if (default_slot) default_slot.d(detaching);
+    }
+  };
+}
+function create_fragment$d(ctx) {
+  let button_1;
+  let span1;
+  let span0;
+  let t;
+  let show_if;
+  let current_block_type_index;
+  let if_block1;
+  let efx_action;
+  let button_1_disabled_value;
+  let popoverTooltip_action;
+  let applyStyles_action;
+  let current;
+  let mounted;
+  let dispose;
+  let if_block0 = (
+    /*icon*/
+    ctx[1] && create_if_block_3(ctx)
+  );
+  const if_block_creators = [create_if_block$5, create_if_block_1$4, create_if_block_2$2];
+  const if_blocks = [];
+  function select_block_type_1(ctx2, dirty) {
+    if (dirty & /*label*/
+    4) show_if = null;
+    if (
+      /*$$slots*/
+      ctx2[13].default
+    ) return 0;
+    if (typeof /*label*/
+    ctx2[2] === "string") return 1;
+    if (show_if == null) show_if = !!TJSSvelte.config.isConfigEmbed(
+      /*label*/
+      ctx2[2]
+    );
+    if (show_if) return 2;
+    return -1;
+  }
+  if (~(current_block_type_index = select_block_type_1(ctx, -1))) {
+    if_block1 = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
+  }
+  return {
+    c() {
+      button_1 = element("button");
+      span1 = element("span");
+      span0 = element("span");
+      if (if_block0) if_block0.c();
+      t = space();
+      if (if_block1) if_block1.c();
+      attr(span0, "class", "tjs-form-button-span svelte-FOU-1n18i9o");
+      attr(span1, "class", "tjs-form-button-efx svelte-FOU-1n18i9o");
+      attr(button_1, "class", "tjs-form-button svelte-FOU-1n18i9o");
+      button_1.disabled = button_1_disabled_value = !/*enabled*/
+      ctx[0];
+    },
+    m(target, anchor) {
+      insert(target, button_1, anchor);
+      append(button_1, span1);
+      append(span1, span0);
+      if (if_block0) if_block0.m(span0, null);
+      append(span0, t);
+      if (~current_block_type_index) {
+        if_blocks[current_block_type_index].m(span0, null);
+      }
+      ctx[24](span1);
+      current = true;
       if (!mounted) {
         dispose = [
+          action_destroyer(efx_action = /*efx*/
+          ctx[6].call(null, span1, { enabled: (
+            /*enabled*/
+            ctx[0]
+          ) })),
           listen(
-            input,
-            "input",
-            /*input_handler*/
-            ctx[1]
+            button_1,
+            "click",
+            /*onClick*/
+            ctx[9]
           ),
-          listen(button, "click", function() {
-            if (is_function(
-              /*sharedProps*/
-              ctx[0].clearFilter
-            )) ctx[0].clearFilter.apply(this, arguments);
-          })
+          listen(
+            button_1,
+            "contextmenu",
+            /*onContextMenuPress*/
+            ctx[10]
+          ),
+          listen(
+            button_1,
+            "keydown",
+            /*onKeydown*/
+            ctx[11]
+          ),
+          listen(
+            button_1,
+            "keyup",
+            /*onKeyup*/
+            ctx[12]
+          ),
+          listen(
+            button_1,
+            "click",
+            /*click_handler*/
+            ctx[21]
+          ),
+          listen(
+            button_1,
+            "contextmenu",
+            /*contextmenu_handler*/
+            ctx[22]
+          ),
+          listen(
+            button_1,
+            "press",
+            /*press_handler*/
+            ctx[23]
+          ),
+          action_destroyer(popoverTooltip_action = popoverTooltip.call(null, button_1, {
+            tooltip: (
+              /*tooltip*/
+              ctx[3]
+            ),
+            direction: (
+              /*tooltipDirection*/
+              ctx[4]
+            )
+          })),
+          action_destroyer(applyStyles_action = applyStyles.call(
+            null,
+            button_1,
+            /*styles*/
+            ctx[5]
+          ))
         ];
         mounted = true;
       }
     },
-    p(new_ctx, [dirty]) {
-      ctx = new_ctx;
-      if (dirty & /*sharedProps*/
-      1 && input_value_value !== (input_value_value = /*sharedProps*/
-      ctx[0].filterText) && input.value !== input_value_value) {
-        input.value = input_value_value;
+    p(ctx2, [dirty]) {
+      if (
+        /*icon*/
+        ctx2[1]
+      ) {
+        if (if_block0) {
+          if_block0.p(ctx2, dirty);
+        } else {
+          if_block0 = create_if_block_3(ctx2);
+          if_block0.c();
+          if_block0.m(span0, t);
+        }
+      } else if (if_block0) {
+        if_block0.d(1);
+        if_block0 = null;
       }
-      if (dirty & /*sharedProps*/
-      1 && input_placeholder_value !== (input_placeholder_value = /*sharedProps*/
-      ctx[0].localize("FilterInventory"))) {
-        attr(input, "placeholder", input_placeholder_value);
+      let previous_block_index = current_block_type_index;
+      current_block_type_index = select_block_type_1(ctx2, dirty);
+      if (current_block_type_index === previous_block_index) {
+        if (~current_block_type_index) {
+          if_blocks[current_block_type_index].p(ctx2, dirty);
+        }
+      } else {
+        if (if_block1) {
+          group_outros();
+          transition_out(if_blocks[previous_block_index], 1, 1, () => {
+            if_blocks[previous_block_index] = null;
+          });
+          check_outros();
+        }
+        if (~current_block_type_index) {
+          if_block1 = if_blocks[current_block_type_index];
+          if (!if_block1) {
+            if_block1 = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx2);
+            if_block1.c();
+          } else {
+            if_block1.p(ctx2, dirty);
+          }
+          transition_in(if_block1, 1);
+          if_block1.m(span0, null);
+        } else {
+          if_block1 = null;
+        }
       }
-      if (dirty & /*sharedProps*/
-      1) {
+      if (efx_action && is_function(efx_action.update) && dirty & /*enabled*/
+      1) efx_action.update.call(null, { enabled: (
+        /*enabled*/
+        ctx2[0]
+      ) });
+      if (!current || dirty & /*enabled*/
+      1 && button_1_disabled_value !== (button_1_disabled_value = !/*enabled*/
+      ctx2[0])) {
+        button_1.disabled = button_1_disabled_value;
+      }
+      if (popoverTooltip_action && is_function(popoverTooltip_action.update) && dirty & /*tooltip, tooltipDirection*/
+      24) popoverTooltip_action.update.call(null, {
+        tooltip: (
+          /*tooltip*/
+          ctx2[3]
+        ),
+        direction: (
+          /*tooltipDirection*/
+          ctx2[4]
+        )
+      });
+      if (applyStyles_action && is_function(applyStyles_action.update) && dirty & /*styles*/
+      32) applyStyles_action.update.call(
+        null,
+        /*styles*/
+        ctx2[5]
+      );
+    },
+    i(local) {
+      if (current) return;
+      transition_in(if_block1);
+      current = true;
+    },
+    o(local) {
+      transition_out(if_block1);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(button_1);
+      }
+      if (if_block0) if_block0.d();
+      if (~current_block_type_index) {
+        if_blocks[current_block_type_index].d();
+      }
+      ctx[24](null);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function instance$d($$self, $$props, $$invalidate) {
+  let { $$slots: slots = {}, $$scope } = $$props;
+  const $$slots = compute_slots(slots);
+  let { button = void 0 } = $$props;
+  let { enabled = void 0 } = $$props;
+  let { icon = void 0 } = $$props;
+  let { label = void 0 } = $$props;
+  let { tooltip = void 0 } = $$props;
+  let { tooltipDirection = void 0 } = $$props;
+  let { styles = void 0 } = $$props;
+  let { keyCode = void 0 } = $$props;
+  let { efx = void 0 } = $$props;
+  let { onPress = void 0 } = $$props;
+  let { onContextMenu = void 0 } = $$props;
+  let { clickPropagate = void 0 } = $$props;
+  const dispatch2 = createEventDispatcher();
+  const s_EFX_DEFAULT = () => void 0;
+  let efxEl;
+  let iconType;
+  function onClick(event) {
+    if (event.detail === 0) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
+    if (typeof onPress === "function") {
+      onPress({ event });
+    }
+    dispatch2("press", { event });
+    if (!clickPropagate) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+  function onContextMenuPress(event) {
+    if (typeof onContextMenu === "function") {
+      if (efxEl) {
+        efxEl.dispatchEvent(new MouseEvent("contextmenu"));
+      }
+      onContextMenu({ event });
+    }
+    if (!clickPropagate) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+  function onKeydown(event) {
+    if (event.code === keyCode) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (event.code === "Enter" || event.code === "Space") {
+      event.preventDefault();
+    }
+  }
+  function onKeyup(event) {
+    if (event.code === keyCode) {
+      if (efxEl) {
+        efxEl.dispatchEvent(new KeyboardEvent(event.type, { key: event.key, code: event.code }));
+      }
+      if (typeof onPress === "function") {
+        onPress({ event });
+      }
+      dispatch2("press", { event });
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+  function click_handler(event) {
+    bubble.call(this, $$self, event);
+  }
+  function contextmenu_handler(event) {
+    bubble.call(this, $$self, event);
+  }
+  function press_handler(event) {
+    bubble.call(this, $$self, event);
+  }
+  function span1_binding($$value) {
+    binding_callbacks[$$value ? "unshift" : "push"](() => {
+      efxEl = $$value;
+      $$invalidate(7, efxEl);
+    });
+  }
+  $$self.$$set = ($$props2) => {
+    if ("button" in $$props2) $$invalidate(18, button = $$props2.button);
+    if ("enabled" in $$props2) $$invalidate(0, enabled = $$props2.enabled);
+    if ("icon" in $$props2) $$invalidate(1, icon = $$props2.icon);
+    if ("label" in $$props2) $$invalidate(2, label = $$props2.label);
+    if ("tooltip" in $$props2) $$invalidate(3, tooltip = $$props2.tooltip);
+    if ("tooltipDirection" in $$props2) $$invalidate(4, tooltipDirection = $$props2.tooltipDirection);
+    if ("styles" in $$props2) $$invalidate(5, styles = $$props2.styles);
+    if ("keyCode" in $$props2) $$invalidate(14, keyCode = $$props2.keyCode);
+    if ("efx" in $$props2) $$invalidate(6, efx = $$props2.efx);
+    if ("onPress" in $$props2) $$invalidate(15, onPress = $$props2.onPress);
+    if ("onContextMenu" in $$props2) $$invalidate(16, onContextMenu = $$props2.onContextMenu);
+    if ("clickPropagate" in $$props2) $$invalidate(17, clickPropagate = $$props2.clickPropagate);
+    if ("$$scope" in $$props2) $$invalidate(19, $$scope = $$props2.$$scope);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*button, enabled*/
+    262145) {
+      $$invalidate(0, enabled = isObject(button) && typeof button.enabled === "boolean" ? button.enabled : typeof enabled === "boolean" ? enabled : true);
+    }
+    if ($$self.$$.dirty & /*button, icon*/
+    262146) {
+      $$invalidate(1, icon = isObject(button) && typeof button.icon === "string" ? button.icon : typeof icon === "string" ? icon : void 0);
+    }
+    if ($$self.$$.dirty & /*button, label*/
+    262148) {
+      $$invalidate(2, label = isObject(button) && (typeof button.label === "string" || TJSSvelte.config.isConfigEmbed(button.label)) ? button.label : typeof label === "string" || TJSSvelte.config.isConfigEmbed(label) ? label : void 0);
+    }
+    if ($$self.$$.dirty & /*button, tooltip*/
+    262152) {
+      $$invalidate(3, tooltip = isObject(button) && typeof button.tooltip === "string" ? button.tooltip : typeof tooltip === "string" ? tooltip : void 0);
+    }
+    if ($$self.$$.dirty & /*button, tooltipDirection*/
+    262160) {
+      $$invalidate(4, tooltipDirection = isObject(button) && typeof button.tooltipDirection === "string" ? button.tooltipDirection : typeof tooltipDirection === "string" ? tooltipDirection : void 0);
+    }
+    if ($$self.$$.dirty & /*button, styles*/
+    262176) {
+      $$invalidate(5, styles = isObject(button) && isObject(button.styles) ? button.styles : isObject(styles) ? styles : void 0);
+    }
+    if ($$self.$$.dirty & /*button, keyCode*/
+    278528) {
+      $$invalidate(14, keyCode = isObject(button) && typeof button.keyCode === "string" ? button.keyCode : typeof keyCode === "string" ? keyCode : "Enter");
+    }
+    if ($$self.$$.dirty & /*button, efx*/
+    262208) {
+      $$invalidate(6, efx = isObject(button) && typeof button.efx === "function" ? button.efx : typeof efx === "function" ? efx : s_EFX_DEFAULT);
+    }
+    if ($$self.$$.dirty & /*button, onPress*/
+    294912) {
+      $$invalidate(15, onPress = isObject(button) && typeof button.onPress === "function" ? button.onPress : typeof onPress === "function" ? onPress : void 0);
+    }
+    if ($$self.$$.dirty & /*button, onContextMenu*/
+    327680) {
+      $$invalidate(16, onContextMenu = isObject(button) && typeof button.onContextMenu === "function" ? button.onContextMenu : typeof onContextMenu === "function" ? onContextMenu : void 0);
+    }
+    if ($$self.$$.dirty & /*button, clickPropagate*/
+    393216) {
+      $$invalidate(17, clickPropagate = isObject(button) && typeof button.clickPropagate === "boolean" ? button.clickPropagate : typeof clickPropagate === "boolean" ? clickPropagate : false);
+    }
+    if ($$self.$$.dirty & /*icon*/
+    2) {
+      {
+        const result = AssetValidator.parseMedia({
+          url: icon,
+          mediaTypes: AssetValidator.MediaTypes.img_svg
+        });
+        $$invalidate(8, iconType = result.valid ? result.elementType : "font");
+      }
+    }
+  };
+  return [
+    enabled,
+    icon,
+    label,
+    tooltip,
+    tooltipDirection,
+    styles,
+    efx,
+    efxEl,
+    iconType,
+    onClick,
+    onContextMenuPress,
+    onKeydown,
+    onKeyup,
+    $$slots,
+    keyCode,
+    onPress,
+    onContextMenu,
+    clickPropagate,
+    button,
+    $$scope,
+    slots,
+    click_handler,
+    contextmenu_handler,
+    press_handler,
+    span1_binding
+  ];
+}
+class TJSButton extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$d, create_fragment$d, safe_not_equal, {
+      button: 18,
+      enabled: 0,
+      icon: 1,
+      label: 2,
+      tooltip: 3,
+      tooltipDirection: 4,
+      styles: 5,
+      keyCode: 14,
+      efx: 6,
+      onPress: 15,
+      onContextMenu: 16,
+      clickPropagate: 17
+    });
+  }
+}
+class TJSSlotLabelUtil {
+  /**
+   * Test if the given label is valid data / prop for the TJSSlotLabel component.
+   */
+  static isValid(label) {
+    return typeof label === "string" || TJSSvelte.config.isConfigEmbed(label);
+  }
+}
+function create_else_block$2(ctx) {
+  let current;
+  const default_slot_template = (
+    /*#slots*/
+    ctx[4].default
+  );
+  const default_slot = create_slot(
+    default_slot_template,
+    ctx,
+    /*$$scope*/
+    ctx[3],
+    null
+  );
+  return {
+    c() {
+      if (default_slot) default_slot.c();
+    },
+    m(target, anchor) {
+      if (default_slot) {
+        default_slot.m(target, anchor);
+      }
+      current = true;
+    },
+    p(ctx2, dirty) {
+      if (default_slot) {
+        if (default_slot.p && (!current || dirty & /*$$scope*/
+        8)) {
+          update_slot_base(
+            default_slot,
+            default_slot_template,
+            ctx2,
+            /*$$scope*/
+            ctx2[3],
+            !current ? get_all_dirty_from_scope(
+              /*$$scope*/
+              ctx2[3]
+            ) : get_slot_changes(
+              default_slot_template,
+              /*$$scope*/
+              ctx2[3],
+              dirty,
+              null
+            ),
+            null
+          );
+        }
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(default_slot, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(default_slot, local);
+      current = false;
+    },
+    d(detaching) {
+      if (default_slot) default_slot.d(detaching);
+    }
+  };
+}
+function create_if_block$4(ctx) {
+  let label_1;
+  let show_if;
+  let current_block_type_index;
+  let if_block;
+  let t;
+  let current;
+  const if_block_creators = [create_if_block_1$3, create_if_block_2$1];
+  const if_blocks = [];
+  function select_block_type_1(ctx2, dirty) {
+    if (dirty & /*label*/
+    1) show_if = null;
+    if (typeof /*label*/
+    ctx2[0] === "string") return 0;
+    if (show_if == null) show_if = !!TJSSvelte.config.isConfigEmbed(
+      /*label*/
+      ctx2[0]
+    );
+    if (show_if) return 1;
+    return -1;
+  }
+  if (~(current_block_type_index = select_block_type_1(ctx, -1))) {
+    if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
+  }
+  const default_slot_template = (
+    /*#slots*/
+    ctx[4].default
+  );
+  const default_slot = create_slot(
+    default_slot_template,
+    ctx,
+    /*$$scope*/
+    ctx[3],
+    null
+  );
+  return {
+    c() {
+      label_1 = element("label");
+      if (if_block) if_block.c();
+      t = space();
+      if (default_slot) default_slot.c();
+      attr(label_1, "class", "tjs-slot-label svelte-FOU-xv9zdb");
+    },
+    m(target, anchor) {
+      insert(target, label_1, anchor);
+      if (~current_block_type_index) {
+        if_blocks[current_block_type_index].m(label_1, null);
+      }
+      append(label_1, t);
+      if (default_slot) {
+        default_slot.m(label_1, null);
+      }
+      current = true;
+    },
+    p(ctx2, dirty) {
+      let previous_block_index = current_block_type_index;
+      current_block_type_index = select_block_type_1(ctx2, dirty);
+      if (current_block_type_index === previous_block_index) {
+        if (~current_block_type_index) {
+          if_blocks[current_block_type_index].p(ctx2, dirty);
+        }
+      } else {
+        if (if_block) {
+          group_outros();
+          transition_out(if_blocks[previous_block_index], 1, 1, () => {
+            if_blocks[previous_block_index] = null;
+          });
+          check_outros();
+        }
+        if (~current_block_type_index) {
+          if_block = if_blocks[current_block_type_index];
+          if (!if_block) {
+            if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx2);
+            if_block.c();
+          } else {
+            if_block.p(ctx2, dirty);
+          }
+          transition_in(if_block, 1);
+          if_block.m(label_1, t);
+        } else {
+          if_block = null;
+        }
+      }
+      if (default_slot) {
+        if (default_slot.p && (!current || dirty & /*$$scope*/
+        8)) {
+          update_slot_base(
+            default_slot,
+            default_slot_template,
+            ctx2,
+            /*$$scope*/
+            ctx2[3],
+            !current ? get_all_dirty_from_scope(
+              /*$$scope*/
+              ctx2[3]
+            ) : get_slot_changes(
+              default_slot_template,
+              /*$$scope*/
+              ctx2[3],
+              dirty,
+              null
+            ),
+            null
+          );
+        }
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(if_block);
+      transition_in(default_slot, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(if_block);
+      transition_out(default_slot, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(label_1);
+      }
+      if (~current_block_type_index) {
+        if_blocks[current_block_type_index].d();
+      }
+      if (default_slot) default_slot.d(detaching);
+    }
+  };
+}
+function create_if_block_2$1(ctx) {
+  let switch_instance;
+  let switch_instance_anchor;
+  let current;
+  const switch_instance_spread_levels = [
+    isObject(
+      /*label*/
+      ctx[0].props
+    ) ? (
+      /*label*/
+      ctx[0].props
+    ) : {},
+    { enabled: (
+      /*enabled*/
+      ctx[1]
+    ) }
+  ];
+  var switch_value = (
+    /*label*/
+    ctx[0].class
+  );
+  function switch_props(ctx2, dirty) {
+    let switch_instance_props = {};
+    for (let i = 0; i < switch_instance_spread_levels.length; i += 1) {
+      switch_instance_props = assign(switch_instance_props, switch_instance_spread_levels[i]);
+    }
+    if (dirty !== void 0 && dirty & /*label, enabled*/
+    3) {
+      switch_instance_props = assign(switch_instance_props, get_spread_update(switch_instance_spread_levels, [
+        dirty & /*label*/
+        1 && get_spread_object(isObject(
+          /*label*/
+          ctx2[0].props
+        ) ? (
+          /*label*/
+          ctx2[0].props
+        ) : {}),
+        dirty & /*enabled*/
+        2 && { enabled: (
+          /*enabled*/
+          ctx2[1]
+        ) }
+      ]));
+    }
+    return { props: switch_instance_props };
+  }
+  if (switch_value) {
+    switch_instance = construct_svelte_component(switch_value, switch_props(ctx));
+  }
+  return {
+    c() {
+      if (switch_instance) create_component(switch_instance.$$.fragment);
+      switch_instance_anchor = empty();
+    },
+    m(target, anchor) {
+      if (switch_instance) mount_component(switch_instance, target, anchor);
+      insert(target, switch_instance_anchor, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*label*/
+      1 && switch_value !== (switch_value = /*label*/
+      ctx2[0].class)) {
+        if (switch_instance) {
+          group_outros();
+          const old_component = switch_instance;
+          transition_out(old_component.$$.fragment, 1, 0, () => {
+            destroy_component(old_component, 1);
+          });
+          check_outros();
+        }
+        if (switch_value) {
+          switch_instance = construct_svelte_component(switch_value, switch_props(ctx2, dirty));
+          create_component(switch_instance.$$.fragment);
+          transition_in(switch_instance.$$.fragment, 1);
+          mount_component(switch_instance, switch_instance_anchor.parentNode, switch_instance_anchor);
+        } else {
+          switch_instance = null;
+        }
+      } else if (switch_value) {
+        const switch_instance_changes = dirty & /*label, enabled*/
+        3 ? get_spread_update(switch_instance_spread_levels, [
+          dirty & /*label*/
+          1 && get_spread_object(isObject(
+            /*label*/
+            ctx2[0].props
+          ) ? (
+            /*label*/
+            ctx2[0].props
+          ) : {}),
+          dirty & /*enabled*/
+          2 && { enabled: (
+            /*enabled*/
+            ctx2[1]
+          ) }
+        ]) : {};
+        switch_instance.$set(switch_instance_changes);
+      }
+    },
+    i(local) {
+      if (current) return;
+      if (switch_instance) transition_in(switch_instance.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      if (switch_instance) transition_out(switch_instance.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(switch_instance_anchor);
+      }
+      if (switch_instance) destroy_component(switch_instance, detaching);
+    }
+  };
+}
+function create_if_block_1$3(ctx) {
+  let span;
+  let t_value = localize$1(
+    /*label*/
+    ctx[0]
+  ) + "";
+  let t;
+  return {
+    c() {
+      span = element("span");
+      t = text(t_value);
+      attr(span, "class", "tjs-slot-label-span svelte-FOU-xv9zdb");
+      toggle_class(
+        span,
+        "is-pointer",
+        /*isPointer*/
+        ctx[2]
+      );
+      toggle_class(span, "disabled", !/*enabled*/
+      ctx[1]);
+    },
+    m(target, anchor) {
+      insert(target, span, anchor);
+      append(span, t);
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*label*/
+      1 && t_value !== (t_value = localize$1(
+        /*label*/
+        ctx2[0]
+      ) + "")) set_data(t, t_value);
+      if (dirty & /*isPointer*/
+      4) {
+        toggle_class(
+          span,
+          "is-pointer",
+          /*isPointer*/
+          ctx2[2]
+        );
+      }
+      if (dirty & /*enabled*/
+      2) {
+        toggle_class(span, "disabled", !/*enabled*/
+        ctx2[1]);
+      }
+    },
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(span);
+      }
+    }
+  };
+}
+function create_fragment$c(ctx) {
+  let current_block_type_index;
+  let if_block;
+  let if_block_anchor;
+  let current;
+  const if_block_creators = [create_if_block$4, create_else_block$2];
+  const if_blocks = [];
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*label*/
+      ctx2[0]
+    ) return 0;
+    return 1;
+  }
+  current_block_type_index = select_block_type(ctx);
+  if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
+  return {
+    c() {
+      if_block.c();
+      if_block_anchor = empty();
+    },
+    m(target, anchor) {
+      if_blocks[current_block_type_index].m(target, anchor);
+      insert(target, if_block_anchor, anchor);
+      current = true;
+    },
+    p(ctx2, [dirty]) {
+      let previous_block_index = current_block_type_index;
+      current_block_type_index = select_block_type(ctx2);
+      if (current_block_type_index === previous_block_index) {
+        if_blocks[current_block_type_index].p(ctx2, dirty);
+      } else {
+        group_outros();
+        transition_out(if_blocks[previous_block_index], 1, 1, () => {
+          if_blocks[previous_block_index] = null;
+        });
+        check_outros();
+        if_block = if_blocks[current_block_type_index];
+        if (!if_block) {
+          if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx2);
+          if_block.c();
+        } else {
+          if_block.p(ctx2, dirty);
+        }
+        transition_in(if_block, 1);
+        if_block.m(if_block_anchor.parentNode, if_block_anchor);
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(if_block);
+      current = true;
+    },
+    o(local) {
+      transition_out(if_block);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(if_block_anchor);
+      }
+      if_blocks[current_block_type_index].d(detaching);
+    }
+  };
+}
+function instance$c($$self, $$props, $$invalidate) {
+  let { $$slots: slots = {}, $$scope } = $$props;
+  let { label = void 0 } = $$props;
+  let { enabled = void 0 } = $$props;
+  let { isPointer = void 0 } = $$props;
+  $$self.$$set = ($$props2) => {
+    if ("label" in $$props2) $$invalidate(0, label = $$props2.label);
+    if ("enabled" in $$props2) $$invalidate(1, enabled = $$props2.enabled);
+    if ("isPointer" in $$props2) $$invalidate(2, isPointer = $$props2.isPointer);
+    if ("$$scope" in $$props2) $$invalidate(3, $$scope = $$props2.$$scope);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*label*/
+    1) {
+      $$invalidate(0, label = TJSSlotLabelUtil.isValid(label) ? label : void 0);
+    }
+    if ($$self.$$.dirty & /*label, enabled*/
+    3) {
+      $$invalidate(1, enabled = isObject(label) && typeof label.enabled === "boolean" ? label.enabled : typeof enabled === "boolean" ? enabled : true);
+    }
+    if ($$self.$$.dirty & /*label, isPointer*/
+    5) {
+      $$invalidate(2, isPointer = isObject(label) && typeof label.isPointer === "boolean" ? label.isPointer : typeof isPointer === "boolean" ? isPointer : false);
+    }
+  };
+  return [label, enabled, isPointer, $$scope, slots];
+}
+class TJSSlotLabel extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$c, create_fragment$c, safe_not_equal, { label: 0, enabled: 1, isPointer: 2 });
+  }
+}
+function create_default_slot$7(ctx) {
+  let div;
+  let input_1;
+  let input_1_disabled_value;
+  let applyStyles_action;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      div = element("div");
+      input_1 = element("input");
+      attr(input_1, "class", "tjs-input svelte-FOU-1voocge");
+      attr(input_1, "type", "checkbox");
+      input_1.disabled = input_1_disabled_value = !/*enabled*/
+      ctx[0];
+      input_1.readOnly = /*readonly*/
+      ctx[2];
+      attr(div, "class", "tjs-input-container svelte-FOU-1voocge");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      append(div, input_1);
+      input_1.checked = /*$store*/
+      ctx[6];
+      if (!mounted) {
+        dispose = [
+          listen(
+            input_1,
+            "change",
+            /*input_1_change_handler*/
+            ctx[10]
+          ),
+          listen(
+            input_1,
+            "pointerdown",
+            /*pointerdown_handler_1*/
+            ctx[9]
+          ),
+          action_destroyer(
+            /*efx*/
+            ctx[5].call(null, div)
+          ),
+          action_destroyer(applyStyles_action = applyStyles.call(
+            null,
+            div,
+            /*styles*/
+            ctx[4]
+          )),
+          listen(
+            div,
+            "pointerdown",
+            /*pointerdown_handler*/
+            ctx[8]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*enabled*/
+      1 && input_1_disabled_value !== (input_1_disabled_value = !/*enabled*/
+      ctx2[0])) {
+        input_1.disabled = input_1_disabled_value;
+      }
+      if (dirty & /*readonly*/
+      4) {
+        input_1.readOnly = /*readonly*/
+        ctx2[2];
+      }
+      if (dirty & /*$store*/
+      64) {
+        input_1.checked = /*$store*/
+        ctx2[6];
+      }
+      if (applyStyles_action && is_function(applyStyles_action.update) && dirty & /*styles*/
+      16) applyStyles_action.update.call(
+        null,
+        /*styles*/
+        ctx2[4]
+      );
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_fragment$b(ctx) {
+  let tjsslotlabel;
+  let current;
+  tjsslotlabel = new TJSSlotLabel({
+    props: {
+      label: (
+        /*label*/
+        ctx[1]
+      ),
+      enabled: (
+        /*enabled*/
+        ctx[0]
+      ),
+      isPointer: true,
+      $$slots: { default: [create_default_slot$7] },
+      $$scope: { ctx }
+    }
+  });
+  return {
+    c() {
+      create_component(tjsslotlabel.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(tjsslotlabel, target, anchor);
+      current = true;
+    },
+    p(ctx2, [dirty]) {
+      const tjsslotlabel_changes = {};
+      if (dirty & /*label*/
+      2) tjsslotlabel_changes.label = /*label*/
+      ctx2[1];
+      if (dirty & /*enabled*/
+      1) tjsslotlabel_changes.enabled = /*enabled*/
+      ctx2[0];
+      if (dirty & /*$$scope, styles, enabled, readonly, $store*/
+      2133) {
+        tjsslotlabel_changes.$$scope = { dirty, ctx: ctx2 };
+      }
+      tjsslotlabel.$set(tjsslotlabel_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tjsslotlabel.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tjsslotlabel.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(tjsslotlabel, detaching);
+    }
+  };
+}
+function instance$b($$self, $$props, $$invalidate) {
+  let $store, $$unsubscribe_store = noop, $$subscribe_store = () => ($$unsubscribe_store(), $$unsubscribe_store = subscribe(store, ($$value) => $$invalidate(6, $store = $$value)), store);
+  $$self.$$.on_destroy.push(() => $$unsubscribe_store());
+  let { input = void 0 } = $$props;
+  let { enabled = void 0 } = $$props;
+  let { label = void 0 } = $$props;
+  let { readonly = void 0 } = $$props;
+  let { store = void 0 } = $$props;
+  $$subscribe_store();
+  let { styles = void 0 } = $$props;
+  let { efx = void 0 } = $$props;
+  function pointerdown_handler(event) {
+    bubble.call(this, $$self, event);
+  }
+  function pointerdown_handler_1(event) {
+    bubble.call(this, $$self, event);
+  }
+  function input_1_change_handler() {
+    $store = this.checked;
+    store.set($store);
+  }
+  $$self.$$set = ($$props2) => {
+    if ("input" in $$props2) $$invalidate(7, input = $$props2.input);
+    if ("enabled" in $$props2) $$invalidate(0, enabled = $$props2.enabled);
+    if ("label" in $$props2) $$invalidate(1, label = $$props2.label);
+    if ("readonly" in $$props2) $$invalidate(2, readonly = $$props2.readonly);
+    if ("store" in $$props2) $$subscribe_store($$invalidate(3, store = $$props2.store));
+    if ("styles" in $$props2) $$invalidate(4, styles = $$props2.styles);
+    if ("efx" in $$props2) $$invalidate(5, efx = $$props2.efx);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*input, enabled*/
+    129) {
+      $$invalidate(0, enabled = isObject(input) && typeof input.enabled === "boolean" ? input.enabled : typeof enabled === "boolean" ? enabled : true);
+    }
+    if ($$self.$$.dirty & /*input, label*/
+    130) {
+      $$invalidate(1, label = isObject(input) && TJSSlotLabelUtil.isValid(input.label) ? input.label : TJSSlotLabelUtil.isValid(label) ? label : void 0);
+    }
+    if ($$self.$$.dirty & /*input, readonly*/
+    132) {
+      $$invalidate(2, readonly = isObject(input) && typeof input.readonly === "boolean" ? input.readonly : typeof readonly === "boolean" ? readonly : false);
+    }
+    if ($$self.$$.dirty & /*input, store*/
+    136) {
+      $$subscribe_store($$invalidate(3, store = isObject(input) && isMinimalWritableStore(input.store) ? input.store : isMinimalWritableStore(store) ? store : writable(void 0)));
+    }
+    if ($$self.$$.dirty & /*input, styles*/
+    144) {
+      $$invalidate(4, styles = isObject(input) && isObject(input.styles) ? input.styles : isObject(styles) ? styles : void 0);
+    }
+    if ($$self.$$.dirty & /*input, efx*/
+    160) {
+      $$invalidate(5, efx = isObject(input) && typeof input.efx === "function" ? input.efx : typeof efx === "function" ? efx : () => {
+      });
+    }
+  };
+  return [
+    enabled,
+    label,
+    readonly,
+    store,
+    styles,
+    efx,
+    $store,
+    input,
+    pointerdown_handler,
+    pointerdown_handler_1,
+    input_1_change_handler
+  ];
+}
+class TJSInputCheckbox extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$b, create_fragment$b, safe_not_equal, {
+      input: 7,
+      enabled: 0,
+      label: 1,
+      readonly: 2,
+      store: 3,
+      styles: 4,
+      efx: 5
+    });
+  }
+}
+function create_default_slot$6(ctx) {
+  let div;
+  let input_1;
+  let input_1_disabled_value;
+  let applyStyles_action;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      div = element("div");
+      input_1 = element("input");
+      attr(input_1, "class", "tjs-input svelte-FOU-1prd8ph");
+      attr(input_1, "type", "number");
+      attr(
+        input_1,
+        "max",
+        /*max*/
+        ctx[2]
+      );
+      attr(
+        input_1,
+        "min",
+        /*min*/
+        ctx[3]
+      );
+      attr(
+        input_1,
+        "step",
+        /*step*/
+        ctx[6]
+      );
+      input_1.disabled = input_1_disabled_value = !/*enabled*/
+      ctx[0];
+      attr(
+        input_1,
+        "placeholder",
+        /*placeholder*/
+        ctx[4]
+      );
+      input_1.readOnly = /*readonly*/
+      ctx[5];
+      toggle_class(
+        input_1,
+        "inner-spin-button",
+        /*localOptions*/
+        ctx[11].innerSpinButton
+      );
+      toggle_class(input_1, "is-value-invalid", !/*$storeIsValid*/
+      ctx[13]);
+      attr(div, "class", "tjs-input-container svelte-FOU-1prd8ph");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      append(div, input_1);
+      ctx[20](input_1);
+      set_input_value(
+        input_1,
+        /*$store*/
+        ctx[14]
+      );
+      if (!mounted) {
+        dispose = [
+          listen(
+            input_1,
+            "input",
+            /*input_1_input_handler*/
+            ctx[21]
+          ),
+          listen(
+            input_1,
+            "focusin",
+            /*onFocusIn*/
+            ctx[15]
+          ),
+          listen(
+            input_1,
+            "keydown",
+            /*onKeyDown*/
+            ctx[16]
+          ),
+          action_destroyer(
+            /*efx*/
+            ctx[10].call(null, div)
+          ),
+          action_destroyer(applyStyles_action = applyStyles.call(
+            null,
+            div,
+            /*styles*/
+            ctx[9]
+          )),
+          listen(
+            div,
+            "pointerdown",
+            /*pointerdown_handler*/
+            ctx[19]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*max*/
+      4) {
+        attr(
+          input_1,
+          "max",
+          /*max*/
+          ctx2[2]
+        );
+      }
+      if (dirty & /*min*/
+      8) {
+        attr(
+          input_1,
+          "min",
+          /*min*/
+          ctx2[3]
+        );
+      }
+      if (dirty & /*step*/
+      64) {
+        attr(
+          input_1,
+          "step",
+          /*step*/
+          ctx2[6]
+        );
+      }
+      if (dirty & /*enabled*/
+      1 && input_1_disabled_value !== (input_1_disabled_value = !/*enabled*/
+      ctx2[0])) {
+        input_1.disabled = input_1_disabled_value;
+      }
+      if (dirty & /*placeholder*/
+      16) {
+        attr(
+          input_1,
+          "placeholder",
+          /*placeholder*/
+          ctx2[4]
+        );
+      }
+      if (dirty & /*readonly*/
+      32) {
+        input_1.readOnly = /*readonly*/
+        ctx2[5];
+      }
+      if (dirty & /*$store*/
+      16384 && to_number(input_1.value) !== /*$store*/
+      ctx2[14]) {
+        set_input_value(
+          input_1,
+          /*$store*/
+          ctx2[14]
+        );
+      }
+      if (dirty & /*localOptions*/
+      2048) {
+        toggle_class(
+          input_1,
+          "inner-spin-button",
+          /*localOptions*/
+          ctx2[11].innerSpinButton
+        );
+      }
+      if (dirty & /*$storeIsValid*/
+      8192) {
+        toggle_class(input_1, "is-value-invalid", !/*$storeIsValid*/
+        ctx2[13]);
+      }
+      if (applyStyles_action && is_function(applyStyles_action.update) && dirty & /*styles*/
+      512) applyStyles_action.update.call(
+        null,
+        /*styles*/
+        ctx2[9]
+      );
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      ctx[20](null);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_fragment$a(ctx) {
+  let tjsslotlabel;
+  let current;
+  tjsslotlabel = new TJSSlotLabel({
+    props: {
+      label: (
+        /*label*/
+        ctx[1]
+      ),
+      enabled: (
+        /*enabled*/
+        ctx[0]
+      ),
+      $$slots: { default: [create_default_slot$6] },
+      $$scope: { ctx }
+    }
+  });
+  return {
+    c() {
+      create_component(tjsslotlabel.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(tjsslotlabel, target, anchor);
+      current = true;
+    },
+    p(ctx2, [dirty]) {
+      const tjsslotlabel_changes = {};
+      if (dirty & /*label*/
+      2) tjsslotlabel_changes.label = /*label*/
+      ctx2[1];
+      if (dirty & /*enabled*/
+      1) tjsslotlabel_changes.enabled = /*enabled*/
+      ctx2[0];
+      if (dirty & /*$$scope, styles, max, min, step, enabled, placeholder, readonly, inputEl, $store, localOptions, $storeIsValid*/
+      8419965) {
+        tjsslotlabel_changes.$$scope = { dirty, ctx: ctx2 };
+      }
+      tjsslotlabel.$set(tjsslotlabel_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tjsslotlabel.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tjsslotlabel.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(tjsslotlabel, detaching);
+    }
+  };
+}
+function instance$a($$self, $$props, $$invalidate) {
+  let $storeIsValid, $$unsubscribe_storeIsValid = noop, $$subscribe_storeIsValid = () => ($$unsubscribe_storeIsValid(), $$unsubscribe_storeIsValid = subscribe(storeIsValid, ($$value) => $$invalidate(13, $storeIsValid = $$value)), storeIsValid);
+  let $store, $$unsubscribe_store = noop, $$subscribe_store = () => ($$unsubscribe_store(), $$unsubscribe_store = subscribe(store, ($$value) => $$invalidate(14, $store = $$value)), store);
+  $$self.$$.on_destroy.push(() => $$unsubscribe_storeIsValid());
+  $$self.$$.on_destroy.push(() => $$unsubscribe_store());
+  let { input = void 0 } = $$props;
+  let { enabled = void 0 } = $$props;
+  let { label = void 0 } = $$props;
+  let { options = void 0 } = $$props;
+  let { max = void 0 } = $$props;
+  let { min = void 0 } = $$props;
+  let { placeholder = void 0 } = $$props;
+  let { readonly = void 0 } = $$props;
+  let { step = void 0 } = $$props;
+  let { store = void 0 } = $$props;
+  $$subscribe_store();
+  let { storeIsValid = void 0 } = $$props;
+  $$subscribe_storeIsValid();
+  let { styles = void 0 } = $$props;
+  let { efx = void 0 } = $$props;
+  const localOptions = {
+    blurOnEnterKey: true,
+    blurOnEscKey: false,
+    cancelOnEscKey: false,
+    innerSpinButton: false
+  };
+  let inputEl;
+  let initialValue;
+  function onFocusIn() {
+    if (localOptions.cancelOnEscKey) {
+      initialValue = inputEl.value === "" ? null : globalThis.parseFloat(inputEl.value);
+    }
+  }
+  function onKeyDown(event) {
+    if (localOptions.blurOnEnterKey && event.code === "Enter") {
+      event.preventDefault();
+      event.stopPropagation();
+      initialValue = void 0;
+      inputEl.blur();
+      return;
+    }
+    if (event.code === "Escape") {
+      if (localOptions.cancelOnEscKey && (initialValue === null || typeof initialValue === "number")) {
+        store.set(initialValue);
+      }
+      if (localOptions.blurOnEscKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        initialValue = void 0;
+        inputEl.blur();
+      }
+    }
+  }
+  function pointerdown_handler(event) {
+    bubble.call(this, $$self, event);
+  }
+  function input_1_binding($$value) {
+    binding_callbacks[$$value ? "unshift" : "push"](() => {
+      inputEl = $$value;
+      $$invalidate(12, inputEl);
+    });
+  }
+  function input_1_input_handler() {
+    $store = to_number(this.value);
+    store.set($store);
+  }
+  $$self.$$set = ($$props2) => {
+    if ("input" in $$props2) $$invalidate(18, input = $$props2.input);
+    if ("enabled" in $$props2) $$invalidate(0, enabled = $$props2.enabled);
+    if ("label" in $$props2) $$invalidate(1, label = $$props2.label);
+    if ("options" in $$props2) $$invalidate(17, options = $$props2.options);
+    if ("max" in $$props2) $$invalidate(2, max = $$props2.max);
+    if ("min" in $$props2) $$invalidate(3, min = $$props2.min);
+    if ("placeholder" in $$props2) $$invalidate(4, placeholder = $$props2.placeholder);
+    if ("readonly" in $$props2) $$invalidate(5, readonly = $$props2.readonly);
+    if ("step" in $$props2) $$invalidate(6, step = $$props2.step);
+    if ("store" in $$props2) $$subscribe_store($$invalidate(7, store = $$props2.store));
+    if ("storeIsValid" in $$props2) $$subscribe_storeIsValid($$invalidate(8, storeIsValid = $$props2.storeIsValid));
+    if ("styles" in $$props2) $$invalidate(9, styles = $$props2.styles);
+    if ("efx" in $$props2) $$invalidate(10, efx = $$props2.efx);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*input, enabled*/
+    262145) {
+      $$invalidate(0, enabled = isObject(input) && typeof input.enabled === "boolean" ? input.enabled : typeof enabled === "boolean" ? enabled : true);
+    }
+    if ($$self.$$.dirty & /*input, label*/
+    262146) {
+      $$invalidate(1, label = isObject(input) && TJSSlotLabelUtil.isValid(input.label) ? input.label : TJSSlotLabelUtil.isValid(label) ? label : void 0);
+    }
+    if ($$self.$$.dirty & /*input, readonly*/
+    262176) {
+      $$invalidate(5, readonly = isObject(input) && typeof input.readonly === "boolean" ? input.readonly : typeof readonly === "boolean" ? readonly : false);
+    }
+    if ($$self.$$.dirty & /*input, options, readonly*/
+    393248) {
+      {
+        $$invalidate(17, options = isObject(input) && isObject(input.options) ? input.options : isObject(options) ? options : {});
+        if (typeof options?.blurOnEnterKey === "boolean") {
+          $$invalidate(11, localOptions.blurOnEnterKey = options.blurOnEnterKey, localOptions);
+        }
+        if (typeof options?.blurOnEscKey === "boolean") {
+          $$invalidate(11, localOptions.blurOnEscKey = options.blurOnEscKey, localOptions);
+        }
+        if (typeof options?.cancelOnEscKey === "boolean") {
+          $$invalidate(11, localOptions.cancelOnEscKey = options.cancelOnEscKey, localOptions);
+        }
+        if (typeof options?.innerSpinButton === "boolean") {
+          $$invalidate(11, localOptions.innerSpinButton = options.innerSpinButton && !readonly, localOptions);
+        }
+      }
+    }
+    if ($$self.$$.dirty & /*input, max*/
+    262148) {
+      $$invalidate(2, max = isObject(input) && typeof input.max === "number" ? input.max : typeof max === "number" ? max : void 0);
+    }
+    if ($$self.$$.dirty & /*input, min*/
+    262152) {
+      $$invalidate(3, min = isObject(input) && typeof input.min === "number" ? input.min : typeof min === "number" ? min : void 0);
+    }
+    if ($$self.$$.dirty & /*input, placeholder*/
+    262160) {
+      $$invalidate(4, placeholder = isObject(input) && typeof input.placeholder === "string" ? localize$1(input.placeholder) : typeof placeholder === "string" ? localize$1(placeholder) : void 0);
+    }
+    if ($$self.$$.dirty & /*input, step*/
+    262208) {
+      $$invalidate(6, step = isObject(input) && typeof input.step === "number" ? input.step : typeof step === "number" ? step : void 0);
+    }
+    if ($$self.$$.dirty & /*input, store*/
+    262272) {
+      $$subscribe_store($$invalidate(7, store = isObject(input) && isMinimalWritableStore(input.store) ? input.store : isMinimalWritableStore(store) ? store : writable(void 0)));
+    }
+    if ($$self.$$.dirty & /*input, storeIsValid*/
+    262400) {
+      $$subscribe_storeIsValid($$invalidate(8, storeIsValid = isObject(input) && isReadableStore(input.storeIsValid) ? input.storeIsValid : isReadableStore(storeIsValid) ? storeIsValid : writable(true)));
+    }
+    if ($$self.$$.dirty & /*input, styles*/
+    262656) {
+      $$invalidate(9, styles = isObject(input) && isObject(input.styles) ? input.styles : isObject(styles) ? styles : void 0);
+    }
+    if ($$self.$$.dirty & /*input, efx*/
+    263168) {
+      $$invalidate(10, efx = isObject(input) && typeof input.efx === "function" ? input.efx : typeof efx === "function" ? efx : () => {
+      });
+    }
+  };
+  return [
+    enabled,
+    label,
+    max,
+    min,
+    placeholder,
+    readonly,
+    step,
+    store,
+    storeIsValid,
+    styles,
+    efx,
+    localOptions,
+    inputEl,
+    $storeIsValid,
+    $store,
+    onFocusIn,
+    onKeyDown,
+    options,
+    input,
+    pointerdown_handler,
+    input_1_binding,
+    input_1_input_handler
+  ];
+}
+class TJSInputNumber extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$a, create_fragment$a, safe_not_equal, {
+      input: 18,
+      enabled: 0,
+      label: 1,
+      options: 17,
+      max: 2,
+      min: 3,
+      placeholder: 4,
+      readonly: 5,
+      step: 6,
+      store: 7,
+      storeIsValid: 8,
+      styles: 9,
+      efx: 10
+    });
+  }
+}
+function create_default_slot$5(ctx) {
+  let div;
+  let input_1;
+  let input_1_disabled_value;
+  let applyStyles_action;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      div = element("div");
+      input_1 = element("input");
+      attr(input_1, "class", "tjs-input svelte-FOU-1k6bzm2");
+      attr(input_1, "type", "range");
+      input_1.disabled = input_1_disabled_value = !/*enabled*/
+      ctx[0];
+      attr(
+        input_1,
+        "min",
+        /*min*/
+        ctx[3]
+      );
+      attr(
+        input_1,
+        "max",
+        /*max*/
+        ctx[2]
+      );
+      input_1.readOnly = /*readonly*/
+      ctx[4];
+      attr(
+        input_1,
+        "step",
+        /*step*/
+        ctx[5]
+      );
+      attr(div, "class", "tjs-input-container svelte-FOU-1k6bzm2");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      append(div, input_1);
+      ctx[17](input_1);
+      set_input_value(
+        input_1,
+        /*$store*/
+        ctx[10]
+      );
+      if (!mounted) {
+        dispose = [
+          listen(
+            input_1,
+            "change",
+            /*input_1_change_input_handler*/
+            ctx[18]
+          ),
+          listen(
+            input_1,
+            "input",
+            /*input_1_change_input_handler*/
+            ctx[18]
+          ),
+          listen(
+            input_1,
+            "focusin",
+            /*onFocusin*/
+            ctx[11]
+          ),
+          listen(
+            input_1,
+            "keydown",
+            /*onKeydown*/
+            ctx[12]
+          ),
+          listen(
+            input_1,
+            "pointerdown",
+            /*onPointerdown*/
+            ctx[13],
+            true
+          ),
+          action_destroyer(
+            /*efx*/
+            ctx[8].call(null, div)
+          ),
+          action_destroyer(applyStyles_action = applyStyles.call(
+            null,
+            div,
+            /*styles*/
+            ctx[7]
+          )),
+          listen(
+            div,
+            "pointerdown",
+            /*pointerdown_handler*/
+            ctx[16]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*enabled*/
+      1 && input_1_disabled_value !== (input_1_disabled_value = !/*enabled*/
+      ctx2[0])) {
+        input_1.disabled = input_1_disabled_value;
+      }
+      if (dirty & /*min*/
+      8) {
+        attr(
+          input_1,
+          "min",
+          /*min*/
+          ctx2[3]
+        );
+      }
+      if (dirty & /*max*/
+      4) {
+        attr(
+          input_1,
+          "max",
+          /*max*/
+          ctx2[2]
+        );
+      }
+      if (dirty & /*readonly*/
+      16) {
+        input_1.readOnly = /*readonly*/
+        ctx2[4];
+      }
+      if (dirty & /*step*/
+      32) {
+        attr(
+          input_1,
+          "step",
+          /*step*/
+          ctx2[5]
+        );
+      }
+      if (dirty & /*$store*/
+      1024) {
+        set_input_value(
+          input_1,
+          /*$store*/
+          ctx2[10]
+        );
+      }
+      if (applyStyles_action && is_function(applyStyles_action.update) && dirty & /*styles*/
+      128) applyStyles_action.update.call(
+        null,
+        /*styles*/
+        ctx2[7]
+      );
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      ctx[17](null);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_fragment$9(ctx) {
+  let tjsslotlabel;
+  let current;
+  tjsslotlabel = new TJSSlotLabel({
+    props: {
+      label: (
+        /*label*/
+        ctx[1]
+      ),
+      enabled: (
+        /*enabled*/
+        ctx[0]
+      ),
+      $$slots: { default: [create_default_slot$5] },
+      $$scope: { ctx }
+    }
+  });
+  return {
+    c() {
+      create_component(tjsslotlabel.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(tjsslotlabel, target, anchor);
+      current = true;
+    },
+    p(ctx2, [dirty]) {
+      const tjsslotlabel_changes = {};
+      if (dirty & /*label*/
+      2) tjsslotlabel_changes.label = /*label*/
+      ctx2[1];
+      if (dirty & /*enabled*/
+      1) tjsslotlabel_changes.enabled = /*enabled*/
+      ctx2[0];
+      if (dirty & /*$$scope, styles, enabled, min, max, readonly, step, inputEl, $store*/
+      4196029) {
+        tjsslotlabel_changes.$$scope = { dirty, ctx: ctx2 };
+      }
+      tjsslotlabel.$set(tjsslotlabel_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tjsslotlabel.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tjsslotlabel.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(tjsslotlabel, detaching);
+    }
+  };
+}
+function instance$9($$self, $$props, $$invalidate) {
+  let $store, $$unsubscribe_store = noop, $$subscribe_store = () => ($$unsubscribe_store(), $$unsubscribe_store = subscribe(store, ($$value) => $$invalidate(10, $store = $$value)), store);
+  $$self.$$.on_destroy.push(() => $$unsubscribe_store());
+  let { input = void 0 } = $$props;
+  let { enabled = void 0 } = $$props;
+  let { label = void 0 } = $$props;
+  let { options = void 0 } = $$props;
+  let { max = void 0 } = $$props;
+  let { min = void 0 } = $$props;
+  let { readonly = void 0 } = $$props;
+  let { step = void 0 } = $$props;
+  let { store = void 0 } = $$props;
+  $$subscribe_store();
+  let { styles = void 0 } = $$props;
+  let { efx = void 0 } = $$props;
+  const localOptions = {
+    blurOnEnterKey: true,
+    blurOnEscKey: false,
+    cancelOnEscKey: false
+  };
+  let inputEl;
+  let initialValue;
+  let initialPointerdownTime = 0;
+  function onFocusin() {
+    const focusTime = performance.now();
+    if (focusTime - initialPointerdownTime < 100) {
+      return;
+    }
+    initialValue = localOptions.cancelOnEscKey ? globalThis.parseFloat(inputEl.value) : void 0;
+  }
+  function onKeydown(event) {
+    if (localOptions.blurOnEnterKey && event.code === "Enter") {
+      event.preventDefault();
+      event.stopPropagation();
+      initialValue = void 0;
+      inputEl.blur();
+      return;
+    }
+    if (event.code === "Escape") {
+      if (localOptions.cancelOnEscKey && typeof initialValue === "number") {
+        store.set(initialValue);
+      }
+      if (localOptions.blurOnEscKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        initialValue = void 0;
+        inputEl.blur();
+      }
+    }
+  }
+  function onPointerdown(event) {
+    if (localOptions.cancelOnEscKey && inputEl !== CrossWindow.getActiveElement(event)) {
+      initialValue = globalThis.parseFloat(inputEl.value);
+      initialPointerdownTime = performance.now();
+    }
+  }
+  function pointerdown_handler(event) {
+    bubble.call(this, $$self, event);
+  }
+  function input_1_binding($$value) {
+    binding_callbacks[$$value ? "unshift" : "push"](() => {
+      inputEl = $$value;
+      $$invalidate(9, inputEl);
+    });
+  }
+  function input_1_change_input_handler() {
+    $store = to_number(this.value);
+    store.set($store);
+  }
+  $$self.$$set = ($$props2) => {
+    if ("input" in $$props2) $$invalidate(15, input = $$props2.input);
+    if ("enabled" in $$props2) $$invalidate(0, enabled = $$props2.enabled);
+    if ("label" in $$props2) $$invalidate(1, label = $$props2.label);
+    if ("options" in $$props2) $$invalidate(14, options = $$props2.options);
+    if ("max" in $$props2) $$invalidate(2, max = $$props2.max);
+    if ("min" in $$props2) $$invalidate(3, min = $$props2.min);
+    if ("readonly" in $$props2) $$invalidate(4, readonly = $$props2.readonly);
+    if ("step" in $$props2) $$invalidate(5, step = $$props2.step);
+    if ("store" in $$props2) $$subscribe_store($$invalidate(6, store = $$props2.store));
+    if ("styles" in $$props2) $$invalidate(7, styles = $$props2.styles);
+    if ("efx" in $$props2) $$invalidate(8, efx = $$props2.efx);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*input, enabled*/
+    32769) {
+      $$invalidate(0, enabled = isObject(input) && typeof input.enabled === "boolean" ? input.enabled : typeof enabled === "boolean" ? enabled : true);
+    }
+    if ($$self.$$.dirty & /*input, label*/
+    32770) {
+      $$invalidate(1, label = isObject(input) && TJSSlotLabelUtil.isValid(input.label) ? input.label : TJSSlotLabelUtil.isValid(label) ? label : void 0);
+    }
+    if ($$self.$$.dirty & /*input, max*/
+    32772) {
+      $$invalidate(2, max = isObject(input) && typeof input.max === "number" ? input.max : typeof max === "number" ? max : 100);
+    }
+    if ($$self.$$.dirty & /*input, min*/
+    32776) {
+      $$invalidate(3, min = isObject(input) && typeof input.min === "number" ? input.min : typeof min === "number" ? min : 0);
+    }
+    if ($$self.$$.dirty & /*input, options*/
+    49152) {
+      {
+        $$invalidate(14, options = isObject(input) && isObject(input.options) ? input.options : isObject(options) ? options : {});
+        if (typeof options?.blurOnEnterKey === "boolean") {
+          localOptions.blurOnEnterKey = options.blurOnEnterKey;
+        }
+        if (typeof options?.blurOnEscKey === "boolean") {
+          localOptions.blurOnEscKey = options.blurOnEscKey;
+        }
+        if (typeof options?.cancelOnEscKey === "boolean") {
+          localOptions.cancelOnEscKey = options.cancelOnEscKey;
+        }
+      }
+    }
+    if ($$self.$$.dirty & /*input, readonly*/
+    32784) {
+      $$invalidate(4, readonly = isObject(input) && typeof input.readonly === "boolean" ? input.readonly : typeof readonly === "boolean" ? readonly : false);
+    }
+    if ($$self.$$.dirty & /*input, step*/
+    32800) {
+      $$invalidate(5, step = isObject(input) && typeof input.step === "number" ? input.step : typeof step === "number" ? step : 1);
+    }
+    if ($$self.$$.dirty & /*input, store*/
+    32832) {
+      $$subscribe_store($$invalidate(6, store = isObject(input) && isMinimalWritableStore(input.store) ? input.store : isMinimalWritableStore(store) ? store : writable(void 0)));
+    }
+    if ($$self.$$.dirty & /*input, styles*/
+    32896) {
+      $$invalidate(7, styles = isObject(input) && isObject(input.styles) ? input.styles : isObject(styles) ? styles : void 0);
+    }
+    if ($$self.$$.dirty & /*input, efx*/
+    33024) {
+      $$invalidate(8, efx = isObject(input) && typeof input.efx === "function" ? input.efx : typeof efx === "function" ? efx : () => {
+      });
+    }
+  };
+  return [
+    enabled,
+    label,
+    max,
+    min,
+    readonly,
+    step,
+    store,
+    styles,
+    efx,
+    inputEl,
+    $store,
+    onFocusin,
+    onKeydown,
+    onPointerdown,
+    options,
+    input,
+    pointerdown_handler,
+    input_1_binding,
+    input_1_change_input_handler
+  ];
+}
+class TJSInputRange extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$9, create_fragment$9, safe_not_equal, {
+      input: 15,
+      enabled: 0,
+      label: 1,
+      options: 14,
+      max: 2,
+      min: 3,
+      readonly: 4,
+      step: 5,
+      store: 6,
+      styles: 7,
+      efx: 8
+    });
+  }
+}
+function create_default_slot$4(ctx) {
+  let tjsinputrange;
+  let t;
+  let tjsinputnumber;
+  let current;
+  tjsinputrange = new TJSInputRange({
+    props: {
+      label: false,
+      enabled: (
+        /*enabled*/
+        ctx[0]
+      ),
+      efx: (
+        /*efxRange*/
+        ctx[9]
+      ),
+      max: (
+        /*max*/
+        ctx[3]
+      ),
+      min: (
+        /*min*/
+        ctx[4]
+      ),
+      options: (
+        /*options*/
+        ctx[2]
+      ),
+      step: (
+        /*step*/
+        ctx[6]
+      ),
+      store: (
+        /*store*/
+        ctx[7]
+      ),
+      styles: (
+        /*styles*/
+        ctx[8]
+      )
+    }
+  });
+  tjsinputnumber = new TJSInputNumber({
+    props: {
+      label: false,
+      enabled: (
+        /*enabled*/
+        ctx[0]
+      ),
+      efx: (
+        /*efxNumber*/
+        ctx[10]
+      ),
+      max: (
+        /*max*/
+        ctx[3]
+      ),
+      min: (
+        /*min*/
+        ctx[4]
+      ),
+      options: (
+        /*options*/
+        ctx[2]
+      ),
+      readonly: (
+        /*readonly*/
+        ctx[5]
+      ),
+      step: (
+        /*step*/
+        ctx[6]
+      ),
+      store: (
+        /*store*/
+        ctx[7]
+      ),
+      styles: (
+        /*styles*/
+        ctx[8]
+      )
+    }
+  });
+  return {
+    c() {
+      create_component(tjsinputrange.$$.fragment);
+      t = space();
+      create_component(tjsinputnumber.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(tjsinputrange, target, anchor);
+      insert(target, t, anchor);
+      mount_component(tjsinputnumber, target, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      const tjsinputrange_changes = {};
+      if (dirty & /*enabled*/
+      1) tjsinputrange_changes.enabled = /*enabled*/
+      ctx2[0];
+      if (dirty & /*efxRange*/
+      512) tjsinputrange_changes.efx = /*efxRange*/
+      ctx2[9];
+      if (dirty & /*max*/
+      8) tjsinputrange_changes.max = /*max*/
+      ctx2[3];
+      if (dirty & /*min*/
+      16) tjsinputrange_changes.min = /*min*/
+      ctx2[4];
+      if (dirty & /*options*/
+      4) tjsinputrange_changes.options = /*options*/
+      ctx2[2];
+      if (dirty & /*step*/
+      64) tjsinputrange_changes.step = /*step*/
+      ctx2[6];
+      if (dirty & /*store*/
+      128) tjsinputrange_changes.store = /*store*/
+      ctx2[7];
+      if (dirty & /*styles*/
+      256) tjsinputrange_changes.styles = /*styles*/
+      ctx2[8];
+      tjsinputrange.$set(tjsinputrange_changes);
+      const tjsinputnumber_changes = {};
+      if (dirty & /*enabled*/
+      1) tjsinputnumber_changes.enabled = /*enabled*/
+      ctx2[0];
+      if (dirty & /*efxNumber*/
+      1024) tjsinputnumber_changes.efx = /*efxNumber*/
+      ctx2[10];
+      if (dirty & /*max*/
+      8) tjsinputnumber_changes.max = /*max*/
+      ctx2[3];
+      if (dirty & /*min*/
+      16) tjsinputnumber_changes.min = /*min*/
+      ctx2[4];
+      if (dirty & /*options*/
+      4) tjsinputnumber_changes.options = /*options*/
+      ctx2[2];
+      if (dirty & /*readonly*/
+      32) tjsinputnumber_changes.readonly = /*readonly*/
+      ctx2[5];
+      if (dirty & /*step*/
+      64) tjsinputnumber_changes.step = /*step*/
+      ctx2[6];
+      if (dirty & /*store*/
+      128) tjsinputnumber_changes.store = /*store*/
+      ctx2[7];
+      if (dirty & /*styles*/
+      256) tjsinputnumber_changes.styles = /*styles*/
+      ctx2[8];
+      tjsinputnumber.$set(tjsinputnumber_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tjsinputrange.$$.fragment, local);
+      transition_in(tjsinputnumber.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tjsinputrange.$$.fragment, local);
+      transition_out(tjsinputnumber.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(t);
+      }
+      destroy_component(tjsinputrange, detaching);
+      destroy_component(tjsinputnumber, detaching);
+    }
+  };
+}
+function create_fragment$8(ctx) {
+  let tjsslotlabel;
+  let current;
+  tjsslotlabel = new TJSSlotLabel({
+    props: {
+      label: (
+        /*label*/
+        ctx[1]
+      ),
+      enabled: (
+        /*enabled*/
+        ctx[0]
+      ),
+      $$slots: { default: [create_default_slot$4] },
+      $$scope: { ctx }
+    }
+  });
+  return {
+    c() {
+      create_component(tjsslotlabel.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(tjsslotlabel, target, anchor);
+      current = true;
+    },
+    p(ctx2, [dirty]) {
+      const tjsslotlabel_changes = {};
+      if (dirty & /*label*/
+      2) tjsslotlabel_changes.label = /*label*/
+      ctx2[1];
+      if (dirty & /*enabled*/
+      1) tjsslotlabel_changes.enabled = /*enabled*/
+      ctx2[0];
+      if (dirty & /*$$scope, enabled, efxNumber, max, min, options, readonly, step, store, styles, efxRange*/
+      6141) {
+        tjsslotlabel_changes.$$scope = { dirty, ctx: ctx2 };
+      }
+      tjsslotlabel.$set(tjsslotlabel_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tjsslotlabel.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tjsslotlabel.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(tjsslotlabel, detaching);
+    }
+  };
+}
+function instance$8($$self, $$props, $$invalidate) {
+  let { input = void 0 } = $$props;
+  let { enabled = void 0 } = $$props;
+  let { label = void 0 } = $$props;
+  let { options = void 0 } = $$props;
+  let { max = void 0 } = $$props;
+  let { min = void 0 } = $$props;
+  let { readonly = void 0 } = $$props;
+  let { step = void 0 } = $$props;
+  let { store = void 0 } = $$props;
+  let { styles = void 0 } = $$props;
+  let { efxRange = void 0 } = $$props;
+  let { efxNumber = void 0 } = $$props;
+  $$self.$$set = ($$props2) => {
+    if ("input" in $$props2) $$invalidate(11, input = $$props2.input);
+    if ("enabled" in $$props2) $$invalidate(0, enabled = $$props2.enabled);
+    if ("label" in $$props2) $$invalidate(1, label = $$props2.label);
+    if ("options" in $$props2) $$invalidate(2, options = $$props2.options);
+    if ("max" in $$props2) $$invalidate(3, max = $$props2.max);
+    if ("min" in $$props2) $$invalidate(4, min = $$props2.min);
+    if ("readonly" in $$props2) $$invalidate(5, readonly = $$props2.readonly);
+    if ("step" in $$props2) $$invalidate(6, step = $$props2.step);
+    if ("store" in $$props2) $$invalidate(7, store = $$props2.store);
+    if ("styles" in $$props2) $$invalidate(8, styles = $$props2.styles);
+    if ("efxRange" in $$props2) $$invalidate(9, efxRange = $$props2.efxRange);
+    if ("efxNumber" in $$props2) $$invalidate(10, efxNumber = $$props2.efxNumber);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*input, enabled*/
+    2049) {
+      $$invalidate(0, enabled = isObject(input) && typeof input.enabled === "boolean" ? input.enabled : typeof enabled === "boolean" ? enabled : true);
+    }
+    if ($$self.$$.dirty & /*input, label*/
+    2050) {
+      $$invalidate(1, label = isObject(input) && TJSSlotLabelUtil.isValid(input.label) ? input.label : TJSSlotLabelUtil.isValid(label) ? label : void 0);
+    }
+    if ($$self.$$.dirty & /*input, max*/
+    2056) {
+      $$invalidate(3, max = isObject(input) && typeof input.max === "number" ? input.max : typeof max === "number" ? max : 100);
+    }
+    if ($$self.$$.dirty & /*input, min*/
+    2064) {
+      $$invalidate(4, min = isObject(input) && typeof input.min === "number" ? input.min : typeof min === "number" ? min : 0);
+    }
+    if ($$self.$$.dirty & /*input, options*/
+    2052) {
+      $$invalidate(2, options = isObject(input) && isObject(input.options) ? input.options : isObject(options) ? options : {});
+    }
+    if ($$self.$$.dirty & /*input, readonly*/
+    2080) {
+      $$invalidate(5, readonly = isObject(input) && typeof input.readonly === "boolean" ? input.readonly : typeof readonly === "boolean" ? readonly : false);
+    }
+    if ($$self.$$.dirty & /*input, step*/
+    2112) {
+      $$invalidate(6, step = isObject(input) && typeof input.step === "number" ? input.step : typeof step === "number" ? step : 1);
+    }
+    if ($$self.$$.dirty & /*input, store*/
+    2176) {
+      $$invalidate(7, store = isObject(input) && isMinimalWritableStore(input.store) ? input.store : isMinimalWritableStore(store) ? store : writable(void 0));
+    }
+    if ($$self.$$.dirty & /*input, styles*/
+    2304) {
+      $$invalidate(8, styles = isObject(input) && isObject(input.styles) ? input.styles : isObject(styles) ? styles : void 0);
+    }
+    if ($$self.$$.dirty & /*input, efxNumber*/
+    3072) {
+      $$invalidate(10, efxNumber = isObject(input) && typeof input.efxNumber === "function" ? input.efxNumber : typeof efxNumber === "function" ? efxNumber : () => {
+      });
+    }
+    if ($$self.$$.dirty & /*input, efxRange*/
+    2560) {
+      $$invalidate(9, efxRange = isObject(input) && typeof input.efxRange === "function" ? input.efxRange : typeof efxRange === "function" ? efxRange : () => {
+      });
+    }
+  };
+  return [
+    enabled,
+    label,
+    options,
+    max,
+    min,
+    readonly,
+    step,
+    store,
+    styles,
+    efxRange,
+    efxNumber,
+    input
+  ];
+}
+class TJSInputRangeNumber extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$8, create_fragment$8, safe_not_equal, {
+      input: 11,
+      enabled: 0,
+      label: 1,
+      options: 2,
+      max: 3,
+      min: 4,
+      readonly: 5,
+      step: 6,
+      store: 7,
+      styles: 8,
+      efxRange: 9,
+      efxNumber: 10
+    });
+  }
+}
+function create_default_slot$3(ctx) {
+  let div;
+  let input_1;
+  let input_1_disabled_value;
+  let applyStyles_action;
+  let mounted;
+  let dispose;
+  let input_1_levels = [
+    { class: "tjs-input" },
+    { type: (
+      /*type*/
+      ctx[7]
+    ) },
+    {
+      disabled: input_1_disabled_value = !/*enabled*/
+      ctx[0]
+    },
+    { placeholder: (
+      /*placeholder*/
+      ctx[2]
+    ) },
+    { readOnly: (
+      /*readonly*/
+      ctx[3]
+    ) }
+  ];
+  let input_data = {};
+  for (let i = 0; i < input_1_levels.length; i += 1) {
+    input_data = assign(input_data, input_1_levels[i]);
+  }
+  return {
+    c() {
+      div = element("div");
+      input_1 = element("input");
+      set_attributes(input_1, input_data);
+      toggle_class(input_1, "is-value-invalid", !/*$storeIsValid*/
+      ctx[10]);
+      toggle_class(input_1, "svelte-FOU-1oqaqxw", true);
+      attr(div, "class", "tjs-input-container svelte-FOU-1oqaqxw");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      append(div, input_1);
+      if (input_1.autofocus) input_1.focus();
+      ctx[17](input_1);
+      set_input_value(
+        input_1,
+        /*$store*/
+        ctx[11]
+      );
+      if (!mounted) {
+        dispose = [
+          listen(
+            input_1,
+            "input",
+            /*input_1_input_handler*/
+            ctx[18]
+          ),
+          listen(
+            input_1,
+            "focusin",
+            /*onFocusin*/
+            ctx[12]
+          ),
+          listen(
+            input_1,
+            "keydown",
+            /*onKeydown*/
+            ctx[13]
+          ),
+          action_destroyer(
+            /*efx*/
+            ctx[8].call(null, div)
+          ),
+          action_destroyer(applyStyles_action = applyStyles.call(
+            null,
+            div,
+            /*styles*/
+            ctx[6]
+          )),
+          listen(
+            div,
+            "pointerdown",
+            /*pointerdown_handler*/
+            ctx[16]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      set_attributes(input_1, input_data = get_spread_update(input_1_levels, [
+        { class: "tjs-input" },
+        dirty & /*type*/
+        128 && { type: (
+          /*type*/
+          ctx2[7]
+        ) },
+        dirty & /*enabled*/
+        1 && input_1_disabled_value !== (input_1_disabled_value = !/*enabled*/
+        ctx2[0]) && { disabled: input_1_disabled_value },
+        dirty & /*placeholder*/
+        4 && { placeholder: (
+          /*placeholder*/
+          ctx2[2]
+        ) },
+        dirty & /*readonly*/
+        8 && { readOnly: (
+          /*readonly*/
+          ctx2[3]
+        ) }
+      ]));
+      if (dirty & /*$store*/
+      2048 && input_1.value !== /*$store*/
+      ctx2[11]) {
+        set_input_value(
+          input_1,
+          /*$store*/
+          ctx2[11]
+        );
+      }
+      toggle_class(input_1, "is-value-invalid", !/*$storeIsValid*/
+      ctx2[10]);
+      toggle_class(input_1, "svelte-FOU-1oqaqxw", true);
+      if (applyStyles_action && is_function(applyStyles_action.update) && dirty & /*styles*/
+      64) applyStyles_action.update.call(
+        null,
+        /*styles*/
+        ctx2[6]
+      );
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      ctx[17](null);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_fragment$7(ctx) {
+  let tjsslotlabel;
+  let current;
+  tjsslotlabel = new TJSSlotLabel({
+    props: {
+      label: (
+        /*label*/
+        ctx[1]
+      ),
+      enabled: (
+        /*enabled*/
+        ctx[0]
+      ),
+      $$slots: { default: [create_default_slot$3] },
+      $$scope: { ctx }
+    }
+  });
+  return {
+    c() {
+      create_component(tjsslotlabel.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(tjsslotlabel, target, anchor);
+      current = true;
+    },
+    p(ctx2, [dirty]) {
+      const tjsslotlabel_changes = {};
+      if (dirty & /*label*/
+      2) tjsslotlabel_changes.label = /*label*/
+      ctx2[1];
+      if (dirty & /*enabled*/
+      1) tjsslotlabel_changes.enabled = /*enabled*/
+      ctx2[0];
+      if (dirty & /*$$scope, styles, type, enabled, placeholder, readonly, inputEl, $store, $storeIsValid*/
+      2100941) {
+        tjsslotlabel_changes.$$scope = { dirty, ctx: ctx2 };
+      }
+      tjsslotlabel.$set(tjsslotlabel_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tjsslotlabel.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tjsslotlabel.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(tjsslotlabel, detaching);
+    }
+  };
+}
+function instance$7($$self, $$props, $$invalidate) {
+  let $storeIsValid, $$unsubscribe_storeIsValid = noop, $$subscribe_storeIsValid = () => ($$unsubscribe_storeIsValid(), $$unsubscribe_storeIsValid = subscribe(storeIsValid, ($$value) => $$invalidate(10, $storeIsValid = $$value)), storeIsValid);
+  let $store, $$unsubscribe_store = noop, $$subscribe_store = () => ($$unsubscribe_store(), $$unsubscribe_store = subscribe(store, ($$value) => $$invalidate(11, $store = $$value)), store);
+  $$self.$$.on_destroy.push(() => $$unsubscribe_storeIsValid());
+  $$self.$$.on_destroy.push(() => $$unsubscribe_store());
+  let { input = void 0 } = $$props;
+  let { enabled = void 0 } = $$props;
+  let { label = void 0 } = $$props;
+  let { options = void 0 } = $$props;
+  let { placeholder = void 0 } = $$props;
+  let { readonly = void 0 } = $$props;
+  let { store = void 0 } = $$props;
+  $$subscribe_store();
+  let { storeIsValid = void 0 } = $$props;
+  $$subscribe_storeIsValid();
+  let { styles = void 0 } = $$props;
+  let { type = void 0 } = $$props;
+  let { efx = void 0 } = $$props;
+  const localOptions = {
+    blurOnEnterKey: true,
+    blurOnEscKey: false,
+    cancelOnEscKey: false,
+    clearOnEscKey: false
+  };
+  let inputEl;
+  let initialValue;
+  function onFocusin() {
+    initialValue = localOptions.cancelOnEscKey ? inputEl.value : void 0;
+  }
+  function onKeydown(event) {
+    if (localOptions.blurOnEnterKey && event.code === "Enter") {
+      event.preventDefault();
+      event.stopPropagation();
+      initialValue = void 0;
+      inputEl.blur();
+      return;
+    }
+    if (event.code === "Escape") {
+      if (localOptions.cancelOnEscKey && typeof initialValue === "string") {
+        store.set(initialValue);
+      } else if (localOptions.clearOnEscKey) {
+        store.set("");
+        initialValue = "";
+      }
+      if (localOptions.blurOnEscKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        initialValue = void 0;
+        inputEl.blur();
+      }
+    }
+  }
+  function pointerdown_handler(event) {
+    bubble.call(this, $$self, event);
+  }
+  function input_1_binding($$value) {
+    binding_callbacks[$$value ? "unshift" : "push"](() => {
+      inputEl = $$value;
+      $$invalidate(9, inputEl);
+    });
+  }
+  function input_1_input_handler() {
+    $store = this.value;
+    store.set($store);
+  }
+  $$self.$$set = ($$props2) => {
+    if ("input" in $$props2) $$invalidate(15, input = $$props2.input);
+    if ("enabled" in $$props2) $$invalidate(0, enabled = $$props2.enabled);
+    if ("label" in $$props2) $$invalidate(1, label = $$props2.label);
+    if ("options" in $$props2) $$invalidate(14, options = $$props2.options);
+    if ("placeholder" in $$props2) $$invalidate(2, placeholder = $$props2.placeholder);
+    if ("readonly" in $$props2) $$invalidate(3, readonly = $$props2.readonly);
+    if ("store" in $$props2) $$subscribe_store($$invalidate(4, store = $$props2.store));
+    if ("storeIsValid" in $$props2) $$subscribe_storeIsValid($$invalidate(5, storeIsValid = $$props2.storeIsValid));
+    if ("styles" in $$props2) $$invalidate(6, styles = $$props2.styles);
+    if ("type" in $$props2) $$invalidate(7, type = $$props2.type);
+    if ("efx" in $$props2) $$invalidate(8, efx = $$props2.efx);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*input, type*/
+    32896) {
+      {
+        $$invalidate(7, type = isObject(input) && typeof input.type === "string" ? input.type : typeof type === "string" ? type : "text");
+        switch (type) {
+          case "email":
+          case "password":
+          case "search":
+          case "text":
+          case "url":
+            break;
+          default:
+            throw new Error(`'TJSInputText only supports text input types: 'email', 'password', 'search', 'text', 'url'.`);
+        }
+      }
+    }
+    if ($$self.$$.dirty & /*input, enabled*/
+    32769) {
+      $$invalidate(0, enabled = isObject(input) && typeof input.enabled === "boolean" ? input.enabled : typeof enabled === "boolean" ? enabled : true);
+    }
+    if ($$self.$$.dirty & /*input, label*/
+    32770) {
+      $$invalidate(1, label = isObject(input) && TJSSlotLabelUtil.isValid(input.label) ? input.label : TJSSlotLabelUtil.isValid(label) ? label : void 0);
+    }
+    if ($$self.$$.dirty & /*input, options*/
+    49152) {
+      {
+        $$invalidate(14, options = isObject(input) && isObject(input.options) ? input.options : isObject(options) ? options : {});
+        if (typeof options?.blurOnEnterKey === "boolean") {
+          localOptions.blurOnEnterKey = options.blurOnEnterKey;
+        }
+        if (typeof options?.blurOnEscKey === "boolean") {
+          localOptions.blurOnEscKey = options.blurOnEscKey;
+        }
+        if (typeof options?.cancelOnEscKey === "boolean") {
+          localOptions.cancelOnEscKey = options.cancelOnEscKey;
+        }
+        if (typeof options?.clearOnEscKey === "boolean") {
+          localOptions.clearOnEscKey = options.clearOnEscKey;
+        }
+      }
+    }
+    if ($$self.$$.dirty & /*input, placeholder*/
+    32772) {
+      $$invalidate(2, placeholder = isObject(input) && typeof input.placeholder === "string" ? localize$1(input.placeholder) : typeof placeholder === "string" ? localize$1(placeholder) : void 0);
+    }
+    if ($$self.$$.dirty & /*input, readonly*/
+    32776) {
+      $$invalidate(3, readonly = isObject(input) && typeof input.readonly === "boolean" ? input.readonly : typeof readonly === "boolean" ? readonly : false);
+    }
+    if ($$self.$$.dirty & /*input, store*/
+    32784) {
+      $$subscribe_store($$invalidate(4, store = isObject(input) && isMinimalWritableStore(input.store) ? input.store : isMinimalWritableStore(store) ? store : writable(void 0)));
+    }
+    if ($$self.$$.dirty & /*input, storeIsValid*/
+    32800) {
+      $$subscribe_storeIsValid($$invalidate(5, storeIsValid = isObject(input) && isReadableStore(input.storeIsValid) ? input.storeIsValid : isReadableStore(storeIsValid) ? storeIsValid : writable(true)));
+    }
+    if ($$self.$$.dirty & /*input, styles*/
+    32832) {
+      $$invalidate(6, styles = isObject(input) && isObject(input.styles) ? input.styles : isObject(styles) ? styles : void 0);
+    }
+    if ($$self.$$.dirty & /*input, efx*/
+    33024) {
+      $$invalidate(8, efx = isObject(input) && typeof input.efx === "function" ? input.efx : typeof efx === "function" ? efx : () => {
+      });
+    }
+  };
+  return [
+    enabled,
+    label,
+    placeholder,
+    readonly,
+    store,
+    storeIsValid,
+    styles,
+    type,
+    efx,
+    inputEl,
+    $storeIsValid,
+    $store,
+    onFocusin,
+    onKeydown,
+    options,
+    input,
+    pointerdown_handler,
+    input_1_binding,
+    input_1_input_handler
+  ];
+}
+class TJSInputText extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$7, create_fragment$7, safe_not_equal, {
+      input: 15,
+      enabled: 0,
+      label: 1,
+      options: 14,
+      placeholder: 2,
+      readonly: 3,
+      store: 4,
+      storeIsValid: 5,
+      styles: 6,
+      type: 7,
+      efx: 8
+    });
+  }
+}
+function get_each_context$3(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[14] = list[i];
+  return child_ctx;
+}
+function create_each_block$3(ctx) {
+  let option_1;
+  let t0_value = localize$1(
+    /*option*/
+    ctx[14].label ?? /*option*/
+    ctx[14].value
+  ) + "";
+  let t0;
+  let t1;
+  let option_1_value_value;
+  return {
+    c() {
+      option_1 = element("option");
+      t0 = text(t0_value);
+      t1 = space();
+      attr(option_1, "class", "tjs-select-option svelte-FOU-11gmhdq");
+      option_1.__value = option_1_value_value = /*option*/
+      ctx[14].value;
+      set_input_value(option_1, option_1.__value);
+    },
+    m(target, anchor) {
+      insert(target, option_1, anchor);
+      append(option_1, t0);
+      append(option_1, t1);
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*options*/
+      4 && t0_value !== (t0_value = localize$1(
+        /*option*/
+        ctx2[14].label ?? /*option*/
+        ctx2[14].value
+      ) + "")) set_data(t0, t0_value);
+      if (dirty & /*options*/
+      4 && option_1_value_value !== (option_1_value_value = /*option*/
+      ctx2[14].value)) {
+        option_1.__value = option_1_value_value;
+        set_input_value(option_1, option_1.__value);
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(option_1);
+      }
+    }
+  };
+}
+function create_default_slot$2(ctx) {
+  let div;
+  let select_1;
+  let select_1_disabled_value;
+  let applyStyles_action;
+  let mounted;
+  let dispose;
+  let each_value = ensure_array_like(
+    /*options*/
+    ctx[2]
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value.length; i += 1) {
+    each_blocks[i] = create_each_block$3(get_each_context$3(ctx, each_value, i));
+  }
+  return {
+    c() {
+      div = element("div");
+      select_1 = element("select");
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      attr(select_1, "class", "tjs-select svelte-FOU-11gmhdq");
+      select_1.disabled = select_1_disabled_value = !/*enabled*/
+      ctx[0];
+      if (
+        /*$store*/
+        ctx[6] === void 0
+      ) add_render_callback(() => (
+        /*select_1_change_handler*/
+        ctx[13].call(select_1)
+      ));
+      toggle_class(
+        select_1,
+        "has-efx",
+        /*efx*/
+        ctx[5] !== /*s_DEFAULT_EFX*/
+        ctx[7]
+      );
+      attr(div, "class", "tjs-select-container svelte-FOU-11gmhdq");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      append(div, select_1);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(select_1, null);
+        }
+      }
+      select_option(
+        select_1,
+        /*$store*/
+        ctx[6],
+        true
+      );
+      if (!mounted) {
+        dispose = [
+          listen(
+            select_1,
+            "change",
+            /*change_handler_1*/
+            ctx[12]
+          ),
+          listen(
+            select_1,
+            "change",
+            /*select_1_change_handler*/
+            ctx[13]
+          ),
+          listen(
+            div,
+            "change",
+            /*change_handler*/
+            ctx[10]
+          ),
+          action_destroyer(
+            /*efx*/
+            ctx[5].call(null, div)
+          ),
+          action_destroyer(applyStyles_action = applyStyles.call(
+            null,
+            div,
+            /*styles*/
+            ctx[4]
+          )),
+          listen(
+            div,
+            "pointerdown",
+            /*pointerdown_handler*/
+            ctx[11]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*options*/
+      4) {
         each_value = ensure_array_like(
-          /*sharedProps*/
-          ctx[0].items || []
+          /*options*/
+          ctx2[2]
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context$1(ctx, each_value, i);
+          const child_ctx = get_each_context$3(ctx2, each_value, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
           } else {
-            each_blocks[i] = create_each_block$1(child_ctx);
+            each_blocks[i] = create_each_block$3(child_ctx);
             each_blocks[i].c();
-            each_blocks[i].m(div1, null);
+            each_blocks[i].m(select_1, null);
           }
         }
         for (; i < each_blocks.length; i += 1) {
@@ -22615,12 +27414,39 @@ function create_fragment$2(ctx) {
         }
         each_blocks.length = each_value.length;
       }
+      if (dirty & /*enabled*/
+      1 && select_1_disabled_value !== (select_1_disabled_value = !/*enabled*/
+      ctx2[0])) {
+        select_1.disabled = select_1_disabled_value;
+      }
+      if (dirty & /*$store, options*/
+      68) {
+        select_option(
+          select_1,
+          /*$store*/
+          ctx2[6]
+        );
+      }
+      if (dirty & /*efx, s_DEFAULT_EFX*/
+      160) {
+        toggle_class(
+          select_1,
+          "has-efx",
+          /*efx*/
+          ctx2[5] !== /*s_DEFAULT_EFX*/
+          ctx2[7]
+        );
+      }
+      if (applyStyles_action && is_function(applyStyles_action.update) && dirty & /*styles*/
+      16) applyStyles_action.update.call(
+        null,
+        /*styles*/
+        ctx2[4]
+      );
     },
-    i: noop,
-    o: noop,
     d(detaching) {
       if (detaching) {
-        detach(div2);
+        detach(div);
       }
       destroy_each(each_blocks, detaching);
       mounted = false;
@@ -22628,25 +27454,1467 @@ function create_fragment$2(ctx) {
     }
   };
 }
-function instance$2($$self, $$props, $$invalidate) {
+function create_fragment$6(ctx) {
+  let tjsslotlabel;
+  let current;
+  tjsslotlabel = new TJSSlotLabel({
+    props: {
+      label: (
+        /*label*/
+        ctx[1]
+      ),
+      enabled: (
+        /*enabled*/
+        ctx[0]
+      ),
+      $$slots: { default: [create_default_slot$2] },
+      $$scope: { ctx }
+    }
+  });
+  return {
+    c() {
+      create_component(tjsslotlabel.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(tjsslotlabel, target, anchor);
+      current = true;
+    },
+    p(ctx2, [dirty]) {
+      const tjsslotlabel_changes = {};
+      if (dirty & /*label*/
+      2) tjsslotlabel_changes.label = /*label*/
+      ctx2[1];
+      if (dirty & /*enabled*/
+      1) tjsslotlabel_changes.enabled = /*enabled*/
+      ctx2[0];
+      if (dirty & /*$$scope, styles, enabled, $store, efx, options*/
+      131189) {
+        tjsslotlabel_changes.$$scope = { dirty, ctx: ctx2 };
+      }
+      tjsslotlabel.$set(tjsslotlabel_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tjsslotlabel.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tjsslotlabel.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(tjsslotlabel, detaching);
+    }
+  };
+}
+function instance$6($$self, $$props, $$invalidate) {
+  let $store, $$unsubscribe_store = noop, $$subscribe_store = () => ($$unsubscribe_store(), $$unsubscribe_store = subscribe(store, ($$value) => $$invalidate(6, $store = $$value)), store);
+  $$self.$$.on_destroy.push(() => $$unsubscribe_store());
+  let { select = void 0 } = $$props;
+  let { enabled = void 0 } = $$props;
+  let { label = void 0 } = $$props;
+  let { selected = void 0 } = $$props;
+  let { options = void 0 } = $$props;
+  let { store = void 0 } = $$props;
+  $$subscribe_store();
+  let { styles = void 0 } = $$props;
+  let { efx = void 0 } = $$props;
+  const s_DEFAULT_EFX = () => {
+  };
+  onMount(() => {
+    if (selected && store && !options.includes($store) && options.includes(selected)) {
+      store.set(selected);
+    }
+  });
+  function change_handler(event) {
+    bubble.call(this, $$self, event);
+  }
+  function pointerdown_handler(event) {
+    bubble.call(this, $$self, event);
+  }
+  function change_handler_1(event) {
+    bubble.call(this, $$self, event);
+  }
+  function select_1_change_handler() {
+    $store = select_value(this);
+    store.set($store);
+    $$invalidate(2, options), $$invalidate(9, select);
+  }
+  $$self.$$set = ($$props2) => {
+    if ("select" in $$props2) $$invalidate(9, select = $$props2.select);
+    if ("enabled" in $$props2) $$invalidate(0, enabled = $$props2.enabled);
+    if ("label" in $$props2) $$invalidate(1, label = $$props2.label);
+    if ("selected" in $$props2) $$invalidate(8, selected = $$props2.selected);
+    if ("options" in $$props2) $$invalidate(2, options = $$props2.options);
+    if ("store" in $$props2) $$subscribe_store($$invalidate(3, store = $$props2.store));
+    if ("styles" in $$props2) $$invalidate(4, styles = $$props2.styles);
+    if ("efx" in $$props2) $$invalidate(5, efx = $$props2.efx);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*select, enabled*/
+    513) {
+      $$invalidate(0, enabled = isObject(select) && typeof select.enabled === "boolean" ? select.enabled : typeof enabled === "boolean" ? enabled : true);
+    }
+    if ($$self.$$.dirty & /*select, label*/
+    514) {
+      $$invalidate(1, label = isObject(select) && TJSSlotLabelUtil.isValid(select.label) ? select.label : TJSSlotLabelUtil.isValid(label) ? label : void 0);
+    }
+    if ($$self.$$.dirty & /*select, selected*/
+    768) {
+      $$invalidate(8, selected = isObject(select) && typeof select.selected === "string" ? select.selected : typeof selected === "string" ? selected : void 0);
+    }
+    if ($$self.$$.dirty & /*select, options*/
+    516) {
+      $$invalidate(2, options = isObject(select) && Array.isArray(select.options) ? select.options : Array.isArray(options) ? options : []);
+    }
+    if ($$self.$$.dirty & /*select, store*/
+    520) {
+      $$subscribe_store($$invalidate(3, store = isObject(select) && isMinimalWritableStore(select.store) ? select.store : isMinimalWritableStore(store) ? store : writable(void 0)));
+    }
+    if ($$self.$$.dirty & /*select, styles*/
+    528) {
+      $$invalidate(4, styles = isObject(select) && isObject(select.styles) ? select.styles : isObject(styles) ? styles : void 0);
+    }
+    if ($$self.$$.dirty & /*select, efx*/
+    544) {
+      $$invalidate(5, efx = isObject(select) && typeof select.efx === "function" ? select.efx : typeof efx === "function" ? efx : s_DEFAULT_EFX);
+    }
+  };
+  return [
+    enabled,
+    label,
+    options,
+    store,
+    styles,
+    efx,
+    $store,
+    s_DEFAULT_EFX,
+    selected,
+    select,
+    change_handler,
+    pointerdown_handler,
+    change_handler_1,
+    select_1_change_handler
+  ];
+}
+class TJSSelect extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$6, create_fragment$6, safe_not_equal, {
+      select: 9,
+      enabled: 0,
+      label: 1,
+      selected: 8,
+      options: 2,
+      store: 3,
+      styles: 4,
+      efx: 5
+    });
+  }
+}
+function create_else_block$1(ctx) {
+  let switch_instance;
+  let switch_instance_anchor;
+  let current;
+  const switch_instance_spread_levels = [
+    /*passedProps*/
+    ctx[1]
+  ];
+  var switch_value = (
+    /*component*/
+    ctx[2]
+  );
+  function switch_props(ctx2, dirty) {
+    let switch_instance_props = {};
+    for (let i = 0; i < switch_instance_spread_levels.length; i += 1) {
+      switch_instance_props = assign(switch_instance_props, switch_instance_spread_levels[i]);
+    }
+    if (dirty !== void 0 && dirty & /*passedProps*/
+    2) {
+      switch_instance_props = assign(switch_instance_props, get_spread_update(switch_instance_spread_levels, [get_spread_object(
+        /*passedProps*/
+        ctx2[1]
+      )]));
+    }
+    return { props: switch_instance_props };
+  }
+  if (switch_value) {
+    switch_instance = construct_svelte_component(switch_value, switch_props(ctx));
+  }
+  return {
+    c() {
+      if (switch_instance) create_component(switch_instance.$$.fragment);
+      switch_instance_anchor = empty();
+    },
+    m(target, anchor) {
+      if (switch_instance) mount_component(switch_instance, target, anchor);
+      insert(target, switch_instance_anchor, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*component*/
+      4 && switch_value !== (switch_value = /*component*/
+      ctx2[2])) {
+        if (switch_instance) {
+          group_outros();
+          const old_component = switch_instance;
+          transition_out(old_component.$$.fragment, 1, 0, () => {
+            destroy_component(old_component, 1);
+          });
+          check_outros();
+        }
+        if (switch_value) {
+          switch_instance = construct_svelte_component(switch_value, switch_props(ctx2, dirty));
+          create_component(switch_instance.$$.fragment);
+          transition_in(switch_instance.$$.fragment, 1);
+          mount_component(switch_instance, switch_instance_anchor.parentNode, switch_instance_anchor);
+        } else {
+          switch_instance = null;
+        }
+      } else if (switch_value) {
+        const switch_instance_changes = dirty & /*passedProps*/
+        2 ? get_spread_update(switch_instance_spread_levels, [get_spread_object(
+          /*passedProps*/
+          ctx2[1]
+        )]) : {};
+        switch_instance.$set(switch_instance_changes);
+      }
+    },
+    i(local) {
+      if (current) return;
+      if (switch_instance) transition_in(switch_instance.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      if (switch_instance) transition_out(switch_instance.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(switch_instance_anchor);
+      }
+      if (switch_instance) destroy_component(switch_instance, detaching);
+    }
+  };
+}
+function create_if_block_1$2(ctx) {
+  let switch_instance;
+  let switch_instance_anchor;
+  let current;
+  const switch_instance_spread_levels = [
+    /*passedProps*/
+    ctx[1]
+  ];
+  var switch_value = (
+    /*component*/
+    ctx[2]
+  );
+  function switch_props(ctx2, dirty) {
+    let switch_instance_props = {};
+    for (let i = 0; i < switch_instance_spread_levels.length; i += 1) {
+      switch_instance_props = assign(switch_instance_props, switch_instance_spread_levels[i]);
+    }
+    if (dirty !== void 0 && dirty & /*passedProps*/
+    2) {
+      switch_instance_props = assign(switch_instance_props, get_spread_update(switch_instance_spread_levels, [get_spread_object(
+        /*passedProps*/
+        ctx2[1]
+      )]));
+    }
+    return { props: switch_instance_props };
+  }
+  if (switch_value) {
+    switch_instance = construct_svelte_component(switch_value, switch_props(ctx));
+  }
+  return {
+    c() {
+      if (switch_instance) create_component(switch_instance.$$.fragment);
+      switch_instance_anchor = empty();
+    },
+    m(target, anchor) {
+      if (switch_instance) mount_component(switch_instance, target, anchor);
+      insert(target, switch_instance_anchor, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*component*/
+      4 && switch_value !== (switch_value = /*component*/
+      ctx2[2])) {
+        if (switch_instance) {
+          group_outros();
+          const old_component = switch_instance;
+          transition_out(old_component.$$.fragment, 1, 0, () => {
+            destroy_component(old_component, 1);
+          });
+          check_outros();
+        }
+        if (switch_value) {
+          switch_instance = construct_svelte_component(switch_value, switch_props(ctx2, dirty));
+          create_component(switch_instance.$$.fragment);
+          transition_in(switch_instance.$$.fragment, 1);
+          mount_component(switch_instance, switch_instance_anchor.parentNode, switch_instance_anchor);
+        } else {
+          switch_instance = null;
+        }
+      } else if (switch_value) {
+        const switch_instance_changes = dirty & /*passedProps*/
+        2 ? get_spread_update(switch_instance_spread_levels, [get_spread_object(
+          /*passedProps*/
+          ctx2[1]
+        )]) : {};
+        switch_instance.$set(switch_instance_changes);
+      }
+    },
+    i(local) {
+      if (current) return;
+      if (switch_instance) transition_in(switch_instance.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      if (switch_instance) transition_out(switch_instance.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(switch_instance_anchor);
+      }
+      if (switch_instance) destroy_component(switch_instance, detaching);
+    }
+  };
+}
+function create_if_block$3(ctx) {
+  let switch_instance;
+  let switch_instance_anchor;
+  let current;
+  const switch_instance_spread_levels = [
+    /*passedProps*/
+    ctx[1]
+  ];
+  var switch_value = (
+    /*component*/
+    ctx[2]
+  );
+  function switch_props(ctx2, dirty) {
+    let switch_instance_props = {};
+    for (let i = 0; i < switch_instance_spread_levels.length; i += 1) {
+      switch_instance_props = assign(switch_instance_props, switch_instance_spread_levels[i]);
+    }
+    if (dirty !== void 0 && dirty & /*passedProps*/
+    2) {
+      switch_instance_props = assign(switch_instance_props, get_spread_update(switch_instance_spread_levels, [get_spread_object(
+        /*passedProps*/
+        ctx2[1]
+      )]));
+    }
+    return { props: switch_instance_props };
+  }
+  if (switch_value) {
+    switch_instance = construct_svelte_component(switch_value, switch_props(ctx));
+    switch_instance.$on(
+      "click",
+      /*click_handler*/
+      ctx[4]
+    );
+    switch_instance.$on(
+      "press",
+      /*press_handler*/
+      ctx[5]
+    );
+    switch_instance.$on(
+      "contextmenu",
+      /*contextmenu_handler*/
+      ctx[6]
+    );
+  }
+  return {
+    c() {
+      if (switch_instance) create_component(switch_instance.$$.fragment);
+      switch_instance_anchor = empty();
+    },
+    m(target, anchor) {
+      if (switch_instance) mount_component(switch_instance, target, anchor);
+      insert(target, switch_instance_anchor, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*component*/
+      4 && switch_value !== (switch_value = /*component*/
+      ctx2[2])) {
+        if (switch_instance) {
+          group_outros();
+          const old_component = switch_instance;
+          transition_out(old_component.$$.fragment, 1, 0, () => {
+            destroy_component(old_component, 1);
+          });
+          check_outros();
+        }
+        if (switch_value) {
+          switch_instance = construct_svelte_component(switch_value, switch_props(ctx2, dirty));
+          switch_instance.$on(
+            "click",
+            /*click_handler*/
+            ctx2[4]
+          );
+          switch_instance.$on(
+            "press",
+            /*press_handler*/
+            ctx2[5]
+          );
+          switch_instance.$on(
+            "contextmenu",
+            /*contextmenu_handler*/
+            ctx2[6]
+          );
+          create_component(switch_instance.$$.fragment);
+          transition_in(switch_instance.$$.fragment, 1);
+          mount_component(switch_instance, switch_instance_anchor.parentNode, switch_instance_anchor);
+        } else {
+          switch_instance = null;
+        }
+      } else if (switch_value) {
+        const switch_instance_changes = dirty & /*passedProps*/
+        2 ? get_spread_update(switch_instance_spread_levels, [get_spread_object(
+          /*passedProps*/
+          ctx2[1]
+        )]) : {};
+        switch_instance.$set(switch_instance_changes);
+      }
+    },
+    i(local) {
+      if (current) return;
+      if (switch_instance) transition_in(switch_instance.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      if (switch_instance) transition_out(switch_instance.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(switch_instance_anchor);
+      }
+      if (switch_instance) destroy_component(switch_instance, detaching);
+    }
+  };
+}
+function create_fragment$5(ctx) {
+  let current_block_type_index;
+  let if_block;
+  let if_block_anchor;
+  let current;
+  const if_block_creators = [create_if_block$3, create_if_block_1$2, create_else_block$1];
+  const if_blocks = [];
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*type*/
+      ctx2[0] === "button"
+    ) return 0;
+    if (
+      /*type*/
+      ctx2[0] === "select"
+    ) return 1;
+    return 2;
+  }
+  current_block_type_index = select_block_type(ctx);
+  if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
+  return {
+    c() {
+      if_block.c();
+      if_block_anchor = empty();
+    },
+    m(target, anchor) {
+      if_blocks[current_block_type_index].m(target, anchor);
+      insert(target, if_block_anchor, anchor);
+      current = true;
+    },
+    p(ctx2, [dirty]) {
+      let previous_block_index = current_block_type_index;
+      current_block_type_index = select_block_type(ctx2);
+      if (current_block_type_index === previous_block_index) {
+        if_blocks[current_block_type_index].p(ctx2, dirty);
+      } else {
+        group_outros();
+        transition_out(if_blocks[previous_block_index], 1, 1, () => {
+          if_blocks[previous_block_index] = null;
+        });
+        check_outros();
+        if_block = if_blocks[current_block_type_index];
+        if (!if_block) {
+          if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx2);
+          if_block.c();
+        } else {
+          if_block.p(ctx2, dirty);
+        }
+        transition_in(if_block, 1);
+        if_block.m(if_block_anchor.parentNode, if_block_anchor);
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(if_block);
+      current = true;
+    },
+    o(local) {
+      transition_out(if_block);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(if_block_anchor);
+      }
+      if_blocks[current_block_type_index].d(detaching);
+    }
+  };
+}
+function instance$5($$self, $$props, $$invalidate) {
+  let { input = void 0 } = $$props;
+  let { type = void 0 } = $$props;
+  let component;
+  let passedProps = {};
+  function click_handler(event) {
+    bubble.call(this, $$self, event);
+  }
+  function press_handler(event) {
+    bubble.call(this, $$self, event);
+  }
+  function contextmenu_handler(event) {
+    bubble.call(this, $$self, event);
+  }
+  $$self.$$set = ($$new_props) => {
+    $$invalidate(7, $$props = assign(assign({}, $$props), exclude_internal_props($$new_props)));
+    if ("input" in $$new_props) $$invalidate(3, input = $$new_props.input);
+    if ("type" in $$new_props) $$invalidate(0, type = $$new_props.type);
+  };
+  $$self.$$.update = () => {
+    {
+      $$invalidate(1, passedProps = Object.assign({}, $$props));
+      delete passedProps.type;
+      $$invalidate(0, type = isObject(input) && typeof input.type === "string" ? input.type : typeof type === "string" ? type : "text");
+      switch (type) {
+        case "button":
+          $$invalidate(1, passedProps.button = input, passedProps);
+          delete passedProps.input;
+          $$invalidate(2, component = TJSButton);
+          break;
+        case "checkbox":
+          $$invalidate(2, component = TJSInputCheckbox);
+          break;
+        case "number":
+          $$invalidate(2, component = TJSInputNumber);
+          break;
+        case "range":
+          $$invalidate(2, component = TJSInputRange);
+          break;
+        case "range-number":
+          $$invalidate(2, component = TJSInputRangeNumber);
+          break;
+        case "email":
+        case "password":
+        case "search":
+        case "text":
+        case "url":
+          $$invalidate(2, component = TJSInputText);
+          break;
+        case "select":
+          $$invalidate(1, passedProps.select = input, passedProps);
+          delete passedProps.input;
+          $$invalidate(2, component = TJSSelect);
+          break;
+        default:
+          throw new Error(`'TJSInput' currently only supports the following input types: 'button', 'checkbox', 'email', 'number', 'password', 'range', 'range-number', 'search', 'select', 'text', and 'url'.`);
+      }
+    }
+  };
+  $$props = exclude_internal_props($$props);
+  return [
+    type,
+    passedProps,
+    component,
+    input,
+    click_handler,
+    press_handler,
+    contextmenu_handler
+  ];
+}
+class TJSInput extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$5, create_fragment$5, safe_not_equal, { input: 3, type: 0 });
+  }
+}
+function createFilterQuery(properties, { caseSensitive = false, store } = {}) {
+  let keyword = "";
+  let regex;
+  if (store !== void 0 && !isWritableStore(store)) {
+    throw new TypeError(`createFilterQuery error: 'store' is not a writable store.`);
+  }
+  const storeKeyword = store ? store : writable(keyword);
+  if (store) {
+    const current = get_store_value(store);
+    if (typeof current === "string") {
+      keyword = Strings.normalize(current);
+      regex = new RegExp(RegExp.escape(keyword), caseSensitive ? "" : "i");
+    } else {
+      store.set(keyword);
+    }
+  }
+  function filterQuery(data) {
+    if (keyword === "" || !regex) {
+      return true;
+    }
+    if (isIterable(properties)) {
+      for (const property of properties) {
+        const value2 = data?.[property];
+        if (value2 !== void 0) {
+          if (typeof value2 === "boolean") {
+            if (value2.toString() === keyword) {
+              return true;
+            }
+          } else {
+            const normalizedValue = Strings.normalize(value2);
+            if (regex.test(normalizedValue)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+    const value = safeAccess(data, properties);
+    if (value !== void 0) {
+      if (typeof value === "boolean") {
+        return value.toString() === keyword;
+      }
+      const normalizedValue = Strings.normalize(value);
+      return regex.test(normalizedValue);
+    }
+    return false;
+  }
+  filterQuery.subscribe = (handler) => {
+    return storeKeyword.subscribe(handler);
+  };
+  filterQuery.set = (value) => {
+    if (Array.isArray(value)) {
+      const pattern = value.map((v) => RegExp.escape(Strings.normalize(v))).join("|");
+      keyword = value.join(", ");
+      regex = new RegExp(pattern, caseSensitive ? "" : "i");
+    } else if (typeof value === "string") {
+      keyword = Strings.normalize(value);
+      regex = new RegExp(RegExp.escape(keyword), caseSensitive ? "" : "i");
+    } else if (typeof value === "boolean") {
+      keyword = value.toString();
+      regex = new RegExp(keyword, caseSensitive ? "" : "i");
+    }
+    storeKeyword.set(keyword);
+  };
+  return filterQuery;
+}
+const get_c5_slot_changes = (dirty) => ({});
+const get_c5_slot_context = (ctx) => ({});
+const get_c4_slot_changes = (dirty) => ({});
+const get_c4_slot_context = (ctx) => ({});
+const get_c3_slot_changes = (dirty) => ({});
+const get_c3_slot_context = (ctx) => ({});
+const get_c2_slot_changes = (dirty) => ({});
+const get_c2_slot_context = (ctx) => ({});
+const get_c1_slot_changes = (dirty) => ({});
+const get_c1_slot_context = (ctx) => ({});
+function create_if_block_1$1(ctx) {
+  let div;
+  let current;
+  const c4_slot_template = (
+    /*#slots*/
+    ctx[3].c4
+  );
+  const c4_slot = create_slot(
+    c4_slot_template,
+    ctx,
+    /*$$scope*/
+    ctx[2],
+    get_c4_slot_context
+  );
+  return {
+    c() {
+      div = element("div");
+      if (c4_slot) c4_slot.c();
+      attr(div, "class", "flex2 svelte-FOU-r3vo5o");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      if (c4_slot) {
+        c4_slot.m(div, null);
+      }
+      current = true;
+    },
+    p(ctx2, dirty) {
+      if (c4_slot) {
+        if (c4_slot.p && (!current || dirty & /*$$scope*/
+        4)) {
+          update_slot_base(
+            c4_slot,
+            c4_slot_template,
+            ctx2,
+            /*$$scope*/
+            ctx2[2],
+            !current ? get_all_dirty_from_scope(
+              /*$$scope*/
+              ctx2[2]
+            ) : get_slot_changes(
+              c4_slot_template,
+              /*$$scope*/
+              ctx2[2],
+              dirty,
+              get_c4_slot_changes
+            ),
+            get_c4_slot_context
+          );
+        }
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(c4_slot, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(c4_slot, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      if (c4_slot) c4_slot.d(detaching);
+    }
+  };
+}
+function create_if_block$2(ctx) {
+  let div;
+  let current;
+  const c5_slot_template = (
+    /*#slots*/
+    ctx[3].c5
+  );
+  const c5_slot = create_slot(
+    c5_slot_template,
+    ctx,
+    /*$$scope*/
+    ctx[2],
+    get_c5_slot_context
+  );
+  return {
+    c() {
+      div = element("div");
+      if (c5_slot) c5_slot.c();
+      attr(div, "class", "actions flex right svelte-FOU-r3vo5o");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      if (c5_slot) {
+        c5_slot.m(div, null);
+      }
+      current = true;
+    },
+    p(ctx2, dirty) {
+      if (c5_slot) {
+        if (c5_slot.p && (!current || dirty & /*$$scope*/
+        4)) {
+          update_slot_base(
+            c5_slot,
+            c5_slot_template,
+            ctx2,
+            /*$$scope*/
+            ctx2[2],
+            !current ? get_all_dirty_from_scope(
+              /*$$scope*/
+              ctx2[2]
+            ) : get_slot_changes(
+              c5_slot_template,
+              /*$$scope*/
+              ctx2[2],
+              dirty,
+              get_c5_slot_changes
+            ),
+            get_c5_slot_context
+          );
+        }
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(c5_slot, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(c5_slot, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      if (c5_slot) c5_slot.d(detaching);
+    }
+  };
+}
+function create_fragment$4(ctx) {
+  let li;
+  let div0;
+  let div1;
+  let if_block0_anchor;
+  let li_class_value;
+  let current;
+  const c1_slot_template = (
+    /*#slots*/
+    ctx[3].c1
+  );
+  const c1_slot = create_slot(
+    c1_slot_template,
+    ctx,
+    /*$$scope*/
+    ctx[2],
+    get_c1_slot_context
+  );
+  const c2_slot_template = (
+    /*#slots*/
+    ctx[3].c2
+  );
+  const c2_slot = create_slot(
+    c2_slot_template,
+    ctx,
+    /*$$scope*/
+    ctx[2],
+    get_c2_slot_context
+  );
+  const c3_slot_template = (
+    /*#slots*/
+    ctx[3].c3
+  );
+  const c3_slot = create_slot(
+    c3_slot_template,
+    ctx,
+    /*$$scope*/
+    ctx[2],
+    get_c3_slot_context
+  );
+  let if_block0 = (
+    /*$$slots*/
+    ctx[1].c4 && create_if_block_1$1(ctx)
+  );
+  let if_block1 = (
+    /*$$slots*/
+    ctx[1].c5 && create_if_block$2(ctx)
+  );
+  return {
+    c() {
+      li = element("li");
+      if (c1_slot) c1_slot.c();
+      div0 = element("div");
+      if (c2_slot) c2_slot.c();
+      div1 = element("div");
+      if (c3_slot) c3_slot.c();
+      if (if_block0) if_block0.c();
+      if_block0_anchor = empty();
+      if (if_block1) if_block1.c();
+      attr(div0, "class", "flex4 left svelte-FOU-r3vo5o");
+      attr(div1, "class", "flex2 svelte-FOU-r3vo5o");
+      attr(li, "class", li_class_value = /*rowClass*/
+      ctx[0] + " flexrow justify-vertical standard-list-row svelte-FOU-r3vo5o");
+    },
+    m(target, anchor) {
+      insert(target, li, anchor);
+      if (c1_slot) {
+        c1_slot.m(li, null);
+      }
+      append(li, div0);
+      if (c2_slot) {
+        c2_slot.m(div0, null);
+      }
+      append(li, div1);
+      if (c3_slot) {
+        c3_slot.m(div1, null);
+      }
+      if (if_block0) if_block0.m(li, null);
+      append(li, if_block0_anchor);
+      if (if_block1) if_block1.m(li, null);
+      current = true;
+    },
+    p(ctx2, [dirty]) {
+      if (c1_slot) {
+        if (c1_slot.p && (!current || dirty & /*$$scope*/
+        4)) {
+          update_slot_base(
+            c1_slot,
+            c1_slot_template,
+            ctx2,
+            /*$$scope*/
+            ctx2[2],
+            !current ? get_all_dirty_from_scope(
+              /*$$scope*/
+              ctx2[2]
+            ) : get_slot_changes(
+              c1_slot_template,
+              /*$$scope*/
+              ctx2[2],
+              dirty,
+              get_c1_slot_changes
+            ),
+            get_c1_slot_context
+          );
+        }
+      }
+      if (c2_slot) {
+        if (c2_slot.p && (!current || dirty & /*$$scope*/
+        4)) {
+          update_slot_base(
+            c2_slot,
+            c2_slot_template,
+            ctx2,
+            /*$$scope*/
+            ctx2[2],
+            !current ? get_all_dirty_from_scope(
+              /*$$scope*/
+              ctx2[2]
+            ) : get_slot_changes(
+              c2_slot_template,
+              /*$$scope*/
+              ctx2[2],
+              dirty,
+              get_c2_slot_changes
+            ),
+            get_c2_slot_context
+          );
+        }
+      }
+      if (c3_slot) {
+        if (c3_slot.p && (!current || dirty & /*$$scope*/
+        4)) {
+          update_slot_base(
+            c3_slot,
+            c3_slot_template,
+            ctx2,
+            /*$$scope*/
+            ctx2[2],
+            !current ? get_all_dirty_from_scope(
+              /*$$scope*/
+              ctx2[2]
+            ) : get_slot_changes(
+              c3_slot_template,
+              /*$$scope*/
+              ctx2[2],
+              dirty,
+              get_c3_slot_changes
+            ),
+            get_c3_slot_context
+          );
+        }
+      }
+      if (
+        /*$$slots*/
+        ctx2[1].c4
+      ) {
+        if (if_block0) {
+          if_block0.p(ctx2, dirty);
+          if (dirty & /*$$slots*/
+          2) {
+            transition_in(if_block0, 1);
+          }
+        } else {
+          if_block0 = create_if_block_1$1(ctx2);
+          if_block0.c();
+          transition_in(if_block0, 1);
+          if_block0.m(li, if_block0_anchor);
+        }
+      } else if (if_block0) {
+        group_outros();
+        transition_out(if_block0, 1, 1, () => {
+          if_block0 = null;
+        });
+        check_outros();
+      }
+      if (
+        /*$$slots*/
+        ctx2[1].c5
+      ) {
+        if (if_block1) {
+          if_block1.p(ctx2, dirty);
+          if (dirty & /*$$slots*/
+          2) {
+            transition_in(if_block1, 1);
+          }
+        } else {
+          if_block1 = create_if_block$2(ctx2);
+          if_block1.c();
+          transition_in(if_block1, 1);
+          if_block1.m(li, null);
+        }
+      } else if (if_block1) {
+        group_outros();
+        transition_out(if_block1, 1, 1, () => {
+          if_block1 = null;
+        });
+        check_outros();
+      }
+      if (!current || dirty & /*rowClass*/
+      1 && li_class_value !== (li_class_value = /*rowClass*/
+      ctx2[0] + " flexrow justify-vertical standard-list-row svelte-FOU-r3vo5o")) {
+        attr(li, "class", li_class_value);
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(c1_slot, local);
+      transition_in(c2_slot, local);
+      transition_in(c3_slot, local);
+      transition_in(if_block0);
+      transition_in(if_block1);
+      current = true;
+    },
+    o(local) {
+      transition_out(c1_slot, local);
+      transition_out(c2_slot, local);
+      transition_out(c3_slot, local);
+      transition_out(if_block0);
+      transition_out(if_block1);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(li);
+      }
+      if (c1_slot) c1_slot.d(detaching);
+      if (c2_slot) c2_slot.d(detaching);
+      if (c3_slot) c3_slot.d(detaching);
+      if (if_block0) if_block0.d();
+      if (if_block1) if_block1.d();
+    }
+  };
+}
+function instance$4($$self, $$props, $$invalidate) {
+  let { $$slots: slots = {}, $$scope } = $$props;
+  const $$slots = compute_slots(slots);
+  let { rowClass = "" } = $$props;
+  $$self.$$set = ($$props2) => {
+    if ("rowClass" in $$props2) $$invalidate(0, rowClass = $$props2.rowClass);
+    if ("$$scope" in $$props2) $$invalidate(2, $$scope = $$props2.$$scope);
+  };
+  return [rowClass, $$slots, $$scope, slots];
+}
+class InventoryRow extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$4, create_fragment$4, safe_not_equal, { rowClass: 0 });
+  }
+}
+function get_each_context$2(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[9] = list[i];
+  child_ctx[11] = i;
+  return child_ctx;
+}
+function create_c1_slot(ctx) {
+  let img;
+  let img_src_value;
+  let img_alt_value;
+  return {
+    c() {
+      img = element("img");
+      attr(img, "class", "icon svelte-FOU-9iqmd3");
+      if (!src_url_equal(img.src, img_src_value = /*item*/
+      ctx[9].img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
+      attr(img, "alt", img_alt_value = /*item*/
+      ctx[9].name);
+    },
+    m(target, anchor) {
+      insert(target, img, anchor);
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*items*/
+      4 && !src_url_equal(img.src, img_src_value = /*item*/
+      ctx2[9].img || "icons/svg/mystery-man.svg")) {
+        attr(img, "src", img_src_value);
+      }
+      if (dirty & /*items*/
+      4 && img_alt_value !== (img_alt_value = /*item*/
+      ctx2[9].name)) {
+        attr(img, "alt", img_alt_value);
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(img);
+      }
+    }
+  };
+}
+function create_c2_slot(ctx) {
+  let a;
+  let t_value = (
+    /*item*/
+    ctx[9].name + ""
+  );
+  let t;
+  let mounted;
+  let dispose;
+  function keydown_handler(...args) {
+    return (
+      /*keydown_handler*/
+      ctx[4](
+        /*item*/
+        ctx[9],
+        ...args
+      )
+    );
+  }
+  return {
+    c() {
+      a = element("a");
+      t = text(t_value);
+      attr(a, "class", "stealth link");
+      attr(a, "tabindex", "0");
+      attr(a, "role", "button");
+    },
+    m(target, anchor) {
+      insert(target, a, anchor);
+      append(a, t);
+      if (!mounted) {
+        dispose = [
+          listen(a, "click", function() {
+            if (is_function(showItemSheet(
+              /*item*/
+              ctx[9]
+            ))) showItemSheet(
+              /*item*/
+              ctx[9]
+            ).apply(this, arguments);
+          }),
+          listen(a, "keydown", stop_propagation(prevent_default(keydown_handler)))
+        ];
+        mounted = true;
+      }
+    },
+    p(new_ctx, dirty) {
+      ctx = new_ctx;
+      if (dirty & /*items*/
+      4 && t_value !== (t_value = /*item*/
+      ctx[9].name + "")) set_data(t, t_value);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(a);
+      }
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_c3_slot(ctx) {
+  let span;
+  let t_value = (
+    /*item*/
+    (ctx[9].system?.quantity ?? 0) + ""
+  );
+  let t;
+  return {
+    c() {
+      span = element("span");
+      t = text(t_value);
+      attr(span, "class", "quantity svelte-FOU-9iqmd3");
+    },
+    m(target, anchor) {
+      insert(target, span, anchor);
+      append(span, t);
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*items*/
+      4 && t_value !== (t_value = /*item*/
+      (ctx2[9].system?.quantity ?? 0) + "")) set_data(t, t_value);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(span);
+      }
+    }
+  };
+}
+function create_each_block$2(ctx) {
+  let inventoryrow;
+  let current;
+  inventoryrow = new InventoryRow({
+    props: {
+      rowClass: "inventory-item",
+      $$slots: {
+        c3: [create_c3_slot],
+        c2: [create_c2_slot],
+        c1: [create_c1_slot]
+      },
+      $$scope: { ctx }
+    }
+  });
+  return {
+    c() {
+      create_component(inventoryrow.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(inventoryrow, target, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      const inventoryrow_changes = {};
+      if (dirty & /*$$scope, items*/
+      4100) {
+        inventoryrow_changes.$$scope = { dirty, ctx: ctx2 };
+      }
+      inventoryrow.$set(inventoryrow_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(inventoryrow.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(inventoryrow.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(inventoryrow, detaching);
+    }
+  };
+}
+function create_fragment$3(ctx) {
+  let div2;
+  let div0;
+  let tjsinput;
+  let button;
+  let div1;
+  let table;
+  let thead;
+  let tr;
+  let th0;
+  let th1;
+  let t1_value = (
+    /*sharedProps*/
+    ctx[0].localize("Name") + ""
+  );
+  let t1;
+  let th2;
+  let t2_value = (
+    /*sharedProps*/
+    ctx[0].localize("Quantity") + ""
+  );
+  let t2;
+  let tbody;
+  let current;
+  let mounted;
+  let dispose;
+  tjsinput = new TJSInput({ props: { input: (
+    /*input*/
+    ctx[1]
+  ) } });
+  let each_value = ensure_array_like(
+    /*items*/
+    ctx[2]
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value.length; i += 1) {
+    each_blocks[i] = create_each_block$2(get_each_context$2(ctx, each_value, i));
+  }
+  const out = (i) => transition_out(each_blocks[i], 1, 1, () => {
+    each_blocks[i] = null;
+  });
+  return {
+    c() {
+      div2 = element("div");
+      div0 = element("div");
+      create_component(tjsinput.$$.fragment);
+      button = element("button");
+      button.textContent = "Clear";
+      div1 = element("div");
+      table = element("table");
+      thead = element("thead");
+      tr = element("tr");
+      th0 = element("th");
+      th1 = element("th");
+      t1 = text(t1_value);
+      th2 = element("th");
+      t2 = text(t2_value);
+      tbody = element("tbody");
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      attr(button, "type", "button");
+      attr(div0, "class", "inventory-controls svelte-FOU-9iqmd3");
+      attr(th0, "class", "img shrink");
+      attr(th0, "scope", "col");
+      attr(th1, "class", "left expand");
+      attr(th1, "scope", "col");
+      attr(th2, "class", "fixed");
+      attr(th2, "scope", "col");
+      attr(tr, "class", "gold");
+      attr(table, "class", "borderless");
+      attr(div1, "class", "inventory-list svelte-FOU-9iqmd3");
+      attr(div2, "class", "inventory-tab svelte-FOU-9iqmd3");
+    },
+    m(target, anchor) {
+      insert(target, div2, anchor);
+      append(div2, div0);
+      mount_component(tjsinput, div0, null);
+      append(div0, button);
+      append(div2, div1);
+      append(div1, table);
+      append(table, thead);
+      append(thead, tr);
+      append(tr, th0);
+      append(tr, th1);
+      append(th1, t1);
+      append(tr, th2);
+      append(th2, t2);
+      append(table, tbody);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(tbody, null);
+        }
+      }
+      current = true;
+      if (!mounted) {
+        dispose = listen(button, "click", function() {
+          if (is_function(
+            /*sharedProps*/
+            ctx[0].clearFilter
+          )) ctx[0].clearFilter.apply(this, arguments);
+        });
+        mounted = true;
+      }
+    },
+    p(new_ctx, [dirty]) {
+      ctx = new_ctx;
+      const tjsinput_changes = {};
+      if (dirty & /*input*/
+      2) tjsinput_changes.input = /*input*/
+      ctx[1];
+      tjsinput.$set(tjsinput_changes);
+      if ((!current || dirty & /*sharedProps*/
+      1) && t1_value !== (t1_value = /*sharedProps*/
+      ctx[0].localize("Name") + "")) set_data(t1, t1_value);
+      if ((!current || dirty & /*sharedProps*/
+      1) && t2_value !== (t2_value = /*sharedProps*/
+      ctx[0].localize("Quantity") + "")) set_data(t2, t2_value);
+      if (dirty & /*items, showItemSheet, handleItemKeydown*/
+      4) {
+        each_value = ensure_array_like(
+          /*items*/
+          ctx[2]
+        );
+        let i;
+        for (i = 0; i < each_value.length; i += 1) {
+          const child_ctx = get_each_context$2(ctx, each_value, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+            transition_in(each_blocks[i], 1);
+          } else {
+            each_blocks[i] = create_each_block$2(child_ctx);
+            each_blocks[i].c();
+            transition_in(each_blocks[i], 1);
+            each_blocks[i].m(tbody, null);
+          }
+        }
+        group_outros();
+        for (i = each_value.length; i < each_blocks.length; i += 1) {
+          out(i);
+        }
+        check_outros();
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tjsinput.$$.fragment, local);
+      for (let i = 0; i < each_value.length; i += 1) {
+        transition_in(each_blocks[i]);
+      }
+      current = true;
+    },
+    o(local) {
+      transition_out(tjsinput.$$.fragment, local);
+      each_blocks = each_blocks.filter(Boolean);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        transition_out(each_blocks[i]);
+      }
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div2);
+      }
+      destroy_component(tjsinput);
+      destroy_each(each_blocks, detaching);
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function showItemSheet(item) {
+  item.sheet?.render(true);
+}
+function handleItemKeydown(item, event) {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    showItemSheet(item);
+  }
+}
+function instance$3($$self, $$props, $$invalidate) {
+  let items;
+  let $Actor;
   let { sharedProps = {} } = $$props;
-  const input_handler = (e) => sharedProps.onFilterChange?.(e.target.value);
-  const click_handler = (item) => sharedProps.openItemSheet(item);
+  const Actor2 = getContext("#doc");
+  component_subscribe($$self, Actor2, (value) => $$invalidate(5, $Actor = value));
+  const doc = new TJSDocument($Actor);
+  const nameSearch = createFilterQuery("name");
+  const input = {
+    store: nameSearch,
+    efx: rippleFocus(),
+    placeholder: "foundryvtt-shop-studio.FilterInventory",
+    type: "search",
+    id: "inventory-search"
+  };
+  const inventory = doc.embedded.create(Item, {
+    name: "inventory",
+    filters: [nameSearch],
+    sort: (a, b) => a.name.localeCompare(b.name)
+  });
+  onMount(() => {
+    const unsubscribe = nameSearch.subscribe((value) => {
+      if (sharedProps.filterText !== value) {
+        sharedProps.onFilterChange?.(value);
+      }
+    });
+    return unsubscribe;
+  });
+  const keydown_handler = (item, e) => handleItemKeydown(item, e);
   $$self.$$set = ($$props2) => {
     if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
   };
-  return [sharedProps, input_handler, click_handler];
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*sharedProps*/
+    1) {
+      if (sharedProps.filterText !== nameSearch.keyword) {
+        nameSearch.set(sharedProps.filterText || "");
+      }
+    }
+  };
+  $$invalidate(1, input.placeholder = "foundryvtt-shop-studio.FilterInventory", input);
+  $$invalidate(2, items = [...inventory]);
+  return [sharedProps, input, items, Actor2, keydown_handler];
 }
 class InventoryTab extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$2, create_fragment$2, safe_not_equal, { sharedProps: 0 });
+    init(this, options, instance$3, create_fragment$3, safe_not_equal, { sharedProps: 0 });
   }
 }
-function get_each_context(ctx, list, i) {
+function get_each_context$1(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[6] = list[i];
-  child_ctx[8] = i;
+  child_ctx[4] = list[i];
+  child_ctx[6] = i;
   return child_ctx;
 }
 function create_else_block(ctx) {
@@ -22668,7 +28936,7 @@ function create_else_block(ctx) {
     }
   };
 }
-function create_if_block(ctx) {
+function create_if_block$1(ctx) {
   let ul;
   let each_value = ensure_array_like(
     /*sharedProps*/
@@ -22676,7 +28944,7 @@ function create_if_block(ctx) {
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
+    each_blocks[i] = create_each_block$1(get_each_context$1(ctx, each_value, i));
   }
   return {
     c() {
@@ -22703,11 +28971,11 @@ function create_if_block(ctx) {
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context(ctx2, each_value, i);
+          const child_ctx = get_each_context$1(ctx2, each_value, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
           } else {
-            each_blocks[i] = create_each_block(child_ctx);
+            each_blocks[i] = create_each_block$1(child_ctx);
             each_blocks[i].c();
             each_blocks[i].m(ul, null);
           }
@@ -22726,14 +28994,14 @@ function create_if_block(ctx) {
     }
   };
 }
-function create_each_block(ctx) {
+function create_each_block$1(ctx) {
   let li;
   let span;
   let t0_value = (
     /*sharedProps*/
     ctx[0].getRollTableName(
       /*rtUuid*/
-      ctx[6]
+      ctx[4]
     ) + ""
   );
   let t0;
@@ -22743,9 +29011,9 @@ function create_each_block(ctx) {
   function click_handler() {
     return (
       /*click_handler*/
-      ctx[5](
+      ctx[3](
         /*index*/
-        ctx[8]
+        ctx[6]
       )
     );
   }
@@ -22775,7 +29043,7 @@ function create_each_block(ctx) {
       1 && t0_value !== (t0_value = /*sharedProps*/
       ctx[0].getRollTableName(
         /*rtUuid*/
-        ctx[6]
+        ctx[4]
       ) + "")) set_data(t0, t0_value);
     },
     d(detaching) {
@@ -22787,24 +29055,25 @@ function create_each_block(ctx) {
     }
   };
 }
-function create_fragment$1(ctx) {
-  let div10;
-  let div9;
+function create_fragment$2(ctx) {
+  let div8;
+  let div7;
   let label0;
   let div0;
   let span0;
   let t0_value = (
     /*sharedProps*/
-    ctx[0].localize("PricingFactor") + ""
+    ctx[0].localize("SalePriceFactor") + ""
   );
   let t0;
+  let t1;
   let strong0;
-  let t1_value = (
+  let t2_value = (
     /*sharedProps*/
     ctx[0].pricingFactor + ""
   );
-  let t1;
   let t2;
+  let t3;
   let input0;
   let input0_value_value;
   let div1;
@@ -22814,87 +29083,43 @@ function create_fragment$1(ctx) {
   let span3;
   let t6_value = (
     /*sharedProps*/
-    ctx[0].localize("PriceVariance") + ""
+    ctx[0].localize("SalePriceFactor") + ""
   );
   let t6;
-  let strong1;
-  let t7_value = (
-    /*sharedProps*/
-    ctx[0].priceVariance + ""
-  );
   let t7;
+  let strong1;
+  let t8_value = (
+    /*sharedProps*/
+    ctx[0].pricingFactor + ""
+  );
   let t8;
+  let t9;
   let input1;
   let input1_value_value;
   let div3;
   let p1;
-  let label2;
-  let div4;
-  let span6;
-  let t12_value = (
-    /*sharedProps*/
-    ctx[0].localize("Atrophy") + ""
-  );
-  let t12;
-  let strong2;
-  let t13_value = (
-    /*sharedProps*/
-    ctx[0].atrophyPercent + ""
-  );
-  let t13;
-  let t14;
-  let input2;
-  let input2_value_value;
   let div5;
-  let p2;
-  let label3;
-  let t18_value = (
-    /*sharedProps*/
-    ctx[0].localize("VariancePeriod") + ""
-  );
-  let t18;
-  let select;
-  let option0;
-  let t19_value = (
-    /*sharedProps*/
-    ctx[0].localize("Daily") + ""
-  );
-  let t19;
-  let option1;
-  let t20_value = (
-    /*sharedProps*/
-    ctx[0].localize("Weekly") + ""
-  );
-  let t20;
-  let option2;
-  let t21_value = (
-    /*sharedProps*/
-    ctx[0].localize("Monthly") + ""
-  );
-  let t21;
-  let select_value_value;
-  let div7;
   let h3;
-  let t22_value = (
+  let t12_value = (
     /*sharedProps*/
     ctx[0].localize("RollTables") + ""
   );
-  let t22;
-  let div6;
-  let p3;
-  let t23_value = (
+  let t12;
+  let div4;
+  let p2;
+  let t13_value = (
     /*sharedProps*/
     ctx[0].localize("DragRollTablesHere") + ""
   );
-  let t23;
-  let t24;
-  let div8;
+  let t13;
+  let t14;
+  let div6;
   let button0;
-  let t25_value = (
+  let t15_value = (
     /*sharedProps*/
     ctx[0].localize("ProvisionStore") + ""
   );
-  let t25;
+  let t15;
   let button1;
   let mounted;
   let dispose;
@@ -22903,77 +29128,58 @@ function create_fragment$1(ctx) {
       /*sharedProps*/
       ctx2[0].rollTables && /*sharedProps*/
       ctx2[0].rollTables.length > 0
-    ) return create_if_block;
+    ) return create_if_block$1;
     return create_else_block;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type(ctx);
   return {
     c() {
-      div10 = element("div");
-      div9 = element("div");
+      div8 = element("div");
+      div7 = element("div");
       label0 = element("label");
       div0 = element("div");
       span0 = element("span");
       t0 = text(t0_value);
+      t1 = text(" (affects all prices) ");
       strong0 = element("strong");
-      t1 = text(t1_value);
-      t2 = text("%");
+      t2 = text(t2_value);
+      t3 = text("% ");
       input0 = element("input");
       div1 = element("div");
       div1.innerHTML = `<span>50%</span><span>200%</span>`;
       p0 = element("p");
-      p0.textContent = "(affects all prices)";
+      p0.innerHTML = ``;
       label1 = element("label");
       div2 = element("div");
       span3 = element("span");
       t6 = text(t6_value);
+      t7 = text(" (affects all prices) ");
       strong1 = element("strong");
-      t7 = text(t7_value);
-      t8 = text("%");
+      t8 = text(t8_value);
+      t9 = text("% ");
       input1 = element("input");
       div3 = element("div");
-      div3.innerHTML = `<span>0%</span><span>50%</span>`;
+      div3.innerHTML = `<span>50%</span><span>200%</span>`;
       p1 = element("p");
-      p1.textContent = "(random element per item)";
-      label2 = element("label");
-      div4 = element("div");
-      span6 = element("span");
-      t12 = text(t12_value);
-      strong2 = element("strong");
-      t13 = text(t13_value);
-      t14 = text("%");
-      input2 = element("input");
+      p1.innerHTML = ``;
       div5 = element("div");
-      div5.innerHTML = `<span>0%</span><span>30%</span>`;
-      p2 = element("p");
-      p2.textContent = "(chance to remove old stock on provision)";
-      label3 = element("label");
-      t18 = text(t18_value);
-      select = element("select");
-      option0 = element("option");
-      t19 = text(t19_value);
-      option1 = element("option");
-      t20 = text(t20_value);
-      option2 = element("option");
-      t21 = text(t21_value);
-      div7 = element("div");
       h3 = element("h3");
-      t22 = text(t22_value);
-      div6 = element("div");
-      p3 = element("p");
-      t23 = text(t23_value);
-      t24 = text(" (from compendium or tables sidebar)");
+      t12 = text(t12_value);
+      div4 = element("div");
+      p2 = element("p");
+      t13 = text(t13_value);
+      t14 = text(" (from compendium or tables sidebar)");
       if_block.c();
-      div8 = element("div");
+      div6 = element("div");
       button0 = element("button");
-      t25 = text(t25_value);
+      t15 = text(t15_value);
       button1 = element("button");
       button1.textContent = "Save Settings";
       attr(div0, "class", "setting-label");
       attr(input0, "type", "range");
       input0.value = input0_value_value = /*sharedProps*/
-      ctx[0].pricingFactor;
+      ctx[0].salePriceFactor;
       attr(input0, "min", "50");
       attr(input0, "max", "200");
       attr(input0, "step", "1");
@@ -22983,101 +29189,63 @@ function create_fragment$1(ctx) {
       attr(div2, "class", "setting-label");
       attr(input1, "type", "range");
       input1.value = input1_value_value = /*sharedProps*/
-      ctx[0].priceVariance;
-      attr(input1, "min", "0");
-      attr(input1, "max", "50");
+      ctx[0].buyPriceFactor;
+      attr(input1, "min", "50");
+      attr(input1, "max", "200");
       attr(input1, "step", "1");
       attr(input1, "class", "svelte-FOU-1xuueht");
       attr(div3, "class", "setting-range");
       attr(p1, "class", "setting-help");
-      attr(div4, "class", "setting-label");
-      attr(input2, "type", "range");
-      input2.value = input2_value_value = /*sharedProps*/
-      ctx[0].atrophyPercent;
-      attr(input2, "min", "0");
-      attr(input2, "max", "30");
-      attr(input2, "step", "1");
-      attr(input2, "class", "svelte-FOU-1xuueht");
-      attr(div5, "class", "setting-range");
-      attr(p2, "class", "setting-help");
-      option0.__value = "daily";
-      set_input_value(option0, option0.__value);
-      option1.__value = "weekly";
-      set_input_value(option1, option1.__value);
-      option2.__value = "monthly";
-      set_input_value(option2, option2.__value);
-      attr(p3, "class", "drag-hint");
-      attr(div6, "class", "drag-drop-area");
-      attr(div6, "role", "region");
-      attr(div6, "aria-label", "Roll table drop zone");
-      attr(div7, "class", "rolltables-section");
+      attr(p2, "class", "drag-hint");
+      attr(div4, "class", "drag-drop-area");
+      attr(div4, "role", "region");
+      attr(div4, "aria-label", "Roll table drop zone");
+      attr(div5, "class", "rolltables-section");
       attr(button0, "class", "provision-btn");
       attr(button0, "type", "button");
       attr(button1, "class", "save-btn");
       attr(button1, "type", "button");
-      attr(div8, "class", "actions");
-      attr(div9, "class", "settings-form");
-      attr(div10, "class", "settings-tab");
+      attr(div6, "class", "actions");
+      attr(div7, "class", "settings-form");
+      attr(div8, "class", "settings-tab");
     },
     m(target, anchor) {
-      insert(target, div10, anchor);
-      append(div10, div9);
-      append(div9, label0);
+      insert(target, div8, anchor);
+      append(div8, div7);
+      append(div7, label0);
       append(label0, div0);
       append(div0, span0);
       append(span0, t0);
+      append(span0, t1);
       append(div0, strong0);
-      append(strong0, t1);
       append(strong0, t2);
+      append(strong0, t3);
       append(label0, input0);
       append(label0, div1);
       append(label0, p0);
-      append(div9, label1);
+      append(div7, label1);
       append(label1, div2);
       append(div2, span3);
       append(span3, t6);
+      append(span3, t7);
       append(div2, strong1);
-      append(strong1, t7);
       append(strong1, t8);
+      append(strong1, t9);
       append(label1, input1);
       append(label1, div3);
       append(label1, p1);
-      append(div9, label2);
-      append(label2, div4);
-      append(div4, span6);
-      append(span6, t12);
-      append(div4, strong2);
-      append(strong2, t13);
-      append(strong2, t14);
-      append(label2, input2);
-      append(label2, div5);
-      append(label2, p2);
-      append(div9, label3);
-      append(label3, t18);
-      append(label3, select);
-      append(select, option0);
-      append(option0, t19);
-      append(select, option1);
-      append(option1, t20);
-      append(select, option2);
-      append(option2, t21);
-      select_option(
-        select,
-        /*sharedProps*/
-        ctx[0].variancePeriod
-      );
-      append(div9, div7);
-      append(div7, h3);
-      append(h3, t22);
+      append(div7, div5);
+      append(div5, h3);
+      append(h3, t12);
+      append(div5, div4);
+      append(div4, p2);
+      append(p2, t13);
+      append(p2, t14);
+      if_block.m(div5, null);
       append(div7, div6);
-      append(div6, p3);
-      append(p3, t23);
-      append(p3, t24);
-      if_block.m(div7, null);
-      append(div9, div8);
-      append(div8, button0);
-      append(button0, t25);
-      append(div8, button1);
+      append(div6, button0);
+      append(button0, t15);
+      append(div6, button1);
       if (!mounted) {
         dispose = [
           listen(
@@ -23092,25 +29260,13 @@ function create_fragment$1(ctx) {
             /*input_handler_1*/
             ctx[2]
           ),
-          listen(
-            input2,
-            "input",
-            /*input_handler_2*/
-            ctx[3]
-          ),
-          listen(
-            select,
-            "change",
-            /*change_handler*/
-            ctx[4]
-          ),
-          listen(div6, "dragover", prevent_default(function() {
+          listen(div4, "dragover", prevent_default(function() {
             if (is_function(
               /*sharedProps*/
               ctx[0].handleDragOver
             )) ctx[0].handleDragOver.apply(this, arguments);
           })),
-          listen(div6, "drop", prevent_default(function() {
+          listen(div4, "drop", prevent_default(function() {
             if (is_function(
               /*sharedProps*/
               ctx[0].handleRollTableDrop
@@ -23136,64 +29292,32 @@ function create_fragment$1(ctx) {
       ctx = new_ctx;
       if (dirty & /*sharedProps*/
       1 && t0_value !== (t0_value = /*sharedProps*/
-      ctx[0].localize("PricingFactor") + "")) set_data(t0, t0_value);
+      ctx[0].localize("SalePriceFactor") + "")) set_data(t0, t0_value);
       if (dirty & /*sharedProps*/
-      1 && t1_value !== (t1_value = /*sharedProps*/
-      ctx[0].pricingFactor + "")) set_data(t1, t1_value);
+      1 && t2_value !== (t2_value = /*sharedProps*/
+      ctx[0].pricingFactor + "")) set_data(t2, t2_value);
       if (dirty & /*sharedProps*/
       1 && input0_value_value !== (input0_value_value = /*sharedProps*/
-      ctx[0].pricingFactor)) {
+      ctx[0].salePriceFactor)) {
         input0.value = input0_value_value;
       }
       if (dirty & /*sharedProps*/
       1 && t6_value !== (t6_value = /*sharedProps*/
-      ctx[0].localize("PriceVariance") + "")) set_data(t6, t6_value);
+      ctx[0].localize("SalePriceFactor") + "")) set_data(t6, t6_value);
       if (dirty & /*sharedProps*/
-      1 && t7_value !== (t7_value = /*sharedProps*/
-      ctx[0].priceVariance + "")) set_data(t7, t7_value);
+      1 && t8_value !== (t8_value = /*sharedProps*/
+      ctx[0].pricingFactor + "")) set_data(t8, t8_value);
       if (dirty & /*sharedProps*/
       1 && input1_value_value !== (input1_value_value = /*sharedProps*/
-      ctx[0].priceVariance)) {
+      ctx[0].buyPriceFactor)) {
         input1.value = input1_value_value;
       }
       if (dirty & /*sharedProps*/
       1 && t12_value !== (t12_value = /*sharedProps*/
-      ctx[0].localize("Atrophy") + "")) set_data(t12, t12_value);
+      ctx[0].localize("RollTables") + "")) set_data(t12, t12_value);
       if (dirty & /*sharedProps*/
       1 && t13_value !== (t13_value = /*sharedProps*/
-      ctx[0].atrophyPercent + "")) set_data(t13, t13_value);
-      if (dirty & /*sharedProps*/
-      1 && input2_value_value !== (input2_value_value = /*sharedProps*/
-      ctx[0].atrophyPercent)) {
-        input2.value = input2_value_value;
-      }
-      if (dirty & /*sharedProps*/
-      1 && t18_value !== (t18_value = /*sharedProps*/
-      ctx[0].localize("VariancePeriod") + "")) set_data(t18, t18_value);
-      if (dirty & /*sharedProps*/
-      1 && t19_value !== (t19_value = /*sharedProps*/
-      ctx[0].localize("Daily") + "")) set_data(t19, t19_value);
-      if (dirty & /*sharedProps*/
-      1 && t20_value !== (t20_value = /*sharedProps*/
-      ctx[0].localize("Weekly") + "")) set_data(t20, t20_value);
-      if (dirty & /*sharedProps*/
-      1 && t21_value !== (t21_value = /*sharedProps*/
-      ctx[0].localize("Monthly") + "")) set_data(t21, t21_value);
-      if (dirty & /*sharedProps*/
-      1 && select_value_value !== (select_value_value = /*sharedProps*/
-      ctx[0].variancePeriod)) {
-        select_option(
-          select,
-          /*sharedProps*/
-          ctx[0].variancePeriod
-        );
-      }
-      if (dirty & /*sharedProps*/
-      1 && t22_value !== (t22_value = /*sharedProps*/
-      ctx[0].localize("RollTables") + "")) set_data(t22, t22_value);
-      if (dirty & /*sharedProps*/
-      1 && t23_value !== (t23_value = /*sharedProps*/
-      ctx[0].localize("DragRollTablesHere") + "")) set_data(t23, t23_value);
+      ctx[0].localize("DragRollTablesHere") + "")) set_data(t13, t13_value);
       if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block) {
         if_block.p(ctx, dirty);
       } else {
@@ -23201,18 +29325,18 @@ function create_fragment$1(ctx) {
         if_block = current_block_type(ctx);
         if (if_block) {
           if_block.c();
-          if_block.m(div7, null);
+          if_block.m(div5, null);
         }
       }
       if (dirty & /*sharedProps*/
-      1 && t25_value !== (t25_value = /*sharedProps*/
-      ctx[0].localize("ProvisionStore") + "")) set_data(t25, t25_value);
+      1 && t15_value !== (t15_value = /*sharedProps*/
+      ctx[0].localize("ProvisionStore") + "")) set_data(t15, t15_value);
     },
     i: noop,
     o: noop,
     d(detaching) {
       if (detaching) {
-        detach(div10);
+        detach(div8);
       }
       if_block.d();
       mounted = false;
@@ -23220,29 +29344,20 @@ function create_fragment$1(ctx) {
     }
   };
 }
-function instance$1($$self, $$props, $$invalidate) {
+function instance$2($$self, $$props, $$invalidate) {
   let { sharedProps = {} } = $$props;
   const input_handler = (e) => sharedProps.onPricingFactorChange?.(e.target.value);
-  const input_handler_1 = (e) => sharedProps.onPriceVarianceChange?.(e.target.value);
-  const input_handler_2 = (e) => sharedProps.onAtrophyPercentChange?.(e.target.value);
-  const change_handler = (e) => sharedProps.onVariancePeriodChange?.(e.target.value);
+  const input_handler_1 = (e) => sharedProps.onPricingFactorChange?.(e.target.value);
   const click_handler = (index) => sharedProps.removeRollTable(index);
   $$self.$$set = ($$props2) => {
     if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
   };
-  return [
-    sharedProps,
-    input_handler,
-    input_handler_1,
-    input_handler_2,
-    change_handler,
-    click_handler
-  ];
+  return [sharedProps, input_handler, input_handler_1, click_handler];
 }
 class SettingsTab extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$1, create_fragment$1, safe_not_equal, { sharedProps: 0 });
+    init(this, options, instance$2, create_fragment$2, safe_not_equal, { sharedProps: 0 });
   }
 }
 const THEME_DARK = "theme-dark";
@@ -23304,14 +29419,14 @@ function observeFoundryBodyTheme(elementRoot) {
     }
   };
 }
-function create_default_slot(ctx) {
+function create_default_slot$1(ctx) {
   let section;
   let main;
   let tabs_1;
   let updating_activeTab;
   let current;
   function tabs_1_activeTab_binding(value) {
-    ctx[17](value);
+    ctx[18](value);
   }
   let tabs_1_props = {
     class: "gas-tabs",
@@ -23338,8 +29453,8 @@ function create_default_slot(ctx) {
       section = element("section");
       main = element("main");
       create_component(tabs_1.$$.fragment);
-      attr(main, "class", "shop-sheet__body svelte-FOU-1xcwi9c");
-      attr(section, "class", "shop-sheet svelte-FOU-1xcwi9c");
+      attr(main, "class", "shop-sheet__body");
+      attr(section, "class", "shop-sheet");
     },
     m(target, anchor) {
       insert(target, section, anchor);
@@ -23381,15 +29496,15 @@ function create_default_slot(ctx) {
     }
   };
 }
-function create_fragment(ctx) {
+function create_fragment$1(ctx) {
   let applicationshell;
   let updating_elementRoot;
   let current;
   function applicationshell_elementRoot_binding(value) {
-    ctx[18](value);
+    ctx[19](value);
   }
   let applicationshell_props = {
-    $$slots: { default: [create_default_slot] },
+    $$slots: { default: [create_default_slot$1] },
     $$scope: { ctx }
   };
   if (
@@ -23413,7 +29528,7 @@ function create_fragment(ctx) {
       const applicationshell_changes = {};
       if (dirty[0] & /*tabs, tabProps, activeTab*/
       28 | dirty[1] & /*$$scope*/
-      2) {
+      8) {
         applicationshell_changes.$$scope = { dirty, ctx: ctx2 };
       }
       if (!updating_elementRoot && dirty[0] & /*elementRoot*/
@@ -23454,12 +29569,12 @@ function getRollTableName(uuid) {
   const rt = game.tables.get(uuid) || game.tables.getName(uuid.split(".").pop());
   return rt?.name || "Unknown Table";
 }
-function instance($$self, $$props, $$invalidate) {
+function instance$1($$self, $$props, $$invalidate) {
   let actor;
   let config;
   let tabs;
   let tabProps;
-  let $documentStore, $$unsubscribe_documentStore = noop, $$subscribe_documentStore = () => ($$unsubscribe_documentStore(), $$unsubscribe_documentStore = subscribe(documentStore, ($$value) => $$invalidate(16, $documentStore = $$value)), documentStore);
+  let $documentStore, $$unsubscribe_documentStore = noop, $$subscribe_documentStore = () => ($$unsubscribe_documentStore(), $$unsubscribe_documentStore = subscribe(documentStore, ($$value) => $$invalidate(17, $documentStore = $$value)), documentStore);
   $$self.$$.on_destroy.push(() => $$unsubscribe_documentStore());
   let { elementRoot } = $$props;
   let { documentStore } = $$props;
@@ -23470,7 +29585,8 @@ function instance($$self, $$props, $$invalidate) {
   let filterText = "";
   let associatedActors = [];
   let rollTables = [];
-  let pricingFactor = 100;
+  let salePriceFactor = 100;
+  let buyPriceFactor = 50;
   let priceVariance = 10;
   let variancePeriod = "daily";
   let atrophyPercent = 5;
@@ -23478,13 +29594,14 @@ function instance($$self, $$props, $$invalidate) {
   let initializedActorId = null;
   let disconnectFoundryTheme = () => {
   };
+  let _filePickerInstance = {};
   async function saveSettings() {
     if (!actor?.isOwner) {
       ui.notifications.warn(localize("NoPermission"));
       return;
     }
     await actor.updateShopConfiguration({
-      pricingFactor: parseFloat(pricingFactor),
+      salePriceFactor: parseFloat(salePriceFactor),
       priceVariance: parseFloat(priceVariance),
       variancePeriod,
       atrophyPercent: parseFloat(atrophyPercent),
@@ -23537,10 +29654,24 @@ function instance($$self, $$props, $$invalidate) {
     $$invalidate(5, filterText = "");
   }
   function openImageEditor() {
-    actor?.sheet?._onEditImage?.();
+    const current = actor?.img;
+    if (_filePickerInstance instanceof FilePicker && !_filePickerInstance?.rendered) {
+      _filePickerInstance.render(true);
+      return;
+    }
+    _filePickerInstance = new FilePicker({
+      type: "image",
+      current,
+      callback: (path) => {
+        $documentStore.update({ img: path });
+      },
+      top: application.position.top + 40,
+      left: application.position.left + 10
+    });
+    return _filePickerInstance.browse();
   }
-  function calculatePrice(basePrice = 0) {
-    const factor = pricingFactor / 100;
+  function calculateSalePrice(basePrice = 0) {
+    const factor = salePriceFactor / 100;
     const variance = (Math.random() * 2 - 1) * (priceVariance / 100);
     return Math.round(basePrice * factor * (1 + variance));
   }
@@ -23566,59 +29697,64 @@ function instance($$self, $$props, $$invalidate) {
   };
   $$self.$$.update = () => {
     if ($$self.$$.dirty[0] & /*$documentStore*/
-    65536) {
-      $$invalidate(14, actor = $documentStore);
+    131072) {
+      $$invalidate(15, actor = $documentStore);
     }
     if ($$self.$$.dirty[0] & /*actor*/
-    16384) {
+    32768) {
       actor?.name ?? game.i18n.localize("foundryvtt-shop-studio.ShopSheetTitle");
     }
     if ($$self.$$.dirty[0] & /*actor*/
-    16384) {
-      $$invalidate(15, config = actor?.shopConfiguration ?? {});
+    32768) {
+      $$invalidate(16, config = actor?.shopConfiguration ?? {});
     }
     if ($$self.$$.dirty[0] & /*actor, initializedActorId, config*/
-    57344) {
+    114688) {
       if (actor?.id && actor.id !== initializedActorId) {
-        $$invalidate(8, pricingFactor = config.pricingFactor ?? 100);
-        $$invalidate(9, priceVariance = config.priceVariance ?? 10);
-        $$invalidate(10, variancePeriod = config.variancePeriod ?? "daily");
-        $$invalidate(11, atrophyPercent = config.atrophyPercent ?? 5);
+        $$invalidate(8, salePriceFactor = config.salePriceFactor ?? 100);
+        $$invalidate(9, buyPriceFactor = config.buyPriceFactor ?? 50);
+        $$invalidate(10, priceVariance = config.priceVariance ?? 10);
+        $$invalidate(11, variancePeriod = config.variancePeriod ?? "daily");
+        $$invalidate(12, atrophyPercent = config.atrophyPercent ?? 5);
         $$invalidate(6, associatedActors = config.associatedActors ?? []);
         $$invalidate(7, rollTables = config.rollTables ?? []);
-        $$invalidate(12, descriptionValue = actor?.system?.details?.biography?.value || "");
-        $$invalidate(13, initializedActorId = actor.id);
+        $$invalidate(13, descriptionValue = actor?.system?.details?.biography?.value || "");
+        $$invalidate(14, initializedActorId = actor.id);
       }
     }
-    if ($$self.$$.dirty[0] & /*actor, descriptionValue, associatedActors, filterText, pricingFactor, priceVariance, variancePeriod, atrophyPercent, rollTables*/
-    24544) {
+    if ($$self.$$.dirty[0] & /*actor, descriptionValue, associatedActors, filterText, salePriceFactor, buyPriceFactor, priceVariance, variancePeriod, atrophyPercent, rollTables*/
+    49120) {
       $$invalidate(3, tabProps = {
         actor,
         descriptionValue,
         associatedActors,
         filterText,
         items: actor?.items || [],
-        pricingFactor,
+        salePriceFactor,
+        buyPriceFactor,
         priceVariance,
         variancePeriod,
         atrophyPercent,
         onDescriptionChange: (value) => {
-          $$invalidate(12, descriptionValue = value);
+          $$invalidate(13, descriptionValue = value);
         },
         onFilterChange: (value) => {
           $$invalidate(5, filterText = value);
         },
-        onPricingFactorChange: (value) => {
-          $$invalidate(8, pricingFactor = Number(value));
+        salePriceFactorChange: (value) => {
+          $$invalidate(8, salePriceFactor = Number(value));
+        },
+        buyPriceFactorChange: (value) => {
+          $$invalidate(9, buyPriceFactor = Number(value));
         },
         onPriceVarianceChange: (value) => {
-          $$invalidate(9, priceVariance = Number(value));
+          $$invalidate(10, priceVariance = Number(value));
         },
         onVariancePeriodChange: (value) => {
-          $$invalidate(10, variancePeriod = value);
+          $$invalidate(11, variancePeriod = value);
         },
         onAtrophyPercentChange: (value) => {
-          $$invalidate(11, atrophyPercent = Number(value));
+          $$invalidate(12, atrophyPercent = Number(value));
         },
         rollTables,
         localize,
@@ -23631,7 +29767,7 @@ function instance($$self, $$props, $$invalidate) {
         removeAssociated,
         removeRollTable,
         clearFilter,
-        calculatePrice,
+        calculateSalePrice,
         openItemSheet,
         provisionStore,
         saveSettings
@@ -23664,7 +29800,8 @@ function instance($$self, $$props, $$invalidate) {
     filterText,
     associatedActors,
     rollTables,
-    pricingFactor,
+    salePriceFactor,
+    buyPriceFactor,
     priceVariance,
     variancePeriod,
     atrophyPercent,
@@ -23680,7 +29817,7 @@ function instance($$self, $$props, $$invalidate) {
 class ShopSheet extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance, create_fragment, safe_not_equal, { elementRoot: 0, documentStore: 1 }, null, [-1, -1]);
+    init(this, options, instance$1, create_fragment$1, safe_not_equal, { elementRoot: 0, documentStore: 1 }, null, [-1, -1]);
   }
   get elementRoot() {
     return this.$$.ctx[0];
@@ -23788,44 +29925,39 @@ function registerShopActor() {
       return identity2?.isShop === true || identity2?.kind === SHOP_IDENTITY_KIND;
     }
     /**
-     * Retrieves configuration flags for this shop.
+     * Retrieves configuration data for this shop.
      * @returns {Record<string, unknown>}
      */
     get shopConfiguration() {
-      const stored = this.getFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.configuration) ?? {};
-      return foundry.utils.mergeObject(DEFAULT_SHOP_CONFIGURATION, stored, { inplace: false });
+      return this.system?.configuration ?? {};
     }
     /**
-     * Updates shop configuration flags.
+     * Updates shop configuration data.
      * @param {Record<string, unknown>} update
      */
     async updateShopConfiguration(update2) {
-      const merged = foundry.utils.mergeObject(this.shopConfiguration, update2 ?? {}, { inplace: false });
-      return this.setFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.configuration, merged);
+      return this.update({ system: { configuration: foundry.utils.mergeObject(this.shopConfiguration, update2 ?? {}, { inplace: false }) } });
     }
     /**
-     * Returns the persisted stock snapshot for the shop.
+     * Returns the persisted stock snapshot.
      * @returns {Array<Record<string, unknown>>}
      */
     get stockSnapshot() {
-      return this.getFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.stock) ?? [];
+      return this.system?.stock ?? [];
     }
     /**
      * Persists a new stock snapshot.
      * @param {Array<Record<string, unknown>>} stock
      */
     async setStockSnapshot(stock) {
-      return this.setFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.stock, stock ?? []);
+      return this.update({ system: { stock: stock ?? [] } });
     }
     /**
      * Marks the actor as a shop when the underlying system does not support a custom type.
      * @returns {Promise<foundry.abstract.Document>} update result
      */
     async setShopIdentity() {
-      return this.setFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.identity, {
-        isShop: true,
-        kind: SHOP_IDENTITY_KIND
-      });
+      return this.update({ system: { identity: { isShop: true, kind: SHOP_IDENTITY_KIND } } });
     }
     /**
      * Prepare baseline data for shop actors ensuring required structures exist.
@@ -23845,11 +29977,971 @@ function registerShopActor() {
   RegisteredShopActor = ShopActor;
   return ShopActor;
 }
+function get_each_context(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[32] = list[i];
+  child_ctx[33] = list;
+  child_ctx[34] = i;
+  return child_ctx;
+}
+function get_each_context_1(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[32] = list[i];
+  child_ctx[35] = list;
+  child_ctx[36] = i;
+  return child_ctx;
+}
+function create_if_block_2(ctx) {
+  let p;
+  return {
+    c() {
+      p = element("p");
+      p.textContent = `${localize("ItemSources.NoMatchesFilter")}`;
+      attr(p, "class", "gss-empty-state svelte-FOU-1qo6q3d");
+    },
+    m(target, anchor) {
+      insert(target, p, anchor);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(p);
+      }
+    }
+  };
+}
+function create_if_block_1(ctx) {
+  let p;
+  return {
+    c() {
+      p = element("p");
+      p.textContent = `${localize("ItemSources.NoItemCompendia")}`;
+      attr(p, "class", "gss-empty-state svelte-FOU-1qo6q3d");
+    },
+    m(target, anchor) {
+      insert(target, p, anchor);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(p);
+      }
+    }
+  };
+}
+function create_each_block_1(ctx) {
+  let div1;
+  let input;
+  let t0;
+  let div0;
+  let t1_value = (
+    /*row*/
+    ctx[32].label + ""
+  );
+  let t1;
+  let t2;
+  let mounted;
+  let dispose;
+  function input_change_handler() {
+    ctx[23].call(
+      input,
+      /*each_value_1*/
+      ctx[35],
+      /*row_index_1*/
+      ctx[36]
+    );
+  }
+  function change_handler(...args) {
+    return (
+      /*change_handler*/
+      ctx[24](
+        /*row*/
+        ctx[32],
+        ...args
+      )
+    );
+  }
+  return {
+    c() {
+      div1 = element("div");
+      input = element("input");
+      t0 = space();
+      div0 = element("div");
+      t1 = text(t1_value);
+      t2 = space();
+      attr(input, "type", "checkbox");
+      attr(input, "class", "flex0");
+      attr(div0, "class", "flex3");
+      attr(div1, "class", "flexrow justify-vertical gap-1");
+    },
+    m(target, anchor) {
+      insert(target, div1, anchor);
+      append(div1, input);
+      input.checked = /*row*/
+      ctx[32].checked;
+      append(div1, t0);
+      append(div1, div0);
+      append(div0, t1);
+      append(div1, t2);
+      if (!mounted) {
+        dispose = [
+          listen(input, "change", input_change_handler),
+          listen(input, "change", change_handler)
+        ];
+        mounted = true;
+      }
+    },
+    p(new_ctx, dirty) {
+      ctx = new_ctx;
+      if (dirty[0] & /*visibleSourceRows*/
+      64) {
+        input.checked = /*row*/
+        ctx[32].checked;
+      }
+      if (dirty[0] & /*visibleSourceRows*/
+      64 && t1_value !== (t1_value = /*row*/
+      ctx[32].label + "")) set_data(t1, t1_value);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div1);
+      }
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_if_block(ctx) {
+  let p;
+  return {
+    c() {
+      p = element("p");
+      p.textContent = `${localize("ItemSources.NoItemTypes")}`;
+      attr(p, "class", "gss-empty-state svelte-FOU-1qo6q3d");
+    },
+    m(target, anchor) {
+      insert(target, p, anchor);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(p);
+      }
+    }
+  };
+}
+function create_each_block(ctx) {
+  let div1;
+  let input;
+  let t0;
+  let div0;
+  let t1_value = (
+    /*row*/
+    ctx[32].label + ""
+  );
+  let t1;
+  let t2;
+  let mounted;
+  let dispose;
+  function input_change_handler_1() {
+    ctx[25].call(
+      input,
+      /*each_value*/
+      ctx[33],
+      /*row_index*/
+      ctx[34]
+    );
+  }
+  function change_handler_1(...args) {
+    return (
+      /*change_handler_1*/
+      ctx[26](
+        /*row*/
+        ctx[32],
+        ...args
+      )
+    );
+  }
+  return {
+    c() {
+      div1 = element("div");
+      input = element("input");
+      t0 = space();
+      div0 = element("div");
+      t1 = text(t1_value);
+      t2 = space();
+      attr(input, "class", "flex0");
+      attr(input, "type", "checkbox");
+      attr(div0, "class", "flex3");
+      attr(div1, "class", "flexrow justify-vertical gap-1");
+    },
+    m(target, anchor) {
+      insert(target, div1, anchor);
+      append(div1, input);
+      input.checked = /*row*/
+      ctx[32].checked;
+      append(div1, t0);
+      append(div1, div0);
+      append(div0, t1);
+      append(div1, t2);
+      if (!mounted) {
+        dispose = [
+          listen(input, "change", input_change_handler_1),
+          listen(input, "change", change_handler_1)
+        ];
+        mounted = true;
+      }
+    },
+    p(new_ctx, dirty) {
+      ctx = new_ctx;
+      if (dirty[0] & /*typeRows*/
+      128) {
+        input.checked = /*row*/
+        ctx[32].checked;
+      }
+      if (dirty[0] & /*typeRows*/
+      128 && t1_value !== (t1_value = /*row*/
+      ctx[32].label + "")) set_data(t1, t1_value);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div1);
+      }
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_default_slot(ctx) {
+  let main;
+  let header;
+  let label0;
+  let i;
+  let t0;
+  let input0;
+  let t1;
+  let label1;
+  let input1;
+  let t2;
+  let span0;
+  let t4;
+  let section;
+  let details0;
+  let summary0;
+  let span1;
+  let t6;
+  let small0;
+  let t7_value = (
+    /*selectedSources*/
+    ctx[3].length + ""
+  );
+  let t7;
+  let t8;
+  let t9_value = (
+    /*sourceRows*/
+    ctx[5].length + ""
+  );
+  let t9;
+  let t10;
+  let div0;
+  let button0;
+  let t12;
+  let button1;
+  let t14;
+  let button2;
+  let t16;
+  let div1;
+  let t17;
+  let t18;
+  let details1;
+  let summary1;
+  let span2;
+  let t20;
+  let small1;
+  let t21_value = (
+    /*selectedTypes*/
+    ctx[4].length + ""
+  );
+  let t21;
+  let t22;
+  let t23_value = (
+    /*allItemTypes*/
+    ctx[8].length + ""
+  );
+  let t23;
+  let t24;
+  let div2;
+  let button3;
+  let t26;
+  let button4;
+  let t28;
+  let button5;
+  let t30;
+  let div3;
+  let t31;
+  let t32;
+  let footer;
+  let button6;
+  let t34;
+  let button7;
+  let mounted;
+  let dispose;
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*sourceRows*/
+      ctx2[5].length === 0
+    ) return create_if_block_1;
+    if (
+      /*visibleSourceRows*/
+      ctx2[6].length === 0
+    ) return create_if_block_2;
+  }
+  let current_block_type = select_block_type(ctx);
+  let if_block0 = current_block_type && current_block_type(ctx);
+  let each_value_1 = ensure_array_like(
+    /*visibleSourceRows*/
+    ctx[6]
+  );
+  let each_blocks_1 = [];
+  for (let i2 = 0; i2 < each_value_1.length; i2 += 1) {
+    each_blocks_1[i2] = create_each_block_1(get_each_context_1(ctx, each_value_1, i2));
+  }
+  let if_block1 = (
+    /*typeRows*/
+    ctx[7].length === 0 && create_if_block()
+  );
+  let each_value = ensure_array_like(
+    /*typeRows*/
+    ctx[7]
+  );
+  let each_blocks = [];
+  for (let i2 = 0; i2 < each_value.length; i2 += 1) {
+    each_blocks[i2] = create_each_block(get_each_context(ctx, each_value, i2));
+  }
+  return {
+    c() {
+      main = element("main");
+      header = element("header");
+      label0 = element("label");
+      i = element("i");
+      t0 = space();
+      input0 = element("input");
+      t1 = space();
+      label1 = element("label");
+      input1 = element("input");
+      t2 = space();
+      span0 = element("span");
+      span0.textContent = `${localize("ItemSources.ShowSelectedOnly")}`;
+      t4 = space();
+      section = element("section");
+      details0 = element("details");
+      summary0 = element("summary");
+      span1 = element("span");
+      span1.textContent = `${localize("ItemSources.ItemCompendia")}`;
+      t6 = space();
+      small0 = element("small");
+      t7 = text(t7_value);
+      t8 = text(" / ");
+      t9 = text(t9_value);
+      t10 = space();
+      div0 = element("div");
+      button0 = element("button");
+      button0.textContent = `${localize("ItemSources.SelectVisible")}`;
+      t12 = space();
+      button1 = element("button");
+      button1.textContent = `${localize("ItemSources.ClearVisible")}`;
+      t14 = space();
+      button2 = element("button");
+      button2.textContent = `${localize("ItemSources.AutoAssign")}`;
+      t16 = space();
+      div1 = element("div");
+      if (if_block0) if_block0.c();
+      t17 = space();
+      for (let i2 = 0; i2 < each_blocks_1.length; i2 += 1) {
+        each_blocks_1[i2].c();
+      }
+      t18 = space();
+      details1 = element("details");
+      summary1 = element("summary");
+      span2 = element("span");
+      span2.textContent = `${localize("ItemSources.ListableItemTypes")}`;
+      t20 = space();
+      small1 = element("small");
+      t21 = text(t21_value);
+      t22 = text(" / ");
+      t23 = text(t23_value);
+      t24 = space();
+      div2 = element("div");
+      button3 = element("button");
+      button3.textContent = `${localize("ItemSources.SelectAllTypes")}`;
+      t26 = space();
+      button4 = element("button");
+      button4.textContent = `${localize("ItemSources.ClearAllTypes")}`;
+      t28 = space();
+      button5 = element("button");
+      button5.textContent = `${localize("ItemSources.ResetTypes")}`;
+      t30 = space();
+      div3 = element("div");
+      if (if_block1) if_block1.c();
+      t31 = space();
+      for (let i2 = 0; i2 < each_blocks.length; i2 += 1) {
+        each_blocks[i2].c();
+      }
+      t32 = space();
+      footer = element("footer");
+      button6 = element("button");
+      button6.textContent = `${localize("ItemSources.Cancel")}`;
+      t34 = space();
+      button7 = element("button");
+      button7.textContent = `${localize("ItemSources.Save")}`;
+      attr(i, "class", "fas fa-search svelte-FOU-1qo6q3d");
+      attr(input0, "type", "search");
+      attr(input0, "placeholder", localize("ItemSources.SearchPlaceholder"));
+      input0.value = /*searchText*/
+      ctx[1];
+      attr(input0, "class", "svelte-FOU-1qo6q3d");
+      attr(label0, "class", "gss-search-box svelte-FOU-1qo6q3d");
+      attr(input1, "type", "checkbox");
+      attr(input1, "class", "svelte-FOU-1qo6q3d");
+      attr(label1, "class", "gss-toggle-control svelte-FOU-1qo6q3d");
+      attr(header, "class", "gss-sources-toolbar no-drag svelte-FOU-1qo6q3d");
+      attr(small0, "class", "svelte-FOU-1qo6q3d");
+      attr(summary0, "class", "gss-source-summary svelte-FOU-1qo6q3d");
+      attr(button0, "type", "button");
+      attr(button1, "type", "button");
+      attr(button2, "type", "button");
+      attr(div0, "class", "gss-source-actions svelte-FOU-1qo6q3d");
+      attr(div1, "class", "gss-source-list svelte-FOU-1qo6q3d");
+      attr(details0, "class", "gss-source-section svelte-FOU-1qo6q3d");
+      details0.open = true;
+      attr(small1, "class", "svelte-FOU-1qo6q3d");
+      attr(summary1, "class", "gss-source-summary svelte-FOU-1qo6q3d");
+      attr(button3, "type", "button");
+      attr(button4, "type", "button");
+      attr(button5, "type", "button");
+      attr(div2, "class", "gss-source-actions svelte-FOU-1qo6q3d");
+      attr(div3, "class", "gss-source-list svelte-FOU-1qo6q3d");
+      attr(details1, "class", "gss-source-section svelte-FOU-1qo6q3d");
+      details1.open = true;
+      attr(section, "class", "gss-sources-content svelte-FOU-1qo6q3d");
+      attr(button6, "type", "button");
+      attr(button7, "type", "button");
+      attr(button7, "class", "gss-save-button svelte-FOU-1qo6q3d");
+      attr(footer, "class", "gss-sources-footer svelte-FOU-1qo6q3d");
+      attr(main, "class", "item-sources-settings svelte-FOU-1qo6q3d");
+    },
+    m(target, anchor) {
+      insert(target, main, anchor);
+      append(main, header);
+      append(header, label0);
+      append(label0, i);
+      append(label0, t0);
+      append(label0, input0);
+      append(header, t1);
+      append(header, label1);
+      append(label1, input1);
+      input1.checked = /*showOnlySelected*/
+      ctx[2];
+      append(label1, t2);
+      append(label1, span0);
+      append(main, t4);
+      append(main, section);
+      append(section, details0);
+      append(details0, summary0);
+      append(summary0, span1);
+      append(summary0, t6);
+      append(summary0, small0);
+      append(small0, t7);
+      append(small0, t8);
+      append(small0, t9);
+      append(details0, t10);
+      append(details0, div0);
+      append(div0, button0);
+      append(div0, t12);
+      append(div0, button1);
+      append(div0, t14);
+      append(div0, button2);
+      append(details0, t16);
+      append(details0, div1);
+      if (if_block0) if_block0.m(div1, null);
+      append(div1, t17);
+      for (let i2 = 0; i2 < each_blocks_1.length; i2 += 1) {
+        if (each_blocks_1[i2]) {
+          each_blocks_1[i2].m(div1, null);
+        }
+      }
+      append(section, t18);
+      append(section, details1);
+      append(details1, summary1);
+      append(summary1, span2);
+      append(summary1, t20);
+      append(summary1, small1);
+      append(small1, t21);
+      append(small1, t22);
+      append(small1, t23);
+      append(details1, t24);
+      append(details1, div2);
+      append(div2, button3);
+      append(div2, t26);
+      append(div2, button4);
+      append(div2, t28);
+      append(div2, button5);
+      append(details1, t30);
+      append(details1, div3);
+      if (if_block1) if_block1.m(div3, null);
+      append(div3, t31);
+      for (let i2 = 0; i2 < each_blocks.length; i2 += 1) {
+        if (each_blocks[i2]) {
+          each_blocks[i2].m(div3, null);
+        }
+      }
+      append(main, t32);
+      append(main, footer);
+      append(footer, button6);
+      append(footer, t34);
+      append(footer, button7);
+      if (!mounted) {
+        dispose = [
+          listen(
+            input0,
+            "input",
+            /*handleSearchInput*/
+            ctx[9]
+          ),
+          listen(
+            input1,
+            "change",
+            /*input1_change_handler*/
+            ctx[22]
+          ),
+          listen(
+            button0,
+            "click",
+            /*handleSelectVisibleSources*/
+            ctx[12]
+          ),
+          listen(
+            button1,
+            "click",
+            /*handleClearVisibleSources*/
+            ctx[13]
+          ),
+          listen(
+            button2,
+            "click",
+            /*handleResetSources*/
+            ctx[14]
+          ),
+          listen(
+            button3,
+            "click",
+            /*handleSelectAllTypes*/
+            ctx[16]
+          ),
+          listen(
+            button4,
+            "click",
+            /*handleClearAllTypes*/
+            ctx[17]
+          ),
+          listen(
+            button5,
+            "click",
+            /*handleResetTypes*/
+            ctx[15]
+          ),
+          listen(
+            button6,
+            "click",
+            /*handleCancel*/
+            ctx[19]
+          ),
+          listen(
+            button7,
+            "click",
+            /*handleSave*/
+            ctx[18]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*searchText*/
+      2 && input0.value !== /*searchText*/
+      ctx2[1]) {
+        input0.value = /*searchText*/
+        ctx2[1];
+      }
+      if (dirty[0] & /*showOnlySelected*/
+      4) {
+        input1.checked = /*showOnlySelected*/
+        ctx2[2];
+      }
+      if (dirty[0] & /*selectedSources*/
+      8 && t7_value !== (t7_value = /*selectedSources*/
+      ctx2[3].length + "")) set_data(t7, t7_value);
+      if (dirty[0] & /*sourceRows*/
+      32 && t9_value !== (t9_value = /*sourceRows*/
+      ctx2[5].length + "")) set_data(t9, t9_value);
+      if (current_block_type !== (current_block_type = select_block_type(ctx2))) {
+        if (if_block0) if_block0.d(1);
+        if_block0 = current_block_type && current_block_type(ctx2);
+        if (if_block0) {
+          if_block0.c();
+          if_block0.m(div1, t17);
+        }
+      }
+      if (dirty[0] & /*visibleSourceRows, handleSourceChange*/
+      1088) {
+        each_value_1 = ensure_array_like(
+          /*visibleSourceRows*/
+          ctx2[6]
+        );
+        let i2;
+        for (i2 = 0; i2 < each_value_1.length; i2 += 1) {
+          const child_ctx = get_each_context_1(ctx2, each_value_1, i2);
+          if (each_blocks_1[i2]) {
+            each_blocks_1[i2].p(child_ctx, dirty);
+          } else {
+            each_blocks_1[i2] = create_each_block_1(child_ctx);
+            each_blocks_1[i2].c();
+            each_blocks_1[i2].m(div1, null);
+          }
+        }
+        for (; i2 < each_blocks_1.length; i2 += 1) {
+          each_blocks_1[i2].d(1);
+        }
+        each_blocks_1.length = each_value_1.length;
+      }
+      if (dirty[0] & /*selectedTypes*/
+      16 && t21_value !== (t21_value = /*selectedTypes*/
+      ctx2[4].length + "")) set_data(t21, t21_value);
+      if (
+        /*typeRows*/
+        ctx2[7].length === 0
+      ) {
+        if (if_block1) ;
+        else {
+          if_block1 = create_if_block();
+          if_block1.c();
+          if_block1.m(div3, t31);
+        }
+      } else if (if_block1) {
+        if_block1.d(1);
+        if_block1 = null;
+      }
+      if (dirty[0] & /*typeRows, handleTypeChange*/
+      2176) {
+        each_value = ensure_array_like(
+          /*typeRows*/
+          ctx2[7]
+        );
+        let i2;
+        for (i2 = 0; i2 < each_value.length; i2 += 1) {
+          const child_ctx = get_each_context(ctx2, each_value, i2);
+          if (each_blocks[i2]) {
+            each_blocks[i2].p(child_ctx, dirty);
+          } else {
+            each_blocks[i2] = create_each_block(child_ctx);
+            each_blocks[i2].c();
+            each_blocks[i2].m(div3, null);
+          }
+        }
+        for (; i2 < each_blocks.length; i2 += 1) {
+          each_blocks[i2].d(1);
+        }
+        each_blocks.length = each_value.length;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(main);
+      }
+      if (if_block0) {
+        if_block0.d();
+      }
+      destroy_each(each_blocks_1, detaching);
+      if (if_block1) if_block1.d();
+      destroy_each(each_blocks, detaching);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_fragment(ctx) {
+  let tjsapplicationshell;
+  let updating_elementRoot;
+  let current;
+  function tjsapplicationshell_elementRoot_binding(value) {
+    ctx[27](value);
+  }
+  let tjsapplicationshell_props = {
+    $$slots: { default: [create_default_slot] },
+    $$scope: { ctx }
+  };
+  if (
+    /*elementRoot*/
+    ctx[0] !== void 0
+  ) {
+    tjsapplicationshell_props.elementRoot = /*elementRoot*/
+    ctx[0];
+  }
+  tjsapplicationshell = new TJSApplicationShell({ props: tjsapplicationshell_props });
+  binding_callbacks.push(() => bind(tjsapplicationshell, "elementRoot", tjsapplicationshell_elementRoot_binding));
+  return {
+    c() {
+      create_component(tjsapplicationshell.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(tjsapplicationshell, target, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      const tjsapplicationshell_changes = {};
+      if (dirty[0] & /*typeRows, selectedTypes, visibleSourceRows, sourceRows, selectedSources, showOnlySelected, searchText*/
+      254 | dirty[1] & /*$$scope*/
+      64) {
+        tjsapplicationshell_changes.$$scope = { dirty, ctx: ctx2 };
+      }
+      if (!updating_elementRoot && dirty[0] & /*elementRoot*/
+      1) {
+        updating_elementRoot = true;
+        tjsapplicationshell_changes.elementRoot = /*elementRoot*/
+        ctx2[0];
+        add_flush_callback(() => updating_elementRoot = false);
+      }
+      tjsapplicationshell.$set(tjsapplicationshell_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tjsapplicationshell.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tjsapplicationshell.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(tjsapplicationshell, detaching);
+    }
+  };
+}
+function getAllItemCompendia() {
+  return game.packs?.filter((pack) => pack.documentName === "Item") ?? [];
+}
+function buildSourceRows(selectedSet) {
+  const allCompendia = getAllItemCompendia();
+  return allCompendia.map((pack) => ({
+    collection: pack.collection,
+    label: `${pack.metadata.label} [${pack.metadata.packageName}]`,
+    searchable: `${pack.collection} ${pack.metadata.label} ${pack.metadata.packageName} ${pack.metadata.id}`.toLowerCase(),
+    checked: selectedSet.has(pack.collection)
+  })).sort((a, b) => a.label.localeCompare(b.label, game.i18n?.lang));
+}
+function instance($$self, $$props, $$invalidate) {
+  let selectedSourceSet;
+  let sourceRows;
+  let visibleSourceRows;
+  let selectedTypeSet;
+  let typeRows;
+  let { elementRoot } = $$props;
+  const { application } = getContext("#external");
+  application.reactive.draggable = true;
+  let searchText = "";
+  let showOnlySelected = false;
+  const savedSources = game.settings.get(MODULE_ID, ITEM_SOURCES_SETTING);
+  let selectedSources = Array.isArray(savedSources) ? savedSources : savedSources && Array.isArray(savedSources.items) ? savedSources.items : [];
+  const initialAllTypes = getAvailableItemTypes();
+  let allItemTypes = initialAllTypes;
+  const savedTypes = game.settings.get(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING);
+  let selectedTypes = savedTypes === null || savedTypes === void 0 ? initialAllTypes.map((t) => t.type) : Array.isArray(savedTypes) ? savedTypes : [];
+  function handleSearchInput(event) {
+    $$invalidate(1, searchText = (event.currentTarget?.value ?? "").toLowerCase().trim());
+  }
+  function handleSourceChange(collection, checked) {
+    if (checked) {
+      if (!selectedSources.includes(collection)) $$invalidate(3, selectedSources = [...selectedSources, collection]);
+    } else {
+      $$invalidate(3, selectedSources = selectedSources.filter((source) => source !== collection));
+    }
+  }
+  function handleTypeChange(type, checked) {
+    if (checked) {
+      if (!selectedTypes.includes(type)) $$invalidate(4, selectedTypes = [...selectedTypes, type]);
+    } else {
+      $$invalidate(4, selectedTypes = selectedTypes.filter((entry) => entry !== type));
+    }
+  }
+  function handleSelectVisibleSources() {
+    const visibleCollections = new Set(visibleSourceRows.map((row) => row.collection));
+    $$invalidate(3, selectedSources = Array.from(/* @__PURE__ */ new Set([...selectedSources, ...visibleCollections])));
+  }
+  function handleClearVisibleSources() {
+    const visibleCollections = new Set(visibleSourceRows.map((row) => row.collection));
+    $$invalidate(3, selectedSources = selectedSources.filter((source) => !visibleCollections.has(source)));
+  }
+  function handleResetSources() {
+    $$invalidate(3, selectedSources = autoAssignItemSources());
+  }
+  function handleResetTypes() {
+    $$invalidate(4, selectedTypes = allItemTypes.map((type) => type.type));
+  }
+  function handleSelectAllTypes() {
+    $$invalidate(4, selectedTypes = allItemTypes.map((type) => type.type));
+  }
+  function handleClearAllTypes() {
+    $$invalidate(4, selectedTypes = []);
+  }
+  async function handleSave() {
+    await game.settings.set(MODULE_ID, ITEM_SOURCES_SETTING, selectedSources);
+    await game.settings.set(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING, selectedTypes.length === allItemTypes.length ? null : selectedTypes);
+    application.close();
+  }
+  function handleCancel() {
+    application.close();
+  }
+  function input1_change_handler() {
+    showOnlySelected = this.checked;
+    $$invalidate(2, showOnlySelected), $$invalidate(3, selectedSources);
+  }
+  function input_change_handler(each_value_1, row_index_1) {
+    each_value_1[row_index_1].checked = this.checked;
+    $$invalidate(6, visibleSourceRows), $$invalidate(5, sourceRows), $$invalidate(1, searchText), $$invalidate(2, showOnlySelected), $$invalidate(3, selectedSources), $$invalidate(21, selectedSourceSet);
+  }
+  const change_handler = (row, e) => handleSourceChange(row.collection, e.currentTarget.checked);
+  function input_change_handler_1(each_value, row_index) {
+    each_value[row_index].checked = this.checked;
+    $$invalidate(7, typeRows), $$invalidate(8, allItemTypes), $$invalidate(20, selectedTypeSet), $$invalidate(2, showOnlySelected), $$invalidate(4, selectedTypes), $$invalidate(3, selectedSources);
+  }
+  const change_handler_1 = (row, e) => handleTypeChange(row.type, e.currentTarget.checked);
+  function tjsapplicationshell_elementRoot_binding(value) {
+    elementRoot = value;
+    $$invalidate(0, elementRoot);
+  }
+  $$self.$$set = ($$props2) => {
+    if ("elementRoot" in $$props2) $$invalidate(0, elementRoot = $$props2.elementRoot);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty[0] & /*selectedSources, showOnlySelected*/
+    12) {
+      if (selectedSources.length === 0 && showOnlySelected) {
+        $$invalidate(2, showOnlySelected = false);
+      }
+    }
+    if ($$self.$$.dirty[0] & /*selectedSources*/
+    8) {
+      $$invalidate(21, selectedSourceSet = new Set(selectedSources));
+    }
+    if ($$self.$$.dirty[0] & /*selectedSourceSet*/
+    2097152) {
+      $$invalidate(5, sourceRows = buildSourceRows(selectedSourceSet));
+    }
+    if ($$self.$$.dirty[0] & /*sourceRows, searchText, showOnlySelected, selectedSources*/
+    46) {
+      $$invalidate(6, visibleSourceRows = sourceRows.filter((row) => {
+        if (searchText && !row.searchable.includes(searchText)) return false;
+        if (showOnlySelected && selectedSources.length > 0 && !row.checked) return false;
+        return true;
+      }));
+    }
+    if ($$self.$$.dirty[0] & /*selectedTypes*/
+    16) {
+      $$invalidate(20, selectedTypeSet = new Set(selectedTypes));
+    }
+    if ($$self.$$.dirty[0] & /*selectedTypeSet, showOnlySelected*/
+    1048580) {
+      $$invalidate(7, typeRows = allItemTypes.map((type) => ({
+        ...type,
+        checked: selectedTypeSet.has(type.type)
+      })).filter((row) => !showOnlySelected || row.checked));
+    }
+  };
+  return [
+    elementRoot,
+    searchText,
+    showOnlySelected,
+    selectedSources,
+    selectedTypes,
+    sourceRows,
+    visibleSourceRows,
+    typeRows,
+    allItemTypes,
+    handleSearchInput,
+    handleSourceChange,
+    handleTypeChange,
+    handleSelectVisibleSources,
+    handleClearVisibleSources,
+    handleResetSources,
+    handleResetTypes,
+    handleSelectAllTypes,
+    handleClearAllTypes,
+    handleSave,
+    handleCancel,
+    selectedTypeSet,
+    selectedSourceSet,
+    input1_change_handler,
+    input_change_handler,
+    change_handler,
+    input_change_handler_1,
+    change_handler_1,
+    tjsapplicationshell_elementRoot_binding
+  ];
+}
+class ItemSourcesAppShell extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance, create_fragment, safe_not_equal, { elementRoot: 0 }, null, [-1, -1]);
+  }
+  get elementRoot() {
+    return this.$$.ctx[0];
+  }
+  set elementRoot(elementRoot) {
+    this.$$set({ elementRoot });
+    flush();
+  }
+}
+class ItemSourcesApp extends SvelteApp {
+  static get defaultOptions() {
+    const viewportWidth = globalThis?.innerWidth ?? 1640;
+    const defaultWidth = Math.max(620, Math.min(900, Math.floor(viewportWidth * 0.5)));
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      title: "Shop Studio - Item Sources",
+      id: "foundryvtt-shop-studio-item-sources-settings",
+      resizable: true,
+      minimizable: true,
+      draggable: true,
+      width: defaultWidth,
+      height: 740,
+      minWidth: 620,
+      minHeight: 500,
+      headerIcon: "modules/foundryvtt-shop-studio/assets/shop-studio-logo-dragon-be7c41ff.webp",
+      svelte: {
+        class: ItemSourcesAppShell,
+        target: document.body
+      }
+    });
+  }
+}
+class ItemSourcesButton extends FormApplication {
+  static showSettings() {
+    const sourcesApp = new ItemSourcesApp();
+    sourcesApp.render(true, { focus: true });
+    return sourcesApp;
+  }
+  constructor(options = {}) {
+    super({}, options);
+    ItemSourcesButton.showSettings();
+  }
+  async _updateObject() {
+  }
+  render() {
+    this.close();
+  }
+}
 function registerSettings(app) {
   log.i("Building module settings");
   debugSetting();
   debugHooksSetting();
   registerUISettings();
+  registerItemSourcesSettings();
   dontShowWelcome();
 }
 function registerUISettings() {
@@ -23860,6 +30952,32 @@ function registerUISettings() {
     config: true,
     default: true,
     type: Boolean
+  });
+}
+function registerItemSourcesSettings() {
+  game.settings.register(MODULE_ID, "itemSources", {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.Hint`),
+    scope: "world",
+    config: false,
+    default: [],
+    type: Array
+  });
+  game.settings.register(MODULE_ID, "listableItemTypes", {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.ListableItemTypesName`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.ListableItemTypesHint`),
+    scope: "world",
+    config: false,
+    default: null,
+    type: Array
+  });
+  game.settings.registerMenu(MODULE_ID, "itemSources", {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.Hint`),
+    label: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.Label`),
+    icon: "fas fa-atlas",
+    type: ItemSourcesButton,
+    restricted: true
   });
 }
 function dontShowWelcome() {

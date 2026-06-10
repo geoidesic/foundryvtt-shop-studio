@@ -44,29 +44,27 @@ export function registerShopActor() {
     }
 
     /**
-     * Retrieves configuration flags for this shop.
+     * Retrieves configuration data for this shop.
      * @returns {Record<string, unknown>}
      */
     get shopConfiguration() {
-      const stored = this.getFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.configuration) ?? {};
-      return foundry.utils.mergeObject(DEFAULT_SHOP_CONFIGURATION, stored, { inplace: false });
+      return this.system?.configuration ?? {};
     }
 
     /**
-     * Updates shop configuration flags.
+     * Updates shop configuration data.
      * @param {Record<string, unknown>} update
      */
     async updateShopConfiguration(update) {
-      const merged = foundry.utils.mergeObject(this.shopConfiguration, update ?? {}, { inplace: false });
-      return this.setFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.configuration, merged);
+      return this.update({ system: { configuration: foundry.utils.mergeObject(this.shopConfiguration, update ?? {}, { inplace: false }) } });
     }
 
     /**
-     * Returns the persisted stock snapshot for the shop.
+     * Returns the persisted stock snapshot.
      * @returns {Array<Record<string, unknown>>}
      */
     get stockSnapshot() {
-      return this.getFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.stock) ?? [];
+      return this.system?.stock ?? [];
     }
 
     /**
@@ -74,7 +72,7 @@ export function registerShopActor() {
      * @param {Array<Record<string, unknown>>} stock
      */
     async setStockSnapshot(stock) {
-      return this.setFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.stock, stock ?? []);
+      return this.update({ system: { stock: stock ?? [] } });
     }
 
     /**
@@ -82,10 +80,7 @@ export function registerShopActor() {
      * @returns {Promise<foundry.abstract.Document>} update result
      */
     async setShopIdentity() {
-      return this.setFlag(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.identity, {
-        isShop: true,
-        kind: SHOP_IDENTITY_KIND
-      });
+      return this.update({ system: { identity: { isShop: true, kind: SHOP_IDENTITY_KIND } } });
     }
 
     /**

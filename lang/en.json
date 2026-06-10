@@ -25,7 +25,32 @@
       "showButtonInSideBar": {
         "Name": "Show Button in Sidebar",
         "Hint": "Show the Shop Studio button in the Actors sidebar directory"
+      },
+      "ItemSources": {
+        "Name": "Item Sources",
+        "Hint": "Configure which item compendia to use as sources for the shop",
+        "Label": "Item Sources",
+        "ListableItemTypesName": "Listable Item Types",
+        "ListableItemTypesHint": "Select which item types to include in the shop catalog. Leave empty to include all types."
       }
+    },
+    "ItemSources": {
+      "SearchPlaceholder": "Search sources...",
+      "ShowSelectedOnly": "Show selected only",
+      "ExpandAll": "Expand all",
+      "ItemCompendia": "Item Compendia",
+      "ListableItemTypes": "Listable Item Types",
+      "SelectVisible": "Select visible",
+      "ClearVisible": "Clear visible",
+      "AutoAssign": "Auto-assign all",
+      "SelectAllTypes": "Select all types",
+      "ClearAllTypes": "Clear all types",
+      "ResetTypes": "Reset types",
+      "Cancel": "Cancel",
+      "Save": "Save",
+      "NoItemCompendia": "No item compendia found",
+      "NoItemTypes": "No item types found",
+      "NoMatchesFilter": "No compendia match the current filter. Uncheck 'Show selected only' or clear the search to see all available sources."
     },
     "ShopStudio": "Shop Studio",
     "ShopSheetTitle": "Shop",
@@ -36,7 +61,8 @@
     "Description": "Description",
     "AssociatedActors": "Associated Actors",
     "DragActorsHere": "Drag actors here to associate with this shop",
-    "PricingFactor": "Pricing Factor (%)",
+    "SalePriceFactor": "Sale Price Factor",
+    "BuyPriceFactor": "Buy Price Factor",
     "PriceVariance": "Price Variance (%)",
     "VariancePeriod": "Variance Period",
     "Daily": "Daily",
