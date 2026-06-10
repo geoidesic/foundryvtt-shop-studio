@@ -76,6 +76,7 @@ function applyShopCreationFields(form) {
   ensureShopHiddenField(form, 'flags.core.sheetClass', `${MODULE_ID}.ShopActorSheet`);
   ensureShopHiddenField(form, `flags.${SHOP_FLAG_SCOPE}.${SHOP_FLAG_KEYS.identity}.isShop`, 'true', 'Boolean');
   ensureShopHiddenField(form, `flags.${SHOP_FLAG_SCOPE}.${SHOP_FLAG_KEYS.identity}.kind`, SHOP_IDENTITY_KIND);
+  ensureShopHiddenField(form, 'img', 'icons/environment/settlement/warehouse-crates.webp');
 }
 
 function addShopTypeToRadioList(form) {
@@ -260,7 +261,7 @@ async function createOrOpenShop() {
             [SHOP_FLAG_KEYS.configuration]: DEFAULT_SHOP_CONFIGURATION
           }
         },
-        img: `modules/${MODULE_ID}/assets/shop-studio-logo-dragon-be7c41ff.webp`
+        img: 'icons/environment/settlement/warehouse-crates.webp'
       }, { renderSheet: true });
       ui.notifications.info('New shop created and opened.');
     } catch (err) {

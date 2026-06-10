@@ -25,7 +25,6 @@
   let priceVariance = 10;
   let variancePeriod = 'daily';
   let atrophyPercent = 5;
-  let descriptionValue = '';
   let initializedActorId = null;
   let disconnectFoundryTheme = () => {};
   let _filePickerInstance = {};
@@ -42,7 +41,6 @@
     atrophyPercent = config.atrophyPercent ?? 5;
     associatedActors = config.associatedActors ?? [];
     rollTables = config.rollTables ?? [];
-    descriptionValue = actor?.system?.details?.biography?.value || '';
     initializedActorId = actor.id;
   }
 
@@ -54,7 +52,6 @@
 
   $: tabProps = {
     actor,
-    descriptionValue,
     associatedActors,
     filterText,
     items: actor?.items || [],
@@ -63,9 +60,6 @@
     priceVariance,
     variancePeriod,
     atrophyPercent,
-    onDescriptionChange: (value) => {
-      descriptionValue = value;
-    },
     onFilterChange: (value) => {
       filterText = value;
     },
@@ -275,7 +269,6 @@
     margin: 0 auto var(--size-sm)
     background: var(--gas-input-background)
 
-  :global(textarea),
   :global(input),
   :global(select)
     width: 100%
@@ -284,6 +277,9 @@
     border: 1px solid var(--gas-input-border)
     border-radius: var(--border-radius)
     padding: 0.5rem 0.6rem
+
+  :global(.shop-description-editor)
+    min-height: 220px
 
   :global(textarea)
     min-height: 180px

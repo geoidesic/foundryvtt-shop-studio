@@ -1,12 +1,7 @@
 <script>
-  import { onMount } from 'svelte';
-  import { loadCatalogItems, catalogItems, catalogLoading, catalogError } from '~/src/stores/shopCatalog';
+  import ProseMirror from '~/src/components/molecules/ProseMirror.svelte';
 
   export let sharedProps = {};
-
-  onMount(() => {
-    loadCatalogItems();
-  });
 </script>
 
 <template lang="pug">
@@ -36,6 +31,6 @@
       .flex2
         .description-section
           h2 {sharedProps.localize("Description")}
-          textarea.description-text(value="{sharedProps.descriptionValue}" placeholder="Describe your shop..." on:input!="{(e) => sharedProps.onDescriptionChange?.(e.target.value)}")
+          ProseMirror(attr="system.details.description" classes="shop-description-editor")
         
 </template>

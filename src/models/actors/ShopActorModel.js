@@ -17,9 +17,8 @@ export class ShopActorModel extends foundry.abstract.TypeDataModel {
    */
   static defineSchema() {
     return {
-      details: new SchemaField({
-        biography: new HTMLField({ required: false, blank: true, initial: '' })
-      }),
+      name: new StringField({ required: true, blank: true }),
+      description: new HTMLField({ required: false, blank: true, initial: '' }),
       currency: new SchemaField({}),
       configuration: new SchemaField({
         salePriceFactor: new NumberField({ required: true, min: 0, initial: 100 }),
@@ -72,18 +71,6 @@ export class ShopActorModel extends foundry.abstract.TypeDataModel {
         kind: new StringField({ required: true, initial: SHOP_ACTOR_TYPE })
       })
     };
-  }
-
-  /**
-   * Ensures the default shop system data is available when older flag-backed shops load.
-   */
-  prepareBaseData() {
-    this.details ??= { biography: '' };
-    this.currency ??= {};
-    this.configuration ??= {};
-    this.stock ??= [];
-    this.transactions ??= [];
-    this.identity ??= { isShop: true, kind: SHOP_ACTOR_TYPE };
   }
 
   /**

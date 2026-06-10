@@ -82,22 +82,6 @@ export function registerShopActor() {
     async setShopIdentity() {
       return this.update({ system: { identity: { isShop: true, kind: SHOP_IDENTITY_KIND } } });
     }
-
-    /**
-     * Prepare baseline data for shop actors ensuring required structures exist.
-     */
-    prepareBaseData() {
-      super.prepareBaseData();
-
-      if (!this.isShop) {
-        return;
-      }
-
-      this.system ??= {};
-      this.system.details ??= {};
-      this.system.details.biography ??= '';
-      this.system.currency ??= {};
-    }
   }
 
   // Register the actor class with the system
