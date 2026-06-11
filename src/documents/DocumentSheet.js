@@ -9,6 +9,9 @@ export default class SvelteDocumentSheet extends SvelteApplication {
   constructor(object) {
     super(object);
 
+    // Ensure options.document is set for Foundry V2 sheet contract
+    this.options.document = object;
+
     Object.defineProperty(this.reactive, 'document', {
       get: () => this.#documentStore.get(),
       set: (document) => {

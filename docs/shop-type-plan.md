@@ -5,13 +5,12 @@ Implement a custom shop actor type that passes Foundry and system validation wit
 
 ## Decisions
 - Use a namespaced actor type: `foundryvtt-shop-studio.shop`
-- Keep compatibility checks for legacy actors with type `shop`
+- DO NOT keep compatibility checks for legacy actors with type `shop`
 - Register actor type metadata in both `CONFIG` and system document type registries
 
 ## Implementation Steps
 1. Define actor type constants
 - `SHOP_ACTOR_TYPE = ${MODULE_ID}.shop`
-- `LEGACY_SHOP_ACTOR_TYPE = shop`
 
 2. Register actor types during init and ready
 - Add type label for namespaced type

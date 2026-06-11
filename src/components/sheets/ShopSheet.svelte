@@ -100,8 +100,9 @@
       ui.notifications.warn(localize('NoPermission'));
       return;
     }
-    await actor.updateShopConfiguration({
+    await actor.system.updateShopConfiguration({
       salePriceFactor: parseFloat(salePriceFactor),
+      buyPriceFactor: parseFloat(buyPriceFactor),
       priceVariance: parseFloat(priceVariance),
       variancePeriod,
       atrophyPercent: parseFloat(atrophyPercent),

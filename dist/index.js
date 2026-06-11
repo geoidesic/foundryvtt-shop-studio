@@ -17210,13 +17210,13 @@ function popoverTooltip(node, { cssClass, direction, isHTML, locked, tooltip }) 
     }
   };
 }
-function create_if_block$b(ctx) {
+function create_if_block$d(ctx) {
   let if_block_anchor;
   function select_block_type(ctx2, dirty) {
     if (
       /*iconType*/
       ctx2[3] === "font"
-    ) return create_if_block_1$6;
+    ) return create_if_block_1$7;
     if (
       /*iconType*/
       ctx2[3] === "img"
@@ -17323,7 +17323,7 @@ function create_if_block_2$4(ctx) {
     }
   };
 }
-function create_if_block_1$6(ctx) {
+function create_if_block_1$7(ctx) {
   let i;
   let i_class_value;
   return {
@@ -17353,7 +17353,7 @@ function create_if_block_1$6(ctx) {
     }
   };
 }
-function create_fragment$m(ctx) {
+function create_fragment$o(ctx) {
   let button_1;
   let button_1_class_value;
   let applyStyles_action;
@@ -17362,7 +17362,7 @@ function create_fragment$m(ctx) {
   let dispose;
   let if_block = (
     /*icon*/
-    ctx[2] && create_if_block$b(ctx)
+    ctx[2] && create_if_block$d(ctx)
   );
   return {
     c() {
@@ -17436,7 +17436,7 @@ function create_fragment$m(ctx) {
         if (if_block) {
           if_block.p(ctx2, dirty);
         } else {
-          if_block = create_if_block$b(ctx2);
+          if_block = create_if_block$d(ctx2);
           if_block.c();
           if_block.m(button_1, null);
         }
@@ -17493,7 +17493,7 @@ function create_fragment$m(ctx) {
     }
   };
 }
-function instance$m($$self, $$props, $$invalidate) {
+function instance$o($$self, $$props, $$invalidate) {
   let icon;
   let label;
   let tooltipDirection;
@@ -17595,7 +17595,7 @@ function instance$m($$self, $$props, $$invalidate) {
 class TJSHeaderButton extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$m, create_fragment$m, safe_not_equal, { button: 0, storeHeaderButtonNoLabel: 1 });
+    init(this, options, instance$o, create_fragment$o, safe_not_equal, { button: 0, storeHeaderButtonNoLabel: 1 });
   }
   get button() {
     return this.$$.ctx[0];
@@ -17658,7 +17658,7 @@ function create_if_block_2$3(ctx) {
     }
   };
 }
-function create_if_block_1$5(ctx) {
+function create_if_block_1$6(ctx) {
   let i;
   let i_class_value;
   return {
@@ -17684,7 +17684,7 @@ function create_if_block_1$5(ctx) {
     }
   };
 }
-function create_if_block$a(ctx) {
+function create_if_block$c(ctx) {
   let img;
   let img_src_value;
   return {
@@ -17908,11 +17908,11 @@ function create_key_block(ctx) {
     if (
       /*mediaType*/
       ctx2[8] === "img"
-    ) return create_if_block$a;
+    ) return create_if_block$c;
     if (
       /*mediaType*/
       ctx2[8] === "font"
-    ) return create_if_block_1$5;
+    ) return create_if_block_1$6;
     if (
       /*mediaType*/
       ctx2[8] === "svg"
@@ -18148,7 +18148,7 @@ function create_key_block(ctx) {
     }
   };
 }
-function create_fragment$l(ctx) {
+function create_fragment$n(ctx) {
   let previous_key = (
     /*draggable*/
     ctx[0]
@@ -18198,7 +18198,7 @@ function create_fragment$l(ctx) {
     }
   };
 }
-function instance$l($$self, $$props, $$invalidate) {
+function instance$n($$self, $$props, $$invalidate) {
   let $focusKeep;
   let $focusAuto;
   let $elementRoot;
@@ -18403,7 +18403,7 @@ function instance$l($$self, $$props, $$invalidate) {
 class TJSApplicationHeader extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$l, create_fragment$l, safe_not_equal, { draggable: 0, draggableOptions: 25 }, null, [-1, -1]);
+    init(this, options, instance$n, create_fragment$n, safe_not_equal, { draggable: 0, draggableOptions: 25 }, null, [-1, -1]);
   }
 }
 class ResizeHandleTransform {
@@ -18460,7 +18460,7 @@ class ResizeHandleTransform {
     return this.#pDeltaLocal;
   }
 }
-function create_fragment$k(ctx) {
+function create_fragment$m(ctx) {
   let div;
   let resizable_action;
   let mounted;
@@ -18524,7 +18524,7 @@ function create_fragment$k(ctx) {
     }
   };
 }
-function instance$k($$self, $$props, $$invalidate) {
+function instance$m($$self, $$props, $$invalidate) {
   let $storeElementRoot;
   let $storeMinimized;
   let $storeResizable;
@@ -18664,10 +18664,10 @@ function instance$k($$self, $$props, $$invalidate) {
 class ResizableHandle extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$k, create_fragment$k, safe_not_equal, { isResizable: 10 });
+    init(this, options, instance$m, create_fragment$m, safe_not_equal, { isResizable: 10 });
   }
 }
-function create_fragment$j(ctx) {
+function create_fragment$l(ctx) {
   let div;
   let mounted;
   let dispose;
@@ -18703,7 +18703,7 @@ function create_fragment$j(ctx) {
     }
   };
 }
-function instance$j($$self, $$props, $$invalidate) {
+function instance$l($$self, $$props, $$invalidate) {
   let { elementRoot = void 0 } = $$props;
   let { enabled = true } = $$props;
   let ignoreElements, wrapEl;
@@ -18743,10 +18743,10 @@ function instance$j($$self, $$props, $$invalidate) {
 class TJSFocusWrap extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$j, create_fragment$j, safe_not_equal, { elementRoot: 2, enabled: 3 });
+    init(this, options, instance$l, create_fragment$l, safe_not_equal, { elementRoot: 2, enabled: 3 });
   }
 }
-function create_else_block$5(ctx) {
+function create_else_block$6(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -19031,7 +19031,7 @@ function create_else_block$5(ctx) {
     }
   };
 }
-function create_if_block$9(ctx) {
+function create_if_block$b(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -19331,12 +19331,12 @@ function create_if_block$9(ctx) {
     }
   };
 }
-function create_fragment$i(ctx) {
+function create_fragment$k(ctx) {
   let current_block_type_index;
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$9, create_else_block$5];
+  const if_block_creators = [create_if_block$b, create_else_block$6];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -19397,7 +19397,7 @@ function create_fragment$i(ctx) {
     }
   };
 }
-function instance$i($$self, $$props, $$invalidate) {
+function instance$k($$self, $$props, $$invalidate) {
   let appResizeObserver;
   let appClasses;
   let $focusKeep;
@@ -19744,8 +19744,8 @@ class ApplicationShell extends SvelteComponent {
     init(
       this,
       options,
-      instance$i,
-      create_fragment$i,
+      instance$k,
+      create_fragment$k,
       safe_not_equal,
       {
         elementContent: 0,
@@ -19898,7 +19898,7 @@ class ApplicationShell extends SvelteComponent {
     flush();
   }
 }
-function create_else_block$4(ctx) {
+function create_else_block$5(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -20183,7 +20183,7 @@ function create_else_block$4(ctx) {
     }
   };
 }
-function create_if_block$8(ctx) {
+function create_if_block$a(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -20483,12 +20483,12 @@ function create_if_block$8(ctx) {
     }
   };
 }
-function create_fragment$h(ctx) {
+function create_fragment$j(ctx) {
   let current_block_type_index;
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$8, create_else_block$4];
+  const if_block_creators = [create_if_block$a, create_else_block$5];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -20549,7 +20549,7 @@ function create_fragment$h(ctx) {
     }
   };
 }
-function instance$h($$self, $$props, $$invalidate) {
+function instance$j($$self, $$props, $$invalidate) {
   let appResizeObserver;
   let appClasses;
   let $focusKeep;
@@ -20896,8 +20896,8 @@ class TJSApplicationShell extends SvelteComponent {
     init(
       this,
       options,
-      instance$h,
-      create_fragment$h,
+      instance$j,
+      create_fragment$j,
       safe_not_equal,
       {
         elementContent: 0,
@@ -21055,8 +21055,6 @@ const MODULE_ID = "foundryvtt-shop-studio";
 const MODULE_TITLE = "Aardvark Shop Studio";
 const MODULE_CODE = "GSS";
 const LOG_PREFIX = "GSS |";
-const DEFAULT_ITEM_SOURCES = [];
-const DEFAULT_LISTABLE_ITEM_TYPES = null;
 const log = {
   ASSERT: 1,
   ERROR: 2,
@@ -21138,7 +21136,7 @@ function create_default_slot$8(ctx) {
     }
   };
 }
-function create_fragment$g(ctx) {
+function create_fragment$i(ctx) {
   let applicationshell;
   let updating_elementRoot;
   let current;
@@ -21195,7 +21193,7 @@ function create_fragment$g(ctx) {
     }
   };
 }
-function instance$g($$self, $$props, $$invalidate) {
+function instance$i($$self, $$props, $$invalidate) {
   let { elementRoot = void 0 } = $$props;
   let { version: version2 = void 0 } = $$props;
   const application = getContext("#external").application;
@@ -21223,7 +21221,7 @@ function instance$g($$self, $$props, $$invalidate) {
 class WelcomeAppShell extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$g, create_fragment$g, safe_not_equal, { elementRoot: 0, version: 1 });
+    init(this, options, instance$i, create_fragment$i, safe_not_equal, { elementRoot: 0, version: 1 });
   }
   get elementRoot() {
     return this.$$.ctx[0];
@@ -22448,7 +22446,7 @@ class DynMapReducer {
     }
   }
 }
-function isDocument(doc) {
+function isDocument$1(doc) {
   return doc !== void 0 && doc !== null && doc instanceof foundry.abstract.Document;
 }
 class EmbeddedStoreManager {
@@ -22622,7 +22620,7 @@ class EmbeddedStoreManager {
    */
   handleDocChange() {
     const doc = this.#document[0];
-    if (isDocument(doc)) {
+    if (isDocument$1(doc)) {
       const existingEmbeddedNames = new Set(this.#name.keys());
       const embeddedNames = Object.entries(doc.constructor?.metadata?.embedded ?? []);
       this.#collectionToDocName.clear();
@@ -22780,7 +22778,7 @@ class TJSDocument {
    */
   #callbackRegister() {
     const doc = this.#document[0];
-    if (isDocument(doc) && isObject(doc?.apps) && !doc.apps[this.#uuidv4]) {
+    if (isDocument$1(doc) && isObject(doc?.apps) && !doc.apps[this.#uuidv4]) {
       doc.apps[this.#uuidv4] = this.#callbackAPI;
     }
   }
@@ -22789,7 +22787,7 @@ class TJSDocument {
    */
   #callbackUnregister() {
     const doc = this.#document[0];
-    if (isDocument(doc)) {
+    if (isDocument$1(doc)) {
       delete doc?.apps?.[this.#uuidv4];
     }
   }
@@ -22800,7 +22798,7 @@ class TJSDocument {
    */
   async #deleted() {
     const doc = this.#document[0];
-    if (isDocument(doc) && !doc?.collection?.has(doc.id)) {
+    if (isDocument$1(doc) && !doc?.collection?.has(doc.id)) {
       this.#setDocument(void 0);
       if (typeof this.#options.preDelete === "function") {
         await this.#options.preDelete(doc);
@@ -22875,14 +22873,14 @@ class TJSDocument {
    * @param [options] - New document update options to set.
    */
   set(doc, options = {}) {
-    if (doc !== void 0 && doc !== null && !isDocument(doc)) {
+    if (doc !== void 0 && doc !== null && !isDocument$1(doc)) {
       throw new TypeError(`TJSDocument set error: 'document' is not a valid Document or undefined / null.`);
     }
     if (!isObject(options)) {
       throw new TypeError(`TJSDocument set error: 'options' is not an object.`);
     }
     if (this.#setDocument(doc)) {
-      if (isDocument(doc) && this.#subscribers.length) {
+      if (isDocument$1(doc) && this.#subscribers.length) {
         this.#callbackRegister();
       }
       this.#updateSubscribers(false, {
@@ -23085,7 +23083,7 @@ function create_each_block$5(ctx) {
     }
   };
 }
-function create_if_block$7(ctx) {
+function create_if_block$9(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -23159,7 +23157,7 @@ function create_if_block$7(ctx) {
     }
   };
 }
-function create_fragment$f(ctx) {
+function create_fragment$h(ctx) {
   let div2;
   let div0;
   let div1;
@@ -23175,7 +23173,7 @@ function create_fragment$f(ctx) {
   }
   let if_block = (
     /*activeComponent*/
-    ctx[3] && create_if_block$7(ctx)
+    ctx[3] && create_if_block$9(ctx)
   );
   return {
     c() {
@@ -23237,7 +23235,7 @@ function create_fragment$f(ctx) {
             transition_in(if_block, 1);
           }
         } else {
-          if_block = create_if_block$7(ctx2);
+          if_block = create_if_block$9(ctx2);
           if_block.c();
           transition_in(if_block, 1);
           if_block.m(div1, null);
@@ -23273,7 +23271,7 @@ function create_fragment$f(ctx) {
     }
   };
 }
-function instance$f($$self, $$props, $$invalidate) {
+function instance$h($$self, $$props, $$invalidate) {
   let activeComponent;
   const omit_props_names = ["tabs", "activeTab", "sharedProps"];
   let $$restProps = compute_rest_props($$props, omit_props_names);
@@ -23299,655 +23297,8 @@ function instance$f($$self, $$props, $$invalidate) {
 class Tabs extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$f, create_fragment$f, safe_not_equal, { tabs: 1, activeTab: 0, sharedProps: 2 });
+    init(this, options, instance$h, create_fragment$h, safe_not_equal, { tabs: 1, activeTab: 0, sharedProps: 2 });
   }
-}
-const ITEM_SOURCES_SETTING = "itemSources";
-const LISTABLE_ITEM_TYPES_SETTING = "listableItemTypes";
-function getAvailableItemTypes() {
-  const configured = CONFIG?.Item?.typeLabels ?? {};
-  const documentTypes = Array.isArray(game?.documentTypes?.Item) ? game.documentTypes.Item : [];
-  const modelTypes = CONFIG?.Item?.dataModels ? Object.keys(CONFIG.Item.dataModels) : [];
-  const metadataTypes = CONFIG?.Item?.documentClass?.metadata?.types ?? [];
-  const legacyTypes = Array.isArray(CONFIG?.Item?.types) ? CONFIG.Item.types : [];
-  const compendiumTypes = game.packs?.filter((pack) => pack.documentName === "Item").flatMap((pack) => Array.from(pack.index?.values?.() ?? []).map((entry) => entry?.type)) ?? [];
-  return Array.from(/* @__PURE__ */ new Set([
-    ...Object.keys(configured),
-    ...documentTypes,
-    ...modelTypes,
-    ...metadataTypes,
-    ...legacyTypes,
-    ...compendiumTypes
-  ])).filter(Boolean).map((type) => ({ type, label: getItemTypeLabel(type) })).sort((a, b) => a.label.localeCompare(b.label, game.i18n?.lang));
-}
-function getItemTypeLabel(type) {
-  const rawLabel = CONFIG?.Item?.typeLabels?.[type] || CONFIG?.Item?.typeHints?.[type];
-  if (rawLabel) return game.i18n.localize(rawLabel);
-  try {
-    return game.i18n.localize(type);
-  } catch (_) {
-    return type;
-  }
-}
-function getAllItemCompendia$1() {
-  return game.packs?.filter((pack) => pack.documentName === "Item") ?? [];
-}
-function getItemSourcePacks() {
-  const configured = safeGetSetting(MODULE_ID, ITEM_SOURCES_SETTING, DEFAULT_ITEM_SOURCES);
-  const collections = Array.isArray(configured) ? configured : configured?.items;
-  if (!Array.isArray(collections)) return [];
-  return collections.map((collection) => game.packs?.get(collection)).filter((pack) => pack?.documentName === "Item");
-}
-function getConfiguredListableItemTypes() {
-  const configured = safeGetSetting(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING, DEFAULT_LISTABLE_ITEM_TYPES);
-  const available = getAvailableItemTypes();
-  if (configured === null || configured === void 0) return available;
-  if (!Array.isArray(configured)) return [];
-  const allowed = new Set(configured);
-  return available.filter((entry) => allowed.has(entry.type));
-}
-function isItemTypeListable(type) {
-  const configured = safeGetSetting(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING, DEFAULT_LISTABLE_ITEM_TYPES);
-  if (configured === null || configured === void 0) return true;
-  return Array.isArray(configured) && configured.includes(type);
-}
-function autoAssignItemSources() {
-  return getAllItemCompendia$1().map((pack) => pack.collection);
-}
-const catalogItems = writable([]);
-const catalogLoading = writable(false);
-const catalogError = writable(null);
-function getNestedProperty(entry, path) {
-  return path.split(".").reduce((value, key) => value?.[key], entry);
-}
-function setNestedProperty(target, path, value) {
-  const keys = path.split(".");
-  const lastKey = keys.pop();
-  const parent = keys.reduce((current, key) => {
-    current[key] ??= {};
-    return current[key];
-  }, target);
-  parent[lastKey] = value;
-}
-function extractPackItems(pack, entries) {
-  const nonIndexKeys = [
-    "system.price.value",
-    "system.price.denomination",
-    "system.quantity"
-  ];
-  return entries.map((entry) => {
-    const item = {
-      _id: entry._id,
-      name: entry.name,
-      img: entry.img,
-      type: entry.type,
-      uuid: entry.uuid,
-      packName: pack.metadata.name,
-      packLabel: pack.metadata.label,
-      packPath: pack.metadata.path,
-      sourcePack: pack.metadata.label
-    };
-    for (const key of nonIndexKeys) {
-      if (entry[key] !== void 0) {
-        setNestedProperty(item, key, entry[key]);
-      } else {
-        setNestedProperty(item, key, getNestedProperty(entry, key));
-      }
-    }
-    return item;
-  });
-}
-async function loadCatalogItems() {
-  const packs = getItemSourcePacks();
-  getConfiguredListableItemTypes().map((entry) => entry.type);
-  catalogLoading.set(true);
-  catalogError.set(null);
-  try {
-    const nonIndexKeys = [
-      "system.price.value",
-      "system.price.denomination",
-      "system.quantity"
-    ];
-    const loadedItems = [];
-    for (const pack of packs) {
-      const index = await pack.getIndex({ fields: nonIndexKeys });
-      loadedItems.push(...extractPackItems(pack, Array.from(index.entries())));
-    }
-    const listableItems = loadedItems.filter((item) => isItemTypeListable(item.type)).sort((a, b) => a.name?.localeCompare(b.name, game.i18n?.lang) ?? 0);
-    const seen = /* @__PURE__ */ new Set();
-    const dedupedItems = [];
-    for (const item of listableItems) {
-      const key = item.uuid || `${item.packPath}.${item._id}`;
-      if (!seen.has(key)) {
-        dedupedItems.push(item);
-        seen.add(key);
-      }
-    }
-    catalogItems.set(dedupedItems);
-    return dedupedItems;
-  } catch (error) {
-    catalogError.set(error?.message ?? String(error));
-    catalogItems.set([]);
-    return [];
-  } finally {
-    catalogLoading.set(false);
-  }
-}
-function get_each_context$4(ctx, list, i) {
-  const child_ctx = ctx.slice();
-  child_ctx[3] = list[i];
-  child_ctx[5] = i;
-  return child_ctx;
-}
-function create_else_block$3(ctx) {
-  let p;
-  return {
-    c() {
-      p = element("p");
-      p.textContent = "No associated actors yet.";
-      attr(p, "class", "no-items");
-    },
-    m(target, anchor) {
-      insert(target, p, anchor);
-    },
-    p: noop,
-    d(detaching) {
-      if (detaching) {
-        detach(p);
-      }
-    }
-  };
-}
-function create_if_block$6(ctx) {
-  let ul;
-  let each_value = ensure_array_like(
-    /*sharedProps*/
-    ctx[0].associatedActors
-  );
-  let each_blocks = [];
-  for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block$4(get_each_context$4(ctx, each_value, i));
-  }
-  return {
-    c() {
-      ul = element("ul");
-      for (let i = 0; i < each_blocks.length; i += 1) {
-        each_blocks[i].c();
-      }
-      attr(ul, "class", "associated-list");
-    },
-    m(target, anchor) {
-      insert(target, ul, anchor);
-      for (let i = 0; i < each_blocks.length; i += 1) {
-        if (each_blocks[i]) {
-          each_blocks[i].m(ul, null);
-        }
-      }
-    },
-    p(ctx2, dirty) {
-      if (dirty & /*sharedProps*/
-      1) {
-        each_value = ensure_array_like(
-          /*sharedProps*/
-          ctx2[0].associatedActors
-        );
-        let i;
-        for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context$4(ctx2, each_value, i);
-          if (each_blocks[i]) {
-            each_blocks[i].p(child_ctx, dirty);
-          } else {
-            each_blocks[i] = create_each_block$4(child_ctx);
-            each_blocks[i].c();
-            each_blocks[i].m(ul, null);
-          }
-        }
-        for (; i < each_blocks.length; i += 1) {
-          each_blocks[i].d(1);
-        }
-        each_blocks.length = each_value.length;
-      }
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(ul);
-      }
-      destroy_each(each_blocks, detaching);
-    }
-  };
-}
-function create_each_block$4(ctx) {
-  let li;
-  let span;
-  let t0_value = (
-    /*sharedProps*/
-    ctx[0].getActorName(
-      /*assoc*/
-      ctx[3]
-    ) + ""
-  );
-  let t0;
-  let button;
-  let mounted;
-  let dispose;
-  function click_handler() {
-    return (
-      /*click_handler*/
-      ctx[1](
-        /*index*/
-        ctx[5]
-      )
-    );
-  }
-  return {
-    c() {
-      li = element("li");
-      span = element("span");
-      t0 = text(t0_value);
-      button = element("button");
-      button.textContent = "×";
-      attr(button, "class", "remove-btn");
-      attr(button, "type", "button");
-    },
-    m(target, anchor) {
-      insert(target, li, anchor);
-      append(li, span);
-      append(span, t0);
-      append(li, button);
-      if (!mounted) {
-        dispose = listen(button, "click", click_handler);
-        mounted = true;
-      }
-    },
-    p(new_ctx, dirty) {
-      ctx = new_ctx;
-      if (dirty & /*sharedProps*/
-      1 && t0_value !== (t0_value = /*sharedProps*/
-      ctx[0].getActorName(
-        /*assoc*/
-        ctx[3]
-      ) + "")) set_data(t0, t0_value);
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(li);
-      }
-      mounted = false;
-      dispose();
-    }
-  };
-}
-function create_fragment$e(ctx) {
-  let div7;
-  let div6;
-  let div3;
-  let div0;
-  let h20;
-  let t0_value = (
-    /*sharedProps*/
-    ctx[0].localize("ProfileImage") + ""
-  );
-  let t0;
-  let img;
-  let img_src_value;
-  let button;
-  let div2;
-  let h21;
-  let t2_value = (
-    /*sharedProps*/
-    ctx[0].localize("AssociatedActors") + ""
-  );
-  let t2;
-  let div1;
-  let p0;
-  let t3_value = (
-    /*sharedProps*/
-    ctx[0].localize("DragActorsHere") + ""
-  );
-  let t3;
-  let p1;
-  let div5;
-  let div4;
-  let h22;
-  let t5_value = (
-    /*sharedProps*/
-    ctx[0].localize("Description") + ""
-  );
-  let t5;
-  let textarea;
-  let textarea_value_value;
-  let mounted;
-  let dispose;
-  function select_block_type(ctx2, dirty) {
-    if (
-      /*sharedProps*/
-      ctx2[0].associatedActors && /*sharedProps*/
-      ctx2[0].associatedActors.length > 0
-    ) return create_if_block$6;
-    return create_else_block$3;
-  }
-  let current_block_type = select_block_type(ctx);
-  let if_block = current_block_type(ctx);
-  return {
-    c() {
-      div7 = element("div");
-      div6 = element("div");
-      div3 = element("div");
-      div0 = element("div");
-      h20 = element("h2");
-      t0 = text(t0_value);
-      img = element("img");
-      button = element("button");
-      button.textContent = "Change Image";
-      div2 = element("div");
-      h21 = element("h2");
-      t2 = text(t2_value);
-      div1 = element("div");
-      p0 = element("p");
-      t3 = text(t3_value);
-      p1 = element("p");
-      p1.textContent = "(Drag actor tokens or from actor directory)";
-      if_block.c();
-      div5 = element("div");
-      div4 = element("div");
-      h22 = element("h2");
-      t5 = text(t5_value);
-      textarea = element("textarea");
-      attr(img, "class", "profile-img");
-      if (!src_url_equal(img.src, img_src_value = /*sharedProps*/
-      ctx[0].actor?.img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
-      attr(img, "alt", "Shop Profile");
-      attr(button, "type", "button");
-      attr(div0, "class", "profile-section flex1");
-      attr(p0, "class", "drag-hint");
-      attr(p1, "class", "small");
-      attr(div1, "class", "drag-drop-area");
-      attr(div1, "role", "region");
-      attr(div1, "aria-label", "Associated actors drop zone");
-      attr(div2, "class", "associated-actors-section flex2");
-      attr(div3, "class", "flex1 flexcol gap-10");
-      attr(textarea, "class", "description-text");
-      textarea.value = textarea_value_value = /*sharedProps*/
-      ctx[0].descriptionValue;
-      attr(textarea, "placeholder", "Describe your shop...");
-      attr(div4, "class", "description-section");
-      attr(div5, "class", "flex2");
-      attr(div6, "class", "flexrow gap-10");
-      attr(div7, "class", "shopfront-tab");
-    },
-    m(target, anchor) {
-      insert(target, div7, anchor);
-      append(div7, div6);
-      append(div6, div3);
-      append(div3, div0);
-      append(div0, h20);
-      append(h20, t0);
-      append(div0, img);
-      append(div0, button);
-      append(div3, div2);
-      append(div2, h21);
-      append(h21, t2);
-      append(div2, div1);
-      append(div1, p0);
-      append(p0, t3);
-      append(div1, p1);
-      if_block.m(div2, null);
-      append(div6, div5);
-      append(div5, div4);
-      append(div4, h22);
-      append(h22, t5);
-      append(div4, textarea);
-      if (!mounted) {
-        dispose = [
-          listen(button, "click", function() {
-            if (is_function(
-              /*sharedProps*/
-              ctx[0].openImageEditor
-            )) ctx[0].openImageEditor.apply(this, arguments);
-          }),
-          listen(div1, "dragover", prevent_default(function() {
-            if (is_function(
-              /*sharedProps*/
-              ctx[0].handleDragOver
-            )) ctx[0].handleDragOver.apply(this, arguments);
-          })),
-          listen(div1, "drop", prevent_default(function() {
-            if (is_function(
-              /*sharedProps*/
-              ctx[0].handleActorDrop
-            )) ctx[0].handleActorDrop.apply(this, arguments);
-          })),
-          listen(
-            textarea,
-            "input",
-            /*input_handler*/
-            ctx[2]
-          )
-        ];
-        mounted = true;
-      }
-    },
-    p(new_ctx, [dirty]) {
-      ctx = new_ctx;
-      if (dirty & /*sharedProps*/
-      1 && t0_value !== (t0_value = /*sharedProps*/
-      ctx[0].localize("ProfileImage") + "")) set_data(t0, t0_value);
-      if (dirty & /*sharedProps*/
-      1 && !src_url_equal(img.src, img_src_value = /*sharedProps*/
-      ctx[0].actor?.img || "icons/svg/mystery-man.svg")) {
-        attr(img, "src", img_src_value);
-      }
-      if (dirty & /*sharedProps*/
-      1 && t2_value !== (t2_value = /*sharedProps*/
-      ctx[0].localize("AssociatedActors") + "")) set_data(t2, t2_value);
-      if (dirty & /*sharedProps*/
-      1 && t3_value !== (t3_value = /*sharedProps*/
-      ctx[0].localize("DragActorsHere") + "")) set_data(t3, t3_value);
-      if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block) {
-        if_block.p(ctx, dirty);
-      } else {
-        if_block.d(1);
-        if_block = current_block_type(ctx);
-        if (if_block) {
-          if_block.c();
-          if_block.m(div2, null);
-        }
-      }
-      if (dirty & /*sharedProps*/
-      1 && t5_value !== (t5_value = /*sharedProps*/
-      ctx[0].localize("Description") + "")) set_data(t5, t5_value);
-      if (dirty & /*sharedProps*/
-      1 && textarea_value_value !== (textarea_value_value = /*sharedProps*/
-      ctx[0].descriptionValue)) {
-        textarea.value = textarea_value_value;
-      }
-    },
-    i: noop,
-    o: noop,
-    d(detaching) {
-      if (detaching) {
-        detach(div7);
-      }
-      if_block.d();
-      mounted = false;
-      run_all(dispose);
-    }
-  };
-}
-function instance$e($$self, $$props, $$invalidate) {
-  let { sharedProps = {} } = $$props;
-  onMount(() => {
-    loadCatalogItems();
-  });
-  const click_handler = (index) => sharedProps.removeAssociated(index);
-  const input_handler = (e) => sharedProps.onDescriptionChange?.(e.target.value);
-  $$self.$$set = ($$props2) => {
-    if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
-  };
-  return [sharedProps, click_handler, input_handler];
-}
-class ShopfrontTab extends SvelteComponent {
-  constructor(options) {
-    super();
-    init(this, options, instance$e, create_fragment$e, safe_not_equal, { sharedProps: 0 });
-  }
-}
-function rippleFocus({ background = "rgba(255, 255, 255, 0.7)", duration = 300, enabled = true, selector } = {}) {
-  return (element2, initialOptions) => {
-    element2.style.overflow = "hidden";
-    const targetEl = typeof selector === "string" ? element2.querySelector(selector) : A11yHelper.isFocusTarget(element2.firstChild) ? element2.firstChild : element2;
-    let activeWindow = void 0;
-    let windowBlurActiveFocus = false;
-    let clientX = -1;
-    let clientY = -1;
-    const activeSpans = [];
-    function blurRipple(event, force = false) {
-      if (!enabled) {
-        return;
-      }
-      if (!force && (activeSpans.length === 0 || targetEl === CrossWindow.getActiveElement(targetEl))) {
-        return;
-      }
-      for (const span of activeSpans) {
-        try {
-          const effect = new window.KeyframeEffect(
-            span,
-            [
-              {
-                // from
-                transform: "scale(3)",
-                opacity: 0.3
-              },
-              {
-                // to
-                transform: "scale(.7)",
-                opacity: 0
-              }
-            ],
-            {
-              duration,
-              fill: "forwards"
-            }
-          );
-          const animation = new window.Animation(effect);
-          animation.onfinish = () => {
-            if (span) {
-              span.remove();
-            }
-          };
-          animation.play();
-        } catch {
-          if (span) {
-            span.remove();
-          }
-        }
-      }
-      activeSpans.length = 0;
-      activeWindow?.removeEventListener?.("blur", blurRippleForced);
-      activeWindow = void 0;
-    }
-    function blurRippleForced(event) {
-      if (CrossWindow.isActiveElement(targetEl)) {
-        windowBlurActiveFocus = true;
-      }
-      blurRipple(event, true);
-    }
-    async function focusRipple() {
-      if (windowBlurActiveFocus) {
-        windowBlurActiveFocus = false;
-        await nextAnimationFrame(2);
-        if (!CrossWindow.isActiveElement(targetEl)) {
-          return;
-        }
-      }
-      if (!enabled) {
-        return;
-      }
-      if (activeSpans.length > 0) {
-        return;
-      }
-      const elementRect = element2.getBoundingClientRect();
-      const actualX = clientX >= 0 ? clientX : elementRect.left + elementRect.width / 2;
-      const actualY = clientY >= 0 ? clientY : elementRect.top + elementRect.height / 2;
-      const diameter = Math.max(elementRect.width, elementRect.height);
-      const radius = diameter / 2;
-      const left = `${actualX - (elementRect.left + radius)}px`;
-      const top = `${actualY - (elementRect.top + radius)}px`;
-      const span = CrossWindow.getDocument(element2).createElement("span");
-      span.style.position = "absolute";
-      span.style.width = `${diameter}px`;
-      span.style.height = `${diameter}px`;
-      span.style.left = left;
-      span.style.top = top;
-      span.style.background = `var(--tjs-action-ripple-background-focus, var(--tjs-action-ripple-background, ${background}))`;
-      span.style.borderRadius = "50%";
-      span.style.pointerEvents = "none";
-      span.style.transform = "translateZ(-1px)";
-      element2.prepend(span);
-      try {
-        const effect = new window.KeyframeEffect(
-          span,
-          [
-            {
-              // from
-              transform: "scale(.7)",
-              opacity: 0.5
-            },
-            {
-              // to
-              transform: "scale(3)",
-              opacity: 0.3
-            }
-          ],
-          {
-            duration,
-            fill: "forwards"
-          }
-        );
-        const animation = new window.Animation(effect);
-        animation.play();
-        activeSpans.push(span);
-        activeWindow = targetEl.ownerDocument.defaultView;
-        activeWindow.addEventListener("blur", blurRippleForced, { once: true });
-      } catch {
-        if (span) {
-          span.remove();
-        }
-      }
-      clientX = clientY = -1;
-    }
-    function onPointerDown(e) {
-      if (!enabled) {
-        return;
-      }
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-    function updateOptions(newOptions) {
-      if (typeof newOptions?.enabled === "boolean" && enabled !== newOptions?.enabled) {
-        enabled = newOptions.enabled;
-        if (!enabled) {
-          blurRipple();
-        }
-      }
-    }
-    targetEl.addEventListener("pointerdown", onPointerDown);
-    targetEl.addEventListener("blur", blurRipple);
-    targetEl.addEventListener("focus", focusRipple);
-    if (isObject(initialOptions)) {
-      updateOptions(initialOptions);
-    }
-    return {
-      update: updateOptions,
-      destroy: () => {
-        targetEl.removeEventListener("pointerdown", onPointerDown);
-        targetEl.removeEventListener("blur", blurRipple);
-        targetEl.removeEventListener("focus", focusRipple);
-        activeWindow?.removeEventListener?.("blur", blurRippleForced);
-        activeWindow = void 0;
-      }
-    };
-  };
 }
 class FVTTConfigure2 {
   static #initialized = false;
@@ -24251,6 +23602,1600 @@ class FVTTConfigure2 {
   }
 }
 FVTTConfigure2.initialize();
+function isDocument(doc) {
+  return doc !== void 0 && doc !== null && doc instanceof foundry.abstract.Document;
+}
+function processHTML({ html, process, selector, containerElement = "div", firstMatchOnly = false, namespaceURI }) {
+  if (typeof html !== "string") {
+    throw new TypeError(`processHTML error: 'html' is not a string.`);
+  }
+  if (typeof process !== "function") {
+    throw new TypeError(`processHTML error: 'process' is not a function.`);
+  }
+  if (typeof selector !== "string") {
+    throw new TypeError(`processHTML error: 'selector' is not a string.`);
+  }
+  if (typeof containerElement !== "string") {
+    throw new TypeError(`processHTML error: 'containerElement' is not a string.`);
+  }
+  if (typeof firstMatchOnly !== "boolean") {
+    throw new TypeError(`processHTML error: 'firstMatchOnly' is not a boolean.`);
+  }
+  if (namespaceURI !== void 0 && typeof namespaceURI !== "string") {
+    throw new TypeError(`processHTML error: 'namespaceURI' is not a string.`);
+  }
+  const resolveSelector = namespaceURI ? `${namespaceURI}|${selector}` : selector;
+  const container = document.createElement(containerElement);
+  container.innerHTML = html;
+  if (firstMatchOnly) {
+    const element2 = container.querySelector(resolveSelector);
+    if (element2) {
+      process(element2);
+    }
+  } else {
+    const elements = container.querySelectorAll(resolveSelector);
+    if (elements) {
+      for (const element2 of elements) {
+        process(element2);
+      }
+    }
+  }
+  return container.innerHTML;
+}
+function createMountRevealSecretButtons(doc, options) {
+  function onUpdateRevealButtons(revealed, id) {
+    const foundryDoc = doc.get();
+    if (foundryDoc && typeof options?.fieldName === "string") {
+      const html = safeAccess(foundryDoc, options?.fieldName);
+      if (typeof html === "string") {
+        const newContent = processHTML({
+          html,
+          process: (element2) => element2.classList[`${revealed ? "add" : "remove"}`]("revealed"),
+          selector: `section.secret[id=${id}]`,
+          firstMatchOnly: true
+        });
+        foundryDoc.update({ [options?.fieldName]: newContent });
+      }
+    }
+  }
+  return (node) => {
+    function buttonEvents() {
+      nextAnimationFrame().then(() => {
+        const foundryDoc = doc.get();
+        const secretSections = node.querySelectorAll("section.secret[id]");
+        for (const sectionEl of secretSections) {
+          const button = sectionEl.querySelector("button.reveal");
+          if (button) {
+            if (foundryDoc && typeof options?.fieldName === "string") {
+              const revealed = sectionEl.classList.contains("revealed");
+              const id = sectionEl.id;
+              button.addEventListener("click", () => onUpdateRevealButtons(!revealed, id), { once: true });
+            } else {
+              button.style.display = "none";
+            }
+          }
+        }
+      });
+    }
+    return {
+      /**
+       * On update if the external parameter `mountRevealButtons` is true and a document / fieldName is defined
+       * mount the secret reveal buttons otherwise destroy any existing buttons.
+       *
+       * Note: In the editor components `enrichedContent` is also passed, but unused, but it will trigger an update
+       * whenever the content changes.
+       *
+       * @param mountRevealButtons
+       */
+      update({ mountRevealButtons }) {
+        if (mountRevealButtons) {
+          buttonEvents();
+        }
+      }
+    };
+  };
+}
+class PMImpl {
+  /**
+   * Handles `options.initialSelection`: Sets the initial cursor / selection range to the start, end, or selects
+   * all text.
+   *
+   * @param {globalThis.EditorView}  view - PM editor view.
+   *
+   * @param {object}  options - TJSProseMirror options.
+   */
+  static setInitialSelection(view, options) {
+    const tr = view.state.tr;
+    const doc = tr.doc;
+    const initialSelection = options.initialSelection;
+    const type = initialSelection === "all" || initialSelection === "end" || initialSelection === "start" ? initialSelection : "start";
+    const minPos = globalThis.ProseMirror.TextSelection.atStart(doc).from;
+    const maxPos = globalThis.ProseMirror.TextSelection.atEnd(doc).to;
+    let transaction;
+    switch (type) {
+      case "all": {
+        const resolvedFrom = clamp(0, minPos, maxPos);
+        const resolvedEnd = clamp(doc.content.size, minPos, maxPos);
+        transaction = tr.setSelection(globalThis.ProseMirror.TextSelection.create(doc, resolvedFrom, resolvedEnd));
+        break;
+      }
+      case "end": {
+        const resolvedFrom = clamp(doc.content.size, minPos, maxPos);
+        const resolvedEnd = clamp(doc.content.size, minPos, maxPos);
+        transaction = tr.setSelection(globalThis.ProseMirror.TextSelection.create(doc, resolvedFrom, resolvedEnd));
+        break;
+      }
+      case "start": {
+        const resolvedFrom = clamp(0, minPos, maxPos);
+        const resolvedEnd = clamp(0, minPos, maxPos);
+        transaction = tr.setSelection(globalThis.ProseMirror.TextSelection.create(doc, resolvedFrom, resolvedEnd));
+        break;
+      }
+    }
+    if (transaction) {
+      transaction.scrollIntoView();
+      view.dispatch(transaction);
+    }
+  }
+}
+const ProseMirrorKeyMaps = globalThis.ProseMirror ? globalThis.ProseMirror.ProseMirrorKeyMaps : class {
+};
+class TJSKeyMaps extends ProseMirrorKeyMaps {
+  /** @type {Function} */
+  #onQuit;
+  /**
+   * @param {globalThis.Schema}   schema - The ProseMirror schema to build keymaps for.
+   *
+   * @param {object}   [options] - Additional options to configure the plugin's behaviour.
+   *
+   * @param {Function} [options.onSave] - A function to call when Ctrl+S is pressed.
+   *
+   * @param {Function} [options.onQuit] - A function to call when Ctrl+Q is pressed.
+   */
+  constructor(schema, options) {
+    super(schema, options);
+    if (typeof options.onQuit === "function") {
+      this.#onQuit = options.onQuit;
+    }
+  }
+  // eslint-disable-next jsdoc/check-types
+  /**
+   * Swaps the Foundry default `Escape` / selectParentNode to `Mod-p` and enables `onQuit` function for `Escape`.
+   *
+   * @returns { {[key: string]: globalThis.ProseMirrorCommand} } ProseMirror keymap data.
+   */
+  buildMapping() {
+    const mapping = super.buildMapping();
+    if (this.#onQuit) {
+      if (mapping["Escape"]) {
+        mapping["Mod-p"] = mapping["Escape"];
+      }
+      mapping["Escape"] = () => this.#onQuit();
+    }
+    return mapping;
+  }
+}
+const Plugin = globalThis.ProseMirror ? globalThis.ProseMirror.Plugin : class {
+};
+const PluginKey = globalThis.ProseMirror ? globalThis.ProseMirror.PluginKey : class {
+};
+class TJSPasteUUID {
+  /**
+   * Defines a regex to check for the shape of a raw Foundry document UUID.
+   *
+   * @type {RegExp}
+   */
+  static #s_UUID_REGEX = /(\.).*([a-zA-Z0-9]{16})/;
+  /**
+   * @returns {Plugin} PM Plugin.
+   */
+  static build() {
+    const instance2 = new this();
+    return new Plugin({
+      key: new PluginKey("tjsPasteRawUUID"),
+      props: {
+        transformPastedText: (text2) => instance2.#transformUUID(text2)
+      }
+    });
+  }
+  /**
+   * Transforms pasted text. Check if pasted test matches the shape of a raw UUID. If so do a lookup and if a
+   * document is retrieved transform it to a document link.
+   *
+   * @param {string}   text - pasted text to transform.
+   *
+   * @returns {string} Potentially transformed pasted text.
+   */
+  #transformUUID(text2) {
+    if (typeof text2 === "string") {
+      try {
+        if (TJSPasteUUID.#s_UUID_REGEX.test(text2)) {
+          const uuidDoc = globalThis.fromUuidSync(text2);
+          if (uuidDoc) {
+            text2 = `@UUID[${text2}]{${typeof uuidDoc.name === "string" ? uuidDoc.name : "Unknown"}}`;
+          }
+        }
+      } catch (err) {
+      }
+    }
+    return text2;
+  }
+}
+function create_if_block_1$5(ctx) {
+  let a;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      a = element("a");
+      a.innerHTML = `<i class="fas fa-edit"></i>`;
+      attr(a, "class", "editor-edit svelte-FOU-1r2l0ln");
+      attr(a, "role", "button");
+      attr(a, "tabindex", "-1");
+    },
+    m(target, anchor) {
+      insert(target, a, anchor);
+      if (!mounted) {
+        dispose = listen(
+          a,
+          "click",
+          /*click_handler*/
+          ctx[19]
+        );
+        mounted = true;
+      }
+    },
+    p: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(a);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_else_block$4(ctx) {
+  let div;
+  return {
+    c() {
+      div = element("div");
+      attr(div, "class", "editor-enriched svelte-FOU-1r2l0ln");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      div.innerHTML = /*enrichedContent*/
+      ctx[1];
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*enrichedContent*/
+      2) div.innerHTML = /*enrichedContent*/
+      ctx2[1];
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+    }
+  };
+}
+function create_if_block$8(ctx) {
+  let div;
+  return {
+    c() {
+      div = element("div");
+      attr(div, "class", "editor-content svelte-FOU-1r2l0ln");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      ctx[20](div);
+    },
+    p: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      ctx[20](null);
+    }
+  };
+}
+function create_fragment$g(ctx) {
+  let div;
+  let t;
+  let div_class_value;
+  let applyStyles_action;
+  let mountRevealSecretButtons_action;
+  let mounted;
+  let dispose;
+  let if_block0 = (
+    /*editorButton*/
+    ctx[6] && create_if_block_1$5(ctx)
+  );
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*editorActive*/
+      ctx2[4]
+    ) return create_if_block$8;
+    return create_else_block$4;
+  }
+  let current_block_type = select_block_type(ctx);
+  let if_block1 = current_block_type(ctx);
+  return {
+    c() {
+      div = element("div");
+      if (if_block0) if_block0.c();
+      t = space();
+      if_block1.c();
+      attr(div, "class", div_class_value = "editor prosemirror tjs-editor " + (Array.isArray(
+        /*options*/
+        ctx[0]?.classes
+      ) ? (
+        /*options*/
+        ctx[0].classes.join(" ")
+      ) : "") + " svelte-FOU-1r2l0ln");
+      attr(div, "role", "textbox");
+      attr(div, "tabindex", "0");
+      toggle_class(
+        div,
+        "click-to-edit",
+        /*clickToEdit*/
+        ctx[2]
+      );
+      toggle_class(
+        div,
+        "editor-active",
+        /*editorActive*/
+        ctx[4]
+      );
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      if (if_block0) if_block0.m(div, null);
+      append(div, t);
+      if_block1.m(div, null);
+      ctx[21](div);
+      if (!mounted) {
+        dispose = [
+          action_destroyer(applyStyles_action = applyStyles.call(
+            null,
+            div,
+            /*options*/
+            ctx[0]?.styles
+          )),
+          action_destroyer(mountRevealSecretButtons_action = /*mountRevealSecretButtons*/
+          ctx[10].call(null, div, {
+            mountRevealButtons: !/*editorActive*/
+            ctx[4] && /*editable*/
+            ctx[3],
+            enrichedContent: (
+              /*enrichedContent*/
+              ctx[1]
+            )
+          })),
+          listen(
+            div,
+            "click",
+            /*onClick*/
+            ctx[12]
+          ),
+          listen(
+            div,
+            "keydown",
+            /*onKeydown*/
+            ctx[13]
+          ),
+          listen(
+            div,
+            "keyup",
+            /*onKeyup*/
+            ctx[14]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, [dirty]) {
+      if (
+        /*editorButton*/
+        ctx2[6]
+      ) {
+        if (if_block0) {
+          if_block0.p(ctx2, dirty);
+        } else {
+          if_block0 = create_if_block_1$5(ctx2);
+          if_block0.c();
+          if_block0.m(div, t);
+        }
+      } else if (if_block0) {
+        if_block0.d(1);
+        if_block0 = null;
+      }
+      if (current_block_type === (current_block_type = select_block_type(ctx2)) && if_block1) {
+        if_block1.p(ctx2, dirty);
+      } else {
+        if_block1.d(1);
+        if_block1 = current_block_type(ctx2);
+        if (if_block1) {
+          if_block1.c();
+          if_block1.m(div, null);
+        }
+      }
+      if (dirty & /*options*/
+      1 && div_class_value !== (div_class_value = "editor prosemirror tjs-editor " + (Array.isArray(
+        /*options*/
+        ctx2[0]?.classes
+      ) ? (
+        /*options*/
+        ctx2[0].classes.join(" ")
+      ) : "") + " svelte-FOU-1r2l0ln")) {
+        attr(div, "class", div_class_value);
+      }
+      if (applyStyles_action && is_function(applyStyles_action.update) && dirty & /*options*/
+      1) applyStyles_action.update.call(
+        null,
+        /*options*/
+        ctx2[0]?.styles
+      );
+      if (mountRevealSecretButtons_action && is_function(mountRevealSecretButtons_action.update) && dirty & /*editorActive, editable, enrichedContent*/
+      26) mountRevealSecretButtons_action.update.call(null, {
+        mountRevealButtons: !/*editorActive*/
+        ctx2[4] && /*editable*/
+        ctx2[3],
+        enrichedContent: (
+          /*enrichedContent*/
+          ctx2[1]
+        )
+      });
+      if (dirty & /*options, clickToEdit*/
+      5) {
+        toggle_class(
+          div,
+          "click-to-edit",
+          /*clickToEdit*/
+          ctx2[2]
+        );
+      }
+      if (dirty & /*options, editorActive*/
+      17) {
+        toggle_class(
+          div,
+          "editor-active",
+          /*editorActive*/
+          ctx2[4]
+        );
+      }
+    },
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      if (if_block0) if_block0.d();
+      if_block1.d();
+      ctx[21](null);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function instance$g($$self, $$props, $$invalidate) {
+  let $doc;
+  let $applicationActiveWindow;
+  let { content = "" } = $$props;
+  let { enrichedContent = "" } = $$props;
+  let { options = {} } = $$props;
+  const application = getContext("#external")?.application;
+  const applicationActiveWindow = application?.reactive?.storeUIState?.activeWindow ?? writable(globalThis);
+  component_subscribe($$self, applicationActiveWindow, (value) => $$invalidate(18, $applicationActiveWindow = value));
+  const dispatch2 = createEventDispatcher();
+  const doc = new TJSDocument({ delete: onDocumentDeleted });
+  component_subscribe($$self, doc, (value) => $$invalidate(17, $doc = value));
+  const mountRevealSecretButtons = createMountRevealSecretButtons(doc, options);
+  let activeWindow = $applicationActiveWindow;
+  let clickToEdit;
+  let editable = true;
+  let editorContentEl;
+  let editor;
+  let editorActive = false;
+  let editorButton;
+  let editorEl;
+  let keyCode;
+  let keyFocused = false;
+  onDestroy(() => {
+    if (editorActive) {
+      saveEditor({
+        remove: typeof options?.button === "boolean" ? options.button : true
+      });
+    } else {
+      destroyEditor();
+    }
+  });
+  onMount(() => {
+    if (editable && !editorButton && !clickToEdit) {
+      initEditor();
+    }
+  });
+  function destroyEditor(fireCancel = true) {
+    if (editor) {
+      editor.destroy();
+      editor = void 0;
+      setTimeout(
+        () => {
+          $$invalidate(4, editorActive = false);
+        },
+        0
+      );
+      if (keyFocused) {
+        keyFocused = false;
+        setTimeout(
+          () => {
+            if (CrossWindow.isHTMLElement(editorEl) && editorEl?.isConnected) {
+              editorEl.focus();
+            }
+          },
+          100
+        );
+      }
+      if (fireCancel) {
+        dispatch2("editor:cancel");
+      }
+    }
+  }
+  async function initEditor() {
+    const remove = typeof options?.button === "boolean" ? options.button : true;
+    const editorOptions = {
+      ...options,
+      plugins: {
+        ...ProseMirror.defaultPlugins,
+        menu: ProseMirror.ProseMirrorMenu.build(ProseMirror.defaultSchema, {
+          compact: typeof options?.menuCompact === "boolean" ? options.menuCompact : false,
+          destroyOnSave: remove,
+          onSave: () => saveEditor({ remove })
+        }),
+        keyMaps: TJSKeyMaps.build(ProseMirror.defaultSchema, {
+          onSave: () => saveEditor({ remove }),
+          onQuit: () => destroyEditor()
+        }),
+        tjsPasteRawUUID: TJSPasteUUID.build(),
+        ...isObject(options?.plugins) ? options.plugins : {}
+      }
+    };
+    $$invalidate(4, editorActive = true);
+    await tick();
+    editor = await foundry.applications.ux.ProseMirrorEditor.create(editorContentEl, content, editorOptions);
+    const containerEl = editorEl.querySelector(".editor-container");
+    if (containerEl) {
+      containerEl.style = "margin: var(--tjs-editor-container-margin, 0)";
+    }
+    editor.view.focus();
+    PMImpl.setInitialSelection(editor.view, options);
+    dispatch2("editor:start");
+  }
+  function onClick() {
+    if (!editorActive && clickToEdit) {
+      initEditor();
+    }
+  }
+  async function onContentChanged(content2, enrichContent) {
+    if (typeof content2 === "string") {
+      if (enrichContent) {
+        const isOwner = $doc?.isOwner ?? false;
+        const relativeTo = $doc ?? void 0;
+        const secrets = globalThis.game.user.isGM || isOwner;
+        const enrichOptions = isObject(options?.enrichOptions) ? {
+          secrets,
+          relativeTo,
+          ...options.enrichOptions,
+          async: true
+        } : { async: true, relativeTo, secrets };
+        $$invalidate(1, enrichedContent = await foundry.applications.ux.TextEditor.enrichHTML(content2, enrichOptions));
+      } else {
+        $$invalidate(1, enrichedContent = content2);
+      }
+    } else {
+      $$invalidate(1, enrichedContent = "");
+    }
+    dispatch2("editor:enrichedContent", { enrichedContent });
+  }
+  function onDocumentDeleted(document2) {
+    if (isObject(options)) {
+      $$invalidate(0, options.document = void 0, options);
+    }
+    destroyEditor();
+    dispatch2("editor:document:deleted", { document: document2 });
+    $$invalidate(15, content = "");
+    $$invalidate(1, enrichedContent = "");
+  }
+  function onKeydown(event) {
+    if (editorActive) {
+      if (event.code === "Escape" || event.code === "KeyS" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    } else {
+      if (event.code === keyCode) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }
+  }
+  function onKeyup(event) {
+    if (event.code === keyCode) {
+      if (!editorActive) {
+        keyFocused = true;
+        initEditor();
+      }
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+  function saveEditor({ remove = true } = {}) {
+    if (editor) {
+      if (editor.isDirty()) {
+        let data = ProseMirror.dom.serializeString(editor.view.state.doc);
+        if ($doc && typeof options?.fieldName === "string") {
+          $doc.update({ [options.fieldName]: data });
+        } else {
+          $$invalidate(15, content = data);
+        }
+        dispatch2("editor:save", { content: data });
+      }
+      if (remove) {
+        destroyEditor(false);
+      }
+    }
+  }
+  const click_handler = () => initEditor();
+  function div_binding($$value) {
+    binding_callbacks[$$value ? "unshift" : "push"](() => {
+      editorContentEl = $$value;
+      $$invalidate(5, editorContentEl);
+    });
+  }
+  function div_binding_1($$value) {
+    binding_callbacks[$$value ? "unshift" : "push"](() => {
+      editorEl = $$value;
+      $$invalidate(7, editorEl);
+    });
+  }
+  $$self.$$set = ($$props2) => {
+    if ("content" in $$props2) $$invalidate(15, content = $$props2.content);
+    if ("enrichedContent" in $$props2) $$invalidate(1, enrichedContent = $$props2.enrichedContent);
+    if ("options" in $$props2) $$invalidate(0, options = $$props2.options);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*activeWindow, $applicationActiveWindow, editorActive*/
+    327696) {
+      if (activeWindow !== $applicationActiveWindow) {
+        if (editorActive) {
+          saveEditor();
+        }
+        $$invalidate(16, activeWindow = $applicationActiveWindow);
+      }
+    }
+    if ($$self.$$.dirty & /*options, $doc, editable*/
+    131081) {
+      {
+        if (typeof options?.editable === "boolean") {
+          $$invalidate(3, editable = options.editable);
+        } else {
+          $$invalidate(3, editable = game.user.isGM || (($doc ?? options.document)?.isOwner ?? false));
+        }
+        if (!editable) {
+          destroyEditor();
+        }
+      }
+    }
+    if ($$self.$$.dirty & /*editorActive, editable, options*/
+    25) {
+      $$invalidate(2, clickToEdit = !editorActive && editable && (typeof options?.clickToEdit === "boolean" ? options.clickToEdit : false));
+    }
+    if ($$self.$$.dirty & /*editorActive, editable, options, clickToEdit*/
+    29) {
+      $$invalidate(6, editorButton = !editorActive && editable && (typeof options?.button === "boolean" ? options.button : true) && !clickToEdit);
+    }
+    if ($$self.$$.dirty & /*options*/
+    1) {
+      keyCode = typeof options?.keyCode === "string" ? options.keyCode : "Enter";
+    }
+    if ($$self.$$.dirty & /*options, $doc*/
+    131073) {
+      if (options?.document !== void 0) {
+        if (!isDocument(options.document)) {
+          throw new TypeError(`TJSProseMirror error: 'options.document' is not a Foundry document.`);
+        }
+        if (typeof options?.fieldName !== "string") {
+          throw new TypeError(`TJSProseMirror error: 'options.document' is defined, but 'options.fieldName' is not a string.`);
+        }
+        if (options.document !== $doc) {
+          $$invalidate(1, enrichedContent = "");
+          $$invalidate(15, content = "");
+          destroyEditor();
+          doc.set(options.document);
+        }
+      } else {
+        if ($doc) {
+          $$invalidate(1, enrichedContent = "");
+          $$invalidate(15, content = "");
+          destroyEditor();
+          doc.set(void 0);
+        }
+      }
+    }
+    if ($$self.$$.dirty & /*$doc, options, content*/
+    163841) {
+      {
+        $$invalidate(15, content = $doc !== void 0 && typeof options?.fieldName === "string" ? safeAccess($doc, options.fieldName) : typeof content === "string" ? content : "");
+        onContentChanged(content, typeof options?.enrichContent === "boolean" ? options.enrichContent : true);
+      }
+    }
+  };
+  return [
+    options,
+    enrichedContent,
+    clickToEdit,
+    editable,
+    editorActive,
+    editorContentEl,
+    editorButton,
+    editorEl,
+    applicationActiveWindow,
+    doc,
+    mountRevealSecretButtons,
+    initEditor,
+    onClick,
+    onKeydown,
+    onKeyup,
+    content,
+    activeWindow,
+    $doc,
+    $applicationActiveWindow,
+    click_handler,
+    div_binding,
+    div_binding_1
+  ];
+}
+class TJSProseMirror extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$g, create_fragment$g, safe_not_equal, {
+      content: 15,
+      enrichedContent: 1,
+      options: 0
+    });
+  }
+}
+function create_if_block$7(ctx) {
+  let tjsprosemirror;
+  let updating_content;
+  let updating_enrichedContent;
+  let current;
+  const tjsprosemirror_spread_levels = [
+    { options: (
+      /*options*/
+      ctx[0]
+    ) },
+    /*$$restProps*/
+    ctx[5]
+  ];
+  function tjsprosemirror_content_binding(value) {
+    ctx[9](value);
+  }
+  function tjsprosemirror_enrichedContent_binding(value) {
+    ctx[10](value);
+  }
+  let tjsprosemirror_props = {};
+  for (let i = 0; i < tjsprosemirror_spread_levels.length; i += 1) {
+    tjsprosemirror_props = assign(tjsprosemirror_props, tjsprosemirror_spread_levels[i]);
+  }
+  if (
+    /*content*/
+    ctx[2] !== void 0
+  ) {
+    tjsprosemirror_props.content = /*content*/
+    ctx[2];
+  }
+  if (
+    /*enrichedContent*/
+    ctx[3] !== void 0
+  ) {
+    tjsprosemirror_props.enrichedContent = /*enrichedContent*/
+    ctx[3];
+  }
+  tjsprosemirror = new TJSProseMirror({ props: tjsprosemirror_props });
+  binding_callbacks.push(() => bind(tjsprosemirror, "content", tjsprosemirror_content_binding));
+  binding_callbacks.push(() => bind(tjsprosemirror, "enrichedContent", tjsprosemirror_enrichedContent_binding));
+  tjsprosemirror.$on(
+    "editor:cancel",
+    /*editor_cancel_handler*/
+    ctx[11]
+  );
+  tjsprosemirror.$on(
+    "editor:enrichedContent",
+    /*editor_enrichedContent_handler*/
+    ctx[12]
+  );
+  tjsprosemirror.$on(
+    "editor:save",
+    /*editor_save_handler*/
+    ctx[13]
+  );
+  tjsprosemirror.$on(
+    "editor:start",
+    /*editor_start_handler*/
+    ctx[14]
+  );
+  return {
+    c() {
+      create_component(tjsprosemirror.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(tjsprosemirror, target, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      const tjsprosemirror_changes = dirty & /*options, $$restProps*/
+      33 ? get_spread_update(tjsprosemirror_spread_levels, [
+        dirty & /*options*/
+        1 && { options: (
+          /*options*/
+          ctx2[0]
+        ) },
+        dirty & /*$$restProps*/
+        32 && get_spread_object(
+          /*$$restProps*/
+          ctx2[5]
+        )
+      ]) : {};
+      if (!updating_content && dirty & /*content*/
+      4) {
+        updating_content = true;
+        tjsprosemirror_changes.content = /*content*/
+        ctx2[2];
+        add_flush_callback(() => updating_content = false);
+      }
+      if (!updating_enrichedContent && dirty & /*enrichedContent*/
+      8) {
+        updating_enrichedContent = true;
+        tjsprosemirror_changes.enrichedContent = /*enrichedContent*/
+        ctx2[3];
+        add_flush_callback(() => updating_enrichedContent = false);
+      }
+      tjsprosemirror.$set(tjsprosemirror_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tjsprosemirror.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tjsprosemirror.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(tjsprosemirror, detaching);
+    }
+  };
+}
+function create_fragment$f(ctx) {
+  let if_block_anchor;
+  let current;
+  let if_block = (
+    /*$doc*/
+    ctx[1] && create_if_block$7(ctx)
+  );
+  return {
+    c() {
+      if (if_block) if_block.c();
+      if_block_anchor = empty();
+    },
+    m(target, anchor) {
+      if (if_block) if_block.m(target, anchor);
+      insert(target, if_block_anchor, anchor);
+      current = true;
+    },
+    p(ctx2, [dirty]) {
+      if (
+        /*$doc*/
+        ctx2[1]
+      ) {
+        if (if_block) {
+          if_block.p(ctx2, dirty);
+          if (dirty & /*$doc*/
+          2) {
+            transition_in(if_block, 1);
+          }
+        } else {
+          if_block = create_if_block$7(ctx2);
+          if_block.c();
+          transition_in(if_block, 1);
+          if_block.m(if_block_anchor.parentNode, if_block_anchor);
+        }
+      } else if (if_block) {
+        group_outros();
+        transition_out(if_block, 1, 1, () => {
+          if_block = null;
+        });
+        check_outros();
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(if_block);
+      current = true;
+    },
+    o(local) {
+      transition_out(if_block);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(if_block_anchor);
+      }
+      if (if_block) if_block.d(detaching);
+    }
+  };
+}
+function instance$f($$self, $$props, $$invalidate) {
+  let options;
+  const omit_props_names = ["attr", "classes", "editable"];
+  let $$restProps = compute_rest_props($$props, omit_props_names);
+  let $doc;
+  let { attr: attr2 = "" } = $$props;
+  let { classes = [] } = $$props;
+  let { editable = void 0 } = $$props;
+  const doc = getContext("#doc");
+  component_subscribe($$self, doc, (value) => $$invalidate(1, $doc = value));
+  let content = "";
+  let enrichedContent;
+  function tjsprosemirror_content_binding(value) {
+    content = value;
+    $$invalidate(2, content);
+  }
+  function tjsprosemirror_enrichedContent_binding(value) {
+    enrichedContent = value;
+    $$invalidate(3, enrichedContent);
+  }
+  const editor_cancel_handler = () => console.log("! event - editor:cancel");
+  const editor_enrichedContent_handler = () => console.log("! event - editor:enrichedContent");
+  const editor_save_handler = () => console.log("! event - editor:save");
+  const editor_start_handler = () => console.log("! event - editor:start");
+  $$self.$$set = ($$new_props) => {
+    $$props = assign(assign({}, $$props), exclude_internal_props($$new_props));
+    $$invalidate(5, $$restProps = compute_rest_props($$props, omit_props_names));
+    if ("attr" in $$new_props) $$invalidate(6, attr2 = $$new_props.attr);
+    if ("classes" in $$new_props) $$invalidate(7, classes = $$new_props.classes);
+    if ("editable" in $$new_props) $$invalidate(8, editable = $$new_props.editable);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*$doc, attr, classes, editable*/
+    450) {
+      $$invalidate(0, options = {
+        document: $doc,
+        fieldName: attr2,
+        classes,
+        editable,
+        button: false
+        // Keep editor open after save
+      });
+    }
+    if ($$self.$$.dirty & /*options*/
+    1) {
+      console.log("ProseMirror: options", options);
+    }
+  };
+  return [
+    options,
+    $doc,
+    content,
+    enrichedContent,
+    doc,
+    $$restProps,
+    attr2,
+    classes,
+    editable,
+    tjsprosemirror_content_binding,
+    tjsprosemirror_enrichedContent_binding,
+    editor_cancel_handler,
+    editor_enrichedContent_handler,
+    editor_save_handler,
+    editor_start_handler
+  ];
+}
+let ProseMirror$1 = class ProseMirror2 extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$f, create_fragment$f, safe_not_equal, { attr: 6, classes: 7, editable: 8 });
+  }
+  get attr() {
+    return this.$$.ctx[6];
+  }
+  set attr(attr2) {
+    this.$$set({ attr: attr2 });
+    flush();
+  }
+  get classes() {
+    return this.$$.ctx[7];
+  }
+  set classes(classes) {
+    this.$$set({ classes });
+    flush();
+  }
+  get editable() {
+    return this.$$.ctx[8];
+  }
+  set editable(editable) {
+    this.$$set({ editable });
+    flush();
+  }
+};
+function get_each_context$4(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[4] = list[i];
+  child_ctx[6] = i;
+  return child_ctx;
+}
+function create_else_block$3(ctx) {
+  let p;
+  return {
+    c() {
+      p = element("p");
+      p.textContent = "No associated actors yet.";
+      attr(p, "class", "no-items");
+    },
+    m(target, anchor) {
+      insert(target, p, anchor);
+    },
+    p: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(p);
+      }
+    }
+  };
+}
+function create_if_block$6(ctx) {
+  let ul;
+  let each_value = ensure_array_like(
+    /*sharedProps*/
+    ctx[0].associatedActors
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value.length; i += 1) {
+    each_blocks[i] = create_each_block$4(get_each_context$4(ctx, each_value, i));
+  }
+  return {
+    c() {
+      ul = element("ul");
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      attr(ul, "class", "associated-list");
+    },
+    m(target, anchor) {
+      insert(target, ul, anchor);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(ul, null);
+        }
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*sharedProps*/
+      1) {
+        each_value = ensure_array_like(
+          /*sharedProps*/
+          ctx2[0].associatedActors
+        );
+        let i;
+        for (i = 0; i < each_value.length; i += 1) {
+          const child_ctx = get_each_context$4(ctx2, each_value, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block$4(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(ul, null);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value.length;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(ul);
+      }
+      destroy_each(each_blocks, detaching);
+    }
+  };
+}
+function create_each_block$4(ctx) {
+  let li;
+  let span;
+  let t0_value = (
+    /*sharedProps*/
+    ctx[0].getActorName(
+      /*assoc*/
+      ctx[4]
+    ) + ""
+  );
+  let t0;
+  let button;
+  let mounted;
+  let dispose;
+  function click_handler() {
+    return (
+      /*click_handler*/
+      ctx[2](
+        /*index*/
+        ctx[6]
+      )
+    );
+  }
+  return {
+    c() {
+      li = element("li");
+      span = element("span");
+      t0 = text(t0_value);
+      button = element("button");
+      button.textContent = "×";
+      attr(button, "class", "remove-btn");
+      attr(button, "type", "button");
+    },
+    m(target, anchor) {
+      insert(target, li, anchor);
+      append(li, span);
+      append(span, t0);
+      append(li, button);
+      if (!mounted) {
+        dispose = listen(button, "click", click_handler);
+        mounted = true;
+      }
+    },
+    p(new_ctx, dirty) {
+      ctx = new_ctx;
+      if (dirty & /*sharedProps*/
+      1 && t0_value !== (t0_value = /*sharedProps*/
+      ctx[0].getActorName(
+        /*assoc*/
+        ctx[4]
+      ) + "")) set_data(t0, t0_value);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(li);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_fragment$e(ctx) {
+  let div8;
+  let div7;
+  let div3;
+  let div0;
+  let h20;
+  let t0_value = (
+    /*sharedProps*/
+    ctx[0].localize("ProfileImage") + ""
+  );
+  let t0;
+  let img;
+  let img_src_value;
+  let button;
+  let div2;
+  let h21;
+  let t2_value = (
+    /*sharedProps*/
+    ctx[0].localize("AssociatedActors") + ""
+  );
+  let t2;
+  let div1;
+  let p0;
+  let t3_value = (
+    /*sharedProps*/
+    ctx[0].localize("DragActorsHere") + ""
+  );
+  let t3;
+  let p1;
+  let div6;
+  let div4;
+  let h22;
+  let t5_value = (
+    /*sharedProps*/
+    ctx[0].localize("Name") + ""
+  );
+  let t5;
+  let input;
+  let input_value_value;
+  let div5;
+  let h23;
+  let t6_value = (
+    /*sharedProps*/
+    ctx[0].localize("Description") + ""
+  );
+  let t6;
+  let prosemirror;
+  let current;
+  let mounted;
+  let dispose;
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*sharedProps*/
+      ctx2[0].associatedActors && /*sharedProps*/
+      ctx2[0].associatedActors.length > 0
+    ) return create_if_block$6;
+    return create_else_block$3;
+  }
+  let current_block_type = select_block_type(ctx);
+  let if_block = current_block_type(ctx);
+  prosemirror = new ProseMirror$1({
+    props: {
+      classes: (
+        /*proseMirrorClasses*/
+        ctx[1]
+      ),
+      attr: "system.description"
+    }
+  });
+  prosemirror.$on("editor:save", handleEditorSave);
+  prosemirror.$on("editor:start", handleEditorStart);
+  prosemirror.$on("editor:cancel", handleEditorCancel);
+  return {
+    c() {
+      div8 = element("div");
+      div7 = element("div");
+      div3 = element("div");
+      div0 = element("div");
+      h20 = element("h2");
+      t0 = text(t0_value);
+      img = element("img");
+      button = element("button");
+      button.textContent = "Change Image";
+      div2 = element("div");
+      h21 = element("h2");
+      t2 = text(t2_value);
+      div1 = element("div");
+      p0 = element("p");
+      t3 = text(t3_value);
+      p1 = element("p");
+      p1.textContent = "(Drag actor tokens or from actor directory)";
+      if_block.c();
+      div6 = element("div");
+      div4 = element("div");
+      h22 = element("h2");
+      t5 = text(t5_value);
+      input = element("input");
+      div5 = element("div");
+      h23 = element("h2");
+      t6 = text(t6_value);
+      create_component(prosemirror.$$.fragment);
+      attr(img, "class", "profile-img");
+      if (!src_url_equal(img.src, img_src_value = /*sharedProps*/
+      ctx[0].actor?.img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
+      attr(img, "alt", "Shop Profile");
+      attr(button, "type", "button");
+      attr(div0, "class", "profile-section flex1");
+      attr(p0, "class", "drag-hint");
+      attr(p1, "class", "small");
+      attr(div1, "class", "drag-drop-area");
+      attr(div1, "role", "region");
+      attr(div1, "aria-label", "Associated actors drop zone");
+      attr(div2, "class", "associated-actors-section flex2");
+      attr(div3, "class", "flex1 flexcol gap-10");
+      attr(input, "class", "name-input");
+      attr(input, "type", "text");
+      input.value = input_value_value = /*sharedProps*/
+      ctx[0].actor?.name || "";
+      attr(input, "placeholder", "Shop Name");
+      attr(div4, "class", "name-section");
+      attr(div5, "class", "description-section");
+      attr(div6, "class", "flex2");
+      attr(div7, "class", "flexrow gap-10");
+      attr(div8, "class", "shopfront-tab");
+    },
+    m(target, anchor) {
+      insert(target, div8, anchor);
+      append(div8, div7);
+      append(div7, div3);
+      append(div3, div0);
+      append(div0, h20);
+      append(h20, t0);
+      append(div0, img);
+      append(div0, button);
+      append(div3, div2);
+      append(div2, h21);
+      append(h21, t2);
+      append(div2, div1);
+      append(div1, p0);
+      append(p0, t3);
+      append(div1, p1);
+      if_block.m(div2, null);
+      append(div7, div6);
+      append(div6, div4);
+      append(div4, h22);
+      append(h22, t5);
+      append(div4, input);
+      append(div6, div5);
+      append(div5, h23);
+      append(h23, t6);
+      mount_component(prosemirror, div5, null);
+      current = true;
+      if (!mounted) {
+        dispose = [
+          listen(button, "click", function() {
+            if (is_function(
+              /*sharedProps*/
+              ctx[0].openImageEditor
+            )) ctx[0].openImageEditor.apply(this, arguments);
+          }),
+          listen(div1, "dragover", prevent_default(function() {
+            if (is_function(
+              /*sharedProps*/
+              ctx[0].handleDragOver
+            )) ctx[0].handleDragOver.apply(this, arguments);
+          })),
+          listen(div1, "drop", prevent_default(function() {
+            if (is_function(
+              /*sharedProps*/
+              ctx[0].handleActorDrop
+            )) ctx[0].handleActorDrop.apply(this, arguments);
+          })),
+          listen(
+            input,
+            "change",
+            /*change_handler*/
+            ctx[3]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(new_ctx, [dirty]) {
+      ctx = new_ctx;
+      if ((!current || dirty & /*sharedProps*/
+      1) && t0_value !== (t0_value = /*sharedProps*/
+      ctx[0].localize("ProfileImage") + "")) set_data(t0, t0_value);
+      if (!current || dirty & /*sharedProps*/
+      1 && !src_url_equal(img.src, img_src_value = /*sharedProps*/
+      ctx[0].actor?.img || "icons/svg/mystery-man.svg")) {
+        attr(img, "src", img_src_value);
+      }
+      if ((!current || dirty & /*sharedProps*/
+      1) && t2_value !== (t2_value = /*sharedProps*/
+      ctx[0].localize("AssociatedActors") + "")) set_data(t2, t2_value);
+      if ((!current || dirty & /*sharedProps*/
+      1) && t3_value !== (t3_value = /*sharedProps*/
+      ctx[0].localize("DragActorsHere") + "")) set_data(t3, t3_value);
+      if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block) {
+        if_block.p(ctx, dirty);
+      } else {
+        if_block.d(1);
+        if_block = current_block_type(ctx);
+        if (if_block) {
+          if_block.c();
+          if_block.m(div2, null);
+        }
+      }
+      if ((!current || dirty & /*sharedProps*/
+      1) && t5_value !== (t5_value = /*sharedProps*/
+      ctx[0].localize("Name") + "")) set_data(t5, t5_value);
+      if (!current || dirty & /*sharedProps*/
+      1 && input_value_value !== (input_value_value = /*sharedProps*/
+      ctx[0].actor?.name || "") && input.value !== input_value_value) {
+        input.value = input_value_value;
+      }
+      if ((!current || dirty & /*sharedProps*/
+      1) && t6_value !== (t6_value = /*sharedProps*/
+      ctx[0].localize("Description") + "")) set_data(t6, t6_value);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(prosemirror.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(prosemirror.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div8);
+      }
+      if_block.d();
+      destroy_component(prosemirror);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function handleEditorSave(event) {
+  console.log("ShopfrontTab: editor:save", event.detail);
+}
+function handleEditorStart() {
+  console.log("ShopfrontTab: editor:start");
+}
+function handleEditorCancel() {
+  console.log("ShopfrontTab: editor:cancel");
+}
+function instance$e($$self, $$props, $$invalidate) {
+  let { sharedProps = {} } = $$props;
+  const proseMirrorClasses = ["left", "small"];
+  const click_handler = (index) => sharedProps.removeAssociated(index);
+  const change_handler = (e) => sharedProps.actor?.update({ name: e.target.value });
+  $$self.$$set = ($$props2) => {
+    if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
+  };
+  return [sharedProps, proseMirrorClasses, click_handler, change_handler];
+}
+class ShopfrontTab extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$e, create_fragment$e, safe_not_equal, { sharedProps: 0 });
+  }
+}
+function rippleFocus({ background = "rgba(255, 255, 255, 0.7)", duration = 300, enabled = true, selector } = {}) {
+  return (element2, initialOptions) => {
+    element2.style.overflow = "hidden";
+    const targetEl = typeof selector === "string" ? element2.querySelector(selector) : A11yHelper.isFocusTarget(element2.firstChild) ? element2.firstChild : element2;
+    let activeWindow = void 0;
+    let windowBlurActiveFocus = false;
+    let clientX = -1;
+    let clientY = -1;
+    const activeSpans = [];
+    function blurRipple(event, force = false) {
+      if (!enabled) {
+        return;
+      }
+      if (!force && (activeSpans.length === 0 || targetEl === CrossWindow.getActiveElement(targetEl))) {
+        return;
+      }
+      for (const span of activeSpans) {
+        try {
+          const effect = new window.KeyframeEffect(
+            span,
+            [
+              {
+                // from
+                transform: "scale(3)",
+                opacity: 0.3
+              },
+              {
+                // to
+                transform: "scale(.7)",
+                opacity: 0
+              }
+            ],
+            {
+              duration,
+              fill: "forwards"
+            }
+          );
+          const animation = new window.Animation(effect);
+          animation.onfinish = () => {
+            if (span) {
+              span.remove();
+            }
+          };
+          animation.play();
+        } catch {
+          if (span) {
+            span.remove();
+          }
+        }
+      }
+      activeSpans.length = 0;
+      activeWindow?.removeEventListener?.("blur", blurRippleForced);
+      activeWindow = void 0;
+    }
+    function blurRippleForced(event) {
+      if (CrossWindow.isActiveElement(targetEl)) {
+        windowBlurActiveFocus = true;
+      }
+      blurRipple(event, true);
+    }
+    async function focusRipple() {
+      if (windowBlurActiveFocus) {
+        windowBlurActiveFocus = false;
+        await nextAnimationFrame(2);
+        if (!CrossWindow.isActiveElement(targetEl)) {
+          return;
+        }
+      }
+      if (!enabled) {
+        return;
+      }
+      if (activeSpans.length > 0) {
+        return;
+      }
+      const elementRect = element2.getBoundingClientRect();
+      const actualX = clientX >= 0 ? clientX : elementRect.left + elementRect.width / 2;
+      const actualY = clientY >= 0 ? clientY : elementRect.top + elementRect.height / 2;
+      const diameter = Math.max(elementRect.width, elementRect.height);
+      const radius = diameter / 2;
+      const left = `${actualX - (elementRect.left + radius)}px`;
+      const top = `${actualY - (elementRect.top + radius)}px`;
+      const span = CrossWindow.getDocument(element2).createElement("span");
+      span.style.position = "absolute";
+      span.style.width = `${diameter}px`;
+      span.style.height = `${diameter}px`;
+      span.style.left = left;
+      span.style.top = top;
+      span.style.background = `var(--tjs-action-ripple-background-focus, var(--tjs-action-ripple-background, ${background}))`;
+      span.style.borderRadius = "50%";
+      span.style.pointerEvents = "none";
+      span.style.transform = "translateZ(-1px)";
+      element2.prepend(span);
+      try {
+        const effect = new window.KeyframeEffect(
+          span,
+          [
+            {
+              // from
+              transform: "scale(.7)",
+              opacity: 0.5
+            },
+            {
+              // to
+              transform: "scale(3)",
+              opacity: 0.3
+            }
+          ],
+          {
+            duration,
+            fill: "forwards"
+          }
+        );
+        const animation = new window.Animation(effect);
+        animation.play();
+        activeSpans.push(span);
+        activeWindow = targetEl.ownerDocument.defaultView;
+        activeWindow.addEventListener("blur", blurRippleForced, { once: true });
+      } catch {
+        if (span) {
+          span.remove();
+        }
+      }
+      clientX = clientY = -1;
+    }
+    function onPointerDown(e) {
+      if (!enabled) {
+        return;
+      }
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    function updateOptions(newOptions) {
+      if (typeof newOptions?.enabled === "boolean" && enabled !== newOptions?.enabled) {
+        enabled = newOptions.enabled;
+        if (!enabled) {
+          blurRipple();
+        }
+      }
+    }
+    targetEl.addEventListener("pointerdown", onPointerDown);
+    targetEl.addEventListener("blur", blurRipple);
+    targetEl.addEventListener("focus", focusRipple);
+    if (isObject(initialOptions)) {
+      updateOptions(initialOptions);
+    }
+    return {
+      update: updateOptions,
+      destroy: () => {
+        targetEl.removeEventListener("pointerdown", onPointerDown);
+        targetEl.removeEventListener("blur", blurRipple);
+        targetEl.removeEventListener("focus", focusRipple);
+        activeWindow?.removeEventListener?.("blur", blurRippleForced);
+        activeWindow = void 0;
+      }
+    };
+  };
+}
 function create_if_block_3(ctx) {
   let if_block_anchor;
   function select_block_type(ctx2, dirty) {
@@ -29426,7 +30371,7 @@ function create_default_slot$1(ctx) {
   let updating_activeTab;
   let current;
   function tabs_1_activeTab_binding(value) {
-    ctx[18](value);
+    ctx[17](value);
   }
   let tabs_1_props = {
     class: "gas-tabs",
@@ -29501,7 +30446,7 @@ function create_fragment$1(ctx) {
   let updating_elementRoot;
   let current;
   function applicationshell_elementRoot_binding(value) {
-    ctx[19](value);
+    ctx[18](value);
   }
   let applicationshell_props = {
     $$slots: { default: [create_default_slot$1] },
@@ -29528,7 +30473,7 @@ function create_fragment$1(ctx) {
       const applicationshell_changes = {};
       if (dirty[0] & /*tabs, tabProps, activeTab*/
       28 | dirty[1] & /*$$scope*/
-      8) {
+      4) {
         applicationshell_changes.$$scope = { dirty, ctx: ctx2 };
       }
       if (!updating_elementRoot && dirty[0] & /*elementRoot*/
@@ -29574,7 +30519,7 @@ function instance$1($$self, $$props, $$invalidate) {
   let config;
   let tabs;
   let tabProps;
-  let $documentStore, $$unsubscribe_documentStore = noop, $$subscribe_documentStore = () => ($$unsubscribe_documentStore(), $$unsubscribe_documentStore = subscribe(documentStore, ($$value) => $$invalidate(17, $documentStore = $$value)), documentStore);
+  let $documentStore, $$unsubscribe_documentStore = noop, $$subscribe_documentStore = () => ($$unsubscribe_documentStore(), $$unsubscribe_documentStore = subscribe(documentStore, ($$value) => $$invalidate(16, $documentStore = $$value)), documentStore);
   $$self.$$.on_destroy.push(() => $$unsubscribe_documentStore());
   let { elementRoot } = $$props;
   let { documentStore } = $$props;
@@ -29590,7 +30535,6 @@ function instance$1($$self, $$props, $$invalidate) {
   let priceVariance = 10;
   let variancePeriod = "daily";
   let atrophyPercent = 5;
-  let descriptionValue = "";
   let initializedActorId = null;
   let disconnectFoundryTheme = () => {
   };
@@ -29600,8 +30544,9 @@ function instance$1($$self, $$props, $$invalidate) {
       ui.notifications.warn(localize("NoPermission"));
       return;
     }
-    await actor.updateShopConfiguration({
+    await actor.system.updateShopConfiguration({
       salePriceFactor: parseFloat(salePriceFactor),
+      buyPriceFactor: parseFloat(buyPriceFactor),
       priceVariance: parseFloat(priceVariance),
       variancePeriod,
       atrophyPercent: parseFloat(atrophyPercent),
@@ -29676,11 +30621,13 @@ function instance$1($$self, $$props, $$invalidate) {
     return Math.round(basePrice * factor * (1 + variance));
   }
   onMount(() => {
+    console.log("ShopSheet: onMount - sheet rendered");
     disconnectFoundryTheme = observeFoundryBodyTheme(elementRoot);
     application.reactive.draggable = true;
     log?.d("ShopSheet mounted for actor", actor?.name);
   });
   onDestroy(() => {
+    console.log("ShopSheet: onDestroy - sheet destroyed");
     disconnectFoundryTheme();
   });
   function tabs_1_activeTab_binding(value) {
@@ -29697,19 +30644,19 @@ function instance$1($$self, $$props, $$invalidate) {
   };
   $$self.$$.update = () => {
     if ($$self.$$.dirty[0] & /*$documentStore*/
-    131072) {
-      $$invalidate(15, actor = $documentStore);
+    65536) {
+      $$invalidate(14, actor = $documentStore);
     }
     if ($$self.$$.dirty[0] & /*actor*/
-    32768) {
+    16384) {
       actor?.name ?? game.i18n.localize("foundryvtt-shop-studio.ShopSheetTitle");
     }
     if ($$self.$$.dirty[0] & /*actor*/
-    32768) {
-      $$invalidate(16, config = actor?.shopConfiguration ?? {});
+    16384) {
+      $$invalidate(15, config = actor?.shopConfiguration ?? {});
     }
     if ($$self.$$.dirty[0] & /*actor, initializedActorId, config*/
-    114688) {
+    57344) {
       if (actor?.id && actor.id !== initializedActorId) {
         $$invalidate(8, salePriceFactor = config.salePriceFactor ?? 100);
         $$invalidate(9, buyPriceFactor = config.buyPriceFactor ?? 50);
@@ -29718,15 +30665,13 @@ function instance$1($$self, $$props, $$invalidate) {
         $$invalidate(12, atrophyPercent = config.atrophyPercent ?? 5);
         $$invalidate(6, associatedActors = config.associatedActors ?? []);
         $$invalidate(7, rollTables = config.rollTables ?? []);
-        $$invalidate(13, descriptionValue = actor?.system?.details?.biography?.value || "");
-        $$invalidate(14, initializedActorId = actor.id);
+        $$invalidate(13, initializedActorId = actor.id);
       }
     }
-    if ($$self.$$.dirty[0] & /*actor, descriptionValue, associatedActors, filterText, salePriceFactor, buyPriceFactor, priceVariance, variancePeriod, atrophyPercent, rollTables*/
-    49120) {
+    if ($$self.$$.dirty[0] & /*actor, associatedActors, filterText, salePriceFactor, buyPriceFactor, priceVariance, variancePeriod, atrophyPercent, rollTables*/
+    24544) {
       $$invalidate(3, tabProps = {
         actor,
-        descriptionValue,
         associatedActors,
         filterText,
         items: actor?.items || [],
@@ -29735,9 +30680,6 @@ function instance$1($$self, $$props, $$invalidate) {
         priceVariance,
         variancePeriod,
         atrophyPercent,
-        onDescriptionChange: (value) => {
-          $$invalidate(13, descriptionValue = value);
-        },
         onFilterChange: (value) => {
           $$invalidate(5, filterText = value);
         },
@@ -29805,7 +30747,6 @@ function instance$1($$self, $$props, $$invalidate) {
     priceVariance,
     variancePeriod,
     atrophyPercent,
-    descriptionValue,
     initializedActorId,
     actor,
     config,
@@ -29838,6 +30779,7 @@ class SvelteDocumentSheet extends SvelteApp {
   #documentStore = new TJSDocument(void 0, { delete: this.close.bind(this) });
   constructor(object) {
     super(object);
+    this.options.document = object;
     Object.defineProperty(this.reactive, "document", {
       get: () => this.#documentStore.get(),
       set: (document2) => {
@@ -29890,8 +30832,8 @@ class ShopActorSheet extends SvelteDocumentSheet {
 }
 const LEGACY_SHOP_ACTOR_TYPE = "shop";
 const SHOP_ACTOR_TYPE = "npc";
-const SHOP_IDENTITY_KIND = `${MODULE_ID}.shop`;
-const SHOP_FLAG_SCOPE = MODULE_ID;
+const SHOP_IDENTITY_KIND = "shop-studio.shop";
+const SHOP_FLAG_SCOPE = "shop-studio";
 const SHOP_FLAG_KEYS = Object.freeze({
   configuration: "configuration",
   stock: "stock",
@@ -29906,76 +30848,218 @@ const DEFAULT_SHOP_CONFIGURATION = Object.freeze({
   associatedActors: [],
   rollTables: []
 });
+const {
+  ArrayField,
+  BooleanField,
+  DocumentUUIDField,
+  HTMLField,
+  NumberField,
+  SchemaField,
+  StringField
+} = foundry.data.fields;
+const VARIANCE_PERIODS = Object.freeze(["daily", "weekly", "monthly"]);
+class BaseActorModel extends foundry.abstract.TypeDataModel {
+  static defineSchema() {
+    return {
+      description: new HTMLField({ required: false, blank: true, initial: "" })
+    };
+  }
+}
+class ShopActorModel extends BaseActorModel {
+  /**
+   * Defines the schema for shop actor system data.
+   * @returns {object} The schema definition object.
+   */
+  static defineSchema() {
+    return {
+      ...super.defineSchema(),
+      currency: new SchemaField({}),
+      configuration: new SchemaField({
+        salePriceFactor: new NumberField({ required: true, min: 0, initial: 100 }),
+        buyPriceFactor: new NumberField({ required: true, min: 0, initial: 100 }),
+        priceVariance: new NumberField({ required: false, min: 0, initial: 10 }),
+        variancePeriod: new StringField({
+          required: true,
+          choices: VARIANCE_PERIODS,
+          initial: "daily"
+        }),
+        atrophyPercent: new NumberField({ required: false, min: 0, initial: 5 }),
+        associatedActors: new ArrayField(
+          new StringField({ required: false, blank: true }),
+          { initial: () => [] }
+        ),
+        rollTables: new ArrayField(
+          new StringField({ required: false, blank: true }),
+          { initial: () => [] }
+        )
+      }),
+      stock: new ArrayField(
+        new SchemaField({
+          itemId: new StringField({ required: false, blank: true }),
+          itemName: new StringField({ required: false, blank: true }),
+          basePrice: new NumberField({ required: false, min: 0, initial: 0 }),
+          price: new NumberField({ required: false, min: 0, initial: 0 }),
+          quantity: new NumberField({ required: false, min: 0, initial: 0 }),
+          currency: new StringField({ required: false, blank: true }),
+          metadata: new SchemaField({})
+        }),
+        { initial: () => [] }
+      ),
+      transactions: new ArrayField(
+        new SchemaField({
+          itemId: new StringField({ required: false, blank: true }),
+          itemName: new StringField({ required: false, blank: true }),
+          quantity: new NumberField({ required: false, min: 0, initial: 0 }),
+          price: new NumberField({ required: false, min: 0, initial: 0 }),
+          total: new NumberField({ required: false, min: 0, initial: 0 }),
+          currency: new StringField({ required: false, blank: true }),
+          buyerId: new StringField({ required: false, blank: true }),
+          buyerName: new StringField({ required: false, blank: true }),
+          timestamp: new NumberField({ required: false, min: 0, initial: 0 }),
+          metadata: new SchemaField({})
+        }),
+        { initial: () => [] }
+      ),
+      identity: new SchemaField({
+        isShop: new BooleanField({ required: true, initial: true }),
+        kind: new StringField({ required: true, initial: SHOP_ACTOR_TYPE })
+      })
+    };
+  }
+  /**
+   * Retrieves shop configuration data from system data.
+   * @returns {Record<string, unknown>}
+   */
+  get shopConfiguration() {
+    return this.configuration ?? {};
+  }
+  /**
+   * Updates shop configuration data in system data.
+   * @param {Record<string, unknown>} update
+   * @returns {Promise<this>}
+   */
+  async updateShopConfiguration(update2) {
+    const merged = foundry.utils.mergeObject(this.shopConfiguration, update2 ?? {}, { inplace: false });
+    return this.parent?.update({ system: { configuration: merged } });
+  }
+  /**
+   * Returns the persisted stock snapshot from system data.
+   * @returns {Array<Record<string, unknown>>}
+   */
+  get stockSnapshot() {
+    return this.stock ?? [];
+  }
+  /**
+   * Persists a new stock snapshot in system data.
+   * @param {Array<Record<string, unknown>>} stock
+   * @returns {Promise<this>}
+   */
+  async setStockSnapshot(stock) {
+    return this.parent?.update({ system: { stock: stock ?? [] } });
+  }
+  /**
+   * Updates the shop identity fields.
+   * @returns {Promise<this>}
+   */
+  async setShopIdentity() {
+    return this.parent?.update({ system: { identity: { isShop: true, kind: SHOP_ACTOR_TYPE } } });
+  }
+}
+class ShopActor extends Actor {
+  /**
+   * Creates a new Shop Actor
+   * @param {object} data - The actor data
+   * @param {object} context - The initialization context
+   */
+  constructor(data = {}, context) {
+    super(data, context);
+  }
+  /**
+   * Indicates whether the Actor is managed by Shop Studio.
+   * @returns {boolean}
+   */
+  get isShop() {
+    const identity2 = this.getFlag(MODULE_ID, "identity");
+    return identity2?.isShop === true || identity2?.kind === "shop-studio.shop";
+  }
+  /**
+   * Retrieves configuration data for this shop.
+   * @returns {Record<string, unknown>}
+   */
+  get shopConfiguration() {
+    return this.system?.configuration ?? {};
+  }
+  /**
+   * Updates shop configuration data.
+   * @param {Record<string, unknown>} update
+   */
+  async updateShopConfiguration(update2) {
+    return this.update({ system: { configuration: foundry.utils.mergeObject(this.shopConfiguration, update2 ?? {}, { inplace: false }) } });
+  }
+  /**
+   * Returns the persisted stock snapshot.
+   * @returns {Array<Record<string, unknown>>}
+   */
+  get stockSnapshot() {
+    return this.system?.stock ?? [];
+  }
+  /**
+   * Persists a new stock snapshot.
+   * @param {Array<Record<string, unknown>>} stock
+   */
+  async setStockSnapshot(stock) {
+    return this.update({ system: { stock: stock ?? [] } });
+  }
+  /**
+   * Marks the actor as a shop when the underlying system does not support a custom type.
+   * @returns {Promise<foundry.abstract.Document>} update result
+   */
+  async setShopIdentity() {
+    return this.update({ system: { identity: { isShop: true, kind: "shop-studio.shop" } } });
+  }
+}
 let RegisteredShopActor = null;
 function registerShopActor() {
-  const BaseActorClass = CONFIG.Actor.documentClass;
   if (RegisteredShopActor) {
     return RegisteredShopActor;
   }
-  class ShopActor extends BaseActorClass {
-    /**
-     * Indicates whether the Actor is managed by Shop Studio.
-     * @returns {boolean}
-     */
-    get isShop() {
-      if (this.type === LEGACY_SHOP_ACTOR_TYPE) {
-        return true;
-      }
-      const identity2 = this.getFlag(MODULE_ID, SHOP_FLAG_KEYS.identity);
-      return identity2?.isShop === true || identity2?.kind === SHOP_IDENTITY_KIND;
-    }
-    /**
-     * Retrieves configuration data for this shop.
-     * @returns {Record<string, unknown>}
-     */
-    get shopConfiguration() {
-      return this.system?.configuration ?? {};
-    }
-    /**
-     * Updates shop configuration data.
-     * @param {Record<string, unknown>} update
-     */
-    async updateShopConfiguration(update2) {
-      return this.update({ system: { configuration: foundry.utils.mergeObject(this.shopConfiguration, update2 ?? {}, { inplace: false }) } });
-    }
-    /**
-     * Returns the persisted stock snapshot.
-     * @returns {Array<Record<string, unknown>>}
-     */
-    get stockSnapshot() {
-      return this.system?.stock ?? [];
-    }
-    /**
-     * Persists a new stock snapshot.
-     * @param {Array<Record<string, unknown>>} stock
-     */
-    async setStockSnapshot(stock) {
-      return this.update({ system: { stock: stock ?? [] } });
-    }
-    /**
-     * Marks the actor as a shop when the underlying system does not support a custom type.
-     * @returns {Promise<foundry.abstract.Document>} update result
-     */
-    async setShopIdentity() {
-      return this.update({ system: { identity: { isShop: true, kind: SHOP_IDENTITY_KIND } } });
-    }
-    /**
-     * Prepare baseline data for shop actors ensuring required structures exist.
-     */
-    prepareBaseData() {
-      super.prepareBaseData();
-      if (!this.isShop) {
-        return;
-      }
-      this.system ??= {};
-      this.system.details ??= {};
-      this.system.details.biography ??= "";
-      this.system.currency ??= {};
-    }
-  }
   CONFIG.Actor.documentClass = ShopActor;
+  CONFIG.Actor.dataModels[SHOP_ACTOR_TYPE] = ShopActorModel;
   RegisteredShopActor = ShopActor;
   return ShopActor;
+}
+const ITEM_SOURCES_SETTING = "itemSources";
+const LISTABLE_ITEM_TYPES_SETTING = "listableItemTypes";
+function getAvailableItemTypes() {
+  const configured = CONFIG?.Item?.typeLabels ?? {};
+  const documentTypes = Array.isArray(game?.documentTypes?.Item) ? game.documentTypes.Item : [];
+  const modelTypes = CONFIG?.Item?.dataModels ? Object.keys(CONFIG.Item.dataModels) : [];
+  const metadataTypes = CONFIG?.Item?.documentClass?.metadata?.types ?? [];
+  const legacyTypes = Array.isArray(CONFIG?.Item?.types) ? CONFIG.Item.types : [];
+  const compendiumTypes = game.packs?.filter((pack) => pack.documentName === "Item").flatMap((pack) => Array.from(pack.index?.values?.() ?? []).map((entry) => entry?.type)) ?? [];
+  return Array.from(/* @__PURE__ */ new Set([
+    ...Object.keys(configured),
+    ...documentTypes,
+    ...modelTypes,
+    ...metadataTypes,
+    ...legacyTypes,
+    ...compendiumTypes
+  ])).filter(Boolean).map((type) => ({ type, label: getItemTypeLabel(type) })).sort((a, b) => a.label.localeCompare(b.label, game.i18n?.lang));
+}
+function getItemTypeLabel(type) {
+  const rawLabel = CONFIG?.Item?.typeLabels?.[type] || CONFIG?.Item?.typeHints?.[type];
+  if (rawLabel) return game.i18n.localize(rawLabel);
+  try {
+    return game.i18n.localize(type);
+  } catch (_) {
+    return type;
+  }
+}
+function getAllItemCompendia$1() {
+  return game.packs?.filter((pack) => pack.documentName === "Item") ?? [];
+}
+function autoAssignItemSources() {
+  return getAllItemCompendia$1().map((pack) => pack.collection);
 }
 function get_each_context(ctx, list, i) {
   const child_ctx = ctx.slice();
@@ -31087,6 +32171,7 @@ function applyShopCreationFields(form) {
   ensureShopHiddenField(form, "flags.core.sheetClass", `${MODULE_ID}.ShopActorSheet`);
   ensureShopHiddenField(form, `flags.${SHOP_FLAG_SCOPE}.${SHOP_FLAG_KEYS.identity}.isShop`, "true", "Boolean");
   ensureShopHiddenField(form, `flags.${SHOP_FLAG_SCOPE}.${SHOP_FLAG_KEYS.identity}.kind`, SHOP_IDENTITY_KIND);
+  ensureShopHiddenField(form, "img", "icons/environment/settlement/warehouse-crates.webp");
 }
 function addShopTypeToRadioList(form) {
   const list = form.querySelector("ol.unlist.card, ol.card, ol.unlist");
@@ -31221,36 +32306,31 @@ const renderShopStudioSidebarButton = (app) => {
   storeEventHandler(elementId, shopButton, "click", clickHandler);
 };
 async function createOrOpenShop() {
-  let shopActor = game.actors.find((a) => a.isOwner && a.isShop);
-  if (!shopActor) {
-    try {
-      shopActor = await Actor.create({
-        name: game.i18n.localize("foundryvtt-shop-studio.ShopSheetTitle") || "New Shop",
-        type: SHOP_ACTOR_TYPE,
-        flags: {
-          core: {
-            sheetClass: `${MODULE_ID}.ShopActorSheet`
-          },
-          [SHOP_FLAG_SCOPE]: {
-            [SHOP_FLAG_KEYS.identity]: {
-              isShop: true,
-              kind: SHOP_IDENTITY_KIND
-            },
-            [SHOP_FLAG_KEYS.configuration]: DEFAULT_SHOP_CONFIGURATION
-          }
+  try {
+    const existingShops = game.actors.filter((a) => a.isOwner && a.isShop);
+    const shopNumber = existingShops.length + 1;
+    const shopName = `Shop ${shopNumber}`;
+    const shopActor = await Actor.create({
+      name: shopName,
+      type: SHOP_ACTOR_TYPE,
+      flags: {
+        core: {
+          sheetClass: `${MODULE_ID}.ShopActorSheet`
         },
-        img: `modules/${MODULE_ID}/assets/shop-studio-logo-dragon-be7c41ff.webp`
-      }, { renderSheet: true });
-      ui.notifications.info("New shop created and opened.");
-    } catch (err) {
-      ui.notifications.error("Failed to create shop actor.");
-      console.error(err);
-    }
-  } else {
-    if (shopActor.getFlag("core", "sheetClass") !== `${MODULE_ID}.ShopActorSheet`) {
-      await shopActor.setFlag("core", "sheetClass", `${MODULE_ID}.ShopActorSheet`);
-    }
-    shopActor.sheet.render(true, { focus: true });
+        [SHOP_FLAG_SCOPE]: {
+          [SHOP_FLAG_KEYS.identity]: {
+            isShop: true,
+            kind: SHOP_IDENTITY_KIND
+          },
+          [SHOP_FLAG_KEYS.configuration]: DEFAULT_SHOP_CONFIGURATION
+        }
+      },
+      img: "icons/environment/settlement/warehouse-crates.webp"
+    }, { renderSheet: true });
+    ui.notifications.info(`New shop "${shopName}" created and opened.`);
+  } catch (err) {
+    ui.notifications.error("Failed to create shop actor.");
+    console.error(err);
   }
 }
 window.log = log;

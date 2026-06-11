@@ -3,6 +3,7 @@ import '~/src/styles/init.sass'; // Import any styles as this includes them in t
 
 import WelcomeApplication from '~/src/components/pages/WelcomeApplication.js';
 import ShopActorSheet from '~/src/sheets/ShopActorSheet';
+
 import { registerShopActor, SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE } from '~/src/actors/ShopActor';
 import { MODULE_ID } from '~/src/helpers/constants';
 import { log, safeGetSetting } from '~/src/helpers/utility';

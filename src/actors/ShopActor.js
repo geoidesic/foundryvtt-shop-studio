@@ -8,6 +8,7 @@ import {
   SHOP_FLAG_KEYS,
   DEFAULT_SHOP_CONFIGURATION
 } from '~/src/constants/shopConstants';
+import ShopActor from '~/src/extensions/actor.js';
 
 // Re-export constants for backward compatibility
 export {
@@ -22,68 +23,15 @@ export {
 let RegisteredShopActor = null;
 
 export function registerShopActor() {
-  const BaseActorClass = CONFIG.Actor.documentClass;
-
   if (RegisteredShopActor) {
     return RegisteredShopActor;
   }
 
-  class ShopActor extends BaseActorClass {
-    /**
-     * Indicates whether the Actor is managed by Shop Studio.
-     * @returns {boolean}
-     */
-    get isShop() {
-      if (this.type === LEGACY_SHOP_ACTOR_TYPE) {
-        return true;
-      }
+  // Register ShopActor (from extensions/actor.js) as the document class so that
+  // options.document on sheets is an instance of our custom ShopActor (with
+  // shop-specific methods) instead of the system base Actor (e.g., Actor5e).
+  CONFIG.Actor.documentClass = ShopActor;
 
-      const identity = this.getFlag(MODULE_ID, SHOP_FLAG_KEYS.identity);
-      return identity?.isShop === true || identity?.kind === SHOP_IDENTITY_KIND;
-    }
-
-    /**
-     * Retrieves configuration data for this shop.
-     * @returns {Record<string, unknown>}
-     */
-    get shopConfiguration() {
-      return this.system?.configuration ?? {};
-    }
-
-    /**
-     * Updates shop configuration data.
-     * @param {Record<string, unknown>} update
-     */
-    async updateShopConfiguration(update) {
-      return this.update({ system: { configuration: foundry.utils.mergeObject(this.shopConfiguration, update ?? {}, { inplace: false }) } });
-    }
-
-    /**
-     * Returns the persisted stock snapshot.
-     * @returns {Array<Record<string, unknown>>}
-     */
-    get stockSnapshot() {
-      return this.system?.stock ?? [];
-    }
-
-    /**
-     * Persists a new stock snapshot.
-     * @param {Array<Record<string, unknown>>} stock
-     */
-    async setStockSnapshot(stock) {
-      return this.update({ system: { stock: stock ?? [] } });
-    }
-
-    /**
-     * Marks the actor as a shop when the underlying system does not support a custom type.
-     * @returns {Promise<foundry.abstract.Document>} update result
-     */
-    async setShopIdentity() {
-      return this.update({ system: { identity: { isShop: true, kind: SHOP_IDENTITY_KIND } } });
-    }
-  }
-
-  // Register the actor class with the system
   // Register the data model for the NPC type (shop actors use NPC type)
   CONFIG.Actor.dataModels[SHOP_ACTOR_TYPE] = ShopActorModel;
   RegisteredShopActor = ShopActor;
