@@ -206,12 +206,14 @@
   }
 
   onMount(() => {
+    console.log("ShopSheet: onMount - sheet rendered");
     disconnectFoundryTheme = observeFoundryBodyTheme(elementRoot);
     application.reactive.draggable = true;
     log?.d('ShopSheet mounted for actor', actor?.name);
   });
 
   onDestroy(() => {
+    console.log("ShopSheet: onDestroy - sheet destroyed");
     disconnectFoundryTheme();
   });
 </script>
@@ -241,7 +243,6 @@
 
 
   :global(.profile-section),
-  :global(.description-section),
   :global(.associated-actors-section),
   :global(.inventory-controls),
   :global(.inventory-list),
@@ -251,6 +252,19 @@
     border-radius: var(--border-radius)
     box-shadow: 0 0 0 1px var(--gas-li-inset) inset
     padding: var(--size-md)
+
+  :global(.description-section)
+    align-self: start
+    min-height: 220px
+    display: flex
+    flex-direction: column
+
+  :global(.description-section h2)
+    flex-shrink: 0
+
+  :global(.description-section .prosemirror)
+    flex: 1
+    min-height: 180px
 
   :global(h2),
   :global(h3)
@@ -277,9 +291,6 @@
     border: 1px solid var(--gas-input-border)
     border-radius: var(--border-radius)
     padding: 0.5rem 0.6rem
-
-  :global(.shop-description-editor)
-    min-height: 220px
 
   :global(textarea)
     min-height: 180px

@@ -19,6 +19,7 @@
     fieldName: attr,
     classes,
     editable,
+    button: false, // Keep editor open after save
   };
 
   /**
@@ -26,16 +27,23 @@
    */
   let content = "";
   let enrichedContent;
+
+  // Debug probes
+  $: console.log("ProseMirror: options", options);
 </script>
-<TJSProseMirror
-  {options}
-  {...$$restProps}
-  bind:content
-  bind:enrichedContent
-  on:editor:cancel={() => console.log("! event - editor:cancel")}
-  on:editor:enrichedContent={(event) => console.log(`! event - editor:enrichedContent - ${event.detail.enrichedContent}`)}
-  on:editor:save={(event) => console.log(`! event - editor:save - ${event.detail.content}`)}
-  on:editor:start={() => console.log("! event - editor:start")}
-/>
+
+<template lang="pug">
+  +if("$doc")
+    TJSProseMirror(
+      {options}
+      {...$$restProps}
+      bind:content
+      bind:enrichedContent
+      on:editor:cancel!="{() => console.log('! event - editor:cancel')}"
+      on:editor:enrichedContent!="{() => console.log('! event - editor:enrichedContent')}"
+      on:editor:save!="{() => console.log('! event - editor:save')}"
+      on:editor:start!="{() => console.log('! event - editor:start')}"
+    )
+</template>
 
 

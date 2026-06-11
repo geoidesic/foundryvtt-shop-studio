@@ -4,6 +4,16 @@
   export let sharedProps = {};
   const proseMirrorClasses = ['left', 'small']
 
+  // Debug: Log when editor events occur
+  function handleEditorSave(event) {
+    console.log("ShopfrontTab: editor:save", event.detail);
+  }
+  function handleEditorStart() {
+    console.log("ShopfrontTab: editor:start");
+  }
+  function handleEditorCancel() {
+    console.log("ShopfrontTab: editor:cancel");
+  }
 </script>
 
 <template lang="pug">
@@ -36,6 +46,12 @@
           input.name-input(type="text" value="{sharedProps.actor?.name || ''}" on:change!="{e => sharedProps.actor?.update({name: e.target.value})}" placeholder="Shop Name")
         .description-section
           h2 {sharedProps.localize("Description")}
-          ProseMirror(classes="{proseMirrorClasses}" attr="system.description" )
+          ProseMirror(
+            classes="{proseMirrorClasses}" 
+            attr="system.description" 
+            on:editor:save="{handleEditorSave}"
+            on:editor:start="{handleEditorStart}"
+            on:editor:cancel="{handleEditorCancel}"
+          )
         
 </template>
