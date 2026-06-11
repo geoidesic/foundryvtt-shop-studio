@@ -243,36 +243,33 @@ export const renderShopStudioSidebarButton = (app) => {
 };
 
 async function createOrOpenShop() {
-  let shopActor = game.actors.find(a => a.isOwner && a.isShop);
-  if (!shopActor) {
-    try {
-      shopActor = await Actor.create({
-        name: game.i18n.localize('foundryvtt-shop-studio.ShopSheetTitle') || "New Shop",
-        type: SHOP_ACTOR_TYPE,
-        flags: {
-          core: {
-            sheetClass: `${MODULE_ID}.ShopActorSheet`
-          },
-          [SHOP_FLAG_SCOPE]: {
-            [SHOP_FLAG_KEYS.identity]: {
-              isShop: true,
-              kind: SHOP_IDENTITY_KIND
-            },
-            [SHOP_FLAG_KEYS.configuration]: DEFAULT_SHOP_CONFIGURATION
-          }
+  try {
+    // Count existing shops to derive an incrementing name
+    const existingShops = game.actors.filter(a => a.isOwner && a.isShop);
+    const shopNumber = existingShops.length + 1;
+    const shopName = `Shop ${shopNumber}`;
+
+    const shopActor = await Actor.create({
+      name: shopName,
+      type: SHOP_ACTOR_TYPE,
+      flags: {
+        core: {
+          sheetClass: `${MODULE_ID}.ShopActorSheet`
         },
-        img: 'icons/environment/settlement/warehouse-crates.webp'
-      }, { renderSheet: true });
-      ui.notifications.info('New shop created and opened.');
-    } catch (err) {
-      ui.notifications.error('Failed to create shop actor.');
-      console.error(err);
-    }
-  } else {
-    if (shopActor.getFlag('core', 'sheetClass') !== `${MODULE_ID}.ShopActorSheet`) {
-      await shopActor.setFlag('core', 'sheetClass', `${MODULE_ID}.ShopActorSheet`);
-    }
-    shopActor.sheet.render(true, { focus: true });
+        [SHOP_FLAG_SCOPE]: {
+          [SHOP_FLAG_KEYS.identity]: {
+            isShop: true,
+            kind: SHOP_IDENTITY_KIND
+          },
+          [SHOP_FLAG_KEYS.configuration]: DEFAULT_SHOP_CONFIGURATION
+        }
+      },
+      img: 'icons/environment/settlement/warehouse-crates.webp'
+    }, { renderSheet: true });
+    ui.notifications.info(`New shop "${shopName}" created and opened.`);
+  } catch (err) {
+    ui.notifications.error('Failed to create shop actor.');
+    console.error(err);
   }
 }
 

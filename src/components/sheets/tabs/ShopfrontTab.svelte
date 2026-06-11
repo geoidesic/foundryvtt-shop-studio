@@ -29,6 +29,9 @@
             +else()
               p.no-items No associated actors yet.
       .flex2
+        .name-section
+          h2 {sharedProps.localize("Name")}
+          input.name-input(type="text" value="{sharedProps.actor?.name || ''}" on:change!="{e => sharedProps.actor?.update({name: e.target.value})}" placeholder="Shop Name")
         .description-section
           h2 {sharedProps.localize("Description")}
           ProseMirror(attr="system.details.description" classes="shop-description-editor")
