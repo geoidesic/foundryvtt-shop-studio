@@ -6,7 +6,7 @@ import {
   SHOP_FLAG_SCOPE,
   SHOP_IDENTITY_KIND,
   DEFAULT_SHOP_CONFIGURATION
-} from '~/src/actors/ShopActor';
+} from '~/src/constants/shopConstants';
 
 const EVENT_HANDLERS = new Map();
 const SHOP_DIALOG_TYPE = `${MODULE_ID}.shop`;

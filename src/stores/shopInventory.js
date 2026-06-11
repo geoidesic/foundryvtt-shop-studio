@@ -1,5 +1,5 @@
 import { derived, writable } from 'svelte/store';
-import { SHOP_ACTOR_TYPE, SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS } from '~/src/actors/ShopActor';
+import { SHOP_ACTOR_TYPE, SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS } from '~/src/constants/shopConstants';
 
 export const catalogItems = writable([]);
 export const shopCart = writable(new Map());

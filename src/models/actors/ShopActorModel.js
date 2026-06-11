@@ -1,4 +1,4 @@
-import { SHOP_ACTOR_TYPE, SHOP_FLAG_KEYS, SHOP_FLAG_SCOPE } from '~/src/actors/ShopActor';
+import { SHOP_ACTOR_TYPE, SHOP_FLAG_KEYS, SHOP_FLAG_SCOPE } from '~/src/constants/shopConstants';
 
 const {
   ArrayField, BooleanField, DocumentUUIDField, HTMLField, NumberField, SchemaField, StringField
@@ -7,18 +7,29 @@ const {
 const VARIANCE_PERIODS = Object.freeze(['daily', 'weekly', 'monthly']);
 
 /**
- * Data model for Shop Studio actor subtype data.
+ * Base actor data model that provides common functionality for all actor types.
  * @extends {foundry.abstract.TypeDataModel}
  */
-export class ShopActorModel extends foundry.abstract.TypeDataModel {
+class BaseActorModel extends foundry.abstract.TypeDataModel {
+  static defineSchema() {
+    return {
+      description: new HTMLField({ required: false, blank: true, initial: '' }),
+    };
+  }
+}
+
+/**
+ * Data model for Shop Studio actor subtype data.
+ * @extends {BaseActorModel}
+ */
+export class ShopActorModel extends BaseActorModel {
   /**
    * Defines the schema for shop actor system data.
    * @returns {object} The schema definition object.
    */
   static defineSchema() {
     return {
-      name: new StringField({ required: true, blank: true }),
-      description: new HTMLField({ required: false, blank: true, initial: '' }),
+      ...super.defineSchema(),
       currency: new SchemaField({}),
       configuration: new SchemaField({
         salePriceFactor: new NumberField({ required: true, min: 0, initial: 100 }),

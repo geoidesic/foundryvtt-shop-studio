@@ -2,6 +2,8 @@
   import ProseMirror from '~/src/components/molecules/ProseMirror.svelte';
 
   export let sharedProps = {};
+  const proseMirrorClasses = ['left', 'small']
+
 </script>
 
 <template lang="pug">
@@ -34,6 +36,6 @@
           input.name-input(type="text" value="{sharedProps.actor?.name || ''}" on:change!="{e => sharedProps.actor?.update({name: e.target.value})}" placeholder="Shop Name")
         .description-section
           h2 {sharedProps.localize("Description")}
-          ProseMirror(attr="system.details.description" classes="shop-description-editor")
+          ProseMirror(classes="{proseMirrorClasses}" attr="system.description" )
         
 </template>
