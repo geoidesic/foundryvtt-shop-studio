@@ -230,7 +230,6 @@ const application = getContext('#external').application;
       min-height: 0
 
 
-  :global(.profile-section),
   :global(.associated-actors-section),
   :global(.inventory-controls),
   :global(.inventory-list),
@@ -262,6 +261,7 @@ const application = getContext('#external').application;
     padding-bottom: var(--size-xs)
 
   :global(.profile-img)
+    width: 100%
     object-fit: cover
     border: 2px solid color-mix(in srgb, var(--gas-tab-active-indicator) 55%, transparent)
     border-radius: 6px

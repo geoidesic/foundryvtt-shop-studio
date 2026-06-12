@@ -49,7 +49,6 @@
 <style lang="sass">
 @import "../../styles/Mixins.sass"
 :global(.foundryvtt-shop-studio)
-
   .shop-sheet-player
     display: flex
     flex-direction: column
@@ -62,7 +61,6 @@
       flex: 1
       min-height: 0
 
-    :global(.profile-section),
     :global(.description-section)
       background: color-mix(in srgb, var(--gas-tabs-content-background) 80%, transparent)
       border: 1px solid color-mix(in srgb, var(--gas-tab-inactive-border) 45%, transparent)
@@ -87,6 +85,7 @@
       padding-bottom: var(--size-xs)
 
     :global(.profile-img)
+      width: 100%
       object-fit: cover
       border: 2px solid color-mix(in srgb, var(--gas-tab-active-indicator) 55%, transparent)
       border-radius: 6px

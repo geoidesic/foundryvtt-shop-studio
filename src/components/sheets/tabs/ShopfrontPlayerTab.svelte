@@ -21,16 +21,15 @@
   .shopfront-player-tab
     .flexrow.gap-10
       .flex1.flexcol.gap-10
-        .profile-section.flex1
-          img.profile-img(
-            src="{sharedProps.actor?.img || 'icons/svg/mystery-man.svg'}"
-            alt="Shop Profile"
-          )
+        img.profile-img(
+          src="{sharedProps.actor?.img || 'icons/svg/mystery-man.svg'}"
+          alt="Shop Profile"
+        )
       .flex2
         .name-section
           h2 {sharedProps.localize("Name")}
           p.shop-name {sharedProps.actor?.name || ''}
-        .description-section
+        .description-section.mt-md
           h2 {sharedProps.localize("Description")}
           .description-content
             | {@html enrichedDescription}

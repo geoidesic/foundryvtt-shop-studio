@@ -19,10 +19,9 @@
 <template lang="pug">
   
   .shopfront-tab
-    .flexrow.gap-10
+    .flexrow.gap-10.pa-md
       .flex1.flexcol.gap-10
-        .profile-section.flex1
-          img.profile-img(on:click!="{sharedProps.openImageEditor}" src="{sharedProps.actor?.img || 'icons/svg/mystery-man.svg'}" alt="Shop Profile")
+        img.profile-img(on:click!="{sharedProps.openImageEditor}" src="{sharedProps.actor?.img || 'icons/svg/mystery-man.svg'}" alt="Shop Profile")
           
         .associated-actors-section.flex2
           h2 {sharedProps.localize("AssociatedActors")}
@@ -37,11 +36,11 @@
                   button.remove-btn(type="button" on:click!="{() => sharedProps.removeAssociated(index)}") ×
             +else()
               p.no-items {sharedProps.localize('NoAssociatedActors')}
-      .flex2
+      .flex2.ml-sm
         .name-section
           h2 {sharedProps.localize("Name")}
           input.name-input(type="text" value="{sharedProps.actor?.name || ''}" on:change!="{e => sharedProps.actor?.update({name: e.target.value})}" placeholder!="{sharedProps.localize('ShopNamePlaceholder')}")
-        .description-section
+        .description-section.mt-md
           h2 {sharedProps.localize("Description")}
           ProseMirror(
             classes="{proseMirrorClasses}" 
