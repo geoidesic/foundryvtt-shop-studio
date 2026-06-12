@@ -16,6 +16,9 @@ nvm use 24        # If node issues occur
 ```
 This is a foundryvtt module and as such conforms to the FoundryVTT API spec, so reference it when writing game logichttps://foundryvtt.wiki/en/development/api
 
+## Git access
+Use `gh`
+
 # Actor Type Workaround (Custom Shop Type via NPC + Flags)
 
 ## Problem

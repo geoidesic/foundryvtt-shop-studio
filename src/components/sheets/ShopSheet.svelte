@@ -227,7 +227,7 @@
 
 <style lang="sass">
 @import "../../styles/Mixins.sass"
-#foundryvtt-shop-studio-sheet
+:global(.foundryvtt-shop-studio)
 
   .shop-sheet
     display: flex

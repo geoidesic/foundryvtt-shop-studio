@@ -1,7 +1,7 @@
 // Shop Studio application roots only — never use bare .theme-dark or .GSS selectors
 // (body.theme-dark would leak into Foundry core UI).
 
-$gas-app-ids: '#foundryvtt-shop-studio-sheet', '#foundryvtt-shop-studio-welcome'
+$gas-app-ids: '.foundryvtt-shop-studio', '#foundryvtt-shop-studio-welcome'
 
 @mixin gas-app-roots
   @each $id in $gas-app-ids

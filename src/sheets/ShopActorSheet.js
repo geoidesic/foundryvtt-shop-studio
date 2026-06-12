@@ -4,15 +4,22 @@ import { version } from '../../module.json';
 import { localize } from '~/src/helpers/utility'
 
 export default class ShopActorSheet extends SvelteDocumentSheet {
+  /**
+   * Unique per-instance application ID so multiple shop sheets can be open simultaneously.
+   */
+  get id() {
+    const docId = this.reactive?.document?.id || foundry.utils.randomID();
+    return `shop-studio-sheet-${docId}`;
+  }
+
   static get defaultOptions() {
-    const classes = [MODULE_CODE, MODULE_ID, 'shop-actor-sheet'];
+    const classes = [MODULE_CODE, MODULE_ID];
     if (Number(game.version) >= 13) {
       classes.push('gas-v13-plus');
     }
     const foundryVersion = game.version || '';
 
     return foundry.utils.mergeObject(super.defaultOptions, {
-      id: 'foundryvtt-shop-studio-sheet',
       title: `${localize('ShopStudio')} v${version} | Foundry: ${foundryVersion}`,
       classes,
       width: 640,
