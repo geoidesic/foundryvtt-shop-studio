@@ -58,6 +58,13 @@
     "Inventory": "Inventory",
     "Settings": "Settings",
     "ProfileImage": "Profile Image",
+    "Name": "Name",
+    "Quantity": "Quantity",
+    "ChangeImage": "Change Image",
+    "ClearFilter": "Clear",
+    "ShopNamePlaceholder": "Shop Name",
+    "DragActorTokensHint": "(Drag actor tokens or from actor directory)",
+    "NoAssociatedActors": "No associated actors yet.",
     "Description": "Description",
     "AssociatedActors": "Associated Actors",
     "DragActorsHere": "Drag actors here to associate with this shop",
@@ -75,6 +82,7 @@
     "FilterInventory": "Filter Inventory...",
     "NoPermission": "You don't have permission to modify this shop.",
     "SettingsSaved": "Shop settings have been saved.",
-    "NoPermission": "Permission denied."
+    "NoPermission": "Permission denied.",
+    "EditToggle": "Edit Mode"
   }
 }

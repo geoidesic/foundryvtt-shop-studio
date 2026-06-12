@@ -59,7 +59,7 @@
   div.inventory-tab
     div.inventory-controls
       TJSInput({input})
-      button(type="button" on:click!="{sharedProps.clearFilter}") Clear
+      button(type="button" on:click!="{sharedProps.clearFilter}") {sharedProps.localize('ClearFilter')}
     div.inventory-list
       table.borderless
         thead
@@ -73,7 +73,7 @@
               svelte:fragment(slot="c1")
                 img.icon(src="{item.img || 'icons/svg/mystery-man.svg'}" alt="{item.name}")
               svelte:fragment(slot="c2")
-                a.stealth.link(on:click="{showItemSheet(item)}" on:keydown|preventDefault|stopPropagation!="{(e) => handleItemKeydown(item, e)}" tabindex="0" role="button") {item.name}
+                a.stealth.link(href="#" on:click|preventDefault="{showItemSheet(item)}" on:keydown|preventDefault|stopPropagation!="{(e) => handleItemKeydown(item, e)}" tabindex="0" role="button") {item.name}
               svelte:fragment(slot="c3")
                 span.quantity {item.system?.quantity ?? 0}
 </template>

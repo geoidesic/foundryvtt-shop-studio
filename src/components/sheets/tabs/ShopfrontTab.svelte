@@ -25,13 +25,13 @@
           h2 {sharedProps.localize("ProfileImage")}
           img.profile-img(src="{sharedProps.actor?.img || 'icons/svg/mystery-man.svg'}" alt="Shop Profile")
           button(type="button" on:click!="{sharedProps.openImageEditor}")
-            | Change Image
+            | {sharedProps.localize('ChangeImage')}
       
         .associated-actors-section.flex2
           h2 {sharedProps.localize("AssociatedActors")}
           div.drag-drop-area(role="region" aria-label="Associated actors drop zone" on:dragover|preventDefault="{sharedProps.handleDragOver}" on:drop|preventDefault="{sharedProps.handleActorDrop}")
             p.drag-hint {sharedProps.localize("DragActorsHere")}
-            p.small (Drag actor tokens or from actor directory)
+            p.small {sharedProps.localize('DragActorTokensHint')}
           +if("sharedProps.associatedActors && sharedProps.associatedActors.length > 0")
             ul.associated-list
               +each("sharedProps.associatedActors as assoc, index")
@@ -39,11 +39,11 @@
                   span {sharedProps.getActorName(assoc)}
                   button.remove-btn(type="button" on:click!="{() => sharedProps.removeAssociated(index)}") ×
             +else()
-              p.no-items No associated actors yet.
+              p.no-items {sharedProps.localize('NoAssociatedActors')}
       .flex2
         .name-section
           h2 {sharedProps.localize("Name")}
-          input.name-input(type="text" value="{sharedProps.actor?.name || ''}" on:change!="{e => sharedProps.actor?.update({name: e.target.value})}" placeholder="Shop Name")
+          input.name-input(type="text" value="{sharedProps.actor?.name || ''}" on:change!="{e => sharedProps.actor?.update({name: e.target.value})}" placeholder!="{sharedProps.localize('ShopNamePlaceholder')}")
         .description-section
           h2 {sharedProps.localize("Description")}
           ProseMirror(

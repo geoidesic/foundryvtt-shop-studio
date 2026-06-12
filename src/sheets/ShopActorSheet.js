@@ -37,4 +37,55 @@ export default class ShopActorSheet extends SvelteDocumentSheet {
     const systemVersion = game.system?.version || '';
     return `${shopName} | Shop Studio v${version} | Foundry: ${game.version || ''} | ${game.system?.id || ''}: ${systemVersion}`;
   }
+
+  /**
+   * Closes the sheet and resets editing state if it was active.
+   * @param {object} [options] - Close options
+   * @returns {Promise<void>}
+   */
+  async close(options = {}) {
+    const { isEditing } = this.reactive.document?.system?.identity ?? {};
+    if (isEditing) {
+      await this.reactive.document.update({ system: { identity: { isEditing: false } } });
+    }
+    await super.close(options);
+  }
+
+  /**
+   * Gets the header buttons for the sheet window.
+   * GMs see an edit/preview toggle that switches between the full
+   * GM edit sheet and a player-facing read-only sheet.
+   * Players have no toggle and always see the player sheet.
+   * @returns {Array<object>} Header button configurations
+   */
+  _getHeaderButtons() {
+    const buttons = super._getHeaderButtons();
+    // Only GMs get the edit toggle — players always see the player sheet
+    if (game.user.isGM) {
+      const isEditing = this.reactive.document?.system?.identity?.isEditing ?? true;
+      buttons.unshift({
+        label: localize('EditToggle'),
+        class: 'edit-shop' + (isEditing ? ' active' : ''),
+        icon: 'fas ' + (isEditing ? 'fa-toggle-on' : 'fa-toggle-off'),
+        onPress: (ev) => this._onToggleEdit(ev),
+      });
+    }
+    return buttons;
+  }
+
+  /**
+   * Handles toggling between GM edit mode and player preview mode.
+   * Only GMs can toggle; players always see the player view.
+   * @param {Event} event - The triggering event
+   * @returns {Promise<void>}
+   */
+  async _onToggleEdit(event) {
+    if (event?.event) {
+      event.event.preventDefault();
+    }
+    const actor = this.reactive.document;
+    const current = actor?.system?.identity?.isEditing ?? true;
+    await actor.update({ system: { identity: { isEditing: !current } } });
+    this.render();
+  }
 }

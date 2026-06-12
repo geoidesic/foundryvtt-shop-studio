@@ -16,6 +16,9 @@ nvm use 24        # If node issues occur
 ```
 This is a foundryvtt module and as such conforms to the FoundryVTT API spec, so reference it when writing game logichttps://foundryvtt.wiki/en/development/api
 
+## Foundry API notes
+Is current user GM? - `game.user.isGM`
+
 ## Git access
 Use `gh`
 
