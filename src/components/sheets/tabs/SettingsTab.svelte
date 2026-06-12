@@ -4,7 +4,7 @@
 
 <template lang="pug">
   div.settings-tab
-    div.settings-form
+    div.settings-form.ma-lg
       label
         div.setting-label
           span {sharedProps.localize("SalePriceFactor")} (affects all prices)&nbsp;

@@ -1,14 +1,20 @@
 <script>
+  import { getContext } from 'svelte';
+  import { getTextEditorAPI } from '~/src/helpers/utility.js';
+
   export let sharedProps = {};
 
-  /**
-   * Enrich the raw description HTML so that Foundry links, inline rolls, etc.
-   * are rendered for the player view.
-   */
-  $: rawDescription = sharedProps.actor?.system?.description ?? '';
-  $: enrichedDescription = rawDescription
-    ? TextEditor.enrichHTML(rawDescription, { secrets: false, documents: true, async: false })
-    : '';
+  const doc = getContext('#doc');
+
+  let rawDescription = '';
+  let enrichedDescription = '';
+
+  $: if ($doc?.system?.description) {
+    rawDescription = $doc.system.description;
+    getTextEditorAPI().enrichHTML(rawDescription, { secrets: true }).then(html => {
+      enrichedDescription = html;
+    });
+  }
 </script>
 
 <template lang="pug">
@@ -16,7 +22,6 @@
     .flexrow.gap-10
       .flex1.flexcol.gap-10
         .profile-section.flex1
-          h2 {sharedProps.localize("ProfileImage")}
           img.profile-img(
             src="{sharedProps.actor?.img || 'icons/svg/mystery-man.svg'}"
             alt="Shop Profile"

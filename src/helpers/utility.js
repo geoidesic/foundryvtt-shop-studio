@@ -109,3 +109,25 @@ export function safeGetSetting(moduleId, key, defaultValue = true) {
     return defaultValue;
   }
 }
+
+/**
+ * Gets the appropriate TextEditor API for the current Foundry version.
+ * @returns {object} The TextEditor API implementation
+ */
+export function getTextEditorAPI() {
+  if (Number(game.version) >= 13) {
+    return foundry.applications?.ux?.TextEditor?.implementation ?? TextEditor;
+  }
+  return TextEditor;
+}
+
+/**
+ * Enriches HTML content using the appropriate TextEditor API for the current Foundry version.
+ * @param {string} content - The HTML content to enrich
+ * @param {object} [options] - Enrichment options
+ * @returns {string} The enriched HTML content
+ */
+export function enrichHTML(content, options = {}) {
+  const textEditor = getTextEditorAPI();
+  return textEditor.enrichHTML(content, options);
+}

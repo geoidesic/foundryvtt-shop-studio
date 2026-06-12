@@ -9,6 +9,7 @@
 
   export let elementRoot;
   export let documentStore;
+  export let document = void 0;
 
   setContext('#doc', documentStore);
   const application = getContext('#external').application;

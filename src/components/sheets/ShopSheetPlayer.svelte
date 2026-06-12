@@ -87,8 +87,6 @@
       padding-bottom: var(--size-xs)
 
     :global(.profile-img)
-      width: 120px
-      height: 120px
       object-fit: cover
       border: 2px solid color-mix(in srgb, var(--gas-tab-active-indicator) 55%, transparent)
       border-radius: 6px

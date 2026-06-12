@@ -22,11 +22,8 @@
     .flexrow.gap-10
       .flex1.flexcol.gap-10
         .profile-section.flex1
-          h2 {sharedProps.localize("ProfileImage")}
-          img.profile-img(src="{sharedProps.actor?.img || 'icons/svg/mystery-man.svg'}" alt="Shop Profile")
-          button(type="button" on:click!="{sharedProps.openImageEditor}")
-            | {sharedProps.localize('ChangeImage')}
-      
+          img.profile-img(on:click!="{sharedProps.openImageEditor}" src="{sharedProps.actor?.img || 'icons/svg/mystery-man.svg'}" alt="Shop Profile")
+          
         .associated-actors-section.flex2
           h2 {sharedProps.localize("AssociatedActors")}
           div.drag-drop-area(role="region" aria-label="Associated actors drop zone" on:dragover|preventDefault="{sharedProps.handleDragOver}" on:drop|preventDefault="{sharedProps.handleActorDrop}")
@@ -55,3 +52,6 @@
           )
         
 </template>
+<style lang="sass">
+
+</style>

@@ -1,14 +1,16 @@
 <svelte:options accessors={true} />
 
 <script>
-  import { setContext } from 'svelte';
-  import Tabs from '~/src/components/molecules/Tabs.svelte';
-  import ShopfrontTab from '~/src/components/sheets/tabs/ShopfrontTab.svelte';
-  import InventoryTab from '~/src/components/sheets/tabs/InventoryTab.svelte';
-  import SettingsTab from '~/src/components/sheets/tabs/SettingsTab.svelte';
-  import { localize } from '~/src/helpers/utility.js';
+import { getContext, setContext } from 'svelte';
+import Tabs from '~/src/components/molecules/Tabs.svelte';
+import ShopfrontTab from '~/src/components/sheets/tabs/ShopfrontTab.svelte';
+import InventoryTab from '~/src/components/sheets/tabs/InventoryTab.svelte';
+import SettingsTab from '~/src/components/sheets/tabs/SettingsTab.svelte';
+import { localize } from '~/src/helpers/utility.js';
 
-  export let documentStore;
+export let documentStore;
+
+const application = getContext('#external').application;
 
   setContext('#doc', documentStore);
 
@@ -260,8 +262,6 @@
     padding-bottom: var(--size-xs)
 
   :global(.profile-img)
-    width: 120px
-    height: 120px
     object-fit: cover
     border: 2px solid color-mix(in srgb, var(--gas-tab-active-indicator) 55%, transparent)
     border-radius: 6px
