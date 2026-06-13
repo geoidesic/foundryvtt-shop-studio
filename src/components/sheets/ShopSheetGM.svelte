@@ -60,13 +60,27 @@ const application = getContext('#external').application;
     priceVariance,
     variancePeriod,
     atrophyPercent,
+    localize,
+    openImageEditor,
+    handleDragOver,
+    handleActorDrop,
+    handleRollTableDrop,
+    getActorName,
+    getRollTableName,
+    removeAssociated,
+    removeRollTable,
+    clearFilter,
+    calculateSalePrice,
+    openItemSheet,
+    provisionStore,
+    saveSettings,
     onFilterChange: (value) => {
       filterText = value;
     },
-    salePriceFactorChange: (value) => {
+    onSalePriceFactorChange: (value) => {
       salePriceFactor = Number(value);
     },
-    buyPriceFactorChange: (value) => {
+    onBuyPriceFactorChange: (value) => {
       buyPriceFactor = Number(value);
     },
     onPriceVarianceChange: (value) => {

@@ -82,6 +82,7 @@
     "FilterInventory": "Filter Inventory...",
     "NoPermission": "You don't have permission to modify this shop.",
     "SettingsSaved": "Shop settings have been saved.",
-    "EditToggle": "Edit Mode"
+    "EditToggle": "Edit Mode",
+    "ItemTypeNotAllowed": "This item type is not allowed for sale. Configure allowed types in module settings."
   }
 }

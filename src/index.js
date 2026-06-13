@@ -9,11 +9,12 @@ import { log, safeGetSetting } from '~/src/helpers/utility';
 import { registerSettings } from '~/src/settings';
 import { renderShopStudioSidebarButton, renderShopTypeInCreateActorApplication } from '~/src/hooks/shopStudioButtons.js';
 
-window.log = log;
-log.level = log.DEBUG;
+window.GAS = window.GAS || {};
 
 Hooks.once("init", (app, html, data) => {
-  log.i('Initialising');
+  window.GAS.log = log;
+  window.GAS.log.level = log.VERBOSE;
+  window.GAS.log.i('Initialising');
   CONFIG.debug.hooks = true;
 
   registerShopActor();
@@ -40,7 +41,7 @@ Hooks.once("init", (app, html, data) => {
 
 Hooks.once("ready", (app, html, data) => {
   if (!game.modules.get(MODULE_ID).active) {
-    log.w('Module is not active');
+    window.GAS.log.w('Module is not active');
     return;
   }
   if (!game.settings.get(MODULE_ID, 'dontShowWelcome')) {
@@ -83,6 +84,6 @@ Hooks.on('renderApplicationV2', (app, html) => {
 });
 
 Hooks.on('gss.openShopStudio', () => {
-  log.i('Shop Studio opened via sidebar button');
+  window.GAS.log.i('Shop Studio opened via sidebar button');
   // Can be extended for more complex open logic
 });
