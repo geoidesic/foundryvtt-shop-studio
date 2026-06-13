@@ -49,11 +49,11 @@ We use the following mechanism to ensure our custom sheet and data model are use
    ```
    This ensures that any actor whose `type` is `"npc"` but carries the shop identity flags will be hydrated with `ShopActorModel`.
 
-5. **Document Class Override** (also in `registerShopActor()`):
-   ```js
-   CONFIG.Actor.documentClass = ShopActor;
-   ```
-   This ensures that `options.document` on sheets is always an instance of our custom `ShopActor` (from `src/extensions/actor.js`) rather than the system base `Actor5e`.
+5. **Document Class (NOT SET)** — See note below.
+
+   `CONFIG.Actor.documentClass` is **not** overridden by Shop Studio. The `ShopActor` class defined in `src/actors/ShopActor.js` is created via `registerShopActor()` and returned (available for subclassing), but `CONFIG.Actor.documentClass` is never reassigned. Sheet `options.document` uses whatever the game system provides (e.g., `Actor5e`).
+
+   > **Note:** A stale `src/extensions/Actor.js` exists as a separate `ShopActor extends Actor` file, but it is **never imported** anywhere in the module. It should be considered dead code.
 
 ## Constants Summary (current values)
 - `LEGACY_SHOP_ACTOR_TYPE` = `'shop'`

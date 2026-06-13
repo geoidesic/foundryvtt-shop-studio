@@ -68,8 +68,99 @@
 3. **Extended Currency Support:** Allow multiple currency tracks or barter-style exchanges via settings.
 4. **Analytics & Reporting:** Build dashboards or journal exports for sales history and inventory turnover.
 
+## Status Tracker
+
+> **Last updated: 2026-06-13**
+> Legend: ✅ Done | 🔧 In progress | ❌ Not started | ⏭️ Deferred/blocked | 🔄 Changed approach
+
+### Core Architecture
+
+| Item | Status | Notes |
+|---|---|---|
+| Actor type strategy | 🔄 | **Diverged from plan.** Using NPC type + identity flags instead of custom `shop` type. See `Agents.md`. |
+| `ShopActor` class | ✅ | Defined in `src/actors/ShopActor.js`, registered in `src/index.js` via `registerShopActor()`. |
+| `ShopActorModel` data model | ✅ | `src/models/actors/ShopActorModel.js` — defines full schema (configuration, stock, transactions, currency, identity). |
+| `ShopActorSheet` (SvelteDocumentSheet) | ✅ | `src/sheets/ShopActorSheet.js` — GM + Player sheets rendered via TyphonJS. |
+| Sheet registration | ✅ | Registered for both `SHOP_ACTOR_TYPE` (`'npc'`) and `LEGACY_SHOP_ACTOR_TYPE` (`'shop'`) in `src/index.js`. |
+| Legacy compatibility (`isShop` getter) | ✅ | `ShopActor.isShop` checks both legacy `type === 'shop'` and flag-based identity. |
+
+### Settings & Configuration
+
+| Item | Status | Notes |
+|---|---|---|
+| Debug settings | ✅ | Debug + debugHooks toggles registered. |
+| Sidebar button toggle | ✅ | `showButtonInSideBar` world setting. |
+| Don't show welcome | ✅ | User-level setting. |
+| Item sources settings | ✅ | Registered but UI (`ItemSourcesApp`) is placeholder. |
+| Item field mapping | ❌ | Not implemented. Plan calls for structured settings UI to map logical fields to document paths. |
+| Price modulation UI | 🔧 | `salePriceFactor`/`buyPriceFactor`/`priceVariance` controls exist in `ShopSheetGM.svelte` but not fully wired to settings persistence. |
+| Proximity enforcement | ❌ | Not implemented. |
+| Shop classes registry | ❌ | Not implemented. |
+
+### UI & UX
+
+| Item | Status | Notes |
+|---|---|---|
+| Shop sidebar button | ✅ | Injected into Actor Directory via `renderShopStudioSidebarButton()`. |
+| Create Actor dialog injection | ✅ | "Shop" option added via `renderShopTypeInCreateActorApplication()`. |
+| GM shop sheet (ShopSheetGM) | ✅ | Tabs: Shopfront, Inventory, Settings. |
+| Player shop sheet (ShopSheetPlayer) | ✅ | Tabs: Shopfront, Inventory. |
+| Shopfront tab (GM) | ✅ | Profile image, name, description (ProseMirror), associated actors, roll tables. |
+| Shopfront tab (Player) | ✅ | Profile image, name, enriched description. |
+| Inventory tab | ✅ | Filterable item list with embedded document management. |
+| Settings tab | 🔧 | Configuration UI exists in GM sheet but needs full field mapping support. |
+| Welcome application | ✅ | Shown on first load. |
+| Token HUD integration | ❌ | Not implemented. |
+
+### Stores & State
+
+| Item | Status | Notes |
+|---|---|---|
+| `shopCatalog` store | ✅ | `src/stores/shopCatalog.js` — catalogItems, catalogLoading, catalogError, loadCatalogItems(). |
+| `shopInventory` store | ✅ | `src/stores/shopInventory.js` — catalogItems, shopCart, priceMultiplier, cartTotal derived store. |
+| `initialiseShopState()` | ✅ | Resets stores when actor changes. |
+
+### Services (Planned but Not Built)
+
+| Item | Status | Notes |
+|---|---|---|
+| `StockService` / `randomiseStock()` | ❌ | No `src/services/` directory exists. |
+| `PurchaseService` / purchase pipeline | ❌ | No purchase flow beyond Actor Studio's existing equipment purchase. |
+| Transaction logging | ❌ | Schema defined in `ShopActorModel` (transactions ArrayField) but no code writes to it. |
+| Actor selection dialog for players | ❌ | Not implemented. |
+
+### Integration & Hooks
+
+| Item | Status | Notes |
+|---|---|---|
+| `gss.openShopStudio` hook | ✅ | Fired on sidebar button click. |
+| Actor Directory injection | ✅ | Both V12 (`renderActorDirectory`) and V13+ (`activateActorDirectory`). |
+| Render Application hooks | ✅ | V12 (`renderApplication`) and V13+ (`renderApplicationV2`) for creation dialog. |
+| Token HUD controls | ❌ | Not implemented. |
+| Socket coordination | ❌ | Not implemented. |
+
+### Testing
+
+| Item | Status | Notes |
+|---|---|---|
+| Vitest harness setup | ❌ | `src/tests/` exists but only contains `Agents.md`. |
+| Unit tests for services | ❌ | No services to test yet. |
+| Component tests | ❌ | Not started. |
+
+### Data Storage Schema
+
+| Item | Status | Notes |
+|---|---|---|
+| `system.configuration` | ✅ | Pricing factors, variance, associated actors, roll tables. |
+| `system.stock` | ✅ | Stock snapshot array. |
+| `system.transactions` | ✅ | Transaction log array. |
+| `system.identity` | ✅ | isShop flag + kind. |
+| `system.description` | ✅ | Rich text description. |
+| `system.currency` | ✅ | Schema defined but minimal. |
+
 ## Immediate Next Steps
-- [ ] Finalise actor sheet registration and flag schema documentation.
-- [ ] Implement settings UI for compendium selection, item field mapping, and proximity controls.
-- [x] Scaffolding: create `ShopActor` class, empty `ShopSheet.svelte`, and baseline stores ready for service integration. (2025-10-16)
-- [ ] Draft Vitest harnesses copying Actor Studio's mock strategy for consistent testing.
+- [ ] Implement `src/services/StockService.js` — stock randomisation from compendiums.
+- [ ] Implement item field mapping settings UI (document path mappings for price, currency, quantity).
+- [ ] Implement purchase pipeline: actor selection -> proximity check -> currency validation -> purchase -> transaction logging.
+- [ ] Add Token HUD integration (`renderTokenHUD` hook) for quick shop controls.
+- [ ] Add Vitest harnesses copying Actor Studio's mock strategy for consistent testing.

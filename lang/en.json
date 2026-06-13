@@ -66,7 +66,7 @@
     "DragActorTokensHint": "(Drag actor tokens or from actor directory)",
     "NoAssociatedActors": "No associated actors yet.",
     "Description": "Description",
-    "AssociatedActors": "Associated Actors",
+    "AssociatedActors": "Associates",
     "DragActorsHere": "Drag actors here to associate with this shop",
     "SalePriceFactor": "Sale Price Factor",
     "BuyPriceFactor": "Buy Price Factor",
@@ -82,7 +82,6 @@
     "FilterInventory": "Filter Inventory...",
     "NoPermission": "You don't have permission to modify this shop.",
     "SettingsSaved": "Shop settings have been saved.",
-    "NoPermission": "Permission denied.",
     "EditToggle": "Edit Mode"
   }
 }

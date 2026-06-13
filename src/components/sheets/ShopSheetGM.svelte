@@ -29,7 +29,7 @@ const application = getContext('#external').application;
 
   $: actor = $documentStore;
   $: sheetTitle = actor?.name ?? game.i18n.localize('foundryvtt-shop-studio.ShopSheetTitle');
-  $: config = actor?.shopConfiguration ?? {};
+  $: config = actor?.system?.shopConfiguration ?? {};
   $: isEditing = actor?.system?.identity?.isEditing ?? false;
 
   $: if (actor?.id && actor.id !== initializedActorId) {
@@ -100,8 +100,9 @@ const application = getContext('#external').application;
       ui.notifications.warn(localize('NoPermission'));
       return;
     }
-    await actor.updateShopConfiguration({
+    await actor.system.updateShopConfiguration({
       salePriceFactor: parseFloat(salePriceFactor),
+      buyPriceFactor: parseFloat(buyPriceFactor),
       priceVariance: parseFloat(priceVariance),
       variancePeriod,
       atrophyPercent: parseFloat(atrophyPercent),
@@ -127,15 +128,16 @@ const application = getContext('#external').application;
     e.preventDefault();
     try {
       const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-      if (dropType === 'actor' && data.type === 'Actor' && data.uuid) {
-        const actorId = data.uuid || data.id;
+      if (dropType === 'actor' && data.type === 'Actor' && (data.uuid || data.id)) {
+        const actorId = data.id || data.uuid.split('.').pop();
         if (!associatedActors.includes(actorId)) {
           associatedActors = [...associatedActors, actorId];
           saveSettings();
         }
       } else if (dropType === 'rolltable' && data.type === 'RollTable' && data.uuid) {
-        if (!rollTables.includes(data.uuid)) {
-          rollTables = [...rollTables, data.uuid];
+        const tableId = data.id || data.uuid.split('.').pop();
+        if (!rollTables.includes(tableId)) {
+          rollTables = [...rollTables, tableId];
           saveSettings();
         }
       }
@@ -189,14 +191,14 @@ const application = getContext('#external').application;
     return _filePickerInstance.browse();
   }
 
-  function getActorName(uuidOrId) {
-    const a = game.actors.get(uuidOrId) || game.actors.getName(uuidOrId);
-    return a?.name || uuidOrId.split('.').pop() || 'Unknown Actor';
+  function getActorName(id) {
+    const a = game.actors.get(id);
+    return a?.name || id || 'Unknown Actor';
   }
 
-  function getRollTableName(uuid) {
-    const rt = game.tables.get(uuid) || game.tables.getName(uuid.split('.').pop());
-    return rt?.name || 'Unknown Table';
+  function getRollTableName(id) {
+    const rt = game.tables.get(id);
+    return rt?.name || id || 'Unknown Table';
   }
 
   function calculateSalePrice(basePrice = 0) {
@@ -216,7 +218,6 @@ const application = getContext('#external').application;
 <style lang="sass">
 @import "../../styles/Mixins.sass"
 :global(.foundryvtt-shop-studio)
-
   .shop-sheet
     display: flex
     flex-direction: column
@@ -228,7 +229,6 @@ const application = getContext('#external').application;
     &__body
       flex: 1
       min-height: 0
-
 
   :global(.associated-actors-section),
   :global(.inventory-controls),
@@ -283,5 +283,6 @@ const application = getContext('#external').application;
     resize: vertical
 
   :global(.drag-drop-area)
+    padding: 0.5rem
     border: 2px dashed color-mix(in srgb, var(--gas-tab-active-indicator) 50%, transparent)
 </style>
