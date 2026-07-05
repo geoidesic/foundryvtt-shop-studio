@@ -3,6 +3,7 @@ Never edit dist.
 Never run build. 
 Never manually copy dist/ output to the Foundry Data modules folder — HMR + symlinks handle propagation automatically.
 Always lint errors.
+When editing Pug templates: make ONE edit at a time, then check the `bun dev` terminal logs for compile errors before the next edit.
 
 # Javascript rules
 Always use ESM import

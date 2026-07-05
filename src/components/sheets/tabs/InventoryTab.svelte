@@ -5,32 +5,43 @@
 
   import { TJSInput } from "#standard/component/form";
   import { createFilterQuery } from "~/src/filters/itemFilterQuery";
-  import { toggleBookmark, ucfirst } from "~/src/helpers/utility";
-  import { localize } from "~/src/helpers/utility";
-  import { MODULE_ID, MODULE_CODE } from "~/src/helpers/constants";
-  import ProseMirror from "~/src/components/molecules/ProseMirror.svelte";
+  import { toggleBookmark, localize } from "~/src/helpers/utility";
+  import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
   import ScrollingContainer from "~/src/helpers/svelte-components/ScrollingContainer.svelte";
   import InventoryRow from "~/src/components/molecules/InventoryRow.svelte";
 
   const Actor = getContext("#doc");
   const doc = new TJSDocument($Actor);
   const typeSearch = createFilterQuery("type");
+  const nameSearch = createFilterQuery("name");
+
   const input = {
-    store: typeSearch,
+    store: nameSearch,
     efx: rippleFocus(),
     placeholder: "by Name",
     type: "search",
     id: "search",
   };
 
+  let typeFilterValue = "all";
+
+  $: typeFilterOptions = [
+    { value: "all", label: "All" },
+    ...getConfiguredListableItemTypes().map((t) => ({
+      value: t.type,
+      label: t.label,
+    })),
+  ];
+
   // Initialize filter after mount (game.system may not be ready at module top-level)
   onMount(() => {
+    // typeSearch.set(['equipment']);
   });
 
   /** @type {import('@typhonjs-fvtt/runtime/svelte/store').DynMapReducer<string, Item>} */
   const wildcard = doc.embedded.create(Item, {
     name: "wildcard",
-    filters: [typeSearch],
+    filters: [typeSearch, nameSearch],
     sort: (a, b) => a.name.localeCompare(b.name),
   });
 
@@ -105,6 +116,12 @@
 
   onMount(async () => {});
 
+  $: if (typeFilterValue === "all") {
+    typeSearch.set("");
+  } else {
+    typeSearch.set([typeFilterValue]);
+  }
+
   $: items = [...$wildcard];
   $: lockCSS = $doc.system.inventoryLocked ? "lock" : "lock-open";
   $: faLockCSS = $doc.system.inventoryLocked ? "fa-lock negative" : "fa-lock-open positive";
@@ -112,17 +129,18 @@
 
 <template lang="pug">
 
-    //- .flexrow.pt-sm.pr-sm
-    //-   .flexcol.flex1.label-container 
-    //-     label Search
-    //-   .flex3.left
-    //-     TJSInput({input})
-    //-   .flexcol.flex1.label-container 
-    //-     label Type
-    //-   .flex3.right
-    //-     Select.short(options="{typeFilterOptions}" bind:value="{typeFilterValue}")
-
     .panel.overflow.containerx
+      .flexrow.pt-sm.pr-sm.pl-sm
+        .flexcol.flex1.label-container
+          label {localize('Search')}
+        .flex3.left
+          TJSInput({input})
+        .flexcol.flex1.label-container
+          label {localize('Type')}
+        .flex3.right
+          select.short(value="{typeFilterValue}" on:change!="{(e) => typeFilterValue = e.target.value}")
+            +each("typeFilterOptions as opt")
+              option(value="{opt.value}") {opt.label}
       .padded
         h1.gold {localize('Inventory')}
         table.borderless
