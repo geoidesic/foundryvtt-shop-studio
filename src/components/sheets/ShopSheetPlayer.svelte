@@ -32,10 +32,17 @@
     onFilterChange: (value) => {
       filterText = value;
     },
+    associatedActors: actor?.system?.configuration?.associatedActors ?? [],
+    getActorName,
   };
 
   function clearFilter() {
     filterText = '';
+  }
+
+  function getActorName(id) {
+    const a = game.actors.get(id);
+    return a?.name || id || 'Unknown Actor';
   }
 
 </script>

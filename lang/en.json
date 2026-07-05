@@ -83,6 +83,28 @@
     "NoPermission": "You don't have permission to modify this shop.",
     "SettingsSaved": "Shop settings have been saved.",
     "EditToggle": "Edit Mode",
-    "ItemTypeNotAllowed": "This item type is not allowed for sale. Configure allowed types in module settings."
+    "ItemTypeNotAllowed": "This item type is not allowed for sale. Configure allowed types in module settings.",
+    "UnknownActor": "Unknown Actor",
+    "CouldNotResolveActor": "Could not resolve the dropped actor.",
+    "Search": "Search",
+    "Type": "Type",
+    "Use": "Use",
+    "View": "View",
+    "Bookmark": "Bookmark",
+    "Types": {
+      "Actor": {
+        "ActionButtons": {
+          "Edit": "Edit",
+          "Duplicate": "Duplicate",
+          "Delete": "Delete"
+        },
+        "Inventory": {
+          "confirmDeleteAll": "Are you sure you want to delete ALL items? This cannot be undone."
+        }
+      }
+    },
+    "Instructions": {
+      "RemoveAll": "Remove All Items"
+    }
   }
 }

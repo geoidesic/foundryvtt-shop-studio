@@ -1,5 +1,6 @@
 <script>
   import ProseMirror from '~/src/components/molecules/ProseMirror.svelte';
+  import ActorBucket from '~/src/components/molecules/ActorBucket.svelte';
 
   export let sharedProps = {};
   const proseMirrorClasses = ['left', 'small']
@@ -14,6 +15,12 @@
   function handleEditorCancel() {
     console.log("ShopfrontTab: editor:cancel");
   }
+
+  async function onActorsPersist(list) {
+    // Convert ActorBucket's object entries to string IDs for system storage
+    sharedProps.associatedActors = list.map(e => e.id);
+    await sharedProps.saveSettings();
+  }
 </script>
 
 <template lang="pug">
@@ -24,18 +31,10 @@
         img.profile-img(on:click!="{sharedProps.openImageEditor}" src="{sharedProps.actor?.img || 'icons/svg/mystery-man.svg'}" alt="Shop Profile")
           
         .associated-actors-section.flex2
-          h2 {sharedProps.localize("AssociatedActors")}
-          div.drag-drop-area(role="region" aria-label="Associated actors drop zone" on:dragover|preventDefault="{sharedProps.handleDragOver}" on:drop|preventDefault="{sharedProps.handleActorDrop}")
-            p.drag-hint {sharedProps.localize("DragActorsHere")}
-            p.small {sharedProps.localize('DragActorTokensHint')}
-          +if("sharedProps.associatedActors && sharedProps.associatedActors.length > 0")
-            ul.associated-list
-              +each("sharedProps.associatedActors as assoc, index")
-                li
-                  span {sharedProps.getActorName(assoc)}
-                  button.remove-btn(type="button" on:click!="{() => sharedProps.removeAssociated(index)}") ×
-            +else()
-              p.no-items {sharedProps.localize('NoAssociatedActors')}
+          ActorBucket(
+            listPath="system.configuration.associatedActors"
+            onPersist="{onActorsPersist}"
+          )
       .flex2.ml-sm
         .name-section
           h2 {sharedProps.localize("Name")}

@@ -17202,11 +17202,11 @@ function create_if_block$e(ctx) {
     if (
       /*iconType*/
       ctx2[3] === "font"
-    ) return create_if_block_1$7;
+    ) return create_if_block_1$6;
     if (
       /*iconType*/
       ctx2[3] === "img"
-    ) return create_if_block_2$5;
+    ) return create_if_block_2$4;
     if (
       /*iconType*/
       ctx2[3] === "svg"
@@ -17281,7 +17281,7 @@ function create_if_block_3$1(ctx) {
     }
   };
 }
-function create_if_block_2$5(ctx) {
+function create_if_block_2$4(ctx) {
   let img;
   let img_src_value;
   return {
@@ -17309,7 +17309,7 @@ function create_if_block_2$5(ctx) {
     }
   };
 }
-function create_if_block_1$7(ctx) {
+function create_if_block_1$6(ctx) {
   let i;
   let i_class_value;
   return {
@@ -17603,12 +17603,12 @@ function get_each_context$6(ctx, list, i) {
   child_ctx[40] = list[i];
   return child_ctx;
 }
-function get_each_context_1$1(ctx, list, i) {
+function get_each_context_1$2(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[40] = list[i];
   return child_ctx;
 }
-function create_if_block_2$4(ctx) {
+function create_if_block_2$3(ctx) {
   let svg;
   let inlineSvg_action;
   let mounted;
@@ -17644,7 +17644,7 @@ function create_if_block_2$4(ctx) {
     }
   };
 }
-function create_if_block_1$6(ctx) {
+function create_if_block_1$5(ctx) {
   let i;
   let i_class_value;
   return {
@@ -17702,7 +17702,7 @@ function create_if_block$d(ctx) {
     }
   };
 }
-function create_each_block_1$1(ctx) {
+function create_each_block_1$2(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -17898,11 +17898,11 @@ function create_key_block(ctx) {
     if (
       /*mediaType*/
       ctx2[8] === "font"
-    ) return create_if_block_1$6;
+    ) return create_if_block_1$5;
     if (
       /*mediaType*/
       ctx2[8] === "svg"
-    ) return create_if_block_2$4;
+    ) return create_if_block_2$3;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type && current_block_type(ctx);
@@ -17912,7 +17912,7 @@ function create_key_block(ctx) {
   );
   let each_blocks_1 = [];
   for (let i = 0; i < each_value_1.length; i += 1) {
-    each_blocks_1[i] = create_each_block_1$1(get_each_context_1$1(ctx, each_value_1, i));
+    each_blocks_1[i] = create_each_block_1$2(get_each_context_1$2(ctx, each_value_1, i));
   }
   const out = (i) => transition_out(each_blocks_1[i], 1, 1, () => {
     each_blocks_1[i] = null;
@@ -18038,12 +18038,12 @@ function create_key_block(ctx) {
         );
         let i;
         for (i = 0; i < each_value_1.length; i += 1) {
-          const child_ctx = get_each_context_1$1(ctx2, each_value_1, i);
+          const child_ctx = get_each_context_1$2(ctx2, each_value_1, i);
           if (each_blocks_1[i]) {
             each_blocks_1[i].p(child_ctx, dirty);
             transition_in(each_blocks_1[i], 1);
           } else {
-            each_blocks_1[i] = create_each_block_1$1(child_ctx);
+            each_blocks_1[i] = create_each_block_1$2(child_ctx);
             each_blocks_1[i].c();
             transition_in(each_blocks_1[i], 1);
             each_blocks_1[i].m(header, t3);
@@ -18732,7 +18732,7 @@ class TJSFocusWrap extends SvelteComponent {
     init(this, options, instance$n, create_fragment$n, safe_not_equal, { elementRoot: 2, enabled: 3 });
   }
 }
-function create_else_block$8(ctx) {
+function create_else_block$7(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -19322,7 +19322,7 @@ function create_fragment$m(ctx) {
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$c, create_else_block$8];
+  const if_block_creators = [create_if_block$c, create_else_block$7];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -19884,7 +19884,7 @@ class ApplicationShell extends SvelteComponent {
     flush();
   }
 }
-function create_else_block$7(ctx) {
+function create_else_block$6(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -20474,7 +20474,7 @@ function create_fragment$l(ctx) {
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$b, create_else_block$7];
+  const if_block_creators = [create_if_block$b, create_else_block$6];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -21042,6 +21042,47 @@ const MODULE_TITLE = "Aardvark Shop Studio";
 const MODULE_CODE = "GSS";
 const LOG_PREFIX = "GSS |";
 const DEFAULT_LISTABLE_ITEM_TYPES = null;
+const LOG_PREFIX_COLOR = `%c[${MODULE_CODE}] |`;
+const LOG_STYLES = {
+  go: "color: goldenrod;",
+  q: "color: aqua;",
+  p: "color: purple;",
+  s: "color: steelblue;",
+  g: "color: green;",
+  r: "color: red;",
+  o: "color: orange;",
+  b: "color: blue;",
+  y: "color: yellow;",
+  c: "color: cyan;",
+  m: "color: magenta;",
+  gr: "color: gray;",
+  br: "color: brown;",
+  pi: "color: pink;",
+  t: "color: teal;"
+};
+async function toggleBookmark(item, callback = () => {
+}) {
+  await item.update({ system: { favourite: !item.system.favourite } });
+  callback();
+}
+function localize(string) {
+  if (typeof game === "undefined") return string;
+  return game.i18n.localize(`${MODULE_ID}.${string}`);
+}
+function safeGetSetting(moduleId, key, defaultValue = true) {
+  try {
+    const setting = game.settings.get(moduleId, key);
+    return setting !== void 0 ? setting : defaultValue;
+  } catch (err) {
+    return defaultValue;
+  }
+}
+function getTextEditorAPI() {
+  if (Number(game.version) >= 13) {
+    return foundry.applications?.ux?.TextEditor?.implementation ?? TextEditor;
+  }
+  return TextEditor;
+}
 const log = {
   ASSERT: 1,
   ERROR: 2,
@@ -21062,30 +21103,57 @@ const log = {
     };
     this.v = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX) : () => {
     };
+    this.s = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.s) : () => {
+    };
+    this.q = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.q) : () => {
+    };
+    this.p = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.p) : () => {
+    };
+    this.g = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.g) : () => {
+    };
+    this.go = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.go) : () => {
+    };
+    this.r = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.r) : () => {
+    };
+    this.o = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.o) : () => {
+    };
+    this.b = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.b) : () => {
+    };
+    this.y = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.y) : () => {
+    };
+    this.c = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.c) : () => {
+    };
+    this.m = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.m) : () => {
+    };
+    this.gr = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.gr) : () => {
+    };
+    this.br = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.br) : () => {
+    };
+    this.pi = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.pi) : () => {
+    };
+    this.t = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.t) : () => {
+    };
+    this.goldenrod = this.s;
+    this.steelblue = this.go;
+    this.aqua = this.q;
+    this.purple = this.p;
+    this.green = this.g;
+    this.red = this.r;
+    this.orange = this.o;
+    this.blue = this.b;
+    this.yellow = this.y;
+    this.cyan = this.c;
+    this.magenta = this.m;
+    this.gray = this.gr;
+    this.brown = this.br;
+    this.pink = this.pi;
+    this.teal = this.t;
     this.loggingLevel = level;
   },
   get level() {
     return this.loggingLevel;
   }
 };
-function localize(string) {
-  if (typeof game === "undefined") return string;
-  return game.i18n.localize(`${MODULE_ID}.${string}`);
-}
-function safeGetSetting(moduleId, key, defaultValue = true) {
-  try {
-    const setting = game.settings.get(moduleId, key);
-    return setting !== void 0 ? setting : defaultValue;
-  } catch (err) {
-    return defaultValue;
-  }
-}
-function getTextEditorAPI() {
-  if (Number(game.version) >= 13) {
-    return foundry.applications?.ux?.TextEditor?.implementation ?? TextEditor;
-  }
-  return TextEditor;
-}
 function create_default_slot$8(ctx) {
   let main;
   let footer;
@@ -23814,7 +23882,7 @@ class TJSPasteUUID {
     return text2;
   }
 }
-function create_if_block_1$5(ctx) {
+function create_if_block_1$4(ctx) {
   let a;
   let mounted;
   let dispose;
@@ -23848,7 +23916,7 @@ function create_if_block_1$5(ctx) {
     }
   };
 }
-function create_else_block$6(ctx) {
+function create_else_block$5(ctx) {
   let div;
   return {
     c() {
@@ -23902,14 +23970,14 @@ function create_fragment$i(ctx) {
   let dispose;
   let if_block0 = (
     /*editorButton*/
-    ctx[6] && create_if_block_1$5(ctx)
+    ctx[6] && create_if_block_1$4(ctx)
   );
   function select_block_type(ctx2, dirty) {
     if (
       /*editorActive*/
       ctx2[4]
     ) return create_if_block$9;
-    return create_else_block$6;
+    return create_else_block$5;
   }
   let current_block_type = select_block_type(ctx);
   let if_block1 = current_block_type(ctx);
@@ -23995,7 +24063,7 @@ function create_fragment$i(ctx) {
         if (if_block0) {
           if_block0.p(ctx2, dirty);
         } else {
-          if_block0 = create_if_block_1$5(ctx2);
+          if_block0 = create_if_block_1$4(ctx2);
           if_block0.c();
           if_block0.m(div, t);
         }
@@ -24629,7 +24697,7 @@ function get_each_context$4(ctx, list, i) {
   child_ctx[6] = i;
   return child_ctx;
 }
-function create_else_block$5(ctx) {
+function create_else_block$4(ctx) {
   let p;
   let t_value = (
     /*sharedProps*/
@@ -24831,7 +24899,7 @@ function create_fragment$g(ctx) {
       ctx2[0].associatedActors && /*sharedProps*/
       ctx2[0].associatedActors.length > 0
     ) return create_if_block$7;
-    return create_else_block$5;
+    return create_else_block$4;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type(ctx);
@@ -25332,7 +25400,7 @@ function create_if_block_4(ctx) {
     }
   };
 }
-function create_if_block_2$3(ctx) {
+function create_if_block_2$2(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -25432,7 +25500,7 @@ function create_if_block_2$3(ctx) {
     }
   };
 }
-function create_if_block_1$4(ctx) {
+function create_if_block_1$3(ctx) {
   let t_value = localize$1(
     /*label*/
     ctx[2]
@@ -25542,7 +25610,7 @@ function create_fragment$f(ctx) {
     /*icon*/
     ctx[1] && create_if_block_3(ctx)
   );
-  const if_block_creators = [create_if_block$6, create_if_block_1$4, create_if_block_2$3];
+  const if_block_creators = [create_if_block$6, create_if_block_1$3, create_if_block_2$2];
   const if_blocks = [];
   function select_block_type_1(ctx2, dirty) {
     if (dirty & /*label*/
@@ -25961,7 +26029,7 @@ class TJSSlotLabelUtil {
     return typeof label === "string" || TJSSvelte.config.isConfigEmbed(label);
   }
 }
-function create_else_block$4(ctx) {
+function create_else_block$3(ctx) {
   let current;
   const default_slot_template = (
     /*#slots*/
@@ -26030,7 +26098,7 @@ function create_if_block$5(ctx) {
   let if_block;
   let t;
   let current;
-  const if_block_creators = [create_if_block_1$3, create_if_block_2$2];
+  const if_block_creators = [create_if_block_1$2, create_if_block_2$1];
   const if_blocks = [];
   function select_block_type_1(ctx2, dirty) {
     if (dirty & /*label*/
@@ -26152,7 +26220,7 @@ function create_if_block$5(ctx) {
     }
   };
 }
-function create_if_block_2$2(ctx) {
+function create_if_block_2$1(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -26268,7 +26336,7 @@ function create_if_block_2$2(ctx) {
     }
   };
 }
-function create_if_block_1$3(ctx) {
+function create_if_block_1$2(ctx) {
   let span;
   let t_value = localize$1(
     /*label*/
@@ -26328,7 +26396,7 @@ function create_fragment$e(ctx) {
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$5, create_else_block$4];
+  const if_block_creators = [create_if_block$5, create_else_block$3];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -28554,7 +28622,7 @@ class TJSSelect extends SvelteComponent {
     });
   }
 }
-function create_else_block$3(ctx) {
+function create_else_block$2(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -28639,7 +28707,7 @@ function create_else_block$3(ctx) {
     }
   };
 }
-function create_if_block_1$2(ctx) {
+function create_if_block_1$1(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -28844,7 +28912,7 @@ function create_fragment$7(ctx) {
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$4, create_if_block_1$2, create_else_block$3];
+  const if_block_creators = [create_if_block$4, create_if_block_1$1, create_else_block$2];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -28984,6 +29052,26 @@ class TJSInput extends SvelteComponent {
     init(this, options, instance$7, create_fragment$7, safe_not_equal, { input: 3, type: 0 });
   }
 }
+function formatDotpath(path) {
+  return path.replace(/\[/g, ".").replace(/]/g, "");
+}
+function stepwiseResolveDotpath(obj, path) {
+  const pathlets = formatDotpath(path).split(".");
+  const result = [
+    {
+      pathlet: null,
+      val: obj
+    }
+  ];
+  for (const pathlet of pathlets) {
+    obj = obj?.[pathlet];
+    result.push({
+      pathlet,
+      val: obj
+    });
+  }
+  return result;
+}
 function createFilterQuery(properties, { caseSensitive = false, store } = {}) {
   let keyword = "";
   let regex;
@@ -28995,25 +29083,28 @@ function createFilterQuery(properties, { caseSensitive = false, store } = {}) {
     const current = get_store_value(store);
     if (typeof current === "string") {
       keyword = Strings.normalize(current);
+      window.GAS.log.d("keyword", keyword);
       regex = new RegExp(RegExp.escape(keyword), caseSensitive ? "" : "i");
+      window.GAS.log.d("keyword", regex);
     } else {
       store.set(keyword);
     }
   }
   function filterQuery(data) {
     if (keyword === "" || !regex) {
+      window.GAS.log.d("No keyword or regex, returning true");
       return true;
     }
     if (isIterable(properties)) {
       for (const property of properties) {
-        const value2 = data?.[property];
-        if (value2 !== void 0) {
-          if (typeof value2 === "boolean") {
-            if (value2.toString() === keyword) {
+        const value = data?.[property];
+        if (value !== void 0) {
+          if (typeof value === "boolean") {
+            if (value.toString() === keyword) {
               return true;
             }
           } else {
-            const normalizedValue = Strings.normalize(value2);
+            const normalizedValue = Strings.normalize(value);
             if (regex.test(normalizedValue)) {
               return true;
             }
@@ -29021,27 +29112,35 @@ function createFilterQuery(properties, { caseSensitive = false, store } = {}) {
         }
       }
       return false;
-    }
-    const value = data?.[properties];
-    if (value !== void 0) {
-      if (typeof value === "boolean") {
-        return value.toString() === keyword;
+    } else {
+      const steps = stepwiseResolveDotpath(data, properties);
+      const value = steps[steps.length - 1].val;
+      if (value !== void 0) {
+        if (typeof value === "boolean") {
+          return value.toString() === keyword;
+        }
+        const normalizedValue = Strings.normalize(value);
+        return regex.test(normalizedValue);
       }
-      const normalizedValue = Strings.normalize(value);
-      return regex.test(normalizedValue);
+      return false;
     }
-    return false;
   }
   filterQuery.subscribe = (handler) => {
     return storeKeyword.subscribe(handler);
   };
   filterQuery.set = (value) => {
+    if (game?.system?.log?.d) {
+      window.GAS.log.d("value", value);
+    }
     if (Array.isArray(value)) {
       const pattern = value.map((v) => RegExp.escape(Strings.normalize(v))).join("|");
       keyword = value.join(", ");
       regex = new RegExp(pattern, caseSensitive ? "" : "i");
     } else if (typeof value === "string") {
       keyword = Strings.normalize(value);
+      if (game?.system?.log?.d) {
+        window.GAS.log.d("keyword", keyword);
+      }
       regex = new RegExp(RegExp.escape(keyword), caseSensitive ? "" : "i");
     } else if (typeof value === "boolean") {
       keyword = value.toString();
@@ -29051,120 +29150,164 @@ function createFilterQuery(properties, { caseSensitive = false, store } = {}) {
   };
   return filterQuery;
 }
+const ITEM_SOURCES_SETTING = "itemSources";
+const LISTABLE_ITEM_TYPES_SETTING = "listableItemTypes";
+function getAvailableItemTypes() {
+  const configured = CONFIG?.Item?.typeLabels ?? {};
+  const documentTypes = Array.isArray(game?.documentTypes?.Item) ? game.documentTypes.Item : [];
+  const modelTypes = CONFIG?.Item?.dataModels ? Object.keys(CONFIG.Item.dataModels) : [];
+  const metadataTypes = CONFIG?.Item?.documentClass?.metadata?.types ?? [];
+  const legacyTypes = Array.isArray(CONFIG?.Item?.types) ? CONFIG.Item.types : [];
+  const compendiumTypes = game.packs?.filter((pack) => pack.documentName === "Item").flatMap((pack) => Array.from(pack.index?.values?.() ?? []).map((entry) => entry?.type)) ?? [];
+  return Array.from(/* @__PURE__ */ new Set([
+    ...Object.keys(configured),
+    ...documentTypes,
+    ...modelTypes,
+    ...metadataTypes,
+    ...legacyTypes,
+    ...compendiumTypes
+  ])).filter(Boolean).map((type) => ({ type, label: getItemTypeLabel(type) })).sort((a, b) => a.label.localeCompare(b.label, game.i18n?.lang));
+}
+function getItemTypeLabel(type) {
+  const rawLabel = CONFIG?.Item?.typeLabels?.[type] || CONFIG?.Item?.typeHints?.[type];
+  if (rawLabel) return game.i18n.localize(rawLabel);
+  try {
+    return game.i18n.localize(type);
+  } catch (_) {
+    return type;
+  }
+}
+function getAllItemCompendia$1() {
+  return game.packs?.filter((pack) => pack.documentName === "Item") ?? [];
+}
+function getConfiguredListableItemTypes() {
+  const configured = safeGetSetting(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING, DEFAULT_LISTABLE_ITEM_TYPES);
+  const available = getAvailableItemTypes();
+  if (configured === null || configured === void 0) return available;
+  if (!Array.isArray(configured)) return [];
+  const allowed = new Set(configured);
+  return available.filter((entry) => allowed.has(entry.type));
+}
+function isItemTypeListable(type) {
+  const configured = safeGetSetting(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING, DEFAULT_LISTABLE_ITEM_TYPES);
+  if (configured === null || configured === void 0) return true;
+  return Array.isArray(configured) && configured.includes(type);
+}
+function autoAssignItemSources() {
+  return getAllItemCompendia$1().map((pack) => pack.collection);
+}
 function get_each_context$2(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[10] = list[i];
-  child_ctx[12] = i;
+  child_ctx[19] = list[i];
+  child_ctx[21] = i;
   return child_ctx;
 }
-function create_if_block_2$1(ctx) {
-  let th;
-  return {
-    c() {
-      th = element("th");
-      attr(th, "class", "shrink");
-      attr(th, "scope", "col");
-    },
-    m(target, anchor) {
-      insert(target, th, anchor);
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(th);
-      }
-    }
-  };
+function get_each_context_1$1(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[22] = list[i];
+  return child_ctx;
 }
-function create_else_block$2(ctx) {
-  let span;
+function create_each_block_1$1(ctx) {
+  let option;
   let t_value = (
-    /*item*/
-    (ctx[10].system?.quantity ?? 0) + ""
+    /*opt*/
+    ctx[22].label + ""
   );
   let t;
+  let option_value_value;
   return {
     c() {
-      span = element("span");
+      option = element("option");
       t = text(t_value);
-      attr(span, "class", "quantity svelte-FOU-sux9u1");
+      option.__value = option_value_value = /*opt*/
+      ctx[22].value;
+      set_input_value(option, option.__value);
     },
     m(target, anchor) {
-      insert(target, span, anchor);
-      append(span, t);
+      insert(target, option, anchor);
+      append(option, t);
     },
     p(ctx2, dirty) {
-      if (dirty & /*items*/
-      4 && t_value !== (t_value = /*item*/
-      (ctx2[10].system?.quantity ?? 0) + "")) set_data(t, t_value);
+      if (dirty & /*typeFilterOptions*/
+      32 && t_value !== (t_value = /*opt*/
+      ctx2[22].label + "")) set_data(t, t_value);
+      if (dirty & /*typeFilterOptions*/
+      32 && option_value_value !== (option_value_value = /*opt*/
+      ctx2[22].value)) {
+        option.__value = option_value_value;
+        set_input_value(option, option.__value);
+      }
     },
     d(detaching) {
       if (detaching) {
-        detach(span);
+        detach(option);
       }
     }
   };
 }
-function create_if_block_1$1(ctx) {
-  let div;
+function create_if_block$3(ctx) {
   let button0;
-  let input_1;
-  let input_1_value_value;
   let button1;
+  let button2;
   let mounted;
   let dispose;
-  function change_handler(...args) {
-    return (
-      /*change_handler*/
-      ctx[5](
-        /*item*/
-        ctx[10],
-        ...args
-      )
-    );
-  }
   return {
     c() {
-      div = element("div");
       button0 = element("button");
-      button0.innerHTML = `<i class="fa fa-chevron-down"></i>`;
-      input_1 = element("input");
+      button0.innerHTML = `<i class="left fa fa-edit"></i>`;
       button1 = element("button");
-      button1.innerHTML = `<i class="fa fa-chevron-up"></i>`;
-      attr(button0, "class", "stealth chevron");
-      attr(button0, "type", "button");
-      attr(input_1, "class", "quantity-input svelte-FOU-sux9u1");
-      attr(input_1, "type", "number");
-      input_1.value = input_1_value_value = /*item*/
-      ctx[10].system?.quantity ?? 0;
-      attr(input_1, "min", "0");
-      attr(button1, "class", "stealth chevron");
-      attr(button1, "type", "button");
-      attr(div, "class", "quantity-editor svelte-FOU-sux9u1");
+      button1.innerHTML = `<i class="left fa fa-copy"></i>`;
+      button2 = element("button");
+      button2.innerHTML = `<i class="left fa fa-trash"></i>`;
+      attr(button0, "class", "stealth");
+      attr(button0, "data-tooltip", localize("Types.Actor.ActionButtons.Edit"));
+      attr(button1, "class", "stealth");
+      attr(button1, "data-tooltip", localize("Types.Actor.ActionButtons.Duplicate"));
+      attr(button2, "class", "stealth");
+      attr(button2, "data-tooltip", localize("Types.Actor.ActionButtons.Delete"));
     },
     m(target, anchor) {
-      insert(target, div, anchor);
-      append(div, button0);
-      append(div, input_1);
-      append(div, button1);
+      insert(target, button0, anchor);
+      insert(target, button1, anchor);
+      insert(target, button2, anchor);
       if (!mounted) {
         dispose = [
           listen(button0, "click", function() {
-            if (is_function(removeQuantity(
+            if (is_function(editItem(
               /*item*/
-              ctx[10]
-            ))) removeQuantity(
+              ctx[19]
+            ))) editItem(
               /*item*/
-              ctx[10]
+              ctx[19]
             ).apply(this, arguments);
           }),
-          listen(input_1, "change", change_handler),
           listen(button1, "click", function() {
-            if (is_function(addQuantity(
+            if (is_function(
+              /*duplicateItem*/
+              ctx[10](
+                /*index*/
+                ctx[21],
+                /*item*/
+                ctx[19]
+              )
+            )) ctx[10](
+              /*index*/
+              ctx[21],
               /*item*/
-              ctx[10]
-            ))) addQuantity(
+              ctx[19]
+            ).apply(this, arguments);
+          }),
+          listen(button2, "click", function() {
+            if (is_function(deleteItem(
+              /*index*/
+              ctx[21],
               /*item*/
-              ctx[10]
+              ctx[19]
+            ))) deleteItem(
+              /*index*/
+              ctx[21],
+              /*item*/
+              ctx[19]
             ).apply(this, arguments);
           })
         ];
@@ -29173,60 +29316,15 @@ function create_if_block_1$1(ctx) {
     },
     p(new_ctx, dirty) {
       ctx = new_ctx;
-      if (dirty & /*items*/
-      4 && input_1_value_value !== (input_1_value_value = /*item*/
-      ctx[10].system?.quantity ?? 0) && input_1.value !== input_1_value_value) {
-        input_1.value = input_1_value_value;
-      }
     },
     d(detaching) {
       if (detaching) {
-        detach(div);
+        detach(button0);
+        detach(button1);
+        detach(button2);
       }
       mounted = false;
       run_all(dispose);
-    }
-  };
-}
-function create_if_block$3(ctx) {
-  let td;
-  let button;
-  let mounted;
-  let dispose;
-  return {
-    c() {
-      td = element("td");
-      button = element("button");
-      button.innerHTML = `<i class="fa fa-trash"></i>`;
-      attr(button, "class", "stealth danger");
-      attr(button, "type", "button");
-      attr(td, "class", "actions svelte-FOU-sux9u1");
-    },
-    m(target, anchor) {
-      insert(target, td, anchor);
-      append(td, button);
-      if (!mounted) {
-        dispose = listen(button, "click", function() {
-          if (is_function(deleteItem(
-            /*item*/
-            ctx[10]
-          ))) deleteItem(
-            /*item*/
-            ctx[10]
-          ).apply(this, arguments);
-        });
-        mounted = true;
-      }
-    },
-    p(new_ctx, dirty) {
-      ctx = new_ctx;
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(td);
-      }
-      mounted = false;
-      dispose();
     }
   };
 }
@@ -29238,27 +29336,28 @@ function create_each_block$2(ctx) {
   let img_alt_value;
   let td1;
   let a;
-  let t_value = (
+  let t0_value = (
     /*item*/
-    ctx[10].name + ""
+    ctx[19].name + ""
   );
-  let t;
+  let t0;
+  let a_class_value;
   let td2;
+  let button0;
+  let t1_value = (
+    /*item*/
+    ctx[19].system.quantity + ""
+  );
+  let t1;
+  let td3;
+  let button1;
+  let i;
+  let i_class_value;
+  let td4;
   let mounted;
   let dispose;
-  function select_block_type(ctx2, dirty) {
-    if (
-      /*sharedProps*/
-      ctx2[0].isEditing
-    ) return create_if_block_1$1;
-    return create_else_block$2;
-  }
-  let current_block_type = select_block_type(ctx);
-  let if_block0 = current_block_type(ctx);
-  let if_block1 = (
-    /*sharedProps*/
-    ctx[0].isEditing && create_if_block$3(ctx)
-  );
+  let if_block = !/*$doc*/
+  ctx[1].system.inventoryLocked && create_if_block$3(ctx);
   return {
     c() {
       tr = element("tr");
@@ -29266,21 +29365,35 @@ function create_each_block$2(ctx) {
       img = element("img");
       td1 = element("td");
       a = element("a");
-      t = text(t_value);
+      t0 = text(t0_value);
       td2 = element("td");
-      if_block0.c();
-      if (if_block1) if_block1.c();
-      attr(img, "class", "icon svelte-FOU-sux9u1");
+      button0 = element("button");
+      t1 = text(t1_value);
+      td3 = element("td");
+      button1 = element("button");
+      i = element("i");
+      td4 = element("td");
+      if (if_block) if_block.c();
+      attr(img, "class", "icon");
       if (!src_url_equal(img.src, img_src_value = /*item*/
-      ctx[10].img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
+      ctx[19].img)) attr(img, "src", img_src_value);
       attr(img, "alt", img_alt_value = /*item*/
-      ctx[10].name);
-      attr(img, "role", "button");
-      attr(td0, "class", "img svelte-FOU-sux9u1");
-      attr(a, "class", "stealth link");
+      ctx[19].name);
+      attr(td0, "class", "img");
+      attr(td0, "data-tooltip", localize("Use"));
+      attr(td0, "role", "button");
+      attr(a, "class", a_class_value = "stealth link " + /*item*/
+      (ctx[19].system.isMagic ? "pulse" : "") + " svelte-FOU-1rmjmnv");
       attr(a, "role", "button");
-      attr(td1, "class", "left svelte-FOU-sux9u1");
-      attr(td2, "class", "svelte-FOU-sux9u1");
+      attr(td1, "class", "left");
+      attr(td1, "data-tooltip", localize("View"));
+      attr(button0, "class", "stealth clickable wide svelte-FOU-1rmjmnv");
+      attr(button0, "data-tooltip", "Left click + / Right Click -");
+      attr(i, "class", i_class_value = "fa-bookmark " + /*item*/
+      (ctx[19].system.favourite === true ? "fa-solid" : "fa-regular") + " svelte-FOU-1rmjmnv");
+      attr(button1, "class", "stealth");
+      attr(td3, "data-tooltip", localize("Bookmark"));
+      attr(td4, "class", "min buttons right white");
     },
     m(target, anchor) {
       insert(target, tr, anchor);
@@ -29288,28 +29401,63 @@ function create_each_block$2(ctx) {
       append(td0, img);
       append(tr, td1);
       append(td1, a);
-      append(a, t);
+      append(a, t0);
       append(tr, td2);
-      if_block0.m(td2, null);
-      if (if_block1) if_block1.m(tr, null);
+      append(td2, button0);
+      append(button0, t1);
+      append(tr, td3);
+      append(td3, button1);
+      append(button1, i);
+      append(tr, td4);
+      if (if_block) if_block.m(td4, null);
       if (!mounted) {
         dispose = [
-          listen(img, "click", function() {
-            if (is_function(showItemSheet(
+          listen(td0, "click", function() {
+            if (is_function(
+              /*useItem*/
+              ctx[12](
+                /*item*/
+                ctx[19]
+              )
+            )) ctx[12](
               /*item*/
-              ctx[10]
-            ))) showItemSheet(
-              /*item*/
-              ctx[10]
+              ctx[19]
             ).apply(this, arguments);
           }),
           listen(a, "click", function() {
             if (is_function(showItemSheet(
               /*item*/
-              ctx[10]
+              ctx[19]
             ))) showItemSheet(
               /*item*/
-              ctx[10]
+              ctx[19]
+            ).apply(this, arguments);
+          }),
+          listen(button0, "click", function() {
+            if (is_function(addQuantity(
+              /*item*/
+              ctx[19]
+            ))) addQuantity(
+              /*item*/
+              ctx[19]
+            ).apply(this, arguments);
+          }),
+          listen(button0, "contextmenu", function() {
+            if (is_function(removeQuantity(
+              /*item*/
+              ctx[19]
+            ))) removeQuantity(
+              /*item*/
+              ctx[19]
+            ).apply(this, arguments);
+          }),
+          listen(button1, "click", function() {
+            if (is_function(toggleBookmark(
+              /*item*/
+              ctx[19]
+            ))) toggleBookmark(
+              /*item*/
+              ctx[19]
             ).apply(this, arguments);
           })
         ];
@@ -29319,97 +29467,99 @@ function create_each_block$2(ctx) {
     p(new_ctx, dirty) {
       ctx = new_ctx;
       if (dirty & /*items*/
-      4 && !src_url_equal(img.src, img_src_value = /*item*/
-      ctx[10].img || "icons/svg/mystery-man.svg")) {
+      16 && !src_url_equal(img.src, img_src_value = /*item*/
+      ctx[19].img)) {
         attr(img, "src", img_src_value);
       }
       if (dirty & /*items*/
-      4 && img_alt_value !== (img_alt_value = /*item*/
-      ctx[10].name)) {
+      16 && img_alt_value !== (img_alt_value = /*item*/
+      ctx[19].name)) {
         attr(img, "alt", img_alt_value);
       }
       if (dirty & /*items*/
-      4 && t_value !== (t_value = /*item*/
-      ctx[10].name + "")) set_data(t, t_value);
-      if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block0) {
-        if_block0.p(ctx, dirty);
-      } else {
-        if_block0.d(1);
-        if_block0 = current_block_type(ctx);
-        if (if_block0) {
-          if_block0.c();
-          if_block0.m(td2, null);
-        }
+      16 && t0_value !== (t0_value = /*item*/
+      ctx[19].name + "")) set_data(t0, t0_value);
+      if (dirty & /*items*/
+      16 && a_class_value !== (a_class_value = "stealth link " + /*item*/
+      (ctx[19].system.isMagic ? "pulse" : "") + " svelte-FOU-1rmjmnv")) {
+        attr(a, "class", a_class_value);
       }
-      if (
-        /*sharedProps*/
-        ctx[0].isEditing
-      ) {
-        if (if_block1) {
-          if_block1.p(ctx, dirty);
+      if (dirty & /*items*/
+      16 && t1_value !== (t1_value = /*item*/
+      ctx[19].system.quantity + "")) set_data(t1, t1_value);
+      if (dirty & /*items*/
+      16 && i_class_value !== (i_class_value = "fa-bookmark " + /*item*/
+      (ctx[19].system.favourite === true ? "fa-solid" : "fa-regular") + " svelte-FOU-1rmjmnv")) {
+        attr(i, "class", i_class_value);
+      }
+      if (!/*$doc*/
+      ctx[1].system.inventoryLocked) {
+        if (if_block) {
+          if_block.p(ctx, dirty);
         } else {
-          if_block1 = create_if_block$3(ctx);
-          if_block1.c();
-          if_block1.m(tr, null);
+          if_block = create_if_block$3(ctx);
+          if_block.c();
+          if_block.m(td4, null);
         }
-      } else if (if_block1) {
-        if_block1.d(1);
-        if_block1 = null;
+      } else if (if_block) {
+        if_block.d(1);
+        if_block = null;
       }
     },
     d(detaching) {
       if (detaching) {
         detach(tr);
       }
-      if_block0.d();
-      if (if_block1) if_block1.d();
+      if (if_block) if_block.d();
       mounted = false;
       run_all(dispose);
     }
   };
 }
 function create_fragment$6(ctx) {
-  let div2;
+  let div6;
+  let div4;
   let div0;
-  let tjsinput;
-  let button;
-  let t0_value = (
-    /*sharedProps*/
-    ctx[0].localize("ClearFilter") + ""
-  );
-  let t0;
+  let label0;
   let div1;
+  let tjsinput;
+  let div2;
+  let label1;
+  let div3;
+  let select;
+  let div5;
+  let h1;
   let table;
-  let thead;
   let tr;
   let th0;
   let th1;
-  let t1_value = (
-    /*sharedProps*/
-    ctx[0].localize("Name") + ""
-  );
-  let t1;
   let th2;
-  let t2_value = (
-    /*sharedProps*/
-    ctx[0].localize("Quantity") + ""
-  );
-  let t2;
-  let tbody;
+  let th3;
+  let th4;
+  let button0;
+  let i1;
+  let i1_class_value;
+  let button0_class_value;
+  let th4_class_value;
+  let button1;
   let current;
   let mounted;
   let dispose;
   tjsinput = new TJSInput({ props: { input: (
     /*input*/
-    ctx[1]
+    ctx[8]
   ) } });
-  let if_block = (
-    /*sharedProps*/
-    ctx[0].isEditing && create_if_block_2$1()
+  let each_value_1 = ensure_array_like(
+    /*typeFilterOptions*/
+    ctx[5]
   );
+  let each_blocks_1 = [];
+  for (let i = 0; i < each_value_1.length; i += 1) {
+    each_blocks_1[i] = create_each_block_1$1(get_each_context_1$1(ctx, each_value_1, i));
+  }
   let each_value = ensure_array_like(
     /*items*/
-    ctx[2]
+    ctx[4]
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
@@ -29417,105 +29567,187 @@ function create_fragment$6(ctx) {
   }
   return {
     c() {
-      div2 = element("div");
+      div6 = element("div");
+      div4 = element("div");
       div0 = element("div");
-      create_component(tjsinput.$$.fragment);
-      button = element("button");
-      t0 = text(t0_value);
+      label0 = element("label");
+      label0.textContent = `${localize("Search")}`;
       div1 = element("div");
+      create_component(tjsinput.$$.fragment);
+      div2 = element("div");
+      label1 = element("label");
+      label1.textContent = `${localize("Type")}`;
+      div3 = element("div");
+      select = element("select");
+      for (let i = 0; i < each_blocks_1.length; i += 1) {
+        each_blocks_1[i].c();
+      }
+      div5 = element("div");
+      h1 = element("h1");
+      h1.textContent = `${localize("Inventory")}`;
       table = element("table");
-      thead = element("thead");
       tr = element("tr");
       th0 = element("th");
       th1 = element("th");
-      t1 = text(t1_value);
+      th1.textContent = `${localize("Name")}`;
       th2 = element("th");
-      t2 = text(t2_value);
-      if (if_block) if_block.c();
-      tbody = element("tbody");
+      th2.textContent = `${localize("Quantity")}`;
+      th3 = element("th");
+      th3.innerHTML = `<i class="fa-solid fa-bookmark svelte-FOU-1rmjmnv"></i>`;
+      th4 = element("th");
+      button0 = element("button");
+      i1 = element("i");
       for (let i = 0; i < each_blocks.length; i += 1) {
         each_blocks[i].c();
       }
-      attr(button, "type", "button");
-      attr(div0, "class", "inventory-controls svelte-FOU-sux9u1");
+      button1 = element("button");
+      button1.textContent = `${localize("Instructions.RemoveAll")}`;
+      attr(div0, "class", "flexcol flex1 label-container");
+      attr(div1, "class", "flex3 left");
+      attr(div2, "class", "flexcol flex1 label-container");
+      attr(select, "class", "short");
+      attr(div3, "class", "flex3 right");
+      attr(div4, "class", "flexrow pt-sm pr-sm pl-sm");
+      attr(h1, "class", "gold");
       attr(th0, "class", "img shrink");
       attr(th0, "scope", "col");
       attr(th1, "class", "left expand");
       attr(th1, "scope", "col");
       attr(th2, "class", "fixed");
       attr(th2, "scope", "col");
+      attr(th3, "class", "shrink");
+      attr(th3, "scope", "col");
+      attr(i1, "class", i1_class_value = "fa " + /*faLockCSS*/
+      ctx[2] + " svelte-FOU-1rmjmnv");
+      attr(button0, "class", button0_class_value = "stealth " + /*lockCSS*/
+      ctx[3] + " svelte-FOU-1rmjmnv");
+      attr(th4, "class", th4_class_value = null_to_empty(
+        /*lockCSS*/
+        ctx[3]
+      ) + " svelte-FOU-1rmjmnv");
+      attr(th4, "scope", "col");
       attr(tr, "class", "gold");
       attr(table, "class", "borderless");
-      attr(div1, "class", "inventory-list svelte-FOU-sux9u1");
-      attr(div2, "class", "inventory-tab svelte-FOU-sux9u1");
+      attr(div5, "class", "padded svelte-FOU-1rmjmnv");
+      attr(button1, "class", "mt-sm glossy-button gold-light hover-shine");
+      attr(div6, "class", "panel overflow containerx svelte-FOU-1rmjmnv");
     },
     m(target, anchor) {
-      insert(target, div2, anchor);
-      append(div2, div0);
-      mount_component(tjsinput, div0, null);
-      append(div0, button);
-      append(button, t0);
-      append(div2, div1);
-      append(div1, table);
-      append(table, thead);
-      append(thead, tr);
-      append(tr, th0);
-      append(tr, th1);
-      append(th1, t1);
-      append(tr, th2);
-      append(th2, t2);
-      if (if_block) if_block.m(tr, null);
-      append(table, tbody);
-      for (let i = 0; i < each_blocks.length; i += 1) {
-        if (each_blocks[i]) {
-          each_blocks[i].m(tbody, null);
+      insert(target, div6, anchor);
+      append(div6, div4);
+      append(div4, div0);
+      append(div0, label0);
+      append(div4, div1);
+      mount_component(tjsinput, div1, null);
+      append(div4, div2);
+      append(div2, label1);
+      append(div4, div3);
+      append(div3, select);
+      for (let i = 0; i < each_blocks_1.length; i += 1) {
+        if (each_blocks_1[i]) {
+          each_blocks_1[i].m(select, null);
         }
       }
+      select_option(
+        select,
+        /*typeFilterValue*/
+        ctx[0]
+      );
+      append(div6, div5);
+      append(div5, h1);
+      append(div5, table);
+      append(table, tr);
+      append(tr, th0);
+      append(tr, th1);
+      append(tr, th2);
+      append(tr, th3);
+      append(tr, th4);
+      append(th4, button0);
+      append(button0, i1);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(table, null);
+        }
+      }
+      append(div6, button1);
       current = true;
       if (!mounted) {
-        dispose = listen(
-          button,
-          "click",
-          /*handleClearFilter*/
-          ctx[4]
-        );
+        dispose = [
+          listen(
+            select,
+            "change",
+            /*change_handler*/
+            ctx[15]
+          ),
+          listen(
+            button0,
+            "click",
+            /*toggleLock*/
+            ctx[13]
+          ),
+          listen(
+            button1,
+            "click",
+            /*removeAllItems*/
+            ctx[11]
+          )
+        ];
         mounted = true;
       }
     },
     p(ctx2, [dirty]) {
-      const tjsinput_changes = {};
-      if (dirty & /*input*/
-      2) tjsinput_changes.input = /*input*/
-      ctx2[1];
-      tjsinput.$set(tjsinput_changes);
-      if ((!current || dirty & /*sharedProps*/
-      1) && t0_value !== (t0_value = /*sharedProps*/
-      ctx2[0].localize("ClearFilter") + "")) set_data(t0, t0_value);
-      if ((!current || dirty & /*sharedProps*/
-      1) && t1_value !== (t1_value = /*sharedProps*/
-      ctx2[0].localize("Name") + "")) set_data(t1, t1_value);
-      if ((!current || dirty & /*sharedProps*/
-      1) && t2_value !== (t2_value = /*sharedProps*/
-      ctx2[0].localize("Quantity") + "")) set_data(t2, t2_value);
-      if (
-        /*sharedProps*/
-        ctx2[0].isEditing
-      ) {
-        if (if_block) ;
-        else {
-          if_block = create_if_block_2$1();
-          if_block.c();
-          if_block.m(tr, null);
+      if (dirty & /*typeFilterOptions*/
+      32) {
+        each_value_1 = ensure_array_like(
+          /*typeFilterOptions*/
+          ctx2[5]
+        );
+        let i;
+        for (i = 0; i < each_value_1.length; i += 1) {
+          const child_ctx = get_each_context_1$1(ctx2, each_value_1, i);
+          if (each_blocks_1[i]) {
+            each_blocks_1[i].p(child_ctx, dirty);
+          } else {
+            each_blocks_1[i] = create_each_block_1$1(child_ctx);
+            each_blocks_1[i].c();
+            each_blocks_1[i].m(select, null);
+          }
         }
-      } else if (if_block) {
-        if_block.d(1);
-        if_block = null;
+        for (; i < each_blocks_1.length; i += 1) {
+          each_blocks_1[i].d(1);
+        }
+        each_blocks_1.length = each_value_1.length;
       }
-      if (dirty & /*deleteItem, items, sharedProps, addQuantity, updateQuantity, removeQuantity, showItemSheet*/
-      5) {
+      if (!current || dirty & /*typeFilterValue, typeFilterOptions*/
+      33) {
+        select_option(
+          select,
+          /*typeFilterValue*/
+          ctx2[0]
+        );
+      }
+      if (!current || dirty & /*faLockCSS*/
+      4 && i1_class_value !== (i1_class_value = "fa " + /*faLockCSS*/
+      ctx2[2] + " svelte-FOU-1rmjmnv")) {
+        attr(i1, "class", i1_class_value);
+      }
+      if (!current || dirty & /*lockCSS*/
+      8 && button0_class_value !== (button0_class_value = "stealth " + /*lockCSS*/
+      ctx2[3] + " svelte-FOU-1rmjmnv")) {
+        attr(button0, "class", button0_class_value);
+      }
+      if (!current || dirty & /*lockCSS*/
+      8 && th4_class_value !== (th4_class_value = null_to_empty(
+        /*lockCSS*/
+        ctx2[3]
+      ) + " svelte-FOU-1rmjmnv")) {
+        attr(th4, "class", th4_class_value);
+      }
+      if (dirty & /*deleteItem, items, duplicateItem, editItem, $doc, addQuantity, removeQuantity, showItemSheet, useItem*/
+      5138) {
         each_value = ensure_array_like(
           /*items*/
-          ctx2[2]
+          ctx2[4]
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
@@ -29525,7 +29757,7 @@ function create_fragment$6(ctx) {
           } else {
             each_blocks[i] = create_each_block$2(child_ctx);
             each_blocks[i].c();
-            each_blocks[i].m(tbody, null);
+            each_blocks[i].m(table, null);
           }
         }
         for (; i < each_blocks.length; i += 1) {
@@ -29545,77 +29777,151 @@ function create_fragment$6(ctx) {
     },
     d(detaching) {
       if (detaching) {
-        detach(div2);
+        detach(div6);
       }
       destroy_component(tjsinput);
-      if (if_block) if_block.d();
+      destroy_each(each_blocks_1, detaching);
       destroy_each(each_blocks, detaching);
       mounted = false;
-      dispose();
+      run_all(dispose);
     }
   };
 }
-function showItemSheet(item) {
-  item.sheet?.render(true);
+function editItem(item) {
+  item.sheet.render(true);
+  window.GAS.log.d("editItem");
+  window.GAS.log.d(item);
 }
 function addQuantity(item) {
-  const quantity = (item.system?.quantity ?? 0) + 1;
+  window.GAS.log.d("addQuantity");
+  window.GAS.log.d(item);
+  const quantity = item.system.quantity + 1;
   item.update({ system: { quantity } });
 }
 function removeQuantity(item) {
-  const quantity = Math.max(0, (item.system?.quantity ?? 0) - 1);
+  const quantity = item.system.quantity - 1;
   item.update({ system: { quantity } });
 }
-function updateQuantity(item, e) {
-  const quantity = Math.max(0, parseInt(e.target.value) || 0);
-  item.update({ system: { quantity } });
-}
-function deleteItem(item) {
+function deleteItem(index, item) {
   item.delete();
 }
+function showItemSheet(item) {
+  item.sheet.render(true);
+}
 function instance$6($$self, $$props, $$invalidate) {
+  let typeFilterOptions;
   let items;
+  let lockCSS;
+  let faLockCSS;
+  let $doc;
+  let $wildcard;
   let $Actor;
-  let { sharedProps = {} } = $$props;
   const Actor2 = getContext("#doc");
-  component_subscribe($$self, Actor2, (value) => $$invalidate(6, $Actor = value));
+  component_subscribe($$self, Actor2, (value) => $$invalidate(16, $Actor = value));
   const doc = new TJSDocument($Actor);
+  component_subscribe($$self, doc, (value) => $$invalidate(1, $doc = value));
+  const typeSearch = createFilterQuery("type");
   const nameSearch = createFilterQuery("name");
   const input = {
     store: nameSearch,
     efx: rippleFocus(),
-    placeholder: "foundryvtt-shop-studio.FilterInventory",
+    placeholder: "by Name",
     type: "search",
-    id: "inventory-search"
+    id: "search"
   };
-  const inventory = doc.embedded.create(Item, {
-    name: "inventory",
-    filters: [nameSearch],
+  let typeFilterValue = "all";
+  onMount(() => {
+  });
+  const wildcard = doc.embedded.create(Item, {
+    name: "wildcard",
+    filters: [typeSearch, nameSearch],
     sort: (a, b) => a.name.localeCompare(b.name)
   });
-  function handleClearFilter() {
-    nameSearch.set("");
+  component_subscribe($$self, wildcard, (value) => $$invalidate(14, $wildcard = value));
+  function duplicateItem(item) {
+    window.GAS.log.d("duplicateItem");
+    window.GAS.log.d(item);
+    const itemData = item.toObject();
+    delete itemData._id;
+    window.GAS.log.d("itemData", itemData);
+    $Actor.sheet._onDropItemCreate(itemData);
   }
-  onMount(() => {
-    const unsubscribe = nameSearch.subscribe((value) => {
-      if (sharedProps.filterText !== value) {
-        sharedProps.onFilterChange?.(value);
+  async function removeAllItems() {
+    const okToDelete = confirm(localize("Types.Actor.Inventory.confirmDeleteAll"));
+    if (okToDelete) {
+      await $Actor.deleteAllItems("equipment");
+    }
+  }
+  function useItem(item) {
+    new CONFIG.FFXIV.RollCalcActor({ actor: $Actor }).equipment(item);
+  }
+  function toggleLock(event) {
+    window.GAS.log.d("a");
+    event.stopPropagation();
+    event.preventDefault();
+    $doc.update(
+      {
+        ["system.inventoryLocked"]: !$doc.system.inventoryLocked
+      },
+      {
+        diff: true,
+        diffData: true,
+        diffSystem: true
       }
-    });
-    return unsubscribe;
+    );
+  }
+  onMount(async () => {
   });
-  const change_handler = (item, e) => updateQuantity(item, e);
-  $$self.$$set = ($$props2) => {
-    if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
+  const change_handler = (e) => $$invalidate(0, typeFilterValue = e.target.value);
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*typeFilterValue*/
+    1) {
+      if (typeFilterValue === "all") {
+        typeSearch.set("");
+      } else {
+        typeSearch.set([typeFilterValue]);
+      }
+    }
+    if ($$self.$$.dirty & /*$wildcard*/
+    16384) {
+      $$invalidate(4, items = [...$wildcard]);
+    }
+    if ($$self.$$.dirty & /*$doc*/
+    2) {
+      $$invalidate(3, lockCSS = $doc.system.inventoryLocked ? "lock" : "lock-open");
+    }
+    if ($$self.$$.dirty & /*$doc*/
+    2) {
+      $$invalidate(2, faLockCSS = $doc.system.inventoryLocked ? "fa-lock negative" : "fa-lock-open positive");
+    }
   };
-  $$invalidate(1, input.placeholder = "foundryvtt-shop-studio.FilterInventory", input);
-  $$invalidate(2, items = [...inventory]);
-  return [sharedProps, input, items, Actor2, handleClearFilter, change_handler];
+  $$invalidate(5, typeFilterOptions = [
+    { value: "all", label: "All" },
+    ...getConfiguredListableItemTypes().map((t) => ({ value: t.type, label: t.label }))
+  ]);
+  return [
+    typeFilterValue,
+    $doc,
+    faLockCSS,
+    lockCSS,
+    items,
+    typeFilterOptions,
+    Actor2,
+    doc,
+    input,
+    wildcard,
+    duplicateItem,
+    removeAllItems,
+    useItem,
+    toggleLock,
+    $wildcard,
+    change_handler
+  ];
 }
 class InventoryTab extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$6, create_fragment$6, safe_not_equal, { sharedProps: 0 });
+    init(this, options, instance$6, create_fragment$6, safe_not_equal, {});
   }
 }
 function get_each_context$1(ctx, list, i) {
@@ -30314,13 +30620,27 @@ function instance$4($$self, $$props, $$invalidate) {
         priceVariance,
         variancePeriod,
         atrophyPercent,
+        localize,
+        openImageEditor,
+        handleDragOver,
+        handleActorDrop,
+        handleRollTableDrop,
+        getActorName,
+        getRollTableName,
+        removeAssociated,
+        removeRollTable,
+        clearFilter,
+        calculateSalePrice,
+        openItemSheet,
+        provisionStore,
+        saveSettings,
         onFilterChange: (value) => {
           $$invalidate(4, filterText = value);
         },
-        salePriceFactorChange: (value) => {
+        onSalePriceFactorChange: (value) => {
           $$invalidate(7, salePriceFactor = Number(value));
         },
-        buyPriceFactorChange: (value) => {
+        onBuyPriceFactorChange: (value) => {
           $$invalidate(8, buyPriceFactor = Number(value));
         },
         onPriceVarianceChange: (value) => {
@@ -31065,44 +31385,6 @@ class SvelteDocumentSheet extends SvelteApp {
     });
   }
 }
-const ITEM_SOURCES_SETTING = "itemSources";
-const LISTABLE_ITEM_TYPES_SETTING = "listableItemTypes";
-function getAvailableItemTypes() {
-  const configured = CONFIG?.Item?.typeLabels ?? {};
-  const documentTypes = Array.isArray(game?.documentTypes?.Item) ? game.documentTypes.Item : [];
-  const modelTypes = CONFIG?.Item?.dataModels ? Object.keys(CONFIG.Item.dataModels) : [];
-  const metadataTypes = CONFIG?.Item?.documentClass?.metadata?.types ?? [];
-  const legacyTypes = Array.isArray(CONFIG?.Item?.types) ? CONFIG.Item.types : [];
-  const compendiumTypes = game.packs?.filter((pack) => pack.documentName === "Item").flatMap((pack) => Array.from(pack.index?.values?.() ?? []).map((entry) => entry?.type)) ?? [];
-  return Array.from(/* @__PURE__ */ new Set([
-    ...Object.keys(configured),
-    ...documentTypes,
-    ...modelTypes,
-    ...metadataTypes,
-    ...legacyTypes,
-    ...compendiumTypes
-  ])).filter(Boolean).map((type) => ({ type, label: getItemTypeLabel(type) })).sort((a, b) => a.label.localeCompare(b.label, game.i18n?.lang));
-}
-function getItemTypeLabel(type) {
-  const rawLabel = CONFIG?.Item?.typeLabels?.[type] || CONFIG?.Item?.typeHints?.[type];
-  if (rawLabel) return game.i18n.localize(rawLabel);
-  try {
-    return game.i18n.localize(type);
-  } catch (_) {
-    return type;
-  }
-}
-function getAllItemCompendia$1() {
-  return game.packs?.filter((pack) => pack.documentName === "Item") ?? [];
-}
-function isItemTypeListable(type) {
-  const configured = safeGetSetting(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING, DEFAULT_LISTABLE_ITEM_TYPES);
-  if (configured === null || configured === void 0) return true;
-  return Array.isArray(configured) && configured.includes(type);
-}
-function autoAssignItemSources() {
-  return getAllItemCompendia$1().map((pack) => pack.collection);
-}
 class ShopActorSheet extends SvelteDocumentSheet {
   /**
    * Unique per-instance application ID so multiple shop sheets can be open simultaneously.
@@ -31212,11 +31494,12 @@ class ShopActorSheet extends SvelteDocumentSheet {
    * Handles dropping content onto the sheet — routes to typed handlers.
    */
   async _onDrop(event) {
-    const data = TextEditor.getDragEventData(event);
+    const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
     const actor = this.reactive.document;
     if (!actor || actor.documentName !== "Actor") return;
     const allowed = Hooks.call("dropActorSheetData", actor, this, data);
     if (allowed === false) return;
+    window.GAS.log.g("ITEM TYPE", data.type);
     switch (data.type) {
       case "Item":
         return this._onDropItem(event, data);
@@ -31234,12 +31517,14 @@ class ShopActorSheet extends SvelteDocumentSheet {
    * via Foundry's API so all hooks fire and TJSDocument reactivity works.
    */
   async _onDropItem(event, data) {
+    window.GAS.log.g("DROP ITEM", event, data);
     const actor = this.reactive.document;
     if (!actor?.isOwner) {
       ui.notifications.warn(localize("NoPermission"));
       return false;
     }
     const droppedItem = await fromUuid(data.uuid);
+    window.GAS.log.g("DROPPED ITEM", droppedItem);
     if (!droppedItem) return false;
     if (!isItemTypeListable(droppedItem.type)) {
       ui.notifications.warn(localize("ItemTypeNotAllowed"));
@@ -31250,11 +31535,16 @@ class ShopActorSheet extends SvelteDocumentSheet {
       await duplicate.update({
         system: { quantity: (duplicate.system?.quantity ?? 0) + 1 }
       });
+      window.GAS.log.g("DUPLICATE ITEM", duplicate);
+      window.GAS.log.g("ACTOR ITEMS", actor.items);
       return true;
     }
     const item = await Item.implementation.fromDropData(data);
     const itemData = item.toObject();
+    window.GAS.log.g("ITEM FROM DROP DATA", item);
+    window.GAS.log.g("ITEM TO OBJECT, BEFORE CREATION", itemData);
     if (actor.uuid === item.parent?.uuid) {
+      window.GAS.log.g("SORTING WITHIN ACTOR");
       return this._onSortItem(event, itemData);
     }
     return this._onDropItemCreate(itemData);
@@ -31279,6 +31569,7 @@ class ShopActorSheet extends SvelteDocumentSheet {
   async _onDropItemCreate(itemData) {
     const actor = this.reactive.document;
     const data = Array.isArray(itemData) ? itemData : [itemData];
+    window.GAS.log.g("DROP ITEM DATA", data);
     for (const d of data) delete d._id;
     return actor.createEmbeddedDocuments("Item", data);
   }
@@ -32749,10 +33040,11 @@ async function createOrOpenShop() {
     console.error(err);
   }
 }
-window.log = log;
-log.level = log.DEBUG;
+window.GAS = window.GAS || {};
 Hooks.once("init", (app, html, data) => {
-  log.i("Initialising");
+  window.GAS.log = log;
+  window.GAS.log.level = log.VERBOSE;
+  window.GAS.log.i("Initialising");
   CONFIG.debug.hooks = true;
   registerShopActor();
   CONFIG.Actor.typeLabels ??= {};
@@ -32772,7 +33064,7 @@ Hooks.once("init", (app, html, data) => {
 });
 Hooks.once("ready", (app, html, data) => {
   if (!game.modules.get(MODULE_ID).active) {
-    log.w("Module is not active");
+    window.GAS.log.w("Module is not active");
     return;
   }
   if (!game.settings.get(MODULE_ID, "dontShowWelcome")) {
@@ -32802,6 +33094,6 @@ Hooks.on("renderApplicationV2", (app, html) => {
   renderShopTypeInCreateActorApplication(app, html);
 });
 Hooks.on("gss.openShopStudio", () => {
-  log.i("Shop Studio opened via sidebar button");
+  window.GAS.log.i("Shop Studio opened via sidebar button");
 });
 //# sourceMappingURL=index.js.map
