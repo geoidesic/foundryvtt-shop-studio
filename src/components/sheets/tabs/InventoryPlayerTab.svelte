@@ -6,8 +6,8 @@
   import { TJSInput } from "#standard/component/form";
   import { createFilterQuery } from "~/src/filters/itemFilterQuery";
   import { localize } from "~/src/helpers/utility";
+  import { MODULE_ID } from "~/src/helpers/constants";
   import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
-  import ScrollingContainer from "~/src/helpers/svelte-components/ScrollingContainer.svelte";
 
   const Actor = getContext("#doc");
   const doc = new TJSDocument($Actor);
@@ -32,8 +32,6 @@
     })),
   ];
 
-  onMount(() => {});
-
   /** @type {import('@typhonjs-fvtt/runtime/svelte/store').DynMapReducer<string, Item>} */
   const wildcard = doc.embedded.create(Item, {
     name: "wildcard",
@@ -41,29 +39,8 @@
     sort: (a, b) => a.name.localeCompare(b.name),
   });
 
-  function addQuantity(item) {
-    const quantity = (item.system.quantity ?? 0) + 1;
-    item.update({ system: { quantity } });
-  }
-
-  function removeQuantity(item) {
-    const quantity = Math.max(0, (item.system.quantity ?? 0) - 1);
-    item.update({ system: { quantity } });
-  }
-
-  function onAddQtyClick(e) {
-    const idx = parseInt(e.currentTarget.dataset.index);
-    addQuantity(items[idx]);
-  }
-
-  function onRemoveQtyClick(e) {
-    const idx = parseInt(e.currentTarget.dataset.index);
-    removeQuantity(items[idx]);
-  }
-
-  function onDeleteClick(e) {
-    const idx = parseInt(e.currentTarget.dataset.index);
-    items[idx].delete();
+  function showItemSheet(item) {
+    item.sheet.render(true);
   }
 
   function onShowItemClick(e) {
@@ -71,22 +48,19 @@
     items[idx].sheet.render(true);
   }
 
-  async function removeAllItems() {
-    const okToDelete = confirm(localize("Types.Actor.Inventory.confirmDeleteAll"));
-    if (okToDelete) {
-      await $Actor.deleteAllItems('equipment');
-    }
+  function onAddToBasketClick(e) {
+    const idx = parseInt(e.currentTarget.dataset.index);
+    addToBasket(items[idx]);
   }
 
   function onTypeFilterChange(e) {
     typeFilterValue = e.target.value;
   }
 
-  /** Format a price value for display (copper/silver/gold in dnd5e, or generic). */
+  /** Format a price value for display. */
   function formatPrice(item) {
     const price = item?.system?.price;
     if (!price) return "—";
-    // dnd5e-style price object
     if (typeof price === "object" && price.value !== undefined) {
       const gp = Math.floor(price.value);
       const sp = Math.floor((price.value - gp) * 10);
@@ -97,12 +71,29 @@
       if (cp > 0) parts.push(`${cp} cp`);
       return parts.length > 0 ? parts.join(" ") : "—";
     }
-    // Simple number price
     if (typeof price === "number") return `${price} gp`;
     return "—";
   }
 
-  onMount(async () => {});
+  /** Add item to the player's basket (stored in a flag on the shop actor, keyed by user). */
+  async function addToBasket(item) {
+    const userId = game.user.id;
+    const basket = $doc.getFlag(MODULE_ID, `basket.${userId}`) ?? [];
+    const existing = basket.find((entry) => entry.itemId === item.id);
+    if (existing) {
+      existing.quantity = (existing.quantity ?? 1) + 1;
+    } else {
+      basket.push({
+        itemId: item.id,
+        itemName: item.name,
+        img: item.img,
+        price: item.system?.price?.value ?? item.system?.price ?? 0,
+        quantity: 1,
+      });
+    }
+    await $doc.setFlag(MODULE_ID, `basket.${userId}`, basket);
+    ui.notifications.info(`${item.name} added to basket`);
+  }
 
   $: if (typeFilterValue === "all") {
     typeSearch.set("");
@@ -145,17 +136,10 @@
               .inv-col-price
                 span.price-text {formatPrice(item)}
               .inv-col-qty
-                .qty-controls
-                  button.stealth.qty-btn(data-tooltip="Decrease quantity" data-index="{index}" on:click!="{onRemoveQtyClick}")
-                    i.fa.fa-minus
-                  span.qty-value {item.system.quantity ?? 0}
-                  button.stealth.qty-btn(data-tooltip="Increase quantity" data-index="{index}" on:click!="{onAddQtyClick}")
-                    i.fa.fa-plus
+                span.qty-value {item.system.quantity ?? 0}
               .inv-col-actions
-                button.stealth.negative(data-tooltip="{localize('Types.Actor.ActionButtons.Delete')}" data-index="{index}" on:click!="{onDeleteClick}")
-                  i.fa.fa-trash
-            
-      button.mt-sm.glossy-button.gold-light.hover-shine(on:click!="{removeAllItems}") {localize("Instructions.RemoveAll")}
+                button.stealth.basket-btn(data-tooltip="Add to basket" data-index="{index}" on:click!="{onAddToBasketClick}")
+                  i.fa.fa-shopping-basket
             
 </template>
 
@@ -181,7 +165,7 @@
 
 .inv-header
   display: grid
-  grid-template-columns: 36px 1fr 90px 100px 50px
+  grid-template-columns: 36px 1fr 90px 80px 50px
   gap: 4px
   align-items: center
   padding: 4px 4px
@@ -192,7 +176,7 @@
 
 .inv-row
   display: grid
-  grid-template-columns: 36px 1fr 90px 100px 50px
+  grid-template-columns: 36px 1fr 90px 80px 50px
   gap: 4px
   align-items: center
   padding: 2px 4px
@@ -237,28 +221,24 @@
   justify-content: center
   gap: 2px
 
-.qty-controls
-  display: flex
-  align-items: center
-  gap: 2px
-
-.qty-btn
-  width: 20px
-  height: 20px
-  padding: 0
-  display: flex
-  align-items: center
-  justify-content: center
-  font-size: 0.65rem
-  border-radius: 3px
-  background: rgba(255, 255, 255, 0.1)
-
-  &:hover
-    background: rgba(255, 255, 255, 0.25)
-
 .qty-value
   min-width: 24px
   text-align: center
   font-size: 0.85rem
   font-weight: 500
+
+.basket-btn
+  width: 28px
+  height: 28px
+  padding: 0
+  display: flex
+  align-items: center
+  justify-content: center
+  font-size: 0.85rem
+  border-radius: 3px
+  color: var(--dnd5e-color-gold, #b59e54)
+
+  &:hover
+    background: rgba(255, 255, 255, 0.15)
+    color: #fff
 </style>

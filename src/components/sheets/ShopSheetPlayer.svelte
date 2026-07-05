@@ -4,7 +4,8 @@
   import { setContext } from 'svelte';
   import Tabs from '~/src/components/molecules/Tabs.svelte';
   import ShopfrontPlayerTab from '~/src/components/sheets/tabs/ShopfrontPlayerTab.svelte';
-  import InventoryTab from '~/src/components/sheets/tabs/InventoryTab.svelte';
+  import InventoryPlayerTab from '~/src/components/sheets/tabs/InventoryPlayerTab.svelte';
+  import BasketTab from '~/src/components/sheets/tabs/BasketTab.svelte';
   import { localize } from '~/src/helpers/utility.js';
 
   export let documentStore;
@@ -19,7 +20,8 @@
 
   $: tabs = [
     { id: 'shopfront', label: localize('Shopfront'), component: ShopfrontPlayerTab },
-    { id: 'inventory', label: localize('Inventory'), component: InventoryTab },
+    { id: 'inventory', label: localize('Inventory'), component: InventoryPlayerTab },
+    { id: 'basket', label: localize('Basket'), component: BasketTab },
   ];
 
   $: tabProps = {
