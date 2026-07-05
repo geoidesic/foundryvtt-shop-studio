@@ -84,8 +84,39 @@ export function registerShopActor() {
   }
 
   // Register the actor class with the system
-  // Register the data model for the NPC type (shop actors use NPC type)
-  CONFIG.Actor.dataModels[SHOP_ACTOR_TYPE] = ShopActorModel;
+  // Extend the existing dnd5e NPC data model instead of replacing it
+  const ExistingNPCModel = CONFIG.Actor.dataModels[SHOP_ACTOR_TYPE];
+  if (ExistingNPCModel && ExistingNPCModel !== ShopActorModel) {
+    // Create a merged model that extends the dnd5e NPC model with shop fields
+    class MergedShopActorModel extends ExistingNPCModel {
+      static defineSchema() {
+        return {
+          ...super.defineSchema(),
+          ...ShopActorModel.defineSchema(),
+        };
+      }
+
+      get shopConfiguration() {
+        return this.configuration ?? {};
+      }
+
+      async updateShopConfiguration(update) {
+        const merged = foundry.utils.mergeObject(this.shopConfiguration, update ?? {}, { inplace: false });
+        return this.parent?.update({ system: { configuration: merged } });
+      }
+
+      get stockSnapshot() {
+        return this.stock ?? [];
+      }
+
+      async setStockSnapshot(stock) {
+        return this.parent?.update({ system: { stock: stock ?? [] } });
+      }
+    }
+    CONFIG.Actor.dataModels[SHOP_ACTOR_TYPE] = MergedShopActorModel;
+  } else {
+    CONFIG.Actor.dataModels[SHOP_ACTOR_TYPE] = ShopActorModel;
+  }
   RegisteredShopActor = ShopActor;
 
   return ShopActor;

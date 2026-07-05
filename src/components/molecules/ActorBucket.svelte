@@ -206,7 +206,7 @@
   }
 
   async function openSheet(entry) {
-    const actor = entry.uuid ? await fromUuid(entry.uuid) : game.actors.get(entry.id);
+    const actor = entry.uuid ? fromUuidSync(entry.uuid) : game.actors.get(entry.id);
     actor?.sheet?.render(true);
   }
 </script>

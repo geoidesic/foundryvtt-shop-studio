@@ -18,8 +18,8 @@
 
   async function onActorsPersist(list) {
     // Convert ActorBucket's object entries to string IDs for system storage
-    sharedProps.associatedActors = list.map(e => e.id);
-    await sharedProps.saveSettings();
+    sharedProps.onAssociatedActorsChange(list.map(e => e.id));
+    await sharedProps.silentSaveSettings();
   }
 </script>
 

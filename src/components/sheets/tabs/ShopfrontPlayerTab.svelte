@@ -15,6 +15,10 @@
       enrichedDescription = html;
     });
   }
+function openActorSheet(actorId) {
+    const actor = fromUuidSync(`Actor.${actorId}`);
+    actor?.sheet?.render(true);
+  }
 </script>
 
 <template lang="pug">
@@ -31,11 +35,12 @@
             ul.associated-list
               +each("sharedProps.associatedActors as actorId")
                 li.associated-entry
-                  img.associated-img(
-                    src="{game.actors.get(actorId)?.img || 'icons/svg/mystery-man.svg'}"
-                    alt="{sharedProps.getActorName(actorId)}"
-                  )
-                  span.associated-name {sharedProps.getActorName(actorId)}
+                  button.associated-link(type="button" data-tooltip="{sharedProps.getActorName(actorId)}" on:click!="{() => openActorSheet(actorId)}")
+                    img.associated-img(
+                      src="{game.actors.get(actorId)?.img || 'icons/svg/mystery-man.svg'}"
+                      alt="{sharedProps.getActorName(actorId)}"
+                    )
+                    span.associated-name {sharedProps.getActorName(actorId)}
       .flex2
         .name-section
           h2 {sharedProps.localize("Name")}
@@ -100,6 +105,24 @@
     gap: 0.5rem
     padding: 0.2rem 0.35rem
     min-height: 28px
+
+  .associated-link
+    display: flex
+    align-items: center
+    gap: 0.5rem
+    flex: 1
+    min-width: 0
+    padding: 0
+    border: 0
+    background: transparent
+    color: var(--gas-color-text)
+    text-align: left
+    cursor: pointer
+
+    &:hover
+      color: var(--gas-tab-active-color)
+      background: color-mix(in srgb, var(--gas-tab-active-indicator) 10%, transparent)
+      border-radius: 3px
 
   .associated-img
     width: 24px

@@ -92,6 +92,9 @@ const application = getContext('#external').application;
     onAtrophyPercentChange: (value) => {
       atrophyPercent = Number(value);
     },
+    onAssociatedActorsChange: (list) => {
+      associatedActors = list;
+    },
     rollTables,
     localize,
     openImageEditor,
@@ -107,6 +110,7 @@ const application = getContext('#external').application;
     openItemSheet,
     provisionStore,
     saveSettings,
+    silentSaveSettings,
   };
 
   async function saveSettings() {
@@ -124,6 +128,19 @@ const application = getContext('#external').application;
       rollTables,
     });
     ui.notifications.info(localize('SettingsSaved'));
+  }
+
+  async function silentSaveSettings() {
+    if (!actor?.isOwner) return;
+    await actor.system.updateShopConfiguration({
+      salePriceFactor: parseFloat(salePriceFactor),
+      buyPriceFactor: parseFloat(buyPriceFactor),
+      priceVariance: parseFloat(priceVariance),
+      variancePeriod,
+      atrophyPercent: parseFloat(atrophyPercent),
+      associatedActors,
+      rollTables,
+    });
   }
 
   async function provisionStore() {
