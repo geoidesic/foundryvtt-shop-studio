@@ -15,6 +15,7 @@
 
   let activeTab = 'shopfront';
   let filterText = '';
+  let selectedActorId = targetActorId ?? null;
 
   $: actor = $documentStore;
   $: isEditing = actor?.system?.identity?.isEditing ?? false;
@@ -30,11 +31,14 @@
     isEditing,
     filterText,
     items: actor?.items || [],
-    targetActorId,
+    targetActorId: selectedActorId,
     localize,
     clearFilter,
     onFilterChange: (value) => {
       filterText = value;
+    },
+    onTargetActorChange: (id) => {
+      selectedActorId = id;
     },
     associatedActors: actor?.system?.configuration?.associatedActors ?? [],
     getActorName,

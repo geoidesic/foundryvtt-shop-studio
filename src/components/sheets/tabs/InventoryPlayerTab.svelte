@@ -79,15 +79,15 @@
     return "—";
   }
 
-  /** Add item to the player's basket (stored in a flag on the shop actor, keyed by user). */
+  /** Add item to the player's basket (stored in a flag on the current user). */
   async function addToBasket(item) {
     if (!targetActorId) {
       ui.notifications.warn(localize('NoTargetActor'));
       return;
     }
 
-    const userId = game.user.id;
-    const basket = $doc.getFlag(MODULE_ID, `basket.${userId}.${targetActorId}`) ?? [];
+    const shopId = $Actor.id;
+    const basket = game.user.getFlag(MODULE_ID, `basket.${shopId}`) ?? [];
     const existing = basket.find((entry) => entry.itemId === item.id);
     if (existing) {
       existing.quantity = (existing.quantity ?? 1) + 1;
@@ -100,7 +100,7 @@
         quantity: 1,
       });
     }
-    await $doc.setFlag(MODULE_ID, `basket.${userId}.${targetActorId}`, basket);
+    await game.user.setFlag(MODULE_ID, `basket.${shopId}`, basket);
     ui.notifications.info(`${item.name} added to basket`);
   }
 

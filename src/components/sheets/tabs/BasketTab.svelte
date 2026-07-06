@@ -8,6 +8,33 @@
   export let sharedProps = {};
 
   $: targetActorId = sharedProps.targetActorId ?? null;
+  $: selectedActor = targetActorId ? game.actors.get(targetActorId) : null;
+
+  /** Actor options for the target select. */
+  $: actorOptions = (() => {
+    if (game.user.isGM) {
+      const associated = sharedProps.associatedActors ?? [];
+      return associated
+        .map(id => game.actors.get(id))
+        .filter(Boolean)
+        .map(a => ({ id: a.id, name: a.name, img: a.img }));
+    } else {
+      return game.actors
+        .filter(a => a.isOwner)
+        .map(a => ({ id: a.id, name: a.name, img: a.img }));
+    }
+  })();
+
+  let dropdownOpen = false;
+
+  function selectActor(id) {
+    dropdownOpen = false;
+    sharedProps.onTargetActorChange?.(id ?? null);
+  }
+
+  function closeDropdown() {
+    dropdownOpen = false;
+  }
 
   let basket = [];
   let totalPrice = 0;
@@ -17,7 +44,7 @@
   /** Load basket from flags whenever the doc changes. */
   $: {
     if ($doc) {
-      basket = $doc.getFlag(MODULE_ID, `basket.${userId}`) ?? [];
+      basket = game.user.getFlag(MODULE_ID, `basket.${$doc.id}`) ?? [];
       totalPrice = basket.reduce((sum, entry) => sum + (entry.price ?? 0) * (entry.quantity ?? 1), 0);
     }
   }
@@ -55,13 +82,13 @@
   }
 
   async function persistBasket() {
-    await $doc.setFlag(MODULE_ID, `basket.${userId}`, basket);
+    await game.user.setFlag(MODULE_ID, `basket.${$doc.id}`, basket);
     totalPrice = basket.reduce((sum, entry) => sum + (entry.price ?? 0) * (entry.quantity ?? 1), 0);
   }
 
   async function clearBasket() {
     basket = [];
-    await $doc.setFlag(MODULE_ID, `basket.${userId}`, []);
+    await game.user.setFlag(MODULE_ID, `basket.${$doc.id}`, []);
     totalPrice = 0;
   }
 
@@ -111,7 +138,7 @@
     }
 
     basket = [];
-    await $doc.setFlag(MODULE_ID, `basket.${userId}`, []);
+    await game.user.setFlag(MODULE_ID, `basket.${$doc.id}`, []);
     totalPrice = 0;
 
     if (!hasErrors) ui.notifications.info(game.i18n.format('PurchaseComplete', { actorName: targetActor.name }));
@@ -140,10 +167,29 @@
   }
 </script>
 
+<svelte:window on:click="{closeDropdown}" />
 <template lang="pug">
   .panel.overflow.containerx
     .padded
       h1.gold {localize('Basket')}
+      .actor-select-faux(on:click!='{e => e.stopPropagation()}')
+        button.actor-trigger(type="button" on:click!="{() => dropdownOpen = !dropdownOpen}")
+          +if("selectedActor")
+            img.actor-avatar(src="{selectedActor.img || 'icons/svg/mystery-man.svg'}" alt="{selectedActor.name}")
+            span.actor-name {selectedActor.name}
+            +else()
+              i.fa.fa-user-circle.actor-placeholder-icon
+              span.actor-name.placeholder — {localize('BasketSelectActor')} —
+          i.fa.fa-chevron-down.chevron(class:open="{dropdownOpen}")
+        +if("dropdownOpen")
+          .actor-dropdown
+            +if("actorOptions.length === 0")
+              .actor-option.empty {localize('ShopHUD.NoActorOwned')}
+              +else()
+                +each("actorOptions as opt")
+                  button.actor-option(type="button" class:selected="{opt.id === targetActorId}" on:click!="{() => selectActor(opt.id)}")
+                    img.actor-avatar(src="{opt.img || 'icons/svg/mystery-man.svg'}" alt="{opt.name}")
+                    span {opt.name}
       +if("basket.length === 0")
         .empty-basket
           i.fa.fa-shopping-basket.empty-icon
@@ -196,6 +242,114 @@
   transition: padding 0.2s ease-in-out
   @container (min-width: 350px)
     padding: 1rem
+
+// ── Faux actor select ──
+.actor-select-faux
+  position: relative
+  width: 100%
+  margin-bottom: 0.75rem
+
+.actor-trigger
+  display: flex
+  align-items: center
+  gap: 0.5rem
+  width: 100%
+  padding: 6px 10px
+  background: var(--gas-input-background, rgba(0,0,0,0.35))
+  border: 1px solid var(--gas-tab-inactive-border, rgba(255,255,255,0.2))
+  border-radius: var(--border-radius, 3px)
+  color: var(--gas-color-text)
+  cursor: pointer
+  text-align: left
+
+  &:hover
+    border-color: var(--dnd5e-color-gold, #b59e54)
+
+  .actor-avatar
+    width: 28px
+    height: 28px
+    border-radius: 50%
+    object-fit: cover
+    flex-shrink: 0
+    border: 1px solid rgba(255,255,255,0.15)
+
+  .actor-placeholder-icon
+    width: 28px
+    height: 28px
+    font-size: 1.4rem
+    display: flex
+    align-items: center
+    justify-content: center
+    color: rgba(255,255,255,0.35)
+    flex-shrink: 0
+
+  .actor-name
+    flex: 1
+    font-size: 0.9rem
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+
+    &.placeholder
+      opacity: 0.5
+      font-style: italic
+
+  .chevron
+    font-size: 0.75rem
+    opacity: 0.6
+    transition: transform 0.15s ease
+    flex-shrink: 0
+
+    &.open
+      transform: rotate(180deg)
+
+.actor-dropdown
+  position: absolute
+  top: calc(100% + 2px)
+  left: 0
+  right: 0
+  z-index: 100
+  background: var(--gas-tabs-content-background, #1a1a2e)
+  border: 1px solid var(--dnd5e-color-gold, #b59e54)
+  border-radius: var(--border-radius, 3px)
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5)
+  overflow: hidden
+
+.actor-option
+  display: flex
+  align-items: center
+  gap: 0.5rem
+  width: 100%
+  padding: 6px 10px
+  background: transparent
+  border: none
+  color: var(--gas-color-text)
+  cursor: pointer
+  text-align: left
+  font-size: 0.9rem
+
+  &:hover
+    background: rgba(255,255,255,0.08)
+
+  &.selected
+    background: rgba(181,158,84,0.15)
+    color: var(--dnd5e-color-gold, #b59e54)
+
+  &.empty
+    opacity: 0.5
+    font-style: italic
+    cursor: default
+
+    &:hover
+      background: transparent
+
+  .actor-avatar
+    width: 26px
+    height: 26px
+    border-radius: 50%
+    object-fit: cover
+    flex-shrink: 0
+    border: 1px solid rgba(255,255,255,0.15)
 
 // ── Empty state ──
 .empty-basket

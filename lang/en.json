@@ -58,6 +58,8 @@
     "Inventory": "Inventory",
     "Basket": "Basket",
     "BasketEmpty": "Your basket is empty. Browse the inventory to add items.",
+    "BasketTargetActor": "Shopping as",
+    "BasketSelectActor": "Select a character",
     "ClearBasket": "Clear Basket",
     "Price": "Price",
     "Total": "Total",
