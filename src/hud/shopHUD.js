@@ -1,7 +1,5 @@
-import { localize } from '~/src/helpers/utility';
 import { MODULE_ID } from '~/src/helpers/constants';
 import { SHOP_IDENTITY_KIND } from '~/src/constants/shopConstants';
-import ShopActorSheet from '~/src/sheets/ShopActorSheet';
 
 /**
  * Hooks into renderTokenHUD to add shop-specific controls when a shop
@@ -29,7 +27,7 @@ export function onRenderTokenHUD(app, html, data) {
 
   if (!isShop) { console.log('[ShopHUD] bail: not a shop', { flagIdentity, systemIdentity }); return; }
 
-  console.log('[ShopHUD] SHOP DETECTED, stripping NPC controls...');
+  // Apply shop-specific HUD stripping while leaving the custom open button disabled.
 
   // Hide irrelevant controls for shop tokens — replace all three columns
   const leftCol = root.querySelector('.col.left');
@@ -53,30 +51,35 @@ export function onRenderTokenHUD(app, html, data) {
       + '.control-icon[data-action="target"], .control-icon[data-action="combat"]').forEach((node) => node.remove());
     if (!game.user.isGM) rightCol.querySelectorAll('.control-icon[data-action="visibility"]').forEach((node) => node.remove());
 
-    // Build and prepend the basket button
-    const basketBtn = document.createElement('button');
-    basketBtn.type = 'button';
-    basketBtn.className = 'control-icon shop-basket-icon';
-    basketBtn.dataset.tooltip = localize('ShopHUD.Basket');
-    basketBtn.setAttribute('aria-label', localize('ShopHUD.Basket'));
-    basketBtn.innerHTML = `
-      <img src="modules/${MODULE_ID}/assets/shop-studio-be7c41ff.webp"
-           alt="${localize('ShopHUD.Basket')}" width="32" height="32">
-    `;
-
-    basketBtn.addEventListener('click', async (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      await handleBasketClick(actor);
-    });
-
-    rightCol.prepend(basketBtn);
+    /*
+     * Disabled by request: the HUD shop-basket/open control is not useful
+     * for non-owner players and duplicates token double-click behavior.
+     *
+     * const basketBtn = document.createElement('button');
+     * basketBtn.type = 'button';
+     * basketBtn.className = 'control-icon shop-basket-icon';
+     * basketBtn.dataset.tooltip = localize('ShopHUD.Basket');
+     * basketBtn.setAttribute('aria-label', localize('ShopHUD.Basket'));
+     * basketBtn.innerHTML = `
+     *   <img src="modules/${MODULE_ID}/assets/shop-studio-be7c41ff.webp"
+     *        alt="${localize('ShopHUD.Basket')}" width="32" height="32">
+     * `;
+     *
+     * basketBtn.addEventListener('click', async (event) => {
+     *   event.preventDefault();
+     *   event.stopPropagation();
+     *   await handleBasketClick(actor);
+     * });
+     *
+     * rightCol.prepend(basketBtn);
+     */
   }
 }
 
 /**
  * Handle the basket button click: pick target actor, open shop.
  */
+/*
 async function handleBasketClick(shop) {
   const ownedActors = game.actors.filter(a =>
     a.isOwner && a.hasPlayerOwner && a.id !== shop.id
@@ -101,10 +104,12 @@ async function handleBasketClick(shop) {
   const sheet = new ShopActorSheet(shop);
   sheet.render(true, { focus: true });
 }
+*/
 
 /**
  * Show a dialog for the player to pick which of their owned actors to shop with.
  */
+/*
 function showActorSelectDialog(actors) {
   return new Promise((resolve) => {
     const options = actors.map(a =>
@@ -134,3 +139,4 @@ function showActorSelectDialog(actors) {
     }).render(true);
   });
 }
+*/
