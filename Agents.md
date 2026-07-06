@@ -10,12 +10,55 @@ Always use ESM import
 Never use require
 
 # Development
+## package.json rules
 Never use `npm`. Always use `bun` instead.
 ```bash
 bun dev           # Never use build commands - HMR handles compilation
 nvm use 24        # If node issues occur
 ```
 This is a foundryvtt module and as such conforms to the FoundryVTT API spec, so reference it when writing game logichttps://foundryvtt.wiki/en/development/api
+
+## Pug Template Rules
+
+### Syntax Requirements
+- ALL Svelte components MUST use Pug templates with `<template lang="pug">` - NEVER use standard HTML markup
+- Pug templates with Svelte preprocessing (NOT standard Pug)
+
+### Pug Syntax Rules
+- Conditionals: `+if("condition")` with condition in double quotes
+- Else blocks: `+else()` or `+else` - **MUST be indented one level deeper than `+if`** (as a child block, not sibling)
+- **CRITICAL**: `+else` indentation:
+  ```pug
+  +if("condition")
+    p Content if true
+    +else()
+      p Content if false
+  ```
+  NOT:
+  ```pug
+  +if("condition")
+    p Content if true
+  +else()
+    p Content if false
+  ```
+- Else-if logic: Use nested `+if`/`+else` blocks (no `+elseif`)
+- Loops: `+each("array as item")` with expression in double quotes
+- Attributes: Use `!=` for complex expressions, e.g., `class:selected!="{isSelected(item)}"`
+- Svelte raw HTML in Pug: when rendering `{@html ...}` as a standalone line, **MUST** use a pipe prefix: `| {@html richHTML}` (do not place bare `{@html ...}` on its own line in Pug blocks)
+- Text content: Inline with elements, e.g., `button(type="button") Text`
+
+### Expression and Event Handling
+- Avoid long expressions in attributes - extract to script functions
+- Do not use compound expressions, instead wrap them as functions
+- Event handlers must use the `!=` operator to prevent HTML encoding
+- Avoid arrow functions and the `=` operator in event handlers
+
+## i18n Localization Rules
+
+### localize() Helper Usage
+- Always use `localize()` from `~/src/helpers/Utility` for GAS-namespaced strings — pass the key **without** the `GAS.` prefix (e.g. `localize("Footer.Cancel")`).
+- Only fall back to `game.i18n.localize` / `game.i18n.format` for core Foundry keys that are not in the GAS namespace (e.g. `"DOCUMENT.ImportData"`).
+- Ensures consistent localization and avoids namespace issues.
 
 ## Foundry API notes
 Is current user GM? - `game.user.isGM`
