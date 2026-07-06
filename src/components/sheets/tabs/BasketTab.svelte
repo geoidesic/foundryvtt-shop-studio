@@ -5,6 +5,10 @@
 
   const doc = getContext("#doc");
 
+  export let sharedProps = {};
+
+  $: targetActorId = sharedProps.targetActorId ?? null;
+
   let basket = [];
   let totalPrice = 0;
 
@@ -59,6 +63,58 @@
     basket = [];
     await $doc.setFlag(MODULE_ID, `basket.${userId}`, []);
     totalPrice = 0;
+  }
+
+  async function onBuyNow() {
+    if (!targetActorId) {
+      ui.notifications.warn(localize('NoTargetActor'));
+      return;
+    }
+    if (basket.length === 0) return;
+
+    const targetActor = game.actors.get(targetActorId);
+    if (!targetActor || !targetActor.isOwner) {
+      ui.notifications.warn(localize('NoTargetActor'));
+      return;
+    }
+
+    const transactions = [];
+    let hasErrors = false;
+
+    for (const entry of basket) {
+      const shopItem = $doc.items.get(entry.itemId);
+      if (!shopItem) { hasErrors = true; continue; }
+
+      const avail = shopItem.system?.quantity ?? 0;
+      const qty = entry.quantity ?? 1;
+      if (avail < qty) {
+        ui.notifications.warn(game.i18n.format('InsufficientStock', { itemName: entry.itemName }));
+        hasErrors = true;
+        continue;
+      }
+
+      const itemData = shopItem.toObject();
+      delete itemData._id;
+      itemData.system.quantity = qty;
+      await targetActor.createEmbeddedDocuments("Item", [itemData]);
+      await shopItem.update({ system: { quantity: avail - qty } });
+
+      transactions.push({
+        itemId: entry.itemId, itemName: entry.itemName, quantity: qty,
+        price: entry.price ?? 0, total: (entry.price ?? 0) * qty,
+        buyerId: targetActorId, buyerName: targetActor.name, timestamp: Date.now()
+      });
+    }
+
+    if (transactions.length > 0 && $doc.system?.transactions) {
+      await $doc.update({ system: { transactions: [...$doc.system.transactions, ...transactions] } });
+    }
+
+    basket = [];
+    await $doc.setFlag(MODULE_ID, `basket.${userId}`, []);
+    totalPrice = 0;
+
+    if (!hasErrors) ui.notifications.info(game.i18n.format('PurchaseComplete', { actorName: targetActor.name }));
   }
 
   /** Format a price value for display. */
@@ -125,6 +181,8 @@
             .basket-total-label {localize('Total')}:
             .basket-total-value {formatTotal()}
             button.glossy-button.gold-light.hover-shine(on:click!="{clearBasket}") {localize('ClearBasket') || 'Clear Basket'}
+            +if("targetActorId")
+              button.glossy-button.primary.hover-shine.buy-now-btn(on:click!="{onBuyNow}") {localize('BuyNow') || 'Buy Now'}
             
 </template>
 
@@ -270,4 +328,14 @@
   color: var(--gas-color-text)
   min-width: 80px
   text-align: right
+
+.buy-now-btn
+  margin-left: 0.5rem
+  background: var(--dnd5e-color-gold, #b59e54)
+  color: #1a1a1a
+  font-weight: bold
+  padding: 0.4rem 1rem
+
+  &:hover
+    filter: brightness(1.2)
 </style>

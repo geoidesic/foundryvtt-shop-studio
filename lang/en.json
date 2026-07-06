@@ -89,6 +89,17 @@
     "SettingsSaved": "Shop settings have been saved.",
     "EditToggle": "Edit Mode",
     "ItemTypeNotAllowed": "This item type is not allowed for sale. Configure allowed types in module settings.",
+    "ShopHUD": {
+      "Basket": "Open Shop",
+      "TargetActor": "Select Character",
+      "TargetActorPrompt": "Which character would you like to shop with?",
+      "Select": "Select",
+      "NoActorOwned": "You don't own any actors to shop with."
+    },
+    "BuyNow": "Buy Now",
+    "NoTargetActor": "Please select a character first.",
+    "InsufficientStock": "Not enough {itemName} in stock.",
+    "PurchaseComplete": "Purchase complete! Items added to {actorName}'s inventory.",
     "UnknownActor": "Unknown Actor",
     "CouldNotResolveActor": "Could not resolve the dropped actor.",
     "Search": "Search",

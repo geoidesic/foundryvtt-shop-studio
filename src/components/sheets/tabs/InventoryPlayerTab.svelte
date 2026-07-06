@@ -11,6 +11,10 @@
 
   const Actor = getContext("#doc");
   const doc = new TJSDocument($Actor);
+
+  export let sharedProps = {};
+
+  $: targetActorId = sharedProps.targetActorId ?? null;
   const typeSearch = createFilterQuery("type");
   const nameSearch = createFilterQuery("name");
 
@@ -77,8 +81,13 @@
 
   /** Add item to the player's basket (stored in a flag on the shop actor, keyed by user). */
   async function addToBasket(item) {
+    if (!targetActorId) {
+      ui.notifications.warn(localize('NoTargetActor'));
+      return;
+    }
+
     const userId = game.user.id;
-    const basket = $doc.getFlag(MODULE_ID, `basket.${userId}`) ?? [];
+    const basket = $doc.getFlag(MODULE_ID, `basket.${userId}.${targetActorId}`) ?? [];
     const existing = basket.find((entry) => entry.itemId === item.id);
     if (existing) {
       existing.quantity = (existing.quantity ?? 1) + 1;
@@ -91,7 +100,7 @@
         quantity: 1,
       });
     }
-    await $doc.setFlag(MODULE_ID, `basket.${userId}`, basket);
+    await $doc.setFlag(MODULE_ID, `basket.${userId}.${targetActorId}`, basket);
     ui.notifications.info(`${item.name} added to basket`);
   }
 

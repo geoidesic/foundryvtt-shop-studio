@@ -9,6 +9,7 @@
   import { localize } from '~/src/helpers/utility.js';
 
   export let documentStore;
+  export let targetActorId = null;
 
   setContext('#doc', documentStore);
 
@@ -29,6 +30,7 @@
     isEditing,
     filterText,
     items: actor?.items || [],
+    targetActorId,
     localize,
     clearFilter,
     onFilterChange: (value) => {

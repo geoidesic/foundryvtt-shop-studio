@@ -1,0 +1,31 @@
+{{!-- ── Shop Token HUD (minimal) ── --}}
+<div class="col left">
+    {{#if isGM}}
+    <button type="button" class="control-icon {{lockedClass}}" data-action="locked"
+        data-tooltip aria-label="{{localize (ifThen lockedClass "HUD.Unlock" "HUD.Lock")}}">
+        <i class="fa-solid {{ifThen lockedClass "fa-lock" "fa-lock-open"}}" inert></i>
+    </button>
+    {{/if}}
+
+    {{#if canConfigure}}
+    <button type="button" class="control-icon" data-action="config" data-tooltip aria-label="{{localize "HUD.OpenConfig"}}">
+        <i class="fa-solid fa-gear" inert></i>
+    </button>
+    {{/if}}
+</div>
+
+<div class="col middle"></div>
+
+<div class="col right">
+    <button type="button" class="control-icon shop-basket-icon" data-action="shopBasket"
+            data-tooltip aria-label="{{localize "ShopHUD.Basket"}}">
+        <img src="{{shopIcon}}" alt="{{localize "ShopHUD.Basket"}}" width="32" height="32">
+    </button>
+
+    {{#if isGM}}
+    <button type="button" class="control-icon {{visibilityClass}}" data-action="visibility"
+        data-tooltip aria-label="{{localize (ifThen visibilityClass "HUD.Show" "HUD.Hide")}}">
+        <i class="fa-solid {{ifThen hidden "fa-eye-slash" "fa-eye"}}" inert></i>
+    </button>
+    {{/if}}
+</div>

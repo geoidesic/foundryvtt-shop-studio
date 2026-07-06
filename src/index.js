@@ -8,6 +8,7 @@ import { MODULE_ID } from '~/src/helpers/constants';
 import { log, safeGetSetting } from '~/src/helpers/utility';
 import { registerSettings } from '~/src/settings';
 import { renderShopStudioSidebarButton, renderShopTypeInCreateActorApplication } from '~/src/hooks/shopStudioButtons.js';
+import { onRenderTokenHUD } from '~/src/hud/shopHUD.js';
 
 window.GAS = window.GAS || {};
 
@@ -82,6 +83,9 @@ Hooks.on('renderApplication', (app, html) => {
 Hooks.on('renderApplicationV2', (app, html) => {
   renderShopTypeInCreateActorApplication(app, html);
 });
+
+// Inject shop basket button into TokenHUD for shop tokens
+Hooks.on('renderTokenHUD', onRenderTokenHUD);
 
 Hooks.on('gss.openShopStudio', () => {
   window.GAS.log.i('Shop Studio opened via sidebar button');
