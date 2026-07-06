@@ -1,5 +1,5 @@
 <script>
-  import { getContext, onMount } from "svelte";
+  import { getContext } from "svelte";
   import { rippleFocus } from "#standard/action/animate/composable";
   import { TJSDocument } from "#runtime/svelte/store/fvtt/document";
 
@@ -15,6 +15,7 @@
   export let sharedProps = {};
 
   $: targetActorId = sharedProps.targetActorId ?? null;
+  $: basketVersion = sharedProps.basketVersion ?? 0;
   const typeSearch = createFilterQuery("type");
   const nameSearch = createFilterQuery("name");
 
@@ -61,6 +62,34 @@
     typeFilterValue = e.target.value;
   }
 
+  let basketByItemId = new Map();
+
+  function rebuildBasketLookup() {
+    if (!$Actor?.id) {
+      basketByItemId = new Map();
+      return;
+    }
+    const basket = game.user.getFlag(MODULE_ID, `basket.${$Actor.id}`) ?? [];
+    basketByItemId = new Map(
+      basket.map((entry) => [entry.itemId, Number(entry.quantity ?? 1)]),
+    );
+  }
+
+  $: {
+    basketVersion;
+    if ($Actor?.id) rebuildBasketLookup();
+  }
+
+  function getDisplayQuantity(item) {
+    const stock = Number(item?.system?.quantity ?? 0);
+    const reserved = basketByItemId.get(item?.id) ?? 0;
+    return Math.max(0, stock - reserved);
+  }
+
+  function isOutOfStock(item) {
+    return getDisplayQuantity(item) <= 0;
+  }
+
   /** Format a price value for display. */
   function formatPrice(item) {
     const price = item?.system?.price;
@@ -87,21 +116,57 @@
     }
 
     const shopId = $Actor.id;
-    const basket = game.user.getFlag(MODULE_ID, `basket.${shopId}`) ?? [];
+    if (isOutOfStock(item)) {
+      ui.notifications.warn(game.i18n.format('InsufficientStock', { itemName: item.name }));
+      return;
+    }
+
+    window.GAS.log.p('addToBasket | BUTTON CLICKED for item:', item?.name, '| itemId:', item?.id, '| targetActorId:', targetActorId, '| shopId:', shopId, '| isGM:', game.user.isGM);
+    window.GAS.log.p('addToBasket | item details:', {
+      name: item?.name,
+      id: item?.id,
+      img: item?.img,
+      price: item?.system?.price?.value ?? item?.system?.price ?? 0,
+      quantity: item?.system?.quantity ?? 0
+    });
+    
+    let basket = game.user.getFlag(MODULE_ID, `basket.${shopId}`) ?? [];
+    window.GAS.log.p('addToBasket | existing basket length:', basket.length);
+    window.GAS.log.p('addToBasket | existing basket content:', JSON.stringify(basket));
+    
     const existing = basket.find((entry) => entry.itemId === item.id);
     if (existing) {
-      existing.quantity = (existing.quantity ?? 1) + 1;
+      const oldQty = existing.quantity ?? 1;
+      existing.quantity = oldQty + 1;
+      window.GAS.log.p('addToBasket | incremented existing item:', item.name, '| old qty:', oldQty, '| new qty:', existing.quantity);
     } else {
-      basket.push({
+      const newEntry = {
         itemId: item.id,
         itemName: item.name,
         img: item.img,
         price: item.system?.price?.value ?? item.system?.price ?? 0,
         quantity: 1,
-      });
+      };
+      basket.push(newEntry);
+      window.GAS.log.p('addToBasket | added new item to basket:', item.name, '| new entry:', JSON.stringify(newEntry));
     }
-    await game.user.setFlag(MODULE_ID, `basket.${shopId}`, basket);
-    ui.notifications.info(`${item.name} added to basket`);
+    
+    window.GAS.log.p('addToBasket | basket before save:', JSON.stringify(basket));
+    window.GAS.log.p('addToBasket | saving basket with length:', basket.length);
+    
+    try {
+      await game.user.setFlag(MODULE_ID, `basket.${shopId}`, basket);
+      window.GAS.log.p('addToBasket | basket saved successfully');
+      sharedProps.onBasketUpdated?.();
+      
+      const verifyBasket = game.user.getFlag(MODULE_ID, `basket.${shopId}`);
+      window.GAS.log.p('addToBasket | flag verification:', verifyBasket ? 'SUCCESS' : 'FAILED', '| verified length:', verifyBasket?.length || 0);
+      
+      ui.notifications.info(`${item.name} added to basket`);
+    } catch (error) {
+      window.GAS.log.p('addToBasket | ERROR saving basket:', error);
+      throw error;
+    }
   }
 
   $: if (typeFilterValue === "all") {
@@ -145,9 +210,9 @@
               .inv-col-price
                 span.price-text {formatPrice(item)}
               .inv-col-qty
-                span.qty-value {item.system.quantity ?? 0}
+                span.qty-value {getDisplayQuantity(item)}
               .inv-col-actions
-                button.stealth.basket-btn(data-tooltip="Add to basket" data-index="{index}" on:click!="{onAddToBasketClick}")
+                button.stealth.basket-btn(disabled="{isOutOfStock(item)}" data-tooltip="Add to basket" data-index="{index}" on:click!="{onAddToBasketClick}")
                   i.fa.fa-shopping-basket
             
 </template>

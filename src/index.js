@@ -9,6 +9,7 @@ import { log, safeGetSetting } from '~/src/helpers/utility';
 import { registerSettings } from '~/src/settings';
 import { renderShopStudioSidebarButton, renderShopTypeInCreateActorApplication } from '~/src/hooks/shopStudioButtons.js';
 import { onRenderTokenHUD } from '~/src/hud/shopHUD.js';
+import { registerSocket } from '~/src/helpers/shopSocket.js';
 
 window.GAS = window.GAS || {};
 
@@ -45,6 +46,7 @@ Hooks.once("ready", (app, html, data) => {
     window.GAS.log.w('Module is not active');
     return;
   }
+  registerSocket();
   if (!game.settings.get(MODULE_ID, 'dontShowWelcome')) {
     new WelcomeApplication().render(true, { focus: true });
   }

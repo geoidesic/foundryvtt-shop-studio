@@ -2,6 +2,7 @@
   import { getContext } from "svelte";
   import { localize } from "~/src/helpers/utility";
   import { MODULE_ID } from "~/src/helpers/constants";
+  import { requestPurchase } from "~/src/helpers/shopSocket.js";
 
   const doc = getContext("#doc");
 
@@ -40,17 +41,43 @@
   let totalPrice = 0;
 
   $: userId = game.user.id;
+  $: basketVersion = sharedProps.basketVersion ?? 0;
 
-  /** Load basket from flags whenever the doc changes. */
+  /** Load basket from flags whenever doc or basketVersion changes. */
   $: {
+    basketVersion;
     if ($doc) {
-      basket = game.user.getFlag(MODULE_ID, `basket.${$doc.id}`) ?? [];
+      window.GAS.log.p('BasketTab | loading basket for shop:', $doc?.name, '| shopId:', $doc.id);
+      const flagPath = `basket.${$doc.id}`;
+      window.GAS.log.p('BasketTab | flag path:', flagPath);
+      const loadedBasket = game.user.getFlag(MODULE_ID, flagPath);
+      window.GAS.log.p('BasketTab | raw flag value:', loadedBasket);
+      window.GAS.log.p('BasketTab | flag type:', typeof loadedBasket);
+      if (loadedBasket !== null && loadedBasket !== undefined) {
+        window.GAS.log.p('BasketTab | flag is not null/undefined, type:', Array.isArray(loadedBasket) ? 'array' : typeof loadedBasket);
+      }
+      basket = loadedBasket ?? [];
+      window.GAS.log.p('BasketTab | loaded basket length:', basket.length, '| basket:', JSON.stringify(basket));
       totalPrice = basket.reduce((sum, entry) => sum + (entry.price ?? 0) * (entry.quantity ?? 1), 0);
+      window.GAS.log.p('BasketTab | initial totalPrice:', totalPrice);
+    }
+  }
+
+  /** Track basket changes for debugging */
+  $: {
+    if ($doc && basket.length > 0) {
+      window.GAS.log.p('BasketTab | basket has items:', basket.length, '| first item:', basket[0].itemName);
+    }
+    if ($doc && basket.length === 0) {
+      window.GAS.log.p('BasketTab | basket is empty');
     }
   }
 
   function removeFromBasket(index) {
+    const removedItem = basket[index];
+    window.GAS.log.p('removeFromBasket | removing item:', removedItem?.itemName, '| index:', index, '| basket length before:', basket.length);
     basket = basket.filter((_, i) => i !== index);
+    window.GAS.log.p('removeFromBasket | basket length after:', basket.length);
     persistBasket();
   }
 
@@ -71,33 +98,90 @@
   }
 
   function changeQuantity(index, delta) {
-    const newQty = (basket[index].quantity ?? 1) + delta;
+    const oldQty = basket[index].quantity ?? 1;
+    const newQty = oldQty + delta;
+    window.GAS.log.p('changeQuantity | changing qty for item:', basket[index].itemName, '| index:', index, '| old qty:', oldQty, '| delta:', delta, '| new qty:', newQty);
+
     if (newQty <= 0) {
       removeFromBasket(index);
       return;
     }
     basket[index].quantity = newQty;
     basket = [...basket];
+    window.GAS.log.p('changeQuantity | updated basket length:', basket.length);
     persistBasket();
   }
 
   async function persistBasket() {
+    window.GAS.log.p('persistBasket | persisting basket for shop:', $doc?.name, '| shopId:', $doc?.id, '| basket length:', basket.length);
+    window.GAS.log.p('persistBasket | basket content:', JSON.stringify(basket));
     await game.user.setFlag(MODULE_ID, `basket.${$doc.id}`, basket);
+    window.GAS.log.p('persistBasket | basket persisted successfully');
+    sharedProps.onBasketUpdated?.();
     totalPrice = basket.reduce((sum, entry) => sum + (entry.price ?? 0) * (entry.quantity ?? 1), 0);
+    window.GAS.log.p('persistBasket | totalPrice updated:', totalPrice);
   }
 
   async function clearBasket() {
+    const startTime = Date.now();
+    window.GAS.log.p('clearBasket | BUTTON CLICKED for shop:', $doc?.name, '| shopId:', $doc?.id);
+    window.GAS.log.p('clearBasket | current basket length:', basket.length);
+    window.GAS.log.p('clearBasket | current basket content:', JSON.stringify(basket));
+    window.GAS.log.p('clearBasket | userId:', game.user.id, '| isGM:', game.user.isGM);
+    window.GAS.log.p('clearBasket | doc exists:', !!$doc, '| doc.id:', $doc?.id);
+    
+    const flagPath = `basket.${$doc?.id}`;
+    const currentFlagValue = game.user.getFlag(MODULE_ID, flagPath);
+    window.GAS.log.p('clearBasket | current flag value:', currentFlagValue);
+    window.GAS.log.p('clearBasket | flag path:', flagPath);
+    
     basket = [];
-    await game.user.setFlag(MODULE_ID, `basket.${$doc.id}`, []);
     totalPrice = 0;
+    window.GAS.log.p('clearBasket | local basket cleared, new length:', basket.length);
+    window.GAS.log.p('clearBasket | totalPrice reset to:', totalPrice);
+    
+    try {
+      window.GAS.log.p('clearBasket | attempting to set flag to empty array');
+      const setFlagStart = Date.now();
+      await game.user.setFlag(MODULE_ID, flagPath, []);
+      const setFlagDuration = Date.now() - setFlagStart;
+      window.GAS.log.p('clearBasket | flag set to empty array successfully, duration:', setFlagDuration, 'ms');
+      sharedProps.onBasketUpdated?.();
+    } catch (error) {
+      window.GAS.log.p('clearBasket | ERROR setting flag:', error);
+      basket = currentFlagValue ?? [];
+      totalPrice = basket.reduce((sum, entry) => sum + (entry.price ?? 0) * (entry.quantity ?? 1), 0);
+      throw error;
+    }
+    
+    const verifyStart = Date.now();
+    const newFlagValue = game.user.getFlag(MODULE_ID, flagPath);
+    const verifyDuration = Date.now() - verifyStart;
+    window.GAS.log.p('clearBasket | new flag value after set:', newFlagValue);
+    window.GAS.log.p('clearBasket | flag verification, duration:', verifyDuration, 'ms');
+    
+    const isSuccess = newFlagValue === null || newFlagValue === undefined || (Array.isArray(newFlagValue) && newFlagValue.length === 0);
+    window.GAS.log.p('clearBasket | flag verification result:', isSuccess ? 'SUCCESS' : 'FAILED');
+    
+    const totalDuration = Date.now() - startTime;
+    window.GAS.log.p('clearBasket | total operation duration:', totalDuration, 'ms');
+    
+    if (!isSuccess) {
+      window.GAS.log.p('clearBasket | WARNING: Flag verification failed, basket may not be properly cleared');
+    }
   }
 
   async function onBuyNow() {
+    window.GAS.log.p('onBuyNow | attempting purchase for shop:', $doc?.name, '| basket length:', basket.length, '| targetActorId:', targetActorId);
+
     if (!targetActorId) {
       ui.notifications.warn(localize('NoTargetActor'));
       return;
     }
-    if (basket.length === 0) return;
+    if (basket.length === 0) {
+      window.GAS.log.p('onBuyNow | basket is empty, nothing to purchase');
+      return;
+    }
 
     const targetActor = game.actors.get(targetActorId);
     if (!targetActor || !targetActor.isOwner) {
@@ -105,43 +189,23 @@
       return;
     }
 
-    const transactions = [];
-    let hasErrors = false;
+    window.GAS.log.p('onBuyNow | requesting purchase via socket');
+    const result = await requestPurchase({
+      shopId: $doc.id,
+      targetActorId,
+      basket: basket.map(e => ({ itemId: e.itemId, itemName: e.itemName, quantity: e.quantity ?? 1, price: e.price ?? 0 })),
+    });
 
-    for (const entry of basket) {
-      const shopItem = $doc.items.get(entry.itemId);
-      if (!shopItem) { hasErrors = true; continue; }
-
-      const avail = shopItem.system?.quantity ?? 0;
-      const qty = entry.quantity ?? 1;
-      if (avail < qty) {
-        ui.notifications.warn(game.i18n.format('InsufficientStock', { itemName: entry.itemName }));
-        hasErrors = true;
-        continue;
-      }
-
-      const itemData = shopItem.toObject();
-      delete itemData._id;
-      itemData.system.quantity = qty;
-      await targetActor.createEmbeddedDocuments("Item", [itemData]);
-      await shopItem.update({ system: { quantity: avail - qty } });
-
-      transactions.push({
-        itemId: entry.itemId, itemName: entry.itemName, quantity: qty,
-        price: entry.price ?? 0, total: (entry.price ?? 0) * qty,
-        buyerId: targetActorId, buyerName: targetActor.name, timestamp: Date.now()
-      });
+    window.GAS.log.p('onBuyNow | socket purchase result:', result.success, '| errors:', result.errors?.length || 0);
+    if (result.errors?.length) {
+      result.errors.forEach(err => ui.notifications.warn(err));
+    } else {
+      window.GAS.log.p('onBuyNow | purchase successful, clearing local basket state');
+      basket = [];
+      sharedProps.onBasketUpdated?.();
+      totalPrice = 0;
+      ui.notifications.info(game.i18n.format('PurchaseComplete', { actorName: targetActor.name }));
     }
-
-    if (transactions.length > 0 && $doc.system?.transactions) {
-      await $doc.update({ system: { transactions: [...$doc.system.transactions, ...transactions] } });
-    }
-
-    basket = [];
-    await game.user.setFlag(MODULE_ID, `basket.${$doc.id}`, []);
-    totalPrice = 0;
-
-    if (!hasErrors) ui.notifications.info(game.i18n.format('PurchaseComplete', { actorName: targetActor.name }));
   }
 
   /** Format a price value for display. */
