@@ -1,7 +1,7 @@
 <svelte:options accessors={true} />
 
 <script>
-  import { setContext, onDestroy } from 'svelte';
+  import { setContext } from 'svelte';
   import Tabs from '~/src/components/molecules/Tabs.svelte';
   import ShopfrontPlayerTab from '~/src/components/sheets/tabs/ShopfrontPlayerTab.svelte';
   import InventoryPlayerTab from '~/src/components/sheets/tabs/InventoryPlayerTab.svelte';
@@ -18,19 +18,6 @@
   let filterText = '';
   let selectedActorId = null;
   let _shopIdRestored = null;
-  let basketVersion = 0;
-
-  function notifyBasketChanged() {
-    basketVersion += 1;
-  }
-
-  function onUserUpdated(user, change) {
-    if (user?.id !== game.user.id || !shopId) return;
-    if (!change?.flags?.[MODULE_ID]?.basket) return;
-    notifyBasketChanged();
-  }
-
-  Hooks.on('updateUser', onUserUpdated);
 
   $: actor = $documentStore;
   $: shopId = actor?.id ?? null;
@@ -41,14 +28,6 @@
     _shopIdRestored = shopId;
     selectedActorId = game.user.getFlag(MODULE_ID, `selectedActor.${shopId}`) ?? null;
   }
-
-  /** Clear basket when the sheet is closed. */
-  onDestroy(async () => {
-    Hooks.off('updateUser', onUserUpdated);
-    if (shopId) {
-      await game.user.setFlag(MODULE_ID, `basket.${shopId}`, []);
-    }
-  });
 
   $: tabs = [
     { id: 'shopfront', label: localize('Shopfront'), component: ShopfrontPlayerTab },
@@ -62,10 +41,8 @@
     filterText,
     items: actor?.items || [],
     targetActorId: selectedActorId,
-    basketVersion,
     localize,
     clearFilter,
-    onBasketUpdated: notifyBasketChanged,
     onFilterChange: (value) => {
       filterText = value;
     },

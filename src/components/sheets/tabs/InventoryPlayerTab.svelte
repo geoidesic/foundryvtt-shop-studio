@@ -8,6 +8,7 @@
   import { localize } from "~/src/helpers/utility";
   import { MODULE_ID } from "~/src/helpers/constants";
   import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
+  import { requestBasketUpdate } from "~/src/helpers/shopSocket.js";
 
   const Actor = getContext("#doc");
   const doc = new TJSDocument($Actor);
@@ -15,7 +16,6 @@
   export let sharedProps = {};
 
   $: targetActorId = sharedProps.targetActorId ?? null;
-  $: basketVersion = sharedProps.basketVersion ?? 0;
   const typeSearch = createFilterQuery("type");
   const nameSearch = createFilterQuery("name");
 
@@ -62,23 +62,11 @@
     typeFilterValue = e.target.value;
   }
 
-  let basketByItemId = new Map();
+  $: basket = targetActorId ? ($Actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [];
 
-  function rebuildBasketLookup() {
-    if (!$Actor?.id) {
-      basketByItemId = new Map();
-      return;
-    }
-    const basket = game.user.getFlag(MODULE_ID, `basket.${$Actor.id}`) ?? [];
-    basketByItemId = new Map(
-      basket.map((entry) => [entry.itemId, Number(entry.quantity ?? 1)]),
-    );
-  }
-
-  $: {
-    basketVersion;
-    if ($Actor?.id) rebuildBasketLookup();
-  }
+  $: basketByItemId = new Map(
+    basket.map((entry) => [entry.itemId, Number(entry.quantity ?? 1)]),
+  );
 
   function getDisplayQuantity(item) {
     const stock = Number(item?.system?.quantity ?? 0);
@@ -121,52 +109,38 @@
       return;
     }
 
-    window.GAS.log.p('addToBasket | BUTTON CLICKED for item:', item?.name, '| itemId:', item?.id, '| targetActorId:', targetActorId, '| shopId:', shopId, '| isGM:', game.user.isGM);
-    window.GAS.log.p('addToBasket | item details:', {
-      name: item?.name,
-      id: item?.id,
-      img: item?.img,
-      price: item?.system?.price?.value ?? item?.system?.price ?? 0,
-      quantity: item?.system?.quantity ?? 0
-    });
-    
-    let basket = game.user.getFlag(MODULE_ID, `basket.${shopId}`) ?? [];
-    window.GAS.log.p('addToBasket | existing basket length:', basket.length);
-    window.GAS.log.p('addToBasket | existing basket content:', JSON.stringify(basket));
+    let basket = targetActorId ? ($Actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [];
     
     const existing = basket.find((entry) => entry.itemId === item.id);
     if (existing) {
-      const oldQty = existing.quantity ?? 1;
-      existing.quantity = oldQty + 1;
-      window.GAS.log.p('addToBasket | incremented existing item:', item.name, '| old qty:', oldQty, '| new qty:', existing.quantity);
+      existing.quantity = (existing.quantity ?? 1) + 1;
     } else {
-      const newEntry = {
+      basket.push({
         itemId: item.id,
         itemName: item.name,
         img: item.img,
         price: item.system?.price?.value ?? item.system?.price ?? 0,
         quantity: 1,
-      };
-      basket.push(newEntry);
-      window.GAS.log.p('addToBasket | added new item to basket:', item.name, '| new entry:', JSON.stringify(newEntry));
+      });
     }
     
-    window.GAS.log.p('addToBasket | basket before save:', JSON.stringify(basket));
-    window.GAS.log.p('addToBasket | saving basket with length:', basket.length);
-    
-    try {
-      await game.user.setFlag(MODULE_ID, `basket.${shopId}`, basket);
-      window.GAS.log.p('addToBasket | basket saved successfully');
-      sharedProps.onBasketUpdated?.();
-      
-      const verifyBasket = game.user.getFlag(MODULE_ID, `basket.${shopId}`);
-      window.GAS.log.p('addToBasket | flag verification:', verifyBasket ? 'SUCCESS' : 'FAILED', '| verified length:', verifyBasket?.length || 0);
-      
-      ui.notifications.info(`${item.name} added to basket`);
-    } catch (error) {
-      window.GAS.log.p('addToBasket | ERROR saving basket:', error);
-      throw error;
+    if (game.user.isGM) {
+      const updateObj = {};
+      foundry.utils.setProperty(updateObj, `flags.${MODULE_ID}.basket.${targetActorId}`, basket);
+      await $doc.update(updateObj);
+    } else {
+      const result = await requestBasketUpdate({
+        shopId,
+        targetActorId,
+        nextBasket: basket,
+      });
+      if (!result.success) {
+        (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
+        return;
+      }
     }
+    
+    ui.notifications.info(`${item.name} added to basket`);
   }
 
   $: if (typeFilterValue === "all") {

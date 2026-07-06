@@ -2,7 +2,7 @@
   import { getContext } from "svelte";
   import { localize } from "~/src/helpers/utility";
   import { MODULE_ID } from "~/src/helpers/constants";
-  import { requestPurchase } from "~/src/helpers/shopSocket.js";
+  import { requestBasketUpdate, requestPurchase } from "~/src/helpers/shopSocket.js";
 
   const doc = getContext("#doc");
 
@@ -41,25 +41,15 @@
   let totalPrice = 0;
 
   $: userId = game.user.id;
-  $: basketVersion = sharedProps.basketVersion ?? 0;
 
-  /** Load basket from flags whenever doc or basketVersion changes. */
+  /** Load basket from shop actor flags whenever doc or targetActorId changes. */
   $: {
-    basketVersion;
-    if ($doc) {
-      window.GAS.log.p('BasketTab | loading basket for shop:', $doc?.name, '| shopId:', $doc.id);
-      const flagPath = `basket.${$doc.id}`;
-      window.GAS.log.p('BasketTab | flag path:', flagPath);
-      const loadedBasket = game.user.getFlag(MODULE_ID, flagPath);
-      window.GAS.log.p('BasketTab | raw flag value:', loadedBasket);
-      window.GAS.log.p('BasketTab | flag type:', typeof loadedBasket);
-      if (loadedBasket !== null && loadedBasket !== undefined) {
-        window.GAS.log.p('BasketTab | flag is not null/undefined, type:', Array.isArray(loadedBasket) ? 'array' : typeof loadedBasket);
-      }
-      basket = loadedBasket ?? [];
-      window.GAS.log.p('BasketTab | loaded basket length:', basket.length, '| basket:', JSON.stringify(basket));
+    if ($doc && targetActorId) {
+      basket = $doc?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? [];
       totalPrice = basket.reduce((sum, entry) => sum + (entry.price ?? 0) * (entry.quantity ?? 1), 0);
-      window.GAS.log.p('BasketTab | initial totalPrice:', totalPrice);
+    } else {
+      basket = [];
+      totalPrice = 0;
     }
   }
 
@@ -113,61 +103,46 @@
   }
 
   async function persistBasket() {
-    window.GAS.log.p('persistBasket | persisting basket for shop:', $doc?.name, '| shopId:', $doc?.id, '| basket length:', basket.length);
-    window.GAS.log.p('persistBasket | basket content:', JSON.stringify(basket));
-    await game.user.setFlag(MODULE_ID, `basket.${$doc.id}`, basket);
-    window.GAS.log.p('persistBasket | basket persisted successfully');
-    sharedProps.onBasketUpdated?.();
+    if (!targetActorId) return;
+    const nextBasket = [...basket];
+
+    if (game.user.isGM) {
+      const updateObj = {};
+      foundry.utils.setProperty(updateObj, `flags.${MODULE_ID}.basket.${targetActorId}`, nextBasket);
+      await $doc.update(updateObj);
+    } else {
+      const result = await requestBasketUpdate({
+        shopId: $doc.id,
+        targetActorId,
+        nextBasket,
+      });
+      if (!result.success) {
+        (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
+        return;
+      }
+    }
+
     totalPrice = basket.reduce((sum, entry) => sum + (entry.price ?? 0) * (entry.quantity ?? 1), 0);
-    window.GAS.log.p('persistBasket | totalPrice updated:', totalPrice);
   }
 
   async function clearBasket() {
-    const startTime = Date.now();
-    window.GAS.log.p('clearBasket | BUTTON CLICKED for shop:', $doc?.name, '| shopId:', $doc?.id);
-    window.GAS.log.p('clearBasket | current basket length:', basket.length);
-    window.GAS.log.p('clearBasket | current basket content:', JSON.stringify(basket));
-    window.GAS.log.p('clearBasket | userId:', game.user.id, '| isGM:', game.user.isGM);
-    window.GAS.log.p('clearBasket | doc exists:', !!$doc, '| doc.id:', $doc?.id);
-    
-    const flagPath = `basket.${$doc?.id}`;
-    const currentFlagValue = game.user.getFlag(MODULE_ID, flagPath);
-    window.GAS.log.p('clearBasket | current flag value:', currentFlagValue);
-    window.GAS.log.p('clearBasket | flag path:', flagPath);
-    
+    if (!targetActorId) return;
     basket = [];
     totalPrice = 0;
-    window.GAS.log.p('clearBasket | local basket cleared, new length:', basket.length);
-    window.GAS.log.p('clearBasket | totalPrice reset to:', totalPrice);
-    
-    try {
-      window.GAS.log.p('clearBasket | attempting to set flag to empty array');
-      const setFlagStart = Date.now();
-      await game.user.setFlag(MODULE_ID, flagPath, []);
-      const setFlagDuration = Date.now() - setFlagStart;
-      window.GAS.log.p('clearBasket | flag set to empty array successfully, duration:', setFlagDuration, 'ms');
-      sharedProps.onBasketUpdated?.();
-    } catch (error) {
-      window.GAS.log.p('clearBasket | ERROR setting flag:', error);
-      basket = currentFlagValue ?? [];
-      totalPrice = basket.reduce((sum, entry) => sum + (entry.price ?? 0) * (entry.quantity ?? 1), 0);
-      throw error;
-    }
-    
-    const verifyStart = Date.now();
-    const newFlagValue = game.user.getFlag(MODULE_ID, flagPath);
-    const verifyDuration = Date.now() - verifyStart;
-    window.GAS.log.p('clearBasket | new flag value after set:', newFlagValue);
-    window.GAS.log.p('clearBasket | flag verification, duration:', verifyDuration, 'ms');
-    
-    const isSuccess = newFlagValue === null || newFlagValue === undefined || (Array.isArray(newFlagValue) && newFlagValue.length === 0);
-    window.GAS.log.p('clearBasket | flag verification result:', isSuccess ? 'SUCCESS' : 'FAILED');
-    
-    const totalDuration = Date.now() - startTime;
-    window.GAS.log.p('clearBasket | total operation duration:', totalDuration, 'ms');
-    
-    if (!isSuccess) {
-      window.GAS.log.p('clearBasket | WARNING: Flag verification failed, basket may not be properly cleared');
+
+    if (game.user.isGM) {
+      const updateObj = {};
+      foundry.utils.setProperty(updateObj, `flags.${MODULE_ID}.basket.${targetActorId}`, []);
+      await $doc.update(updateObj);
+    } else {
+      const result = await requestBasketUpdate({
+        shopId: $doc.id,
+        targetActorId,
+        nextBasket: [],
+      });
+      if (!result.success) {
+        (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
+      }
     }
   }
 
@@ -202,7 +177,6 @@
     } else {
       window.GAS.log.p('onBuyNow | purchase successful, clearing local basket state');
       basket = [];
-      sharedProps.onBasketUpdated?.();
       totalPrice = 0;
       ui.notifications.info(game.i18n.format('PurchaseComplete', { actorName: targetActor.name }));
     }
