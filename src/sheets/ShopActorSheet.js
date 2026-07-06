@@ -40,6 +40,18 @@ export default class ShopActorSheet extends SvelteDocumentSheet {
   }
 
   /**
+   * Foundry calls this from sidebar context menus to determine whether
+   * a sheet should be shown as viewable.
+   * @param {User} user
+   * @returns {boolean}
+   */
+  _canUserView(user) {
+    const actor = this.reactive.document;
+    if (!actor?.testUserPermission) return true;
+    return actor.testUserPermission(user, CONST.DOCUMENT_OWNERSHIP_LEVELS.LIMITED);
+  }
+
+  /**
    * Closes the sheet and resets editing state if it was active.
    * @param {object} [options] - Close options
    * @returns {Promise<void>}
