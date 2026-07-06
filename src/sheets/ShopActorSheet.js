@@ -58,7 +58,7 @@ export default class ShopActorSheet extends SvelteDocumentSheet {
    */
   async close(options = {}) {
     const { isEditing } = this.reactive.document?.system?.identity ?? {};
-    if (isEditing) {
+    if (isEditing && this.reactive.document?.isOwner) {
       await this.reactive.document.update({ system: { identity: { isEditing: false } } });
     }
     await super.close(options);
