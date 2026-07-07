@@ -5,49 +5,62 @@
   import { requestBasketUpdate, requestPurchase } from "~/src/helpers/shopSocket.js";
   import { shopSocketState } from "~/src/stores/basketState.js";
   import { shopTelemetry } from "~/src/helpers/telemetry.js";
+  import {
+    getCurrentTokenTargetEntries,
+    getShopTargetEntries,
+    resolveShopTargetActor,
+  } from "~/src/helpers/shopTargets.js";
 
   const doc = getContext("#doc");
 
   export let sharedProps = {};
 
   $: targetActorId = sharedProps.targetActorId ?? null;
-  $: selectedActor = targetActorId ? game.actors.get(targetActorId) : null;
+  $: selectedActor = targetActorId ? resolveShopTargetActor($doc, targetActorId) : null;
   $: shopUuid = $doc?.uuid ?? ($doc?.id ? `Actor.${$doc.id}` : null);
   $: socketShopState = shopUuid ? $shopSocketState.get(shopUuid) : null;
+  let tokenTargetRevision = 0;
 
   /** Actor options for the target select. */
   $: actorOptions = (() => {
     if (game.user.isGM) {
-      const basketActorIds = Object.keys($doc?.flags?.[MODULE_ID]?.basket ?? {});
-      const socketBasketActorIds = [...(socketShopState?.basketsByActorId?.keys?.() ?? [])];
-      const selectableActorIds = [
-        ...(sharedProps.associatedActors ?? []),
-        ...basketActorIds,
-        ...socketBasketActorIds,
+      tokenTargetRevision;
+      const targetEntries = [
+        ...getShopTargetEntries($doc),
+        ...getCurrentTokenTargetEntries({ excludeActorId: $doc?.id, source: 'gm-token-target' }),
       ];
-      return [...new Set(selectableActorIds)]
-        .map(id => game.actors.get(id))
+      return [...new Map(targetEntries.map((entry) => [entry.actorId, entry])).values()]
+        .filter((entry) => entry?.actorId)
         .filter(Boolean)
-        .map(a => ({ id: a.id, name: a.name, img: a.img }));
+        .map((entry) => ({
+          id: entry.actorId,
+          actorUuid: entry.actorUuid,
+          tokenUuid: entry.tokenUuid,
+          name: entry.name,
+          img: entry.img,
+        }));
     } else {
       return game.actors
         .filter(a => a.isOwner)
-        .map(a => ({ id: a.id, name: a.name, img: a.img }));
+        .map(a => ({ id: a.id, actorUuid: a.uuid, name: a.name, img: a.img }));
     }
   })();
 
   let dropdownOpen = false;
   let unsubscribeDoc = () => {};
+  let targetTokenHookId = null;
 
   function selectActor(id) {
+    const targetEntry = actorOptions.find((option) => option.id === id);
     shopTelemetry('BasketTab', 'select actor', {
       previousTargetActorId: targetActorId,
       nextTargetActorId: id,
       shopId: $doc?.id,
       shopUuid,
+      targetEntry,
     });
     dropdownOpen = false;
-    sharedProps.onTargetActorChange?.(id ?? null);
+    sharedProps.onTargetActorChange?.(id ?? null, targetEntry);
   }
 
   function closeDropdown() {
@@ -81,6 +94,8 @@
         socketBasket,
         basketActorIds: Object.keys($doc?.flags?.[MODULE_ID]?.basket ?? {}),
         socketBasketActorIds: [...(socketShopState?.basketsByActorId?.keys?.() ?? [])],
+        shopTargetActorIds: getShopTargetEntries($doc).map((entry) => entry.actorId),
+        currentTokenTargetActorIds: getCurrentTokenTargetEntries({ excludeActorId: $doc?.id }).map((entry) => entry.actorId),
         associatedActors: sharedProps.associatedActors ?? [],
         actorOptions,
         isGM: game.user.isGM,
@@ -95,6 +110,8 @@
         targetActorId,
         basketActorIds: Object.keys($doc?.flags?.[MODULE_ID]?.basket ?? {}),
         socketBasketActorIds: [...(socketShopState?.basketsByActorId?.keys?.() ?? [])],
+        shopTargetActorIds: getShopTargetEntries($doc).map((entry) => entry.actorId),
+        currentTokenTargetActorIds: getCurrentTokenTargetEntries({ excludeActorId: $doc?.id }).map((entry) => entry.actorId),
         associatedActors: sharedProps.associatedActors ?? [],
         actorOptions,
         isGM: game.user.isGM,
@@ -225,8 +242,8 @@
       return;
     }
 
-    const targetActor = game.actors.get(targetActorId);
-    if (!targetActor || !targetActor.isOwner) {
+    const targetActor = resolveShopTargetActor($doc, targetActorId);
+    if (!targetActor || (!targetActor.isOwner && !game.user.isGM)) {
       ui.notifications.warn(localize('NoTargetActor'));
       return;
     }
@@ -278,9 +295,24 @@
       shopUuid,
       targetActorId,
       basketActorIds: Object.keys($doc?.flags?.[MODULE_ID]?.basket ?? {}),
+      shopTargetActorIds: getShopTargetEntries($doc).map((entry) => entry.actorId),
+      currentTokenTargetActorIds: getCurrentTokenTargetEntries({ excludeActorId: $doc?.id }).map((entry) => entry.actorId),
       associatedActors: sharedProps.associatedActors ?? [],
       actorOptions,
     });
+
+    if (game.user.isGM) {
+      targetTokenHookId = Hooks.on('targetToken', (user) => {
+        if (user?.id !== game.user.id) return;
+        tokenTargetRevision += 1;
+        shopTelemetry('BasketTab', 'targetToken hook', {
+          shopId: $doc?.id,
+          shopUuid,
+          tokenTargetRevision,
+          currentTokenTargetActorIds: getCurrentTokenTargetEntries({ excludeActorId: $doc?.id }).map((entry) => entry.actorId),
+        });
+      });
+    }
 
     unsubscribeDoc = doc.subscribe((document, options) => {
       shopTelemetry('BasketTab', 'doc store emitted', {
@@ -290,6 +322,7 @@
         shopUuid: document?.uuid,
         targetActorId,
         basketActorIds: Object.keys(document?.flags?.[MODULE_ID]?.basket ?? {}),
+        shopTargetActorIds: getShopTargetEntries(document).map((entry) => entry.actorId),
         targetBasket: targetActorId ? (document?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [],
       });
     });
@@ -297,6 +330,7 @@
 
   onDestroy(() => {
     unsubscribeDoc();
+    if (targetTokenHookId !== null) Hooks.off('targetToken', targetTokenHookId);
   });
 </script>
 

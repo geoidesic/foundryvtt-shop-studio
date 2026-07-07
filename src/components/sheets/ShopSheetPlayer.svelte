@@ -9,6 +9,7 @@
   import { localize } from '~/src/helpers/utility.js';
   import { MODULE_ID } from '~/src/helpers/constants.ts';
   import { shopTelemetry } from '~/src/helpers/telemetry.js';
+  import { registerShopTargetActor, registerShopTargetEntries } from '~/src/helpers/shopTargets.js';
 
   export let documentStore;
   export let targetActorId = null;
@@ -35,6 +36,9 @@
       basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
       associatedActors: actor?.system?.configuration?.associatedActors ?? [],
     });
+    if (actor && selectedActorId) {
+      registerShopTargetActor(actor, selectedActorId, { source: 'player-restored-selection' });
+    }
   }
 
   $: tabs = [
@@ -68,17 +72,28 @@
     return a?.name || id || 'Unknown Actor';
   }
 
-  async function selectTargetActor(id) {
+  async function selectTargetActor(id, targetEntry = null) {
     shopTelemetry('ShopSheetPlayer', 'select target actor', {
       shopId,
       actorUuid: actor?.uuid,
       previousSelectedActorId: selectedActorId,
       nextSelectedActorId: id,
+      targetEntry,
       basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
     });
     selectedActorId = id;
     if (shopId) {
       await game.user.setFlag(MODULE_ID, `selectedActor.${shopId}`, id ?? '');
+    }
+    if (actor && targetEntry) {
+      await registerShopTargetEntries(actor, [{
+        ...targetEntry,
+        source: 'player-selection',
+        userId: game.user?.id,
+        timestamp: Date.now(),
+      }]);
+    } else if (actor && id) {
+      await registerShopTargetActor(actor, id, { source: 'player-selection' });
     }
   }
 

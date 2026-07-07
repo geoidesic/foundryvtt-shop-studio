@@ -2,6 +2,7 @@ import { MODULE_ID } from '~/src/helpers/constants';
 import { TJSDocument } from '#runtime/svelte/store/fvtt/document';
 import { recordShopSocketResult } from '~/src/stores/basketState.js';
 import { itemQuantitySnapshot, shopTelemetry } from '~/src/helpers/telemetry.js';
+import { resolveShopTargetActor } from '~/src/helpers/shopTargets.js';
 
 const SOCKET_NAME = `module.${MODULE_ID}`;
 const SOCKET_HANDLER_KEY = `__${MODULE_ID}_socketHandler`;
@@ -475,7 +476,7 @@ export function registerSocket() {
         try {
           const shop = resolveShopDocument({ shopUuid: requestedShopUuid, shopId });
           const responseShopUuid = requestedShopUuid ?? shop?.uuid;
-          const targetActor = game.actors.get(targetActorId);
+          const targetActor = resolveShopTargetActor(shop, targetActorId);
           const errors = [];
           const transactions = [];
 

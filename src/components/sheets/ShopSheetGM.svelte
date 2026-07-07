@@ -10,6 +10,7 @@ import SettingsTab from '~/src/components/sheets/tabs/SettingsTab.svelte';
 import { localize } from '~/src/helpers/utility.js';
 import { MODULE_ID } from '~/src/helpers/constants';
 import { shopTelemetry } from '~/src/helpers/telemetry.js';
+import { registerShopTargetActor, registerShopTargetEntries } from '~/src/helpers/shopTargets.js';
 
 export let documentStore;
 
@@ -119,18 +120,29 @@ const application = getContext('#external').application;
     silentSaveSettings,
   };
 
-  async function selectTargetActor(id) {
+  async function selectTargetActor(id, targetEntry = null) {
     shopTelemetry('ShopSheetGM', 'select target actor', {
       shopId: actor?.id,
       actorUuid: actor?.uuid,
       previousSelectedActorId: selectedActorId,
       nextSelectedActorId: id,
+      targetEntry,
       basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
       associatedActors,
     });
     selectedActorId = id;
     if (actor?.id) {
       await game.user.setFlag(MODULE_ID, `selectedActor.${actor.id}`, id ?? '');
+    }
+    if (actor && targetEntry) {
+      await registerShopTargetEntries(actor, [{
+        ...targetEntry,
+        source: 'gm-selection',
+        userId: game.user?.id,
+        timestamp: Date.now(),
+      }]);
+    } else if (actor && id) {
+      await registerShopTargetActor(actor, id, { source: 'gm-selection' });
     }
   }
 
