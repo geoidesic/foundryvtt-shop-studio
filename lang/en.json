@@ -88,6 +88,7 @@
     "Atrophy": "Atrophy (%)",
     "FilterInventory": "Filter Inventory...",
     "NoPermission": "You don't have permission to modify this shop.",
+    "EditModeRequired": "Enable edit mode before changing this shop.",
     "SettingsSaved": "Shop settings have been saved.",
     "EditToggle": "Edit Mode",
     "ItemTypeNotAllowed": "This item type is not allowed for sale. Configure allowed types in module settings.",

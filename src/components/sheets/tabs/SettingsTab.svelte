@@ -1,28 +1,41 @@
 <script>
   export let sharedProps = {};
+
+  function formatFactor(value, fallback) {
+    const factor = Number(value ?? fallback);
+    return Number.isFinite(factor) ? factor : fallback;
+  }
+
+  function onSaleFactorInput(event) {
+    sharedProps.onSalePriceFactorChange?.(event.target.value);
+  }
+
+  function onBuyFactorInput(event) {
+    sharedProps.onBuyPriceFactorChange?.(event.target.value);
+  }
 </script>
 
 <template lang="pug">
   div.settings-tab
     div.settings-form.ma-lg
-      label
+      label.setting-control
         div.setting-label
-          span {sharedProps.localize("SalePriceFactor")} (affects all prices)&nbsp;
-          strong {sharedProps.pricingFactor}%&nbsp;
-        input(type="range" value="{sharedProps.salePriceFactor}" min="50" max="200" step="1" on:input!="{(e) => sharedProps.onPricingFactorChange?.(e.target.value)}")
+          span {sharedProps.localize("SalePriceFactor")}
+          strong {formatFactor(sharedProps.salePriceFactor, 100)}%
+        input(type="range" value="{formatFactor(sharedProps.salePriceFactor, 100)}" min="50" max="200" step="1" on:input!="{onSaleFactorInput}")
         div.setting-range
           span 50%
           span 200%
-        p.setting-help 
-      label
+        p.setting-help Affects prices charged to buyers.
+      label.setting-control
         div.setting-label
-          span {sharedProps.localize("SalePriceFactor")} (affects all prices)&nbsp;
-          strong {sharedProps.pricingFactor}%&nbsp;
-        input(type="range" value="{sharedProps.buyPriceFactor}" min="50" max="200" step="1" on:input!="{(e) => sharedProps.onPricingFactorChange?.(e.target.value)}")
+          span {sharedProps.localize("BuyPriceFactor")}
+          strong {formatFactor(sharedProps.buyPriceFactor, 50)}%
+        input(type="range" value="{formatFactor(sharedProps.buyPriceFactor, 50)}" min="50" max="200" step="1" on:input!="{onBuyFactorInput}")
         div.setting-range
           span 50%
           span 200%
-        p.setting-help 
+        p.setting-help Affects prices paid when buying from actors.
       //- label
       //-   div.setting-label
       //-     span {sharedProps.localize("PriceVariance")}
@@ -66,6 +79,43 @@
           | Save Settings
 </template>
 <style lang="sass">
-  input[type="range"]
-    height: 0
+  :global(.settings-tab)
+    display: flex
+    flex-direction: column
+    gap: 1rem
+
+  :global(.settings-form)
+    display: flex
+    flex-direction: column
+    gap: 1rem
+
+  :global(.setting-control)
+    display: flex
+    flex-direction: column
+    gap: 0.35rem
+
+  :global(.setting-label),
+  :global(.setting-range),
+  :global(.actions)
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 0.75rem
+
+  :global(.setting-help)
+    margin: 0
+    opacity: 0.75
+    font-size: 0.85em
+
+  :global(.settings-tab input[type="range"])
+    padding: 0
+
+  :global(.rolltables-section)
+    display: flex
+    flex-direction: column
+    gap: 0.5rem
+
+  :global(.actions)
+    justify-content: flex-start
+    flex-wrap: wrap
 </style>

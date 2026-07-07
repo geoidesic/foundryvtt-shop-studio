@@ -31,9 +31,12 @@ export function isShopActor(actor) {
 }
 
 export function getShopConfiguration(actor) {
+  const configuration = actor?.getFlag?.(MODULE_ID, SHOP_FLAG_KEYS.configuration) ?? {};
   return {
     ...DEFAULT_SHOP_CONFIGURATION,
-    ...(actor?.getFlag?.(MODULE_ID, SHOP_FLAG_KEYS.configuration) ?? {}),
+    ...configuration,
+    salePriceFactor: configuration.salePriceFactor ?? configuration.pricingFactor ?? DEFAULT_SHOP_CONFIGURATION.salePriceFactor,
+    buyPriceFactor: configuration.buyPriceFactor ?? DEFAULT_SHOP_CONFIGURATION.buyPriceFactor,
   };
 }
 

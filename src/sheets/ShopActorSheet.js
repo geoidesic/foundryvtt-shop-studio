@@ -143,6 +143,10 @@ export default class ShopActorSheet extends SvelteDocumentSheet {
     const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
     const actor = this.reactive.document;
     if (!actor || actor.documentName !== 'Actor') return;
+    if (!isShopEditing(actor)) {
+      ui.notifications.error(localize('EditModeRequired'));
+      return false;
+    }
 
     const allowed = Hooks.call('dropActorSheetData', actor, this, data);
     if (allowed === false) return;

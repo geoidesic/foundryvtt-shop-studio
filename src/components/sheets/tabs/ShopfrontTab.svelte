@@ -33,6 +33,7 @@
         .associated-actors-section.flex2
           ActorBucket(
             listPath="flags.shop-studio.configuration.associatedActors"
+            isEditing="{sharedProps.isEditing}"
             onPersist="{onActorsPersist}"
           )
       .flex2.ml-sm

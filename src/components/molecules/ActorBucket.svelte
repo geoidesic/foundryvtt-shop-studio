@@ -7,6 +7,7 @@
   export let listPath = 'flags.shop-studio.configuration.associatedActors';
   export let placeholder = localize('DragActorsHere');
   export let emptyText = localize('NoAssociatedActors');
+  export let isEditing = false;
   /** Optional external persist callback. Called with (newList) instead of internal flag-based persist. */
   export let onPersist = null;
 
@@ -120,6 +121,11 @@
 
   async function handleDrop(data) {
     telemetry('drop-start', { data, localList });
+    if (!isEditing) {
+      ui.notifications.error(localize('EditModeRequired'));
+      return;
+    }
+
     const actor = await resolveActor(data);
     if (!actor) {
       telemetry('drop-no-actor', { data });

@@ -11,6 +11,8 @@ export const SHOP_FLAG_KEYS = Object.freeze({
 
 export const DEFAULT_SHOP_CONFIGURATION = Object.freeze({
   pricingFactor: 100,
+  salePriceFactor: 100,
+  buyPriceFactor: 50,
   priceVariance: 10,
   variancePeriod: 'daily',
   atrophyPercent: 5,

@@ -191,6 +191,11 @@ const application = getContext('#external').application;
 
   function handleDrop(e, dropType) {
     e.preventDefault();
+    if (!isEditing) {
+      ui.notifications.error(localize('EditModeRequired'));
+      return;
+    }
+
     try {
       const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
       if (dropType === 'actor' && data.type === 'Actor' && (data.uuid || data.id)) {
