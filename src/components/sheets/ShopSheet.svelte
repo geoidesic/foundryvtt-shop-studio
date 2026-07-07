@@ -7,6 +7,8 @@
   import ShopSheetPlayer from '~/src/components/sheets/ShopSheetPlayer.svelte';
   import { observeFoundryBodyTheme } from '~/src/helpers/syncAppThemeFromFoundryBody';
   import { MODULE_ID } from '~/src/helpers/constants';
+  import { registerShopDocumentStore } from '~/src/helpers/shopSocket.js';
+  import { shopTelemetry } from '~/src/helpers/telemetry.js';
 
   export let elementRoot;
   export let documentStore;
@@ -16,6 +18,8 @@
   const application = getContext('#external').application;
 
   let disconnectFoundryTheme = () => {};
+  let unregisterShopDocumentStore = () => {};
+  let registeredShopUuid = null;
 
   $: actor = $documentStore;
   $: isEditing = actor?.system?.identity?.isEditing ?? false;
@@ -26,12 +30,45 @@
     ? $documentStore.getFlag(MODULE_ID, `targetActor.${game.user.id}`) ?? null
     : null;
 
+  $: {
+    const shopUuid = $documentStore?.uuid ?? null;
+    if (shopUuid !== registeredShopUuid) {
+      shopTelemetry('ShopSheet', 'document store registration changed', {
+        previousShopUuid: registeredShopUuid,
+        nextShopUuid: shopUuid,
+        actorId: $documentStore?.id,
+        actorName: $documentStore?.name,
+        isEditing,
+        showGM,
+      });
+      unregisterShopDocumentStore();
+      registeredShopUuid = shopUuid;
+      unregisterShopDocumentStore = shopUuid
+        ? registerShopDocumentStore(shopUuid, documentStore)
+        : () => {};
+    }
+  }
+
   onMount(() => {
+    shopTelemetry('ShopSheet', 'mounted', {
+      actorId: $documentStore?.id,
+      actorUuid: $documentStore?.uuid,
+      actorName: $documentStore?.name,
+      isEditing,
+      showGM,
+      targetActorId,
+    });
     disconnectFoundryTheme = observeFoundryBodyTheme(elementRoot);
     application.reactive.draggable = true;
   });
 
   onDestroy(() => {
+    shopTelemetry('ShopSheet', 'destroyed', {
+      registeredShopUuid,
+      actorId: $documentStore?.id,
+      actorUuid: $documentStore?.uuid,
+    });
+    unregisterShopDocumentStore();
     disconnectFoundryTheme();
   });
 </script>

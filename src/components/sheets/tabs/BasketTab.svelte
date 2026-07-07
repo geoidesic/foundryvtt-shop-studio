@@ -1,8 +1,10 @@
 <script>
-  import { getContext } from "svelte";
+  import { getContext, onDestroy, onMount } from "svelte";
   import { localize } from "~/src/helpers/utility";
   import { MODULE_ID } from "~/src/helpers/constants";
   import { requestBasketUpdate, requestPurchase } from "~/src/helpers/shopSocket.js";
+  import { shopSocketState } from "~/src/stores/basketState.js";
+  import { shopTelemetry } from "~/src/helpers/telemetry.js";
 
   const doc = getContext("#doc");
 
@@ -10,6 +12,8 @@
 
   $: targetActorId = sharedProps.targetActorId ?? null;
   $: selectedActor = targetActorId ? game.actors.get(targetActorId) : null;
+  $: shopUuid = $doc?.uuid ?? ($doc?.id ? `Actor.${$doc.id}` : null);
+  $: socketShopState = shopUuid ? $shopSocketState.get(shopUuid) : null;
 
   /** Actor options for the target select. */
   $: actorOptions = (() => {
@@ -27,8 +31,15 @@
   })();
 
   let dropdownOpen = false;
+  let unsubscribeDoc = () => {};
 
   function selectActor(id) {
+    shopTelemetry('BasketTab', 'select actor', {
+      previousTargetActorId: targetActorId,
+      nextTargetActorId: id,
+      shopId: $doc?.id,
+      shopUuid,
+    });
     dropdownOpen = false;
     sharedProps.onTargetActorChange?.(id ?? null);
   }
@@ -45,11 +56,40 @@
   /** Load basket from shop actor flags whenever doc or targetActorId changes. */
   $: {
     if ($doc && targetActorId) {
-      basket = $doc?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? [];
+      const documentBasket = $doc?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? [];
+      const hasSocketBasket = socketShopState?.basketsByActorId?.has(targetActorId) ?? false;
+      const socketBasket = socketShopState?.basketsByActorId?.get(targetActorId) ?? [];
+      const sourceBasket = hasSocketBasket ? socketBasket : documentBasket;
+      basket = sourceBasket.map((entry) => ({ ...entry }));
       totalPrice = basket.reduce((sum, entry) => sum + (entry.price ?? 0) * (entry.quantity ?? 1), 0);
+      shopTelemetry('BasketTab', 'basket derived', {
+        shopId: $doc?.id,
+        shopUuid,
+        targetActorId,
+        selectedActorName: selectedActor?.name,
+        source: hasSocketBasket ? 'socket' : 'document',
+        documentBasketLength: documentBasket.length,
+        socketBasketLength: socketBasket.length,
+        resultBasketLength: basket.length,
+        documentBasket,
+        socketBasket,
+        basketActorIds: Object.keys($doc?.flags?.[MODULE_ID]?.basket ?? {}),
+        socketBasketActorIds: [...(socketShopState?.basketsByActorId?.keys?.() ?? [])],
+        associatedActors: sharedProps.associatedActors ?? [],
+        actorOptions,
+      });
     } else {
       basket = [];
       totalPrice = 0;
+      shopTelemetry('BasketTab', 'basket derived empty: missing doc or target', {
+        hasDoc: Boolean($doc),
+        shopId: $doc?.id,
+        shopUuid,
+        targetActorId,
+        basketActorIds: Object.keys($doc?.flags?.[MODULE_ID]?.basket ?? {}),
+        associatedActors: sharedProps.associatedActors ?? [],
+        actorOptions,
+      });
     }
   }
 
@@ -96,53 +136,71 @@
       removeFromBasket(index);
       return;
     }
-    basket[index].quantity = newQty;
-    basket = [...basket];
+    basket = basket.map((entry, i) => (
+      i === index ? { ...entry, quantity: newQty } : { ...entry }
+    ));
     window.GAS.log.p('changeQuantity | updated basket length:', basket.length);
     persistBasket();
   }
 
   async function persistBasket() {
     if (!targetActorId) return;
-    const nextBasket = [...basket];
+    const nextBasket = basket.map((entry) => ({ ...entry }));
+    shopTelemetry('BasketTab', 'persistBasket start', {
+      shopId: $doc?.id,
+      shopUuid,
+      targetActorId,
+      nextBasket,
+      isGM: game.user.isGM,
+    });
 
-    if (game.user.isGM) {
-      const updateObj = {};
-      foundry.utils.setProperty(updateObj, `flags.${MODULE_ID}.basket.${targetActorId}`, nextBasket);
-      await $doc.update(updateObj);
-    } else {
-      const result = await requestBasketUpdate({
-        shopId: $doc.id,
-        targetActorId,
-        nextBasket,
-      });
-      if (!result.success) {
-        (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
-        return;
-      }
+    const result = await requestBasketUpdate({
+      shopId: $doc.id,
+      shopUuid: $doc.uuid,
+      targetActorId,
+      nextBasket,
+    });
+    shopTelemetry('BasketTab', 'persistBasket socket result', {
+      shopId: $doc?.id,
+      shopUuid,
+      targetActorId,
+      result,
+    });
+    if (!result.success) {
+      (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
+      return;
     }
+    basket = (result.basket ?? nextBasket).map((entry) => ({ ...entry }));
 
     totalPrice = basket.reduce((sum, entry) => sum + (entry.price ?? 0) * (entry.quantity ?? 1), 0);
   }
 
   async function clearBasket() {
     if (!targetActorId) return;
+    shopTelemetry('BasketTab', 'clearBasket start', {
+      shopId: $doc?.id,
+      shopUuid,
+      targetActorId,
+      currentBasket: basket,
+      isGM: game.user.isGM,
+    });
     basket = [];
     totalPrice = 0;
 
-    if (game.user.isGM) {
-      const updateObj = {};
-      foundry.utils.setProperty(updateObj, `flags.${MODULE_ID}.basket.${targetActorId}`, []);
-      await $doc.update(updateObj);
-    } else {
-      const result = await requestBasketUpdate({
-        shopId: $doc.id,
-        targetActorId,
-        nextBasket: [],
-      });
-      if (!result.success) {
-        (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
-      }
+    const result = await requestBasketUpdate({
+      shopId: $doc.id,
+      shopUuid: $doc.uuid,
+      targetActorId,
+      nextBasket: [],
+    });
+    shopTelemetry('BasketTab', 'clearBasket socket result', {
+      shopId: $doc?.id,
+      shopUuid,
+      targetActorId,
+      result,
+    });
+    if (!result.success) {
+      (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
     }
   }
 
@@ -167,6 +225,7 @@
     window.GAS.log.p('onBuyNow | requesting purchase via socket');
     const result = await requestPurchase({
       shopId: $doc.id,
+      shopUuid: $doc.uuid,
       targetActorId,
       basket: basket.map(e => ({ itemId: e.itemId, itemName: e.itemName, quantity: e.quantity ?? 1, price: e.price ?? 0 })),
     });
@@ -203,6 +262,33 @@
     const item = $doc.items.get(itemId);
     if (item) item.sheet.render(true);
   }
+
+  onMount(() => {
+    shopTelemetry('BasketTab', 'mounted', {
+      shopId: $doc?.id,
+      shopUuid,
+      targetActorId,
+      basketActorIds: Object.keys($doc?.flags?.[MODULE_ID]?.basket ?? {}),
+      associatedActors: sharedProps.associatedActors ?? [],
+      actorOptions,
+    });
+
+    unsubscribeDoc = doc.subscribe((document, options) => {
+      shopTelemetry('BasketTab', 'doc store emitted', {
+        action: options?.action,
+        data: options?.data,
+        shopId: document?.id,
+        shopUuid: document?.uuid,
+        targetActorId,
+        basketActorIds: Object.keys(document?.flags?.[MODULE_ID]?.basket ?? {}),
+        targetBasket: targetActorId ? (document?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [],
+      });
+    });
+  });
+
+  onDestroy(() => {
+    unsubscribeDoc();
+  });
 </script>
 
 <svelte:window on:click="{closeDropdown}" />

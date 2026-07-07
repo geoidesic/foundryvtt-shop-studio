@@ -8,6 +8,7 @@
   import BasketTab from '~/src/components/sheets/tabs/BasketTab.svelte';
   import { localize } from '~/src/helpers/utility.js';
   import { MODULE_ID } from '~/src/helpers/constants.ts';
+  import { shopTelemetry } from '~/src/helpers/telemetry.js';
 
   export let documentStore;
   export let targetActorId = null;
@@ -27,6 +28,13 @@
   $: if (shopId && shopId !== _shopIdRestored) {
     _shopIdRestored = shopId;
     selectedActorId = game.user.getFlag(MODULE_ID, `selectedActor.${shopId}`) ?? null;
+    shopTelemetry('ShopSheetPlayer', 'restored selected actor', {
+      shopId,
+      actorUuid: actor?.uuid,
+      selectedActorId,
+      basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
+      associatedActors: actor?.system?.configuration?.associatedActors ?? [],
+    });
   }
 
   $: tabs = [
@@ -46,12 +54,7 @@
     onFilterChange: (value) => {
       filterText = value;
     },
-    onTargetActorChange: async (id) => {
-      selectedActorId = id;
-      if (shopId) {
-        await game.user.setFlag(MODULE_ID, `selectedActor.${shopId}`, id ?? '');
-      }
-    },
+    onTargetActorChange: selectTargetActor,
     associatedActors: actor?.system?.configuration?.associatedActors ?? [],
     getActorName,
   };
@@ -63,6 +66,20 @@
   function getActorName(id) {
     const a = game.actors.get(id);
     return a?.name || id || 'Unknown Actor';
+  }
+
+  async function selectTargetActor(id) {
+    shopTelemetry('ShopSheetPlayer', 'select target actor', {
+      shopId,
+      actorUuid: actor?.uuid,
+      previousSelectedActorId: selectedActorId,
+      nextSelectedActorId: id,
+      basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
+    });
+    selectedActorId = id;
+    if (shopId) {
+      await game.user.setFlag(MODULE_ID, `selectedActor.${shopId}`, id ?? '');
+    }
   }
 
 </script>

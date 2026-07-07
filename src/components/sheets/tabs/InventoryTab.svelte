@@ -1,5 +1,5 @@
 <script>
-  import { getContext, onMount } from "svelte";
+  import { getContext, onDestroy, onMount } from "svelte";
   import { rippleFocus } from "#standard/action/animate/composable";
   import { TJSDocument } from "#runtime/svelte/store/fvtt/document";
 
@@ -8,11 +8,19 @@
   import { localize } from "~/src/helpers/utility";
   import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
   import ScrollingContainer from "~/src/helpers/svelte-components/ScrollingContainer.svelte";
+  import { shopSocketState } from "~/src/stores/basketState.js";
+  import { itemQuantitySnapshot, shopTelemetry } from "~/src/helpers/telemetry.js";
 
   const Actor = getContext("#doc");
   const doc = new TJSDocument($Actor);
+
+  $: doc.set($Actor);
+
   const typeSearch = createFilterQuery("type");
   const nameSearch = createFilterQuery("name");
+  $: shopUuid = $Actor?.uuid ?? ($Actor?.id ? `Actor.${$Actor.id}` : null);
+  $: socketShopState = shopUuid ? $shopSocketState.get(shopUuid) : null;
+  $: socketStockRevision = socketShopState?.revision ?? 0;
 
   const input = {
     store: nameSearch,
@@ -23,6 +31,9 @@
   };
 
   let typeFilterValue = "all";
+  let items = [];
+  let unsubscribeActor = () => {};
+  let unsubscribeWildcard = () => {};
 
   $: typeFilterOptions = [
     { value: "all", label: "All" },
@@ -32,7 +43,34 @@
     })),
   ];
 
-  onMount(() => {});
+  onMount(() => {
+    shopTelemetry('InventoryTab', 'mounted', {
+      actorId: $Actor?.id,
+      actorUuid: $Actor?.uuid,
+      itemCount: $Actor?.items?.size,
+      itemQuantities: itemQuantitySnapshot($Actor?.items),
+    });
+
+    unsubscribeActor = Actor.subscribe((actor, options) => {
+      shopTelemetry('InventoryTab', 'Actor store emitted', {
+        action: options?.action,
+        data: options?.data,
+        actorId: actor?.id,
+        actorUuid: actor?.uuid,
+        itemCount: actor?.items?.size,
+        itemQuantities: itemQuantitySnapshot(actor?.items),
+      });
+    });
+
+    unsubscribeWildcard = wildcard.subscribe((value) => {
+      shopTelemetry('InventoryTab', 'wildcard emitted', {
+        actorId: $Actor?.id,
+        actorUuid: $Actor?.uuid,
+        itemCount: value?.size ?? value?.length,
+        itemQuantities: itemQuantitySnapshot(value),
+      });
+    });
+  });
 
   /** @type {import('@typhonjs-fvtt/runtime/svelte/store').DynMapReducer<string, Item>} */
   const wildcard = doc.embedded.create(Item, {
@@ -41,14 +79,50 @@
     sort: (a, b) => a.name.localeCompare(b.name),
   });
 
-  function addQuantity(item) {
+  async function addQuantity(item) {
     const quantity = (item.system.quantity ?? 0) + 1;
-    item.update({ system: { quantity } });
+    shopTelemetry('InventoryTab', 'addQuantity update start', {
+      actorId: $Actor?.id,
+      itemId: item?.id,
+      itemName: item?.name,
+      previousQuantity: Number(item?.system?.quantity ?? 0),
+      nextQuantity: quantity,
+    });
+    const [result] = await $Actor.updateEmbeddedDocuments('Item', [{
+      _id: item.id,
+      'system.quantity': quantity,
+    }]);
+    shopTelemetry('InventoryTab', 'addQuantity update complete', {
+      actorId: $Actor?.id,
+      itemId: item?.id,
+      itemName: item?.name,
+      resultQuantity: Number(result?.system?.quantity ?? item?.system?.quantity ?? 0),
+      itemQuantityAfter: Number(item?.system?.quantity ?? 0),
+      itemQuantities: itemQuantitySnapshot($Actor?.items),
+    });
   }
 
-  function removeQuantity(item) {
+  async function removeQuantity(item) {
     const quantity = Math.max(0, (item.system.quantity ?? 0) - 1);
-    item.update({ system: { quantity } });
+    shopTelemetry('InventoryTab', 'removeQuantity update start', {
+      actorId: $Actor?.id,
+      itemId: item?.id,
+      itemName: item?.name,
+      previousQuantity: Number(item?.system?.quantity ?? 0),
+      nextQuantity: quantity,
+    });
+    const [result] = await $Actor.updateEmbeddedDocuments('Item', [{
+      _id: item.id,
+      'system.quantity': quantity,
+    }]);
+    shopTelemetry('InventoryTab', 'removeQuantity update complete', {
+      actorId: $Actor?.id,
+      itemId: item?.id,
+      itemName: item?.name,
+      resultQuantity: Number(result?.system?.quantity ?? item?.system?.quantity ?? 0),
+      itemQuantityAfter: Number(item?.system?.quantity ?? 0),
+      itemQuantities: itemQuantitySnapshot($Actor?.items),
+    });
   }
 
   function onAddQtyClick(e) {
@@ -82,6 +156,34 @@
     typeFilterValue = e.target.value;
   }
 
+  function getActorItems() {
+    const source = typeof $Actor?.items?.values === "function"
+      ? $Actor.items.values()
+      : ($Actor?.items ?? []);
+    return Array.from(source);
+  }
+
+  function getInventoryItems() {
+    return getActorItems()
+      .filter((item) => typeSearch(item) && nameSearch(item))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  function getDisplayQuantity(item) {
+    const socketStock = socketShopState?.stockByItemId?.get(item?.id);
+    const stock = Number(socketStock ?? item?.system?.quantity ?? 0);
+    shopTelemetry('InventoryTab', 'display quantity evaluated', {
+      shopUuid,
+      itemId: item?.id,
+      itemName: item?.name,
+      documentQuantity: Number(item?.system?.quantity ?? 0),
+      socketStock,
+      result: Math.max(0, stock),
+      socketStockRevision,
+    });
+    return Math.max(0, stock);
+  }
+
   /** Format a price value for display (copper/silver/gold in dnd5e, or generic). */
   function formatPrice(item) {
     const price = item?.system?.price;
@@ -102,7 +204,10 @@
     return "—";
   }
 
-  onMount(async () => {});
+  onDestroy(() => {
+    unsubscribeActor();
+    unsubscribeWildcard();
+  });
 
   $: if (typeFilterValue === "all") {
     typeSearch.set("");
@@ -110,7 +215,22 @@
     typeSearch.set([typeFilterValue]);
   }
 
-  $: items = [...$wildcard];
+  $: {
+    $Actor;
+    $wildcard;
+    $nameSearch;
+    $typeSearch;
+    socketStockRevision;
+    items = getInventoryItems();
+    shopTelemetry('InventoryTab', 'items reassigned', {
+      actorId: $Actor?.id,
+      actorUuid: $Actor?.uuid,
+      socketStockRevision,
+      itemCount: items.length,
+      itemQuantities: itemQuantitySnapshot(items),
+      socketStock: [...(socketShopState?.stockByItemId ?? new Map()).entries()],
+    });
+  }
 </script>
 
 <template lang="pug">
@@ -148,7 +268,7 @@
                 .qty-controls
                   button.stealth.qty-btn(data-tooltip="Decrease quantity" data-index="{index}" on:click!="{onRemoveQtyClick}")
                     i.fa.fa-minus
-                  span.qty-value {item.system.quantity ?? 0}
+                  span.qty-value {getDisplayQuantity(item)}
                   button.stealth.qty-btn(data-tooltip="Increase quantity" data-index="{index}" on:click!="{onAddQtyClick}")
                     i.fa.fa-plus
               .inv-col-actions

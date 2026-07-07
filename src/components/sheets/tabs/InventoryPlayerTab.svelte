@@ -1,5 +1,5 @@
 <script>
-  import { getContext } from "svelte";
+  import { getContext, onDestroy, onMount } from "svelte";
   import { rippleFocus } from "#standard/action/animate/composable";
   import { TJSDocument } from "#runtime/svelte/store/fvtt/document";
 
@@ -9,13 +9,20 @@
   import { MODULE_ID } from "~/src/helpers/constants";
   import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
   import { requestBasketUpdate } from "~/src/helpers/shopSocket.js";
+  import { shopSocketState } from "~/src/stores/basketState.js";
+  import { itemQuantitySnapshot, shopTelemetry } from "~/src/helpers/telemetry.js";
 
   const Actor = getContext("#doc");
   const doc = new TJSDocument($Actor);
 
+  $: doc.set($Actor);
+
   export let sharedProps = {};
 
   $: targetActorId = sharedProps.targetActorId ?? null;
+  $: shopUuid = $Actor?.uuid ?? ($Actor?.id ? `Actor.${$Actor.id}` : null);
+  $: socketShopState = shopUuid ? $shopSocketState.get(shopUuid) : null;
+  $: socketStockRevision = socketShopState?.revision ?? 0;
   const typeSearch = createFilterQuery("type");
   const nameSearch = createFilterQuery("name");
 
@@ -28,6 +35,9 @@
   };
 
   let typeFilterValue = "all";
+  let items = [];
+  let unsubscribeActor = () => {};
+  let unsubscribeWildcard = () => {};
 
   $: typeFilterOptions = [
     { value: "all", label: "All" },
@@ -55,6 +65,12 @@
 
   function onAddToBasketClick(e) {
     const idx = parseInt(e.currentTarget.dataset.index);
+    shopTelemetry('InventoryPlayerTab', 'add button clicked', {
+      index: idx,
+      itemId: items[idx]?.id,
+      itemName: items[idx]?.name,
+      displayQuantity: items[idx] ? getDisplayQuantity(items[idx]) : null,
+    });
     addToBasket(items[idx]);
   }
 
@@ -62,16 +78,32 @@
     typeFilterValue = e.target.value;
   }
 
-  $: basket = targetActorId ? ($Actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [];
+  function getActorItems() {
+    const source = typeof $Actor?.items?.values === "function"
+      ? $Actor.items.values()
+      : ($Actor?.items ?? []);
+    return Array.from(source);
+  }
 
-  $: basketByItemId = new Map(
-    basket.map((entry) => [entry.itemId, Number(entry.quantity ?? 1)]),
-  );
+  function getInventoryItems() {
+    return getActorItems()
+      .filter((item) => typeSearch(item) && nameSearch(item))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
 
   function getDisplayQuantity(item) {
-    const stock = Number(item?.system?.quantity ?? 0);
-    const reserved = basketByItemId.get(item?.id) ?? 0;
-    return Math.max(0, stock - reserved);
+    const socketStock = socketShopState?.stockByItemId?.get(item?.id);
+    const stock = Number(socketStock ?? item?.system?.quantity ?? 0);
+    shopTelemetry('InventoryPlayerTab', 'display quantity evaluated', {
+      shopUuid,
+      itemId: item?.id,
+      itemName: item?.name,
+      documentQuantity: Number(item?.system?.quantity ?? 0),
+      socketStock,
+      result: Math.max(0, stock),
+      socketStockRevision,
+    });
+    return Math.max(0, stock);
   }
 
   function isOutOfStock(item) {
@@ -98,6 +130,18 @@
 
   /** Add item to the player's basket (stored in a flag on the current user). */
   async function addToBasket(item) {
+    shopTelemetry('InventoryPlayerTab', 'addToBasket start', {
+      shopId: $Actor?.id,
+      shopUuid: $Actor?.uuid,
+      targetActorId,
+      itemId: item?.id,
+      itemName: item?.name,
+      itemQuantity: Number(item?.system?.quantity ?? 0),
+      displayQuantity: item ? getDisplayQuantity(item) : null,
+      currentBasket: targetActorId ? ($Actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [],
+      allBasketActorIds: Object.keys($Actor?.flags?.[MODULE_ID]?.basket ?? {}),
+    });
+
     if (!targetActorId) {
       ui.notifications.warn(localize('NoTargetActor'));
       return;
@@ -109,13 +153,14 @@
       return;
     }
 
-    let basket = targetActorId ? ($Actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [];
+    const currentBasket = targetActorId ? ($Actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [];
+    const nextBasket = currentBasket.map((entry) => ({ ...entry }));
     
-    const existing = basket.find((entry) => entry.itemId === item.id);
+    const existing = nextBasket.find((entry) => entry.itemId === item.id);
     if (existing) {
       existing.quantity = (existing.quantity ?? 1) + 1;
     } else {
-      basket.push({
+      nextBasket.push({
         itemId: item.id,
         itemName: item.name,
         img: item.img,
@@ -124,24 +169,60 @@
       });
     }
     
-    if (game.user.isGM) {
-      const updateObj = {};
-      foundry.utils.setProperty(updateObj, `flags.${MODULE_ID}.basket.${targetActorId}`, basket);
-      await $doc.update(updateObj);
-    } else {
-      const result = await requestBasketUpdate({
-        shopId,
-        targetActorId,
-        nextBasket: basket,
-      });
-      if (!result.success) {
-        (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
-        return;
-      }
+    const result = await requestBasketUpdate({
+      shopId,
+      shopUuid: $Actor.uuid,
+      targetActorId,
+      nextBasket,
+    });
+    shopTelemetry('InventoryPlayerTab', 'addToBasket socket result', {
+      shopId,
+      targetActorId,
+      result,
+    });
+    if (!result.success) {
+      (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
+      return;
     }
     
     ui.notifications.info(`${item.name} added to basket`);
   }
+
+  onMount(() => {
+    shopTelemetry('InventoryPlayerTab', 'mounted', {
+      actorId: $Actor?.id,
+      actorUuid: $Actor?.uuid,
+      itemCount: $Actor?.items?.size,
+      itemQuantities: itemQuantitySnapshot($Actor?.items),
+    });
+
+    unsubscribeActor = Actor.subscribe((actor, options) => {
+      shopTelemetry('InventoryPlayerTab', 'Actor store emitted', {
+        action: options?.action,
+        data: options?.data,
+        actorId: actor?.id,
+        actorUuid: actor?.uuid,
+        itemCount: actor?.items?.size,
+        itemQuantities: itemQuantitySnapshot(actor?.items),
+        basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
+        targetBasket: targetActorId ? (actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [],
+      });
+    });
+
+    unsubscribeWildcard = wildcard.subscribe((value) => {
+      shopTelemetry('InventoryPlayerTab', 'wildcard emitted', {
+        shopUuid,
+        socketStockRevision,
+        itemCount: value?.size ?? value?.length,
+        itemQuantities: itemQuantitySnapshot(value),
+      });
+    });
+  });
+
+  onDestroy(() => {
+    unsubscribeActor();
+    unsubscribeWildcard();
+  });
 
   $: if (typeFilterValue === "all") {
     typeSearch.set("");
@@ -149,7 +230,21 @@
     typeSearch.set([typeFilterValue]);
   }
 
-  $: items = [...$wildcard];
+  $: {
+    $Actor;
+    $wildcard;
+    $nameSearch;
+    $typeSearch;
+    socketStockRevision;
+    items = getInventoryItems();
+    shopTelemetry('InventoryPlayerTab', 'items reassigned', {
+      shopUuid,
+      socketStockRevision,
+      itemCount: items.length,
+      itemQuantities: itemQuantitySnapshot(items),
+      socketStock: [...(socketShopState?.stockByItemId ?? new Map()).entries()],
+    });
+  }
 </script>
 
 <template lang="pug">
