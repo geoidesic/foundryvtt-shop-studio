@@ -16,9 +16,10 @@ window.GAS = window.GAS || {};
 Hooks.once("init", (app, html, data) => {
   window.GAS.log = log;
   window.GAS.log.level = log.VERBOSE;
-  window.GAS.log.i('Initialising');
+  window.GAS.log.g('Initialising');
   CONFIG.debug.hooks = true;
 
+  registerSocket();
   registerShopActor();
 
   CONFIG.Actor.typeLabels ??= {};
@@ -26,7 +27,7 @@ Hooks.once("init", (app, html, data) => {
     CONFIG.Actor.typeLabels[LEGACY_SHOP_ACTOR_TYPE] = 'Shop (Legacy)';
   }
 
-  Actors.registerSheet(MODULE_ID, ShopActorSheet, {
+  foundry.documents.collections.Actors.registerSheet(MODULE_ID, ShopActorSheet, {
     types: [SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE],
     makeDefault: false,
     label: 'Shop Studio'
@@ -39,14 +40,15 @@ Hooks.once("init", (app, html, data) => {
   }
   
   registerSettings(app);
+
 });
 
 Hooks.once("ready", (app, html, data) => {
+  window.GAS.log.g('GSS ready hook');
   if (!game.modules.get(MODULE_ID).active) {
-    window.GAS.log.w('Module is not active');
+    window.GAS.log.w('GSS Module is not active');
     return;
   }
-  registerSocket();
   if (!game.settings.get(MODULE_ID, 'dontShowWelcome')) {
     new WelcomeApplication().render(true, { focus: true });
   }

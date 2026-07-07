@@ -19,6 +19,13 @@ function openActorSheet(actorId) {
     const actor = fromUuidSync(`Actor.${actorId}`);
     actor?.sheet?.render(true);
   }
+
+  function onSocketTestClick() {
+    game.socket.emit('module.foundryvtt-shop-studio', {
+      type: 'ACTION',
+      payload: 'Foo'
+    });
+  }
 </script>
 
 <template lang="pug">
@@ -29,6 +36,7 @@ function openActorSheet(actorId) {
           src="{sharedProps.actor?.img || 'icons/svg/mystery-man.svg'}"
           alt="Shop Profile"
         )
+        button.socket-test-btn(type="button" on:click!="{onSocketTestClick}") Socket Test
         +if("sharedProps.associatedActors && sharedProps.associatedActors.length > 0")
           .associated-actors-section
             h2 {sharedProps.localize("AssociatedActors")}
