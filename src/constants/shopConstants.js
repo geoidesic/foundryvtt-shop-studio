@@ -1,7 +1,9 @@
+import { MODULE_ID } from '~/src/helpers/constants.ts';
+
 export const LEGACY_SHOP_ACTOR_TYPE = 'shop';
 export const SHOP_ACTOR_TYPE = 'npc';
-export const SHOP_IDENTITY_KIND = 'shop-studio.shop';
-export const SHOP_FLAG_SCOPE = 'shop-studio';
+export const SHOP_IDENTITY_KIND = MODULE_ID+'.shop';
+export const SHOP_FLAG_SCOPE = MODULE_ID;
 export const SHOP_FLAG_KEYS = Object.freeze({
   configuration: 'configuration',
   stock: 'stock',

@@ -102,9 +102,9 @@ We use the following mechanism to ensure our custom sheet and data model are use
 ## Constants Summary (current values)
 - `LEGACY_SHOP_ACTOR_TYPE` = `'shop'`
 - `SHOP_ACTOR_TYPE` = `'npc'`
-- `SHOP_DIALOG_TYPE` = `'shop-studio.shop'` (local to `shopStudioButtons.js`)
-- `SHOP_IDENTITY_KIND` = `'shop-studio.shop'`
-- `SHOP_FLAG_SCOPE` = `'shop-studio'`
+- `SHOP_DIALOG_TYPE` = `'foundryvtt-shop-studio.shop'` (local to `shopStudioButtons.js`)
+- `SHOP_IDENTITY_KIND` = `'foundryvtt-shop-studio.shop'`
+- `SHOP_FLAG_SCOPE` = `'foundryvtt-shop-studio'`
 - `SHOP_FLAG_KEYS.identity` = `'identity'`
 
 ## Rationale for Rollback

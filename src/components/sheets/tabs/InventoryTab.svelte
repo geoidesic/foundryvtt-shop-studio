@@ -6,7 +6,7 @@
   import { TJSInput } from "#standard/component/form";
   import { createFilterQuery } from "~/src/filters/itemFilterQuery";
   import { localize } from "~/src/helpers/utility";
-  import { formatPrice as formatCurrencyPrice } from "~/src/helpers/currency.js";
+  import { applyPriceFactor, formatPrice as formatCurrencyPrice } from "~/src/helpers/currency.js";
   import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
   import ScrollingContainer from "~/src/helpers/svelte-components/ScrollingContainer.svelte";
   import { shopSocketState } from "~/src/stores/basketState.js";
@@ -16,6 +16,8 @@
   const doc = new TJSDocument($Actor);
 
   $: doc.set($Actor);
+
+  export let sharedProps = {};
 
   const typeSearch = createFilterQuery("type");
   const nameSearch = createFilterQuery("name");
@@ -184,7 +186,7 @@
   }
 
   function formatPrice(item) {
-    return formatCurrencyPrice(item?.system?.price);
+    return formatCurrencyPrice(applyPriceFactor(item?.system?.price, sharedProps.salePriceFactor ?? 100));
   }
 
   onDestroy(() => {

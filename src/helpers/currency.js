@@ -187,6 +187,24 @@ export function makeBasketPrice(price) {
   };
 }
 
+export function applyPriceFactor(price, factorPercent = 100) {
+  const normalized = normalizePrice(price);
+  const factor = Number(factorPercent) / 100;
+  const multiplier = Number.isFinite(factor) ? factor : 1;
+
+  if (isDenominationMap(normalized.value)) {
+    return {
+      ...normalized,
+      value: cleanDenominationMap(normalized.value, multiplier),
+    };
+  }
+
+  return {
+    ...normalized,
+    value: normalized.value * multiplier,
+  };
+}
+
 export function formatPrice(price) {
   const normalized = normalizePrice(price);
   if (isDenominationMap(normalized.value)) {

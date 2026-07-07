@@ -55,6 +55,7 @@
     filterText,
     items: actor?.items || [],
     targetActorId: selectedActorId,
+    salePriceFactor: config.salePriceFactor ?? 100,
     localize,
     clearFilter,
     onFilterChange: (value) => {

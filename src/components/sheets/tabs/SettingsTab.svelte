@@ -1,5 +1,11 @@
 <script>
+  import { getContext } from 'svelte';
+  import { shopConfig } from '~/src/stores/shopConfig.js';
+
   export let sharedProps = {};
+
+  // Get the shopConfig store from context (set by ShopSheetGM)
+  const config = getContext('shopConfig') || shopConfig;
 
   function formatFactor(value, fallback) {
     const factor = Number(value ?? fallback);
@@ -7,11 +13,11 @@
   }
 
   function onSaleFactorInput(event) {
-    sharedProps.onSalePriceFactorChange?.(event.target.value);
+    config.update((current) => ({ ...current, salePriceFactor: Number(event.target.value) }));
   }
 
   function onBuyFactorInput(event) {
-    sharedProps.onBuyPriceFactorChange?.(event.target.value);
+    config.update((current) => ({ ...current, buyPriceFactor: Number(event.target.value) }));
   }
 </script>
 
@@ -21,8 +27,8 @@
       label.setting-control
         div.setting-label
           span {sharedProps.localize("SalePriceFactor")}
-          strong {formatFactor(sharedProps.salePriceFactor, 100)}%
-        input(type="range" value="{formatFactor(sharedProps.salePriceFactor, 100)}" min="50" max="200" step="1" on:input!="{onSaleFactorInput}")
+          strong {formatFactor($config.salePriceFactor, 100)}%
+        input(type="range" bind:value!="{ $config.salePriceFactor }" min="50" max="200" step="1" on:input!="{onSaleFactorInput}")
         div.setting-range
           span 50%
           span 200%
@@ -30,8 +36,8 @@
       label.setting-control
         div.setting-label
           span {sharedProps.localize("BuyPriceFactor")}
-          strong {formatFactor(sharedProps.buyPriceFactor, 50)}%
-        input(type="range" value="{formatFactor(sharedProps.buyPriceFactor, 50)}" min="50" max="200" step="1" on:input!="{onBuyFactorInput}")
+          strong {formatFactor($config.buyPriceFactor, 50)}%
+        input(type="range" bind:value!="{ $config.buyPriceFactor }" min="50" max="200" step="1" on:input!="{onBuyFactorInput}")
         div.setting-range
           span 50%
           span 200%

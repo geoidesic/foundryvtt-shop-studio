@@ -7,7 +7,7 @@
   import { createFilterQuery } from "~/src/filters/itemFilterQuery";
   import { localize } from "~/src/helpers/utility";
   import { MODULE_ID } from "~/src/helpers/constants";
-  import { formatPrice as formatCurrencyPrice, makeBasketPrice } from "~/src/helpers/currency.js";
+  import { applyPriceFactor, formatPrice as formatCurrencyPrice, makeBasketPrice } from "~/src/helpers/currency.js";
   import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
   import { requestBasketUpdate } from "~/src/helpers/shopSocket.js";
   import { shopSocketState } from "~/src/stores/basketState.js";
@@ -112,7 +112,11 @@
   }
 
   function formatPrice(item) {
-    return formatCurrencyPrice(item?.system?.price);
+    return formatCurrencyPrice(getSalePrice(item));
+  }
+
+  function getSalePrice(item) {
+    return applyPriceFactor(item?.system?.price, sharedProps.salePriceFactor ?? 100);
   }
 
   /** Add item to the player's basket (stored in a flag on the current user). */
@@ -151,7 +155,7 @@
         itemId: item.id,
         itemName: item.name,
         img: item.img,
-        price: makeBasketPrice(item.system?.price),
+        price: makeBasketPrice(getSalePrice(item)),
         quantity: 1,
       });
     }

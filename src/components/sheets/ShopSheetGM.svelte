@@ -12,12 +12,14 @@ import { MODULE_ID } from '~/src/helpers/constants';
 import { shopTelemetry } from '~/src/helpers/telemetry.js';
 import { registerShopTargetActor, registerShopTargetEntries } from '~/src/helpers/shopTargets.js';
 import { getShopConfiguration, isShopEditing, setShopConfiguration } from '~/src/helpers/shopIdentity.js';
+import { shopConfig } from '~/src/stores/shopConfig.js';
 
 export let documentStore;
 
 const application = getContext('#external').application;
 
   setContext('#doc', documentStore);
+  setContext('shopConfig', shopConfig);
 
   let activeTab = 'shopfront';
   let filterText = '';
@@ -39,16 +41,29 @@ const application = getContext('#external').application;
   $: config = getShopConfiguration(actor);
   $: isEditing = isShopEditing(actor);
 
+  // Initialize shopConfig store from actor flags when actor changes
   $: if (actor?.id && actor.id !== initializedActorId) {
-    salePriceFactor = config.salePriceFactor ?? 100;
-    buyPriceFactor = config.buyPriceFactor ?? 50;
-    priceVariance = config.priceVariance ?? 10;
-    variancePeriod = config.variancePeriod ?? 'daily';
-    atrophyPercent = config.atrophyPercent ?? 5;
-    associatedActors = config.associatedActors ?? [];
-    rollTables = config.rollTables ?? [];
+    const config = getShopConfiguration(actor);
+    shopConfig.set({
+      salePriceFactor: config.salePriceFactor ?? 100,
+      buyPriceFactor: config.buyPriceFactor ?? 50,
+      priceVariance: config.priceVariance ?? 10,
+      variancePeriod: config.variancePeriod ?? 'daily',
+      atrophyPercent: config.atrophyPercent ?? 5,
+      associatedActors: config.associatedActors ?? [],
+      rollTables: config.rollTables ?? []
+    });
     initializedActorId = actor.id;
   }
+
+  // Sync local variables from store for backward compatibility
+  $: salePriceFactor = $shopConfig.salePriceFactor;
+  $: buyPriceFactor = $shopConfig.buyPriceFactor;
+  $: priceVariance = $shopConfig.priceVariance;
+  $: variancePeriod = $shopConfig.variancePeriod;
+  $: atrophyPercent = $shopConfig.atrophyPercent;
+  $: associatedActors = $shopConfig.associatedActors;
+  $: rollTables = $shopConfig.rollTables;
 
   $: if (actor?.id && actor.id !== restoredSelectionActorId) {
     restoredSelectionActorId = actor.id;
@@ -152,29 +167,35 @@ const application = getContext('#external').application;
       ui.notifications.warn(localize('NoPermission'));
       return;
     }
-    await setShopConfiguration(actor, {
-      salePriceFactor: parseFloat(salePriceFactor),
-      buyPriceFactor: parseFloat(buyPriceFactor),
-      priceVariance: parseFloat(priceVariance),
-      variancePeriod,
-      atrophyPercent: parseFloat(atrophyPercent),
-      associatedActors,
-      rollTables,
-    });
+    const nextConfig = {
+      ...$shopConfig,
+      salePriceFactor: parseFloat($shopConfig.salePriceFactor),
+      buyPriceFactor: parseFloat($shopConfig.buyPriceFactor),
+      priceVariance: parseFloat($shopConfig.priceVariance),
+      variancePeriod: $shopConfig.variancePeriod,
+      atrophyPercent: parseFloat($shopConfig.atrophyPercent),
+      associatedActors: $shopConfig.associatedActors,
+      rollTables: $shopConfig.rollTables,
+    };
+    await setShopConfiguration(actor, nextConfig);
+    shopConfig.set(nextConfig);
     ui.notifications.info(localize('SettingsSaved'));
   }
 
   async function silentSaveSettings() {
     if (!actor?.isOwner) return;
-    await setShopConfiguration(actor, {
-      salePriceFactor: parseFloat(salePriceFactor),
-      buyPriceFactor: parseFloat(buyPriceFactor),
-      priceVariance: parseFloat(priceVariance),
-      variancePeriod,
-      atrophyPercent: parseFloat(atrophyPercent),
-      associatedActors,
-      rollTables,
-    });
+    const nextConfig = {
+      ...$shopConfig,
+      salePriceFactor: parseFloat($shopConfig.salePriceFactor),
+      buyPriceFactor: parseFloat($shopConfig.buyPriceFactor),
+      priceVariance: parseFloat($shopConfig.priceVariance),
+      variancePeriod: $shopConfig.variancePeriod,
+      atrophyPercent: parseFloat($shopConfig.atrophyPercent),
+      associatedActors: $shopConfig.associatedActors,
+      rollTables: $shopConfig.rollTables,
+    };
+    await setShopConfiguration(actor, nextConfig);
+    shopConfig.set(nextConfig);
   }
 
   async function provisionStore() {

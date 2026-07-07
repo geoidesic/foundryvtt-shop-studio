@@ -2,11 +2,14 @@ import { MODULE_ID } from '~/src/helpers/constants';
 import {
   DEFAULT_SHOP_CONFIGURATION,
   SHOP_FLAG_KEYS,
+  SHOP_FLAG_SCOPE,
   SHOP_IDENTITY_KIND,
 } from '~/src/constants/shopConstants.js';
 
 export function getShopIdentity(actor) {
-  return actor?.getFlag?.(MODULE_ID, SHOP_FLAG_KEYS.identity) ?? {};
+  return actor?.getFlag?.(MODULE_ID, SHOP_FLAG_KEYS.identity)
+    ?? actor?.getFlag?.(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.identity)
+    ?? {};
 }
 
 export async function setShopIdentity(actor, identity = {}) {
@@ -31,7 +34,9 @@ export function isShopActor(actor) {
 }
 
 export function getShopConfiguration(actor) {
-  const configuration = actor?.getFlag?.(MODULE_ID, SHOP_FLAG_KEYS.configuration) ?? {};
+  const configuration = actor?.getFlag?.(MODULE_ID, SHOP_FLAG_KEYS.configuration)
+    ?? actor?.getFlag?.(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.configuration)
+    ?? {};
   return {
     ...DEFAULT_SHOP_CONFIGURATION,
     ...configuration,
