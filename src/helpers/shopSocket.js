@@ -3,6 +3,7 @@ import { TJSDocument } from '#runtime/svelte/store/fvtt/document';
 import { recordShopSocketResult } from '~/src/stores/basketState.js';
 import { itemQuantitySnapshot, shopTelemetry } from '~/src/helpers/telemetry.js';
 import { resolveShopTargetActor } from '~/src/helpers/shopTargets.js';
+import { getComparablePriceValue, makeBasketPrice, multiplyPrice, normalizePrice } from '~/src/helpers/currency.js';
 
 const SOCKET_NAME = `module.${MODULE_ID}`;
 const SOCKET_HANDLER_KEY = `__${MODULE_ID}_socketHandler`;
@@ -75,6 +76,10 @@ function getShopUuidAliases(shop) {
 }
 
 function resolveShopDocument(shop) {
+  const shopUuid = getShopUuid(shop);
+  const document = shopUuid ? globalThis.fromUuidSync?.(shopUuid) : void 0;
+  if (document) return document;
+
   if (typeof shop === 'object' && shop) {
     const shopId = shop.shopId ?? shop.id;
     if (typeof shopId === 'string' && shopId) {
@@ -83,10 +88,6 @@ function resolveShopDocument(shop) {
       if (actor) return actor;
     }
   }
-
-  const shopUuid = getShopUuid(shop);
-  const document = shopUuid ? globalThis.fromUuidSync?.(shopUuid) : void 0;
-  if (document) return document;
 
   const shopId = typeof shop === 'string'
     ? (shop.includes('.') ? shop.split('.').pop() : shop)
@@ -102,15 +103,12 @@ function refreshShopDocumentStore(store, shop, options = {}) {
     documentName: document?.name,
     options,
   });
-  store.set(void 0, { ...options, action: 'shop-socket-refresh-start' });
-  queueMicrotask(() => {
-    shopTelemetry('shopSocket', 'refresh store commit', {
-      shop: getShopUuid(shop),
-      documentId: document?.id,
-      documentName: document?.name,
-      options,
-    });
-    store.set(document, { ...options, action: 'shop-socket-refresh' });
+  store.set(document, { ...options, action: 'shop-socket-refresh' });
+  shopTelemetry('shopSocket', 'refresh store commit', {
+    shop: getShopUuid(shop),
+    documentId: document?.id,
+    documentName: document?.name,
+    options,
   });
   return document;
 }
@@ -200,13 +198,17 @@ export function refreshShopDocumentStores(shop, options = {}) {
 function sanitizeBasket(entries) {
   return (entries ?? [])
     .filter((entry) => entry?.itemId)
-    .map((entry) => ({
-      itemId: entry.itemId,
-      itemName: entry.itemName,
-      img: entry.img,
-      price: Number(entry.price ?? 0),
-      quantity: Math.max(0, Number(entry.quantity ?? 0)),
-    }))
+    .map((entry) => {
+      const price = makeBasketPrice(entry.price);
+      return {
+        itemId: entry.itemId,
+        itemName: entry.itemName,
+        img: entry.img,
+        price,
+        priceValue: getComparablePriceValue(price),
+        quantity: Math.max(0, Number(entry.quantity ?? 0)),
+      };
+    })
     .filter((entry) => entry.quantity > 0);
 }
 
@@ -392,6 +394,30 @@ function registerShopDocumentHooks() {
       userId,
     });
   });
+
+  Hooks.on('updateActorDelta', (actorDelta, data, options, userId) => {
+    const token = actorDelta?.parent;
+    const actor = token?.actor;
+    shopTelemetry('shopSocket', 'hook updateActorDelta', {
+      actorDeltaId: actorDelta?.id,
+      tokenId: token?.id,
+      tokenUuid: token?.uuid,
+      actorId: actor?.id,
+      actorUuid: actor?.uuid,
+      actorName: actor?.name,
+      changedKeys: Object.keys(data ?? {}),
+      data,
+      options,
+      userId,
+      hasRegisteredStore: hasRegisteredShopDocumentStore(actor),
+    });
+    refreshRegisteredShopDocumentStores(actor, {
+      action: 'shop-hook-update-actor-delta',
+      data,
+      options,
+      userId,
+    });
+  });
 }
 
 export function registerSocket() {
@@ -523,11 +549,16 @@ export function registerSocket() {
                 itemId: entry.itemId,
                 itemName: entry.itemName,
                 quantity: qty,
-                price: entry.price ?? 0,
-                total: (entry.price ?? 0) * qty,
+                price: getComparablePriceValue(entry.price),
+                total: getComparablePriceValue(multiplyPrice(entry.price, qty)),
+                currency: normalizePrice(entry.price).denomination,
                 buyerId: targetActorId,
                 buyerName: targetActor.name,
                 timestamp: Date.now(),
+                metadata: {
+                  price: makeBasketPrice(entry.price),
+                  total: multiplyPrice(entry.price, qty),
+                },
               });
             }
 

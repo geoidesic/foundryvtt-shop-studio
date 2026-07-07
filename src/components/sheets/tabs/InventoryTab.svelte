@@ -6,6 +6,7 @@
   import { TJSInput } from "#standard/component/form";
   import { createFilterQuery } from "~/src/filters/itemFilterQuery";
   import { localize } from "~/src/helpers/utility";
+  import { formatPrice as formatCurrencyPrice } from "~/src/helpers/currency.js";
   import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
   import ScrollingContainer from "~/src/helpers/svelte-components/ScrollingContainer.svelte";
   import { shopSocketState } from "~/src/stores/basketState.js";
@@ -170,38 +171,20 @@
   }
 
   function getDisplayQuantity(item) {
-    const socketStock = socketShopState?.stockByItemId?.get(item?.id);
-    const stock = Number(socketStock ?? item?.system?.quantity ?? 0);
+    const stock = Number(item?.system?.quantity ?? 0);
     shopTelemetry('InventoryTab', 'display quantity evaluated', {
       shopUuid,
       itemId: item?.id,
       itemName: item?.name,
       documentQuantity: Number(item?.system?.quantity ?? 0),
-      socketStock,
       result: Math.max(0, stock),
       socketStockRevision,
     });
     return Math.max(0, stock);
   }
 
-  /** Format a price value for display (copper/silver/gold in dnd5e, or generic). */
   function formatPrice(item) {
-    const price = item?.system?.price;
-    if (!price) return "—";
-    // dnd5e-style price object
-    if (typeof price === "object" && price.value !== undefined) {
-      const gp = Math.floor(price.value);
-      const sp = Math.floor((price.value - gp) * 10);
-      const cp = Math.round(((price.value - gp) * 10 - sp) * 10);
-      const parts = [];
-      if (gp > 0) parts.push(`${gp} gp`);
-      if (sp > 0) parts.push(`${sp} sp`);
-      if (cp > 0) parts.push(`${cp} cp`);
-      return parts.length > 0 ? parts.join(" ") : "—";
-    }
-    // Simple number price
-    if (typeof price === "number") return `${price} gp`;
-    return "—";
+    return formatCurrencyPrice(item?.system?.price);
   }
 
   onDestroy(() => {

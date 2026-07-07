@@ -2,6 +2,12 @@
   import { getContext, onDestroy, onMount } from "svelte";
   import { localize } from "~/src/helpers/utility";
   import { MODULE_ID } from "~/src/helpers/constants";
+  import {
+    formatPrice as formatCurrencyPrice,
+    formatTotalPrice,
+    multiplyPrice,
+    makeBasketPrice,
+  } from "~/src/helpers/currency.js";
   import { requestBasketUpdate, requestPurchase } from "~/src/helpers/shopSocket.js";
   import { shopSocketState } from "~/src/stores/basketState.js";
   import { shopTelemetry } from "~/src/helpers/telemetry.js";
@@ -68,7 +74,14 @@
   }
 
   let basket = [];
-  let totalPrice = 0;
+  let totalPrice = "—";
+
+  function getBasketTotal(entries) {
+    return formatTotalPrice(entries.map((entry) => ({
+      price: entry.price,
+      quantity: entry.quantity ?? 1,
+    })));
+  }
 
   $: userId = game.user.id;
 
@@ -80,7 +93,7 @@
       const socketBasket = socketShopState?.basketsByActorId?.get(targetActorId) ?? [];
       const sourceBasket = hasSocketBasket ? socketBasket : documentBasket;
       basket = sourceBasket.map((entry) => ({ ...entry }));
-      totalPrice = basket.reduce((sum, entry) => sum + (entry.price ?? 0) * (entry.quantity ?? 1), 0);
+      totalPrice = getBasketTotal(basket);
       shopTelemetry('BasketTab', 'basket derived', {
         shopId: $doc?.id,
         shopUuid,
@@ -102,7 +115,7 @@
       });
     } else {
       basket = [];
-      totalPrice = 0;
+      totalPrice = "—";
       shopTelemetry('BasketTab', 'basket derived empty: missing doc or target', {
         hasDoc: Boolean($doc),
         shopId: $doc?.id,
@@ -198,7 +211,7 @@
     }
     basket = (result.basket ?? nextBasket).map((entry) => ({ ...entry }));
 
-    totalPrice = basket.reduce((sum, entry) => sum + (entry.price ?? 0) * (entry.quantity ?? 1), 0);
+    totalPrice = getBasketTotal(basket);
   }
 
   async function clearBasket() {
@@ -211,7 +224,7 @@
       isGM: game.user.isGM,
     });
     basket = [];
-    totalPrice = 0;
+    totalPrice = "—";
 
     const result = await requestBasketUpdate({
       shopId: $doc.id,
@@ -253,7 +266,7 @@
       shopId: $doc.id,
       shopUuid: $doc.uuid,
       targetActorId,
-      basket: basket.map(e => ({ itemId: e.itemId, itemName: e.itemName, quantity: e.quantity ?? 1, price: e.price ?? 0 })),
+      basket: basket.map((entry) => serializeBasketEntry(entry)),
     });
 
     window.GAS.log.p('onBuyNow | socket purchase result:', result.success, '| errors:', result.errors?.length || 0);
@@ -262,26 +275,30 @@
     } else {
       window.GAS.log.p('onBuyNow | purchase successful, clearing local basket state');
       basket = [];
-      totalPrice = 0;
+      totalPrice = "—";
       ui.notifications.info(game.i18n.format('PurchaseComplete', { actorName: targetActor.name }));
     }
   }
 
-  /** Format a price value for display. */
   function formatPrice(price) {
-    if (!price && price !== 0) return "—";
-    const gp = Math.floor(price);
-    const sp = Math.floor((price - gp) * 10);
-    const cp = Math.round(((price - gp) * 10 - sp) * 10);
-    const parts = [];
-    if (gp > 0) parts.push(`${gp} gp`);
-    if (sp > 0) parts.push(`${sp} sp`);
-    if (cp > 0) parts.push(`${cp} cp`);
-    return parts.length > 0 ? parts.join(" ") : "—";
+    return formatCurrencyPrice(price);
+  }
+
+  function formatLineTotal(entry) {
+    return formatPrice(multiplyPrice(entry.price, entry.quantity ?? 1));
   }
 
   function formatTotal() {
-    return formatPrice(totalPrice);
+    return totalPrice;
+  }
+
+  function serializeBasketEntry(entry) {
+    return {
+      itemId: entry.itemId,
+      itemName: entry.itemName,
+      quantity: entry.quantity ?? 1,
+      price: makeBasketPrice(entry.price),
+    };
   }
 
   function showItemSheet(itemId) {
@@ -386,7 +403,7 @@
                     button.stealth.qty-btn(data-tooltip="Increase" data-index="{index}" data-delta="1" on:click!="{onQtyClick}")
                       i.fa.fa-plus
                 .basket-col-total
-                  span.total-text {formatPrice((entry.price ?? 0) * (entry.quantity ?? 1))}
+                  span.total-text {formatLineTotal(entry)}
                 .basket-col-actions
                   button.stealth.negative(data-tooltip="Remove" data-index="{index}" on:click!="{onRemoveClick}")
                     i.fa.fa-trash

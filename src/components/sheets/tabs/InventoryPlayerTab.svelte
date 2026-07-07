@@ -7,6 +7,7 @@
   import { createFilterQuery } from "~/src/filters/itemFilterQuery";
   import { localize } from "~/src/helpers/utility";
   import { MODULE_ID } from "~/src/helpers/constants";
+  import { formatPrice as formatCurrencyPrice, makeBasketPrice } from "~/src/helpers/currency.js";
   import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
   import { requestBasketUpdate } from "~/src/helpers/shopSocket.js";
   import { shopSocketState } from "~/src/stores/basketState.js";
@@ -110,22 +111,8 @@
     return getDisplayQuantity(item) <= 0;
   }
 
-  /** Format a price value for display. */
   function formatPrice(item) {
-    const price = item?.system?.price;
-    if (!price) return "—";
-    if (typeof price === "object" && price.value !== undefined) {
-      const gp = Math.floor(price.value);
-      const sp = Math.floor((price.value - gp) * 10);
-      const cp = Math.round(((price.value - gp) * 10 - sp) * 10);
-      const parts = [];
-      if (gp > 0) parts.push(`${gp} gp`);
-      if (sp > 0) parts.push(`${sp} sp`);
-      if (cp > 0) parts.push(`${cp} cp`);
-      return parts.length > 0 ? parts.join(" ") : "—";
-    }
-    if (typeof price === "number") return `${price} gp`;
-    return "—";
+    return formatCurrencyPrice(item?.system?.price);
   }
 
   /** Add item to the player's basket (stored in a flag on the current user). */
@@ -164,7 +151,7 @@
         itemId: item.id,
         itemName: item.name,
         img: item.img,
-        price: item.system?.price?.value ?? item.system?.price ?? 0,
+        price: makeBasketPrice(item.system?.price),
         quantity: 1,
       });
     }
