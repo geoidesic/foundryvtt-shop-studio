@@ -18,14 +18,11 @@ export function onRenderTokenHUD(app, html, data) {
   if (!root) { console.log('[ShopHUD] bail: no HUD root'); return; }
 
   const flagIdentity = actor.getFlag(MODULE_ID, 'identity');
-  const systemIdentity = actor.system?.identity;
   const isShop = actor.isShop === true
     || flagIdentity?.isShop === true
-    || flagIdentity?.kind === SHOP_IDENTITY_KIND
-    || systemIdentity?.isShop === true
-    || systemIdentity?.kind === SHOP_IDENTITY_KIND;
+    || flagIdentity?.kind === SHOP_IDENTITY_KIND;
 
-  if (!isShop) { console.log('[ShopHUD] bail: not a shop', { flagIdentity, systemIdentity }); return; }
+  if (!isShop) { console.log('[ShopHUD] bail: not a shop', { flagIdentity }); return; }
 
   // Apply shop-specific HUD stripping while leaving the custom open button disabled.
 

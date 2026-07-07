@@ -9,6 +9,7 @@
   import { MODULE_ID } from '~/src/helpers/constants';
   import { registerShopDocumentStore } from '~/src/helpers/shopSocket.js';
   import { shopTelemetry } from '~/src/helpers/telemetry.js';
+  import { isShopEditing } from '~/src/helpers/shopIdentity.js';
 
   export let elementRoot;
   export let documentStore;
@@ -22,7 +23,7 @@
   let registeredShopUuid = null;
 
   $: actor = $documentStore;
-  $: isEditing = actor?.system?.identity?.isEditing ?? false;
+  $: isEditing = isShopEditing(actor);
   $: showGM = game.user?.isGM && isEditing;
 
   /** The actor ID the current player has selected as their shop target. */

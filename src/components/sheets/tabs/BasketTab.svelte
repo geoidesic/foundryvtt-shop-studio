@@ -5,8 +5,10 @@
   import {
     formatPrice as formatCurrencyPrice,
     formatTotalPrice,
+    getActorCurrencyPaymentUpdate,
     multiplyPrice,
     makeBasketPrice,
+    sumPrices,
   } from "~/src/helpers/currency.js";
   import { requestBasketUpdate, requestPurchase } from "~/src/helpers/shopSocket.js";
   import { shopSocketState } from "~/src/stores/basketState.js";
@@ -74,10 +76,17 @@
   }
 
   let basket = [];
-  let totalPrice = "—";
+  $: totalPrice = basket.length ? getBasketTotal(basket) : "—";
 
   function getBasketTotal(entries) {
     return formatTotalPrice(entries.map((entry) => ({
+      price: entry.price,
+      quantity: entry.quantity ?? 1,
+    })));
+  }
+
+  function getBasketTotalPrice(entries) {
+    return sumPrices(entries.map((entry) => ({
       price: entry.price,
       quantity: entry.quantity ?? 1,
     })));
@@ -93,7 +102,6 @@
       const socketBasket = socketShopState?.basketsByActorId?.get(targetActorId) ?? [];
       const sourceBasket = hasSocketBasket ? socketBasket : documentBasket;
       basket = sourceBasket.map((entry) => ({ ...entry }));
-      totalPrice = getBasketTotal(basket);
       shopTelemetry('BasketTab', 'basket derived', {
         shopId: $doc?.id,
         shopUuid,
@@ -115,7 +123,6 @@
       });
     } else {
       basket = [];
-      totalPrice = "—";
       shopTelemetry('BasketTab', 'basket derived empty: missing doc or target', {
         hasDoc: Boolean($doc),
         shopId: $doc?.id,
@@ -210,8 +217,6 @@
       return;
     }
     basket = (result.basket ?? nextBasket).map((entry) => ({ ...entry }));
-
-    totalPrice = getBasketTotal(basket);
   }
 
   async function clearBasket() {
@@ -224,7 +229,6 @@
       isGM: game.user.isGM,
     });
     basket = [];
-    totalPrice = "—";
 
     const result = await requestBasketUpdate({
       shopId: $doc.id,
@@ -261,6 +265,12 @@
       return;
     }
 
+    const payment = getActorCurrencyPaymentUpdate(targetActor, getBasketTotalPrice(basket));
+    if (!payment.success) {
+      payment.errors.forEach(err => ui.notifications.warn(err));
+      return;
+    }
+
     window.GAS.log.p('onBuyNow | requesting purchase via socket');
     const result = await requestPurchase({
       shopId: $doc.id,
@@ -275,7 +285,6 @@
     } else {
       window.GAS.log.p('onBuyNow | purchase successful, clearing local basket state');
       basket = [];
-      totalPrice = "—";
       ui.notifications.info(game.i18n.format('PurchaseComplete', { actorName: targetActor.name }));
     }
   }

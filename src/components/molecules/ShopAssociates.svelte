@@ -12,9 +12,7 @@
   function getAssociatedActors() {
     const flagList = $doc?.getFlag?.(MODULE_ID, 'configuration')?.associatedActors;
     if (Array.isArray(flagList)) return flagList;
-
-    const systemList = $doc?.system?.configuration?.associatedActors;
-    return Array.isArray(systemList) ? systemList : [];
+    return [];
   }
 
   async function handleRemove(index) {

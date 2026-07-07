@@ -3,7 +3,7 @@ import '~/src/styles/init.sass'; // Import any styles as this includes them in t
 
 import WelcomeApplication from '~/src/components/pages/WelcomeApplication.js';
 import ShopActorSheet from '~/src/sheets/ShopActorSheet';
-import { registerShopActor, SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE } from '~/src/actors/ShopActor';
+import { getShopActorType, registerShopActor, SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE } from '~/src/actors/ShopActor';
 import { MODULE_ID } from '~/src/helpers/constants';
 import { log, safeGetSetting } from '~/src/helpers/utility';
 import { registerSettings } from '~/src/settings';
@@ -28,7 +28,7 @@ Hooks.once("init", (app, html, data) => {
   }
 
   foundry.documents.collections.Actors.registerSheet(MODULE_ID, ShopActorSheet, {
-    types: [SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE],
+    types: [...new Set([getShopActorType(), SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE])],
     makeDefault: false,
     label: 'Shop Studio'
   });
@@ -49,7 +49,7 @@ Hooks.once("ready", (app, html, data) => {
     window.GAS.log.w('GSS Module is not active');
     return;
   }
-  if (!game.settings.get(MODULE_ID, 'dontShowWelcome')) {
+  if (!safeGetSetting(MODULE_ID, 'dontShowWelcome', false)) {
     new WelcomeApplication().render(true, { focus: true });
   }
 });

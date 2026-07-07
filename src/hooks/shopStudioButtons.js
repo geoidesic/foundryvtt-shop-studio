@@ -1,7 +1,7 @@
 import { MODULE_ID } from '~/src/helpers/constants';
 import { safeGetSetting } from '~/src/helpers/utility';
+import { getShopActorType } from '~/src/actors/ShopActor.js';
 import {
-  SHOP_ACTOR_TYPE,
   SHOP_FLAG_KEYS,
   SHOP_FLAG_SCOPE,
   SHOP_IDENTITY_KIND,
@@ -79,10 +79,23 @@ function applyShopCreationFields(form) {
   ensureShopHiddenField(form, 'img', 'icons/environment/settlement/warehouse-crates.webp');
 }
 
+function applyShopDialogSelection(form) {
+  const selectedType = getSelectedType(form);
+  if (selectedType !== SHOP_DIALOG_TYPE) {
+    clearShopHiddenFields(form);
+    return false;
+  }
+
+  setSelectedType(form, getShopActorType());
+  applyShopCreationFields(form);
+  return true;
+}
+
 function addShopTypeToRadioList(form) {
   const list = form.querySelector('ol.unlist.card, ol.card, ol.unlist');
-  const npcInput = form.querySelector(`input[name="type"][value="${SHOP_ACTOR_TYPE}"]`);
-  if (!list || !npcInput) return;
+  const backingType = getShopActorType();
+  const backingInput = form.querySelector(`input[name="type"][value="${backingType}"]`);
+  if (!list || !backingInput) return;
   if (form.querySelector(`input[name="type"][value="${SHOP_DIALOG_TYPE}"]`)) return;
 
   const li = document.createElement('li');
@@ -108,9 +121,9 @@ function addShopTypeToRadioList(form) {
   label.append(icon, text, input);
   li.appendChild(label);
 
-  const npcRow = npcInput.closest('li');
-  if (npcRow?.parentNode) {
-    npcRow.parentNode.insertBefore(li, npcRow.nextSibling);
+  const backingRow = backingInput.closest('li');
+  if (backingRow?.parentNode) {
+    backingRow.parentNode.insertBefore(li, backingRow.nextSibling);
   } else {
     list.appendChild(li);
   }
@@ -139,15 +152,14 @@ export function renderShopTypeInCreateActorApplication(app, html) {
 
   if (form.dataset.gssShopTypeBound === 'true') return;
 
-  form.addEventListener('submit', () => {
-    const selectedType = getSelectedType(form);
-    if (selectedType !== SHOP_DIALOG_TYPE) {
-      clearShopHiddenFields(form);
-      return;
-    }
+  form.addEventListener('click', (event) => {
+    const button = event.target?.closest?.('button');
+    if (!button || button.type === 'button') return;
+    applyShopDialogSelection(form);
+  }, true);
 
-    setSelectedType(form, SHOP_ACTOR_TYPE);
-    applyShopCreationFields(form);
+  form.addEventListener('submit', () => {
+    applyShopDialogSelection(form);
   }, true);
 
   form.dataset.gssShopTypeBound = 'true';
@@ -193,7 +205,12 @@ function getShopStudioButton(buttonId) {
 export const renderShopStudioSidebarButton = (app) => {
   if (!game.modules.get(MODULE_ID)?.active) return;
   if (!safeGetSetting(MODULE_ID, 'showButtonInSideBar', true)) return;
-  if (!app || (app.constructor.name !== "ActorDirectory" && app.constructor.name !== "ActorDirectoryV2")) return;
+  const appName = app?.constructor?.name ?? '';
+  const isActorDirectory = appName.includes('ActorDirectory')
+    || app?.collection === game.actors
+    || app?.id === 'actors'
+    || app?.tabName === 'actors';
+  if (!isActorDirectory) return;
 
   const element = game.version >= 13 ? app.element : (app._element || app.element || $(app.element));
   if (!element) return;
@@ -251,7 +268,7 @@ async function createOrOpenShop() {
 
     const shopActor = await Actor.create({
       name: shopName,
-      type: SHOP_ACTOR_TYPE,
+      type: getShopActorType(),
       flags: {
         core: {
           sheetClass: `${MODULE_ID}.ShopActorSheet`

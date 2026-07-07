@@ -11,6 +11,7 @@ import { localize } from '~/src/helpers/utility.js';
 import { MODULE_ID } from '~/src/helpers/constants';
 import { shopTelemetry } from '~/src/helpers/telemetry.js';
 import { registerShopTargetActor, registerShopTargetEntries } from '~/src/helpers/shopTargets.js';
+import { getShopConfiguration, isShopEditing, setShopConfiguration } from '~/src/helpers/shopIdentity.js';
 
 export let documentStore;
 
@@ -35,8 +36,8 @@ const application = getContext('#external').application;
 
   $: actor = $documentStore;
   $: sheetTitle = actor?.name ?? game.i18n.localize('foundryvtt-shop-studio.ShopSheetTitle');
-  $: config = actor?.system?.shopConfiguration ?? {};
-  $: isEditing = actor?.system?.identity?.isEditing ?? false;
+  $: config = getShopConfiguration(actor);
+  $: isEditing = isShopEditing(actor);
 
   $: if (actor?.id && actor.id !== initializedActorId) {
     salePriceFactor = config.salePriceFactor ?? 100;
@@ -151,7 +152,7 @@ const application = getContext('#external').application;
       ui.notifications.warn(localize('NoPermission'));
       return;
     }
-    await actor.system.updateShopConfiguration({
+    await setShopConfiguration(actor, {
       salePriceFactor: parseFloat(salePriceFactor),
       buyPriceFactor: parseFloat(buyPriceFactor),
       priceVariance: parseFloat(priceVariance),
@@ -165,7 +166,7 @@ const application = getContext('#external').application;
 
   async function silentSaveSettings() {
     if (!actor?.isOwner) return;
-    await actor.system.updateShopConfiguration({
+    await setShopConfiguration(actor, {
       salePriceFactor: parseFloat(salePriceFactor),
       buyPriceFactor: parseFloat(buyPriceFactor),
       priceVariance: parseFloat(priceVariance),

@@ -3,6 +3,7 @@ import { MODULE_CODE, MODULE_ID } from '~/src/helpers/constants';
 import { version } from '../../module.json';
 import { localize } from '~/src/helpers/utility';
 import { isItemTypeListable } from '~/src/helpers/itemSources';
+import { isShopEditing, setShopEditing } from '~/src/helpers/shopIdentity.js';
 
 export default class ShopActorSheet extends SvelteDocumentSheet {
   /**
@@ -57,9 +58,9 @@ export default class ShopActorSheet extends SvelteDocumentSheet {
    * @returns {Promise<void>}
    */
   async close(options = {}) {
-    const { isEditing } = this.reactive.document?.system?.identity ?? {};
+    const isEditing = isShopEditing(this.reactive.document);
     if (isEditing && this.reactive.document?.isOwner) {
-      await this.reactive.document.update({ system: { identity: { isEditing: false } } });
+      await setShopEditing(this.reactive.document, false);
     }
     await super.close(options);
   }
@@ -75,7 +76,7 @@ export default class ShopActorSheet extends SvelteDocumentSheet {
     const buttons = super._getHeaderButtons();
     // Only GMs get the edit toggle — players always see the player sheet
     if (game.user.isGM) {
-      const isEditing = this.reactive.document?.system?.identity?.isEditing ?? true;
+      const isEditing = isShopEditing(this.reactive.document);
       buttons.unshift({
         label: localize('EditToggle'),
         class: 'edit-shop' + (isEditing ? ' active' : ''),
@@ -97,8 +98,8 @@ export default class ShopActorSheet extends SvelteDocumentSheet {
       event.event.preventDefault();
     }
     const actor = this.reactive.document;
-    const current = actor?.system?.identity?.isEditing ?? true;
-    await actor.update({ system: { identity: { isEditing: !current } } });
+    const current = isShopEditing(actor);
+    await setShopEditing(actor, !current);
     this.render();
   }
 

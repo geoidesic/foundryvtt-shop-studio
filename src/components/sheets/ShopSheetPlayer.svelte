@@ -10,6 +10,7 @@
   import { MODULE_ID } from '~/src/helpers/constants.ts';
   import { shopTelemetry } from '~/src/helpers/telemetry.js';
   import { registerShopTargetActor, registerShopTargetEntries } from '~/src/helpers/shopTargets.js';
+  import { getShopConfiguration, isShopEditing } from '~/src/helpers/shopIdentity.js';
 
   export let documentStore;
   export let targetActorId = null;
@@ -23,7 +24,8 @@
 
   $: actor = $documentStore;
   $: shopId = actor?.id ?? null;
-  $: isEditing = actor?.system?.identity?.isEditing ?? false;
+  $: config = getShopConfiguration(actor);
+  $: isEditing = isShopEditing(actor);
 
   /** Restore persisted selected actor once the shop actor is available. */
   $: if (shopId && shopId !== _shopIdRestored) {
@@ -34,7 +36,7 @@
       actorUuid: actor?.uuid,
       selectedActorId,
       basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
-      associatedActors: actor?.system?.configuration?.associatedActors ?? [],
+      associatedActors: config.associatedActors ?? [],
     });
     if (actor && selectedActorId) {
       registerShopTargetActor(actor, selectedActorId, { source: 'player-restored-selection' });
@@ -59,7 +61,7 @@
       filterText = value;
     },
     onTargetActorChange: selectTargetActor,
-    associatedActors: actor?.system?.configuration?.associatedActors ?? [],
+    associatedActors: config.associatedActors ?? [],
     getActorName,
   };
 

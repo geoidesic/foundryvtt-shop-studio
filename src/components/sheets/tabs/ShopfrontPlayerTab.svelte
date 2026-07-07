@@ -9,8 +9,8 @@
   let rawDescription = '';
   let enrichedDescription = '';
 
-  $: if ($doc?.system?.description) {
-    rawDescription = $doc.system.description;
+  $: if ($doc) {
+    rawDescription = $doc.getFlag('foundryvtt-shop-studio', 'description') ?? '';
     getTextEditorAPI().enrichHTML(rawDescription, { secrets: true }).then(html => {
       enrichedDescription = html;
     });

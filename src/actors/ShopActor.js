@@ -1,5 +1,4 @@
 import { MODULE_ID } from '~/src/helpers/constants';
-import { ShopActorModel } from '~/src/models/actors/ShopActorModel';
 import {
   LEGACY_SHOP_ACTOR_TYPE,
   SHOP_ACTOR_TYPE,
@@ -8,6 +7,13 @@ import {
   SHOP_FLAG_KEYS,
   DEFAULT_SHOP_CONFIGURATION
 } from '~/src/constants/shopConstants';
+import {
+  getShopConfiguration,
+  getShopStock,
+  setShopConfiguration,
+  setShopIdentity,
+  setShopStock,
+} from '~/src/helpers/shopIdentity.js';
 
 // Re-export constants for backward compatibility
 export {
@@ -20,6 +26,15 @@ export {
 };
 
 let RegisteredShopActor = null;
+
+export function getShopActorType() {
+  const systemActorTypes = game?.system?.documentTypes?.Actor;
+  const actorTypes = Array.isArray(systemActorTypes)
+    ? systemActorTypes
+    : Object.keys(systemActorTypes ?? CONFIG.Actor?.typeLabels ?? {});
+  if (actorTypes.includes(SHOP_ACTOR_TYPE)) return SHOP_ACTOR_TYPE;
+  return CONFIG.Actor?.defaultType ?? actorTypes[0] ?? SHOP_ACTOR_TYPE;
+}
 
 export function registerShopActor() {
   const BaseActorClass = CONFIG.Actor.documentClass;
@@ -47,7 +62,7 @@ export function registerShopActor() {
      * @returns {Record<string, unknown>}
      */
     get shopConfiguration() {
-      return this.system?.configuration ?? {};
+      return getShopConfiguration(this);
     }
 
     /**
@@ -55,7 +70,7 @@ export function registerShopActor() {
      * @param {Record<string, unknown>} update
      */
     async updateShopConfiguration(update) {
-      return this.update({ system: { configuration: foundry.utils.mergeObject(this.shopConfiguration, update ?? {}, { inplace: false }) } });
+      return setShopConfiguration(this, update);
     }
 
     /**
@@ -63,7 +78,7 @@ export function registerShopActor() {
      * @returns {Array<Record<string, unknown>>}
      */
     get stockSnapshot() {
-      return this.system?.stock ?? [];
+      return getShopStock(this);
     }
 
     /**
@@ -71,7 +86,7 @@ export function registerShopActor() {
      * @param {Array<Record<string, unknown>>} stock
      */
     async setStockSnapshot(stock) {
-      return this.update({ system: { stock: stock ?? [] } });
+      return setShopStock(this, stock);
     }
 
     /**
@@ -79,44 +94,10 @@ export function registerShopActor() {
      * @returns {Promise<foundry.abstract.Document>} update result
      */
     async setShopIdentity() {
-      return this.update({ system: { identity: { isShop: true, kind: SHOP_IDENTITY_KIND } } });
+      return setShopIdentity(this);
     }
   }
 
-  // Register the actor class with the system
-  // Extend the existing dnd5e NPC data model instead of replacing it
-  const ExistingNPCModel = CONFIG.Actor.dataModels[SHOP_ACTOR_TYPE];
-  if (ExistingNPCModel && ExistingNPCModel !== ShopActorModel) {
-    // Create a merged model that extends the dnd5e NPC model with shop fields
-    class MergedShopActorModel extends ExistingNPCModel {
-      static defineSchema() {
-        return {
-          ...super.defineSchema(),
-          ...ShopActorModel.defineSchema(),
-        };
-      }
-
-      get shopConfiguration() {
-        return this.configuration ?? {};
-      }
-
-      async updateShopConfiguration(update) {
-        const merged = foundry.utils.mergeObject(this.shopConfiguration, update ?? {}, { inplace: false });
-        return this.parent?.update({ system: { configuration: merged } });
-      }
-
-      get stockSnapshot() {
-        return this.stock ?? [];
-      }
-
-      async setStockSnapshot(stock) {
-        return this.parent?.update({ system: { stock: stock ?? [] } });
-      }
-    }
-    CONFIG.Actor.dataModels[SHOP_ACTOR_TYPE] = MergedShopActorModel;
-  } else {
-    CONFIG.Actor.dataModels[SHOP_ACTOR_TYPE] = ShopActorModel;
-  }
   RegisteredShopActor = ShopActor;
 
   return ShopActor;

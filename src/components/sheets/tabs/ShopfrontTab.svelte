@@ -32,7 +32,7 @@
           
         .associated-actors-section.flex2
           ActorBucket(
-            listPath="system.configuration.associatedActors"
+            listPath="flags.shop-studio.configuration.associatedActors"
             onPersist="{onActorsPersist}"
           )
       .flex2.ml-sm
@@ -43,7 +43,7 @@
           h2 {sharedProps.localize("Description")}
           ProseMirror(
             classes="{proseMirrorClasses}" 
-            attr="system.description" 
+            attr="flags.foundryvtt-shop-studio.description" 
             on:editor:save="{handleEditorSave}"
             on:editor:start="{handleEditorStart}"
             on:editor:cancel="{handleEditorCancel}"

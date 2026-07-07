@@ -4,7 +4,7 @@
   import { MODULE_ID, MYSTERY_MAN } from '~/src/helpers/constants';
   import { localize } from '~/src/helpers/utility';
 
-  export let listPath = 'system.configuration.associatedActors';
+  export let listPath = 'flags.shop-studio.configuration.associatedActors';
   export let placeholder = localize('DragActorsHere');
   export let emptyText = localize('NoAssociatedActors');
   /** Optional external persist callback. Called with (newList) instead of internal flag-based persist. */
@@ -27,7 +27,6 @@
   $: if ($doc) {
     telemetry('state', {
       flags: $doc.getFlag?.(MODULE_ID, 'configuration')?.associatedActors,
-      system: foundry.utils.getProperty($doc, listPath),
       localList,
       localCount: localList.length,
     });
@@ -35,24 +34,13 @@
 
   function getAssociatedActors() {
     const flagList = $doc.getFlag?.(MODULE_ID, 'configuration')?.associatedActors;
-    if (Array.isArray(flagList) && flagList.length > 0) {
-      // Flag entries are objects {id, uuid, name, img}
-      if (typeof flagList[0] === 'object') {
-        telemetry('read-flags', { count: flagList.length, flagList });
-        return flagList;
-      }
-    }
-
-    const systemList = foundry.utils.getProperty($doc, listPath);
-    telemetry('read-system-fallback', {
-      count: Array.isArray(systemList) ? systemList.length : null,
-      systemList,
+    telemetry('read-flags', {
+      count: Array.isArray(flagList) ? flagList.length : null,
+      flagList,
     });
+    if (!Array.isArray(flagList)) return [];
 
-    if (!Array.isArray(systemList)) return [];
-
-    // Resolve string IDs to actor objects
-    return systemList
+    return flagList
       .map((id) => {
         if (typeof id === 'object' && id !== null) return id;
         const actor = game.actors.get(id);
@@ -149,7 +137,6 @@
     telemetry('drop-complete', {
       entry,
       flagsAfter: $doc.getFlag?.(MODULE_ID, 'configuration')?.associatedActors,
-      systemAfter: foundry.utils.getProperty($doc, listPath),
     });
     ui.notifications.info(`${localize('AssociatedActors')}: ${entry.name}`);
   }
@@ -193,7 +180,6 @@
       nextList: list,
       existingConfiguration: configuration,
       flagsBefore: $doc.getFlag?.(MODULE_ID, 'configuration')?.associatedActors,
-      systemBefore: foundry.utils.getProperty($doc, listPath),
     });
     await $doc.setFlag(MODULE_ID, 'configuration', {
       ...configuration,
@@ -201,7 +187,6 @@
     });
     telemetry('persist-after', {
       flagsAfter: $doc.getFlag?.(MODULE_ID, 'configuration')?.associatedActors,
-      systemAfter: foundry.utils.getProperty($doc, listPath),
     });
   }
 
