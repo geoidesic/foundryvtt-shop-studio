@@ -18,8 +18,14 @@
   /** Actor options for the target select. */
   $: actorOptions = (() => {
     if (game.user.isGM) {
-      const associated = sharedProps.associatedActors ?? [];
-      return associated
+      const basketActorIds = Object.keys($doc?.flags?.[MODULE_ID]?.basket ?? {});
+      const socketBasketActorIds = [...(socketShopState?.basketsByActorId?.keys?.() ?? [])];
+      const selectableActorIds = [
+        ...(sharedProps.associatedActors ?? []),
+        ...basketActorIds,
+        ...socketBasketActorIds,
+      ];
+      return [...new Set(selectableActorIds)]
         .map(id => game.actors.get(id))
         .filter(Boolean)
         .map(a => ({ id: a.id, name: a.name, img: a.img }));
@@ -77,6 +83,7 @@
         socketBasketActorIds: [...(socketShopState?.basketsByActorId?.keys?.() ?? [])],
         associatedActors: sharedProps.associatedActors ?? [],
         actorOptions,
+        isGM: game.user.isGM,
       });
     } else {
       basket = [];
@@ -87,8 +94,10 @@
         shopUuid,
         targetActorId,
         basketActorIds: Object.keys($doc?.flags?.[MODULE_ID]?.basket ?? {}),
+        socketBasketActorIds: [...(socketShopState?.basketsByActorId?.keys?.() ?? [])],
         associatedActors: sharedProps.associatedActors ?? [],
         actorOptions,
+        isGM: game.user.isGM,
       });
     }
   }

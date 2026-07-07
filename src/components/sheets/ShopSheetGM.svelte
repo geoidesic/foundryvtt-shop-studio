@@ -5,8 +5,11 @@ import { getContext, setContext } from 'svelte';
 import Tabs from '~/src/components/molecules/Tabs.svelte';
 import ShopfrontTab from '~/src/components/sheets/tabs/ShopfrontTab.svelte';
 import InventoryTab from '~/src/components/sheets/tabs/InventoryTab.svelte';
+import BasketTab from '~/src/components/sheets/tabs/BasketTab.svelte';
 import SettingsTab from '~/src/components/sheets/tabs/SettingsTab.svelte';
 import { localize } from '~/src/helpers/utility.js';
+import { MODULE_ID } from '~/src/helpers/constants';
+import { shopTelemetry } from '~/src/helpers/telemetry.js';
 
 export let documentStore;
 
@@ -23,7 +26,9 @@ const application = getContext('#external').application;
   let priceVariance = 10;
   let variancePeriod = 'daily';
   let atrophyPercent = 5;
+  let selectedActorId = null;
   let initializedActorId = null;
+  let restoredSelectionActorId = null;
   let disconnectFoundryTheme = () => {};
   let _filePickerInstance = {};
 
@@ -43,9 +48,22 @@ const application = getContext('#external').application;
     initializedActorId = actor.id;
   }
 
+  $: if (actor?.id && actor.id !== restoredSelectionActorId) {
+    restoredSelectionActorId = actor.id;
+    selectedActorId = game.user.getFlag(MODULE_ID, `selectedActor.${actor.id}`) ?? null;
+    shopTelemetry('ShopSheetGM', 'restored selected actor', {
+      shopId: actor.id,
+      shopUuid: actor.uuid,
+      selectedActorId,
+      basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
+      configuredAssociatedActors: config.associatedActors ?? [],
+    });
+  }
+
   $: tabs = [
     { id: 'shopfront', label: localize('Shopfront'), component: ShopfrontTab },
     { id: 'inventory', label: localize('Inventory'), component: InventoryTab },
+    { id: 'basket', label: localize('Basket'), component: BasketTab },
     { id: 'settings', label: localize('Settings'), component: SettingsTab },
   ];
 
@@ -55,25 +73,12 @@ const application = getContext('#external').application;
     associatedActors,
     filterText,
     items: actor?.items || [],
+    targetActorId: selectedActorId,
     salePriceFactor,
     buyPriceFactor,
     priceVariance,
     variancePeriod,
     atrophyPercent,
-    localize,
-    openImageEditor,
-    handleDragOver,
-    handleActorDrop,
-    handleRollTableDrop,
-    getActorName,
-    getRollTableName,
-    removeAssociated,
-    removeRollTable,
-    clearFilter,
-    calculateSalePrice,
-    openItemSheet,
-    provisionStore,
-    saveSettings,
     onFilterChange: (value) => {
       filterText = value;
     },
@@ -95,6 +100,7 @@ const application = getContext('#external').application;
     onAssociatedActorsChange: (list) => {
       associatedActors = list;
     },
+    onTargetActorChange: selectTargetActor,
     rollTables,
     localize,
     openImageEditor,
@@ -112,6 +118,21 @@ const application = getContext('#external').application;
     saveSettings,
     silentSaveSettings,
   };
+
+  async function selectTargetActor(id) {
+    shopTelemetry('ShopSheetGM', 'select target actor', {
+      shopId: actor?.id,
+      actorUuid: actor?.uuid,
+      previousSelectedActorId: selectedActorId,
+      nextSelectedActorId: id,
+      basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
+      associatedActors,
+    });
+    selectedActorId = id;
+    if (actor?.id) {
+      await game.user.setFlag(MODULE_ID, `selectedActor.${actor.id}`, id ?? '');
+    }
+  }
 
   async function saveSettings() {
     if (!actor?.isOwner) {

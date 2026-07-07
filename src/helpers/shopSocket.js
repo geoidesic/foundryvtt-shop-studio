@@ -57,6 +57,19 @@ function getShopUuidAliases(shop) {
     }
   }
 
+  const targetDocument = resolveShopDocument(shop);
+  const targetShopId = targetDocument?.id
+    ?? (typeof shop === 'object' ? (shop?.shopId ?? shop?.id) : null);
+
+  if (targetShopId) {
+    for (const registeredShopUuid of getShopDocumentStores().keys()) {
+      const registeredDocument = resolveShopDocument(registeredShopUuid);
+      if (registeredDocument?.id === targetShopId) {
+        uuids.add(registeredShopUuid);
+      }
+    }
+  }
+
   return [...uuids];
 }
 
@@ -327,6 +340,14 @@ function refreshRegisteredShopDocumentStores(shop, options = {}) {
   refreshShopDocumentStores(shop, options);
 }
 
+function withLocalShopUuidAliases(payload) {
+  if (!payload || typeof payload !== 'object') return payload;
+  return {
+    ...payload,
+    shopUuids: getShopUuidAliases(payload),
+  };
+}
+
 function registerShopDocumentHooks() {
   if (window[SHOP_DOCUMENT_HOOKS_KEY]) return;
   window[SHOP_DOCUMENT_HOOKS_KEY] = true;
@@ -581,8 +602,9 @@ export function registerSocket() {
       }
 
       if (payload.payload?.kind === 'basketUpdateResult') {
-        recordShopSocketResult(payload.payload);
-        refreshShopDocumentStores(payload.payload);
+        const resultPayload = withLocalShopUuidAliases(payload.payload);
+        recordShopSocketResult(resultPayload);
+        refreshShopDocumentStores(resultPayload);
       }
 
       const pendingBasket = getPendingRequests(PENDING_BASKET_KEY).get(payload.payload?.requestId);
@@ -593,8 +615,9 @@ export function registerSocket() {
       }
 
       if (payload.payload?.kind === 'purchaseResult') {
-        recordShopSocketResult(payload.payload);
-        refreshShopDocumentStores(payload.payload);
+        const resultPayload = withLocalShopUuidAliases(payload.payload);
+        recordShopSocketResult(resultPayload);
+        refreshShopDocumentStores(resultPayload);
       }
 
       const pendingPurchase = getPendingRequests(PENDING_PURCHASE_KEY).get(payload.payload?.requestId);
@@ -619,17 +642,30 @@ export async function requestBasketUpdate({ shopId, shopUuid, targetActorId, nex
   });
 
   if (game.user.isGM) {
+    const requestId = foundry.utils.randomID();
     const shop = resolveShopDocument({ shopUuid, shopId });
     const responseShopUuid = shopUuid ?? shop?.uuid;
     if (!shop || !targetActorId) {
       return { success: false, errors: ['Invalid basket update request'], basket: [] };
     }
     const result = await applyBasket(shop, targetActorId, nextBasket);
-    recordShopSocketResult({ shopId, shopUuid: responseShopUuid, targetActorId, ...result });
-    refreshShopDocumentStores(responseShopUuid);
+    const resultPayload = {
+      kind: 'basketUpdateResult',
+      requestId,
+      shopId,
+      shopUuid: responseShopUuid,
+      shopUuids: getShopUuidAliases({ shopId, shopUuid: responseShopUuid }),
+      resolvedShopUuid: shop?.uuid,
+      targetActorId,
+      ...result,
+      userId: game.user.id,
+    };
+    recordShopSocketResult(resultPayload);
+    refreshShopDocumentStores(resultPayload);
     if (shop?.uuid && shop.uuid !== responseShopUuid) {
       refreshShopDocumentStores(shop.uuid);
     }
+    emitToSocket({ type: 'ACTION', payload: resultPayload });
     return result;
   }
 
