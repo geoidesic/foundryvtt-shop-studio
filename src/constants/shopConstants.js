@@ -19,5 +19,6 @@ export const DEFAULT_SHOP_CONFIGURATION = Object.freeze({
   variancePeriod: 'daily',
   atrophyPercent: 5,
   associatedActors: [],
-  rollTables: []
+  rollTables: [],
+  rollTableRolls: []
 });

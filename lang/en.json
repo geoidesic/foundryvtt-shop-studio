@@ -84,7 +84,12 @@
     "Monthly": "Monthly",
     "RollTables": "Roll Tables",
     "DragRollTablesHere": "Drag roll tables here",
+    "CouldNotResolveRollTable": "Could not resolve roll table.",
     "ProvisionStore": "Provision Store",
+    "ProvisioningStore": "Provisioning store...",
+    "ProvisionComplete": "Added {count} items to inventory.",
+    "ProvisionNoItems": "No item results were rolled.",
+    "NoRollTablesConfigured": "No roll tables configured.",
     "Atrophy": "Atrophy (%)",
     "FilterInventory": "Filter Inventory...",
     "NoPermission": "You don't have permission to modify this shop.",
@@ -109,6 +114,9 @@
     "Type": "Type",
     "Use": "Use",
     "View": "View",
+    "Increase": "Increase",
+    "Decrease": "Decrease",
+    "RollCount": "Roll count",
     "Bookmark": "Bookmark",
     "Types": {
       "Actor": {

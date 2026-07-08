@@ -7,5 +7,6 @@ export const shopConfig = writable({
   variancePeriod: 'daily',
   atrophyPercent: 5,
   associatedActors: [],
-  rollTables: []
+  rollTables: [],
+  rollTableRolls: []
 });

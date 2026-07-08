@@ -139,7 +139,9 @@
       return;
     }
 
-    await persist([...localList, entry]);
+    const nextList = [...localList, entry];
+    await persist(nextList);
+    localList = nextList;
     telemetry('drop-complete', {
       entry,
       flagsAfter: $doc.getFlag?.(MODULE_ID, 'configuration')?.associatedActors,
@@ -168,7 +170,9 @@
 
   async function handleRemove(index) {
     telemetry('remove-start', { index, localList });
-    await persist(localList.filter((_, i) => i !== index));
+    const nextList = localList.filter((_, i) => i !== index);
+    await persist(nextList);
+    localList = nextList;
     telemetry('remove-complete', {
       flagsAfter: $doc.getFlag?.(MODULE_ID, 'configuration')?.associatedActors,
     });

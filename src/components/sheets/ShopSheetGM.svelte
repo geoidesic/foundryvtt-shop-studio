@@ -12,6 +12,7 @@ import { MODULE_ID } from '~/src/helpers/constants';
 import { shopTelemetry } from '~/src/helpers/telemetry.js';
 import { registerShopTargetActor, registerShopTargetEntries } from '~/src/helpers/shopTargets.js';
 import { getShopConfiguration, isShopEditing, setShopConfiguration } from '~/src/helpers/shopIdentity.js';
+import { isItemTypeListable } from '~/src/helpers/itemSources.js';
 import { shopConfig } from '~/src/stores/shopConfig.js';
 
 export let documentStore;
@@ -25,6 +26,7 @@ const application = getContext('#external').application;
   let filterText = '';
   let associatedActors = [];
   let rollTables = [];
+  let rollTableRolls = [];
   let salePriceFactor = 100;
   let buyPriceFactor = 50;
   let priceVariance = 10;
@@ -51,7 +53,8 @@ const application = getContext('#external').application;
       variancePeriod: config.variancePeriod ?? 'daily',
       atrophyPercent: config.atrophyPercent ?? 5,
       associatedActors: config.associatedActors ?? [],
-      rollTables: config.rollTables ?? []
+      rollTables: config.rollTables ?? [],
+      rollTableRolls: normalizeRollTableRolls(config.rollTables ?? [], config.rollTableRolls ?? [])
     });
     initializedActorId = actor.id;
   }
@@ -64,6 +67,7 @@ const application = getContext('#external').application;
   $: atrophyPercent = $shopConfig.atrophyPercent;
   $: associatedActors = $shopConfig.associatedActors;
   $: rollTables = $shopConfig.rollTables;
+  $: rollTableRolls = $shopConfig.rollTableRolls;
 
   $: if (actor?.id && actor.id !== restoredSelectionActorId) {
     restoredSelectionActorId = actor.id;
@@ -115,7 +119,10 @@ const application = getContext('#external').application;
       atrophyPercent = Number(value);
     },
     onAssociatedActorsChange: (list) => {
-      associatedActors = list;
+      shopConfig.update((current) => ({
+        ...current,
+        associatedActors: list,
+      }));
     },
     onTargetActorChange: selectTargetActor,
     rollTables,
@@ -176,6 +183,7 @@ const application = getContext('#external').application;
       atrophyPercent: parseFloat($shopConfig.atrophyPercent),
       associatedActors: $shopConfig.associatedActors,
       rollTables: $shopConfig.rollTables,
+      rollTableRolls: normalizeRollTableRolls($shopConfig.rollTables, $shopConfig.rollTableRolls),
     };
     await setShopConfiguration(actor, nextConfig);
     shopConfig.set(nextConfig);
@@ -193,16 +201,260 @@ const application = getContext('#external').application;
       atrophyPercent: parseFloat($shopConfig.atrophyPercent),
       associatedActors: $shopConfig.associatedActors,
       rollTables: $shopConfig.rollTables,
+      rollTableRolls: normalizeRollTableRolls($shopConfig.rollTables, $shopConfig.rollTableRolls),
     };
     await setShopConfiguration(actor, nextConfig);
     shopConfig.set(nextConfig);
   }
 
   async function provisionStore() {
-    if (!actor?.isOwner) return;
-    ui.notifications.info('Provisioning store... This will roll on configured tables, apply pricing variance, and update inventory.');
-    const numToAdd = 5;
-    ui.notifications.info(`Added ${numToAdd} items to inventory.`);
+    if (!actor?.isOwner) {
+      ui.notifications.warn(localize('NoPermission'));
+      return;
+    }
+
+    const configuredTables = Array.isArray($shopConfig.rollTables) ? $shopConfig.rollTables : [];
+    const configuredRolls = normalizeRollTableRolls(configuredTables, $shopConfig.rollTableRolls);
+    if (!configuredTables.length) {
+      ui.notifications.warn(localize('NoRollTablesConfigured') || 'No roll tables configured.');
+      return;
+    }
+
+    ui.notifications.info(localize('ProvisioningStore') || 'Provisioning store...');
+
+    const items = await rollProvisionItems(configuredTables, configuredRolls);
+    if (!items.length) {
+      ui.notifications.warn(localize('ProvisionNoItems') || 'No item results were rolled.');
+      return;
+    }
+
+    const addedCount = await upsertProvisionItems(items);
+    ui.notifications.info(
+      game.i18n.format(`${MODULE_ID}.ProvisionComplete`, { count: addedCount })
+        || `Added ${addedCount} items to inventory.`
+    );
+  }
+
+  function normalizeRollTableRolls(tables = [], rolls = []) {
+    const tableList = Array.isArray(tables) ? tables : [];
+    const rollList = Array.isArray(rolls) ? rolls : [];
+    return tableList.map((_, index) => {
+      const count = Number.parseInt(rollList[index], 10);
+      return Number.isFinite(count) && count > 0 ? count : 1;
+    });
+  }
+
+  async function rollProvisionItems(configuredTables, configuredRolls) {
+    const rollPlans = [];
+    for (const [index, entry] of configuredTables.entries()) {
+      const table = await resolveConfiguredRollTable(entry);
+      if (table) {
+        rollPlans.push({
+          table,
+          count: Math.max(1, Number(configuredRolls[index] ?? 1)),
+        });
+      }
+    }
+
+    const items = [];
+    for (const plan of rollPlans) {
+      const results = await drawRollTableResults(plan.table, plan.count);
+      for (const result of results) {
+        const document = await resolveTableResultDocument(result);
+        if (document?.documentName === 'Item' && isItemTypeListable(document.type)) {
+          items.push(document);
+        }
+      }
+    }
+
+    return items;
+  }
+
+  async function drawRollTableResults(table, count) {
+    const drawOptions = { displayChat: false, recursive: true };
+    if (typeof table.drawMany === 'function') {
+      try {
+        return getRollTableDrawResults(await table.drawMany(count, drawOptions));
+      } catch (err) {
+        console.error('Roll table drawMany error:', err);
+      }
+    }
+
+    const results = [];
+    for (let index = 0; index < count; index += 1) {
+      try {
+        results.push(...getRollTableDrawResults(await table.draw(drawOptions)));
+      } catch (err) {
+        console.error('Roll table draw error:', err);
+      }
+    }
+    return results;
+  }
+
+  function getRollTableDrawResults(draw) {
+    return toArray(draw?.results ?? draw?.RollTableDraw?.results);
+  }
+
+  function toArray(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+    if (Array.isArray(value.contents)) return value.contents;
+    if (typeof value.values === 'function') return Array.from(value.values());
+    return [];
+  }
+
+  async function resolveConfiguredRollTable(entry) {
+    if (typeof entry === 'object' && entry !== null) {
+      if (entry.uuid) {
+        try {
+          return await fromUuid(entry.uuid);
+        } catch (err) {
+          console.error('Configured roll table UUID resolve error:', err);
+          return null;
+        }
+      }
+      if (entry.id) return game.tables.get(entry.id) ?? null;
+      return null;
+    }
+
+    if (entry?.includes?.('.')) {
+      try {
+        return await fromUuid(entry);
+      } catch (err) {
+        console.error('Configured roll table UUID resolve error:', err);
+        return null;
+      }
+    }
+    return game.tables.get(entry) ?? null;
+  }
+
+  async function resolveTableResultDocument(result) {
+    if (!result) return null;
+    if (result.document) return result.document;
+
+    if (typeof result.getDocument === 'function') {
+      try {
+        const document = await result.getDocument();
+        if (document) return document;
+      } catch (err) {
+        console.error('Roll table result getDocument error:', err);
+      }
+    }
+
+    const uuids = getTableResultDocumentUuids(result);
+    for (const uuid of uuids) {
+      try {
+        const document = await fromUuid(uuid);
+        if (document) return document;
+      } catch (err) {
+        console.error('Roll table result UUID resolve error:', err);
+      }
+    }
+
+    if (result.uuid) {
+      try {
+        const document = await fromUuid(result.uuid);
+        if (document) return document;
+      } catch (err) {
+        console.error('Roll table result UUID resolve error:', err);
+      }
+    }
+
+    const collectionName = result.documentCollection;
+    const documentId = result.documentId;
+    if (!collectionName || !documentId) return null;
+
+    const worldCollection = getWorldCollection(collectionName);
+    const worldDocument = worldCollection?.get?.(documentId);
+    if (worldDocument) return worldDocument;
+
+    const pack = game.packs?.get(collectionName);
+    if (pack) return pack.getDocument(documentId);
+
+    return null;
+  }
+
+  function getTableResultDocumentUuids(result) {
+    const documentUuid = result.documentUuid ?? result.documentUUID;
+    if (documentUuid) return [documentUuid];
+
+    const collectionName = result.documentCollection;
+    const documentId = result.documentId;
+    if (!collectionName || !documentId) return [];
+    if (collectionName.startsWith('Compendium.')) return [`${collectionName}.${documentId}`];
+    if (game.packs?.has(collectionName)) return [`Compendium.${collectionName}.${documentId}`];
+
+    const documentName = getDocumentName(collectionName);
+    const uuids = [`${collectionName}.${documentId}`];
+    if (documentName && documentName !== collectionName) uuids.push(`${documentName}.${documentId}`);
+    return uuids;
+  }
+
+  function getWorldCollection(collectionName) {
+    const documentName = getDocumentName(collectionName);
+    return game.collections?.get(collectionName)
+      ?? game.collections?.get(documentName)
+      ?? game[collectionName]
+      ?? game[collectionName.toLowerCase?.()]
+      ?? game[`${collectionName.toLowerCase?.()}s`]
+      ?? game[`${documentName?.toLowerCase?.()}s`]
+      ?? null;
+  }
+
+  function getDocumentName(collectionName) {
+    if (!collectionName || collectionName.startsWith('Compendium.') || collectionName.includes('.')) return null;
+    if (collectionName === 'items') return 'Item';
+    return collectionName.charAt(0).toUpperCase() + collectionName.slice(1).replace(/s$/, '');
+  }
+
+  async function upsertProvisionItems(items) {
+    let addedCount = 0;
+    const provisionedByKey = new Map();
+
+    for (const item of items) {
+      const key = getProvisionItemKey(item);
+      const entry = provisionedByKey.get(key);
+      if (entry) {
+        entry.quantity += 1;
+      } else {
+        provisionedByKey.set(key, { item, quantity: 1 });
+      }
+      addedCount += 1;
+    }
+
+    const updates = [];
+    const createData = [];
+
+    for (const { item, quantity } of provisionedByKey.values()) {
+      const duplicate = actor.items.find((candidate) => getProvisionItemKey(candidate) === getProvisionItemKey(item));
+      if (duplicate) {
+        updates.push({
+          _id: duplicate.id,
+          'system.quantity': Number(duplicate.system?.quantity ?? 0) + quantity,
+        });
+        continue;
+      }
+
+      const itemData = item.toObject();
+      delete itemData._id;
+      itemData.system = itemData.system ?? {};
+      itemData.system.quantity = Math.max(1, Number(itemData.system.quantity ?? 1)) + quantity - 1;
+      createData.push(itemData);
+    }
+
+    if (updates.length) {
+      await actor.updateEmbeddedDocuments('Item', updates);
+    }
+
+    if (createData.length) {
+      await actor.createEmbeddedDocuments('Item', createData);
+    }
+
+    return addedCount;
+  }
+
+  function getProvisionItemKey(item) {
+    return `${item.type}::${item.name}`;
   }
 
   function handleDragOver(e) {
@@ -222,13 +474,20 @@ const application = getContext('#external').application;
       if (dropType === 'actor' && data.type === 'Actor' && (data.uuid || data.id)) {
         const actorId = data.id || data.uuid.split('.').pop();
         if (!associatedActors.includes(actorId)) {
-          associatedActors = [...associatedActors, actorId];
+          shopConfig.update((current) => ({
+            ...current,
+            associatedActors: [...associatedActors, actorId],
+          }));
           saveSettings();
         }
       } else if (dropType === 'rolltable' && data.type === 'RollTable' && data.uuid) {
         const tableId = data.id || data.uuid.split('.').pop();
         if (!rollTables.includes(tableId)) {
-          rollTables = [...rollTables, tableId];
+          shopConfig.update((current) => ({
+            ...current,
+            rollTables: [...rollTables, tableId],
+            rollTableRolls: [...normalizeRollTableRolls(rollTables, rollTableRolls), 1],
+          }));
           saveSettings();
         }
       }
@@ -246,12 +505,19 @@ const application = getContext('#external').application;
   }
 
   function removeAssociated(index) {
-    associatedActors = associatedActors.filter((_, i) => i !== index);
+    shopConfig.update((current) => ({
+      ...current,
+      associatedActors: associatedActors.filter((_, i) => i !== index),
+    }));
     saveSettings();
   }
 
   function removeRollTable(index) {
-    rollTables = rollTables.filter((_, i) => i !== index);
+    shopConfig.update((current) => ({
+      ...current,
+      rollTables: rollTables.filter((_, i) => i !== index),
+      rollTableRolls: normalizeRollTableRolls(rollTables, rollTableRolls).filter((_, i) => i !== index),
+    }));
     saveSettings();
   }
 
@@ -287,9 +553,17 @@ const application = getContext('#external').application;
     return a?.name || id || 'Unknown Actor';
   }
 
-  function getRollTableName(id) {
-    const rt = game.tables.get(id);
-    return rt?.name || id || 'Unknown Table';
+  function getRollTableName(entry) {
+    if (typeof entry === 'object' && entry !== null) {
+      if (entry.name) return entry.name;
+      const uuidTable = entry.uuid ? fromUuidSync(entry.uuid) : null;
+      const idTable = entry.id ? game.tables.get(entry.id) : null;
+      return uuidTable?.name || idTable?.name || entry.uuid || entry.id || 'Unknown Table';
+    }
+
+    const uuidTable = entry?.includes?.('.') ? fromUuidSync(entry) : null;
+    const idTable = game.tables.get(entry);
+    return uuidTable?.name || idTable?.name || entry || 'Unknown Table';
   }
 
   function calculateSalePrice(basePrice = 0) {
