@@ -63,21 +63,7 @@ function get_slot_context(definition, ctx, $$scope, fn) {
   return definition[1] && fn ? assign($$scope.ctx.slice(), definition[1](fn(ctx))) : $$scope.ctx;
 }
 function get_slot_changes(definition, $$scope, dirty, fn) {
-  if (definition[2] && fn) {
-    const lets = definition[2](fn(dirty));
-    if ($$scope.dirty === void 0) {
-      return lets;
-    }
-    if (typeof lets === "object") {
-      const merged = [];
-      const len = Math.max($$scope.dirty.length, lets.length);
-      for (let i = 0; i < len; i += 1) {
-        merged[i] = $$scope.dirty[i] | lets[i];
-      }
-      return merged;
-    }
-    return $$scope.dirty | lets;
-  }
+  if (definition[2] && fn) ;
   return $$scope.dirty;
 }
 function update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn) {
@@ -146,6 +132,10 @@ function loop(callback) {
     }
   };
 }
+const globals = typeof window !== "undefined" ? window : typeof globalThis !== "undefined" ? globalThis : (
+  // @ts-ignore Node typings have this
+  global
+);
 function append(target, node) {
   target.appendChild(node);
 }
@@ -1205,7 +1195,7 @@ function isIterable(value) {
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
-function isPlainObject(value) {
+function isPlainObject$1(value) {
   if (Object.prototype.toString.call(value) !== "[object Object]") {
     return false;
   }
@@ -13117,7 +13107,7 @@ class TJSPosition {
    * @param [options] - The configuration options object.
    */
   constructor(parentOrOptions, options) {
-    if (isPlainObject(parentOrOptions)) {
+    if (isPlainObject$1(parentOrOptions)) {
       options = parentOrOptions;
     } else {
       this.#parent = parentOrOptions;
@@ -17210,21 +17200,21 @@ function popoverTooltip(node, { cssClass, direction, isHTML, locked, tooltip }) 
     }
   };
 }
-function create_if_block$d(ctx) {
+function create_if_block$f(ctx) {
   let if_block_anchor;
   function select_block_type(ctx2, dirty) {
     if (
       /*iconType*/
       ctx2[3] === "font"
-    ) return create_if_block_1$7;
+    ) return create_if_block_1$8;
     if (
       /*iconType*/
       ctx2[3] === "img"
-    ) return create_if_block_2$4;
+    ) return create_if_block_2$5;
     if (
       /*iconType*/
       ctx2[3] === "svg"
-    ) return create_if_block_3$1;
+    ) return create_if_block_3$2;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type && current_block_type(ctx);
@@ -17259,7 +17249,7 @@ function create_if_block$d(ctx) {
     }
   };
 }
-function create_if_block_3$1(ctx) {
+function create_if_block_3$2(ctx) {
   let svg;
   let inlineSvg_action;
   let mounted;
@@ -17295,7 +17285,7 @@ function create_if_block_3$1(ctx) {
     }
   };
 }
-function create_if_block_2$4(ctx) {
+function create_if_block_2$5(ctx) {
   let img;
   let img_src_value;
   return {
@@ -17323,7 +17313,7 @@ function create_if_block_2$4(ctx) {
     }
   };
 }
-function create_if_block_1$7(ctx) {
+function create_if_block_1$8(ctx) {
   let i;
   let i_class_value;
   return {
@@ -17353,7 +17343,7 @@ function create_if_block_1$7(ctx) {
     }
   };
 }
-function create_fragment$o(ctx) {
+function create_fragment$u(ctx) {
   let button_1;
   let button_1_class_value;
   let applyStyles_action;
@@ -17362,7 +17352,7 @@ function create_fragment$o(ctx) {
   let dispose;
   let if_block = (
     /*icon*/
-    ctx[2] && create_if_block$d(ctx)
+    ctx[2] && create_if_block$f(ctx)
   );
   return {
     c() {
@@ -17436,7 +17426,7 @@ function create_fragment$o(ctx) {
         if (if_block) {
           if_block.p(ctx2, dirty);
         } else {
-          if_block = create_if_block$d(ctx2);
+          if_block = create_if_block$f(ctx2);
           if_block.c();
           if_block.m(button_1, null);
         }
@@ -17493,7 +17483,7 @@ function create_fragment$o(ctx) {
     }
   };
 }
-function instance$o($$self, $$props, $$invalidate) {
+function instance$u($$self, $$props, $$invalidate) {
   let icon;
   let label;
   let tooltipDirection;
@@ -17595,7 +17585,7 @@ function instance$o($$self, $$props, $$invalidate) {
 class TJSHeaderButton extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$o, create_fragment$o, safe_not_equal, { button: 0, storeHeaderButtonNoLabel: 1 });
+    init(this, options, instance$u, create_fragment$u, safe_not_equal, { button: 0, storeHeaderButtonNoLabel: 1 });
   }
   get button() {
     return this.$$.ctx[0];
@@ -17612,17 +17602,17 @@ class TJSHeaderButton extends SvelteComponent {
     flush();
   }
 }
-function get_each_context$6(ctx, list, i) {
+function get_each_context$9(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[40] = list[i];
   return child_ctx;
 }
-function get_each_context_1$1(ctx, list, i) {
+function get_each_context_1$4(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[40] = list[i];
   return child_ctx;
 }
-function create_if_block_2$3(ctx) {
+function create_if_block_2$4(ctx) {
   let svg;
   let inlineSvg_action;
   let mounted;
@@ -17658,7 +17648,7 @@ function create_if_block_2$3(ctx) {
     }
   };
 }
-function create_if_block_1$6(ctx) {
+function create_if_block_1$7(ctx) {
   let i;
   let i_class_value;
   return {
@@ -17684,7 +17674,7 @@ function create_if_block_1$6(ctx) {
     }
   };
 }
-function create_if_block$c(ctx) {
+function create_if_block$e(ctx) {
   let img;
   let img_src_value;
   return {
@@ -17716,7 +17706,7 @@ function create_if_block$c(ctx) {
     }
   };
 }
-function create_each_block_1$1(ctx) {
+function create_each_block_1$4(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -17801,7 +17791,7 @@ function create_each_block_1$1(ctx) {
     }
   };
 }
-function create_each_block$6(ctx) {
+function create_each_block$9(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -17908,15 +17898,15 @@ function create_key_block(ctx) {
     if (
       /*mediaType*/
       ctx2[8] === "img"
-    ) return create_if_block$c;
+    ) return create_if_block$e;
     if (
       /*mediaType*/
       ctx2[8] === "font"
-    ) return create_if_block_1$6;
+    ) return create_if_block_1$7;
     if (
       /*mediaType*/
       ctx2[8] === "svg"
-    ) return create_if_block_2$3;
+    ) return create_if_block_2$4;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type && current_block_type(ctx);
@@ -17926,7 +17916,7 @@ function create_key_block(ctx) {
   );
   let each_blocks_1 = [];
   for (let i = 0; i < each_value_1.length; i += 1) {
-    each_blocks_1[i] = create_each_block_1$1(get_each_context_1$1(ctx, each_value_1, i));
+    each_blocks_1[i] = create_each_block_1$4(get_each_context_1$4(ctx, each_value_1, i));
   }
   const out = (i) => transition_out(each_blocks_1[i], 1, 1, () => {
     each_blocks_1[i] = null;
@@ -17937,7 +17927,7 @@ function create_key_block(ctx) {
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block$6(get_each_context$6(ctx, each_value, i));
+    each_blocks[i] = create_each_block$9(get_each_context$9(ctx, each_value, i));
   }
   const out_1 = (i) => transition_out(each_blocks[i], 1, 1, () => {
     each_blocks[i] = null;
@@ -18052,12 +18042,12 @@ function create_key_block(ctx) {
         );
         let i;
         for (i = 0; i < each_value_1.length; i += 1) {
-          const child_ctx = get_each_context_1$1(ctx2, each_value_1, i);
+          const child_ctx = get_each_context_1$4(ctx2, each_value_1, i);
           if (each_blocks_1[i]) {
             each_blocks_1[i].p(child_ctx, dirty);
             transition_in(each_blocks_1[i], 1);
           } else {
-            each_blocks_1[i] = create_each_block_1$1(child_ctx);
+            each_blocks_1[i] = create_each_block_1$4(child_ctx);
             each_blocks_1[i].c();
             transition_in(each_blocks_1[i], 1);
             each_blocks_1[i].m(header, t3);
@@ -18077,12 +18067,12 @@ function create_key_block(ctx) {
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context$6(ctx2, each_value, i);
+          const child_ctx = get_each_context$9(ctx2, each_value, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
             transition_in(each_blocks[i], 1);
           } else {
-            each_blocks[i] = create_each_block$6(child_ctx);
+            each_blocks[i] = create_each_block$9(child_ctx);
             each_blocks[i].c();
             transition_in(each_blocks[i], 1);
             each_blocks[i].m(header, null);
@@ -18148,7 +18138,7 @@ function create_key_block(ctx) {
     }
   };
 }
-function create_fragment$n(ctx) {
+function create_fragment$t(ctx) {
   let previous_key = (
     /*draggable*/
     ctx[0]
@@ -18198,7 +18188,7 @@ function create_fragment$n(ctx) {
     }
   };
 }
-function instance$n($$self, $$props, $$invalidate) {
+function instance$t($$self, $$props, $$invalidate) {
   let $focusKeep;
   let $focusAuto;
   let $elementRoot;
@@ -18403,7 +18393,7 @@ function instance$n($$self, $$props, $$invalidate) {
 class TJSApplicationHeader extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$n, create_fragment$n, safe_not_equal, { draggable: 0, draggableOptions: 25 }, null, [-1, -1]);
+    init(this, options, instance$t, create_fragment$t, safe_not_equal, { draggable: 0, draggableOptions: 25 }, null, [-1, -1]);
   }
 }
 class ResizeHandleTransform {
@@ -18460,7 +18450,7 @@ class ResizeHandleTransform {
     return this.#pDeltaLocal;
   }
 }
-function create_fragment$m(ctx) {
+function create_fragment$s(ctx) {
   let div;
   let resizable_action;
   let mounted;
@@ -18524,7 +18514,7 @@ function create_fragment$m(ctx) {
     }
   };
 }
-function instance$m($$self, $$props, $$invalidate) {
+function instance$s($$self, $$props, $$invalidate) {
   let $storeElementRoot;
   let $storeMinimized;
   let $storeResizable;
@@ -18664,10 +18654,10 @@ function instance$m($$self, $$props, $$invalidate) {
 class ResizableHandle extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$m, create_fragment$m, safe_not_equal, { isResizable: 10 });
+    init(this, options, instance$s, create_fragment$s, safe_not_equal, { isResizable: 10 });
   }
 }
-function create_fragment$l(ctx) {
+function create_fragment$r(ctx) {
   let div;
   let mounted;
   let dispose;
@@ -18703,7 +18693,7 @@ function create_fragment$l(ctx) {
     }
   };
 }
-function instance$l($$self, $$props, $$invalidate) {
+function instance$r($$self, $$props, $$invalidate) {
   let { elementRoot = void 0 } = $$props;
   let { enabled = true } = $$props;
   let ignoreElements, wrapEl;
@@ -18743,10 +18733,10 @@ function instance$l($$self, $$props, $$invalidate) {
 class TJSFocusWrap extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$l, create_fragment$l, safe_not_equal, { elementRoot: 2, enabled: 3 });
+    init(this, options, instance$r, create_fragment$r, safe_not_equal, { elementRoot: 2, enabled: 3 });
   }
 }
-function create_else_block$6(ctx) {
+function create_else_block$7(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -19031,7 +19021,7 @@ function create_else_block$6(ctx) {
     }
   };
 }
-function create_if_block$b(ctx) {
+function create_if_block$d(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -19331,12 +19321,12 @@ function create_if_block$b(ctx) {
     }
   };
 }
-function create_fragment$k(ctx) {
+function create_fragment$q(ctx) {
   let current_block_type_index;
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$b, create_else_block$6];
+  const if_block_creators = [create_if_block$d, create_else_block$7];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -19397,7 +19387,7 @@ function create_fragment$k(ctx) {
     }
   };
 }
-function instance$k($$self, $$props, $$invalidate) {
+function instance$q($$self, $$props, $$invalidate) {
   let appResizeObserver;
   let appClasses;
   let $focusKeep;
@@ -19744,8 +19734,8 @@ class ApplicationShell extends SvelteComponent {
     init(
       this,
       options,
-      instance$k,
-      create_fragment$k,
+      instance$q,
+      create_fragment$q,
       safe_not_equal,
       {
         elementContent: 0,
@@ -19898,7 +19888,7 @@ class ApplicationShell extends SvelteComponent {
     flush();
   }
 }
-function create_else_block$5(ctx) {
+function create_else_block$6(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -20183,7 +20173,7 @@ function create_else_block$5(ctx) {
     }
   };
 }
-function create_if_block$a(ctx) {
+function create_if_block$c(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -20483,12 +20473,12 @@ function create_if_block$a(ctx) {
     }
   };
 }
-function create_fragment$j(ctx) {
+function create_fragment$p(ctx) {
   let current_block_type_index;
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$a, create_else_block$5];
+  const if_block_creators = [create_if_block$c, create_else_block$6];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -20549,7 +20539,7 @@ function create_fragment$j(ctx) {
     }
   };
 }
-function instance$j($$self, $$props, $$invalidate) {
+function instance$p($$self, $$props, $$invalidate) {
   let appResizeObserver;
   let appClasses;
   let $focusKeep;
@@ -20896,8 +20886,8 @@ class TJSApplicationShell extends SvelteComponent {
     init(
       this,
       options,
-      instance$j,
-      create_fragment$j,
+      instance$p,
+      create_fragment$p,
       safe_not_equal,
       {
         elementContent: 0,
@@ -21055,6 +21045,44 @@ const MODULE_ID = "foundryvtt-shop-studio";
 const MODULE_TITLE = "Aardvark Shop Studio";
 const MODULE_CODE = "GSS";
 const LOG_PREFIX = "GSS |";
+const MYSTERY_MAN = "icons/svg/mystery-man.svg";
+const DEFAULT_LISTABLE_ITEM_TYPES = null;
+const LOG_PREFIX_COLOR = `%c[${MODULE_CODE}] |`;
+const LOG_STYLES = {
+  go: "color: goldenrod;",
+  q: "color: aqua;",
+  p: "color: purple;",
+  s: "color: steelblue;",
+  g: "color: green;",
+  r: "color: red;",
+  o: "color: orange;",
+  b: "color: blue;",
+  y: "color: yellow;",
+  c: "color: cyan;",
+  m: "color: magenta;",
+  gr: "color: gray;",
+  br: "color: brown;",
+  pi: "color: pink;",
+  t: "color: teal;"
+};
+function localize(string) {
+  if (typeof game === "undefined") return string;
+  return game.i18n.localize(`${MODULE_ID}.${string}`);
+}
+function safeGetSetting(moduleId, key, defaultValue = true) {
+  try {
+    const setting = game.settings.get(moduleId, key);
+    return setting !== void 0 ? setting : defaultValue;
+  } catch (err) {
+    return defaultValue;
+  }
+}
+function getTextEditorAPI() {
+  if (Number(game.version) >= 13) {
+    return foundry.applications?.ux?.TextEditor?.implementation ?? TextEditor;
+  }
+  return TextEditor;
+}
 const log = {
   ASSERT: 1,
   ERROR: 2,
@@ -21075,25 +21103,58 @@ const log = {
     };
     this.v = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX) : () => {
     };
+    this.s = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.s) : () => {
+    };
+    this.q = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.q) : () => {
+    };
+    this.p = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.p) : () => {
+    };
+    this.g = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.g) : () => {
+    };
+    this.go = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.go) : () => {
+    };
+    this.r = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.r) : () => {
+    };
+    this.o = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.o) : () => {
+    };
+    this.b = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.b) : () => {
+    };
+    this.y = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.y) : () => {
+    };
+    this.c = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.c) : () => {
+    };
+    this.m = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.m) : () => {
+    };
+    this.gr = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.gr) : () => {
+    };
+    this.br = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.br) : () => {
+    };
+    this.pi = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.pi) : () => {
+    };
+    this.t = level >= this.VERBOSE ? console.log.bind(window.console, LOG_PREFIX_COLOR, LOG_STYLES.t) : () => {
+    };
+    this.goldenrod = this.s;
+    this.steelblue = this.go;
+    this.aqua = this.q;
+    this.purple = this.p;
+    this.green = this.g;
+    this.red = this.r;
+    this.orange = this.o;
+    this.blue = this.b;
+    this.yellow = this.y;
+    this.cyan = this.c;
+    this.magenta = this.m;
+    this.gray = this.gr;
+    this.brown = this.br;
+    this.pink = this.pi;
+    this.teal = this.t;
     this.loggingLevel = level;
   },
   get level() {
     return this.loggingLevel;
   }
 };
-function localize(string) {
-  if (typeof game === "undefined") return string;
-  return game.i18n.localize(`${MODULE_ID}.${string}`);
-}
-function safeGetSetting(moduleId, key, defaultValue = true) {
-  try {
-    const setting = game.settings.get(moduleId, key);
-    return setting !== void 0 ? setting : defaultValue;
-  } catch (err) {
-    return defaultValue;
-  }
-}
-function create_default_slot$8(ctx) {
+function create_default_slot$9(ctx) {
   let main;
   let footer;
   let div0;
@@ -21136,7 +21197,7 @@ function create_default_slot$8(ctx) {
     }
   };
 }
-function create_fragment$i(ctx) {
+function create_fragment$o(ctx) {
   let applicationshell;
   let updating_elementRoot;
   let current;
@@ -21144,7 +21205,7 @@ function create_fragment$i(ctx) {
     ctx[3](value);
   }
   let applicationshell_props = {
-    $$slots: { default: [create_default_slot$8] },
+    $$slots: { default: [create_default_slot$9] },
     $$scope: { ctx }
   };
   if (
@@ -21193,7 +21254,7 @@ function create_fragment$i(ctx) {
     }
   };
 }
-function instance$i($$self, $$props, $$invalidate) {
+function instance$o($$self, $$props, $$invalidate) {
   let { elementRoot = void 0 } = $$props;
   let { version: version2 = void 0 } = $$props;
   const application = getContext("#external").application;
@@ -21221,7 +21282,7 @@ function instance$i($$self, $$props, $$invalidate) {
 class WelcomeAppShell extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$i, create_fragment$i, safe_not_equal, { elementRoot: 0, version: 1 });
+    init(this, options, instance$o, create_fragment$o, safe_not_equal, { elementRoot: 0, version: 1 });
   }
   get elementRoot() {
     return this.$$.ctx[0];
@@ -22740,7 +22801,7 @@ class TJSDocument {
       close: this.#deleted.bind(this),
       render: this.#updateSubscribers.bind(this)
     };
-    if (isPlainObject(document2)) {
+    if (isPlainObject$1(document2)) {
       this.setOptions(document2);
     } else {
       this.setOptions(options);
@@ -23017,12 +23078,12 @@ class TJSDocument {
     }
   }
 }
-function get_each_context$5(ctx, list, i) {
+function get_each_context$8(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[6] = list[i];
   return child_ctx;
 }
-function create_each_block$5(ctx) {
+function create_each_block$8(ctx) {
   let button;
   let t_value = (
     /*tab*/
@@ -23083,7 +23144,7 @@ function create_each_block$5(ctx) {
     }
   };
 }
-function create_if_block$9(ctx) {
+function create_if_block$b(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -23157,7 +23218,7 @@ function create_if_block$9(ctx) {
     }
   };
 }
-function create_fragment$h(ctx) {
+function create_fragment$n(ctx) {
   let div2;
   let div0;
   let div1;
@@ -23169,11 +23230,11 @@ function create_fragment$h(ctx) {
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block$5(get_each_context$5(ctx, each_value, i));
+    each_blocks[i] = create_each_block$8(get_each_context$8(ctx, each_value, i));
   }
   let if_block = (
     /*activeComponent*/
-    ctx[3] && create_if_block$9(ctx)
+    ctx[3] && create_if_block$b(ctx)
   );
   return {
     c() {
@@ -23210,11 +23271,11 @@ function create_fragment$h(ctx) {
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context$5(ctx2, each_value, i);
+          const child_ctx = get_each_context$8(ctx2, each_value, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
           } else {
-            each_blocks[i] = create_each_block$5(child_ctx);
+            each_blocks[i] = create_each_block$8(child_ctx);
             each_blocks[i].c();
             each_blocks[i].m(div0, null);
           }
@@ -23235,7 +23296,7 @@ function create_fragment$h(ctx) {
             transition_in(if_block, 1);
           }
         } else {
-          if_block = create_if_block$9(ctx2);
+          if_block = create_if_block$b(ctx2);
           if_block.c();
           transition_in(if_block, 1);
           if_block.m(div1, null);
@@ -23271,7 +23332,7 @@ function create_fragment$h(ctx) {
     }
   };
 }
-function instance$h($$self, $$props, $$invalidate) {
+function instance$n($$self, $$props, $$invalidate) {
   let activeComponent;
   const omit_props_names = ["tabs", "activeTab", "sharedProps"];
   let $$restProps = compute_rest_props($$props, omit_props_names);
@@ -23297,7 +23358,7 @@ function instance$h($$self, $$props, $$invalidate) {
 class Tabs extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$h, create_fragment$h, safe_not_equal, { tabs: 1, activeTab: 0, sharedProps: 2 });
+    init(this, options, instance$n, create_fragment$n, safe_not_equal, { tabs: 1, activeTab: 0, sharedProps: 2 });
   }
 }
 class FVTTConfigure2 {
@@ -23821,7 +23882,7 @@ class TJSPasteUUID {
     return text2;
   }
 }
-function create_if_block_1$5(ctx) {
+function create_if_block_1$6(ctx) {
   let a;
   let mounted;
   let dispose;
@@ -23855,7 +23916,7 @@ function create_if_block_1$5(ctx) {
     }
   };
 }
-function create_else_block$4(ctx) {
+function create_else_block$5(ctx) {
   let div;
   return {
     c() {
@@ -23879,7 +23940,7 @@ function create_else_block$4(ctx) {
     }
   };
 }
-function create_if_block$8(ctx) {
+function create_if_block$a(ctx) {
   let div;
   return {
     c() {
@@ -23899,7 +23960,7 @@ function create_if_block$8(ctx) {
     }
   };
 }
-function create_fragment$g(ctx) {
+function create_fragment$m(ctx) {
   let div;
   let t;
   let div_class_value;
@@ -23909,14 +23970,14 @@ function create_fragment$g(ctx) {
   let dispose;
   let if_block0 = (
     /*editorButton*/
-    ctx[6] && create_if_block_1$5(ctx)
+    ctx[6] && create_if_block_1$6(ctx)
   );
   function select_block_type(ctx2, dirty) {
     if (
       /*editorActive*/
       ctx2[4]
-    ) return create_if_block$8;
-    return create_else_block$4;
+    ) return create_if_block$a;
+    return create_else_block$5;
   }
   let current_block_type = select_block_type(ctx);
   let if_block1 = current_block_type(ctx);
@@ -24002,7 +24063,7 @@ function create_fragment$g(ctx) {
         if (if_block0) {
           if_block0.p(ctx2, dirty);
         } else {
-          if_block0 = create_if_block_1$5(ctx2);
+          if_block0 = create_if_block_1$6(ctx2);
           if_block0.c();
           if_block0.m(div, t);
         }
@@ -24079,7 +24140,7 @@ function create_fragment$g(ctx) {
     }
   };
 }
-function instance$g($$self, $$props, $$invalidate) {
+function instance$m($$self, $$props, $$invalidate) {
   let $doc;
   let $applicationActiveWindow;
   let { content = "" } = $$props;
@@ -24359,14 +24420,14 @@ function instance$g($$self, $$props, $$invalidate) {
 class TJSProseMirror extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$g, create_fragment$g, safe_not_equal, {
+    init(this, options, instance$m, create_fragment$m, safe_not_equal, {
       content: 15,
       enrichedContent: 1,
       options: 0
     });
   }
 }
-function create_if_block$7(ctx) {
+function create_if_block$9(ctx) {
   let tjsprosemirror;
   let updating_content;
   let updating_enrichedContent;
@@ -24478,12 +24539,12 @@ function create_if_block$7(ctx) {
     }
   };
 }
-function create_fragment$f(ctx) {
+function create_fragment$l(ctx) {
   let if_block_anchor;
   let current;
   let if_block = (
     /*$doc*/
-    ctx[1] && create_if_block$7(ctx)
+    ctx[1] && create_if_block$9(ctx)
   );
   return {
     c() {
@@ -24507,7 +24568,7 @@ function create_fragment$f(ctx) {
             transition_in(if_block, 1);
           }
         } else {
-          if_block = create_if_block$7(ctx2);
+          if_block = create_if_block$9(ctx2);
           if_block.c();
           transition_in(if_block, 1);
           if_block.m(if_block_anchor.parentNode, if_block_anchor);
@@ -24537,7 +24598,7 @@ function create_fragment$f(ctx) {
     }
   };
 }
-function instance$f($$self, $$props, $$invalidate) {
+function instance$l($$self, $$props, $$invalidate) {
   let options;
   const omit_props_names = ["attr", "classes", "editable"];
   let $$restProps = compute_rest_props($$props, omit_props_names);
@@ -24606,7 +24667,7 @@ function instance$f($$self, $$props, $$invalidate) {
 let ProseMirror$1 = class ProseMirror2 extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$f, create_fragment$f, safe_not_equal, { attr: 6, classes: 7, editable: 8 });
+    init(this, options, instance$l, create_fragment$l, safe_not_equal, { attr: 6, classes: 7, editable: 8 });
   }
   get attr() {
     return this.$$.ctx[6];
@@ -24630,24 +24691,30 @@ let ProseMirror$1 = class ProseMirror2 extends SvelteComponent {
     flush();
   }
 };
-function get_each_context$4(ctx, list, i) {
-  const child_ctx = ctx.slice();
-  child_ctx[4] = list[i];
-  child_ctx[6] = i;
-  return child_ctx;
-}
-function create_else_block$3(ctx) {
+function fallback_block(ctx) {
   let p;
+  let t;
   return {
     c() {
       p = element("p");
-      p.textContent = "No associated actors yet.";
-      attr(p, "class", "no-items");
+      t = text(
+        /*placeholder*/
+        ctx[0]
+      );
+      attr(p, "class", "drag-drop-area__placeholder svelte-FOU-12odnoa");
     },
     m(target, anchor) {
       insert(target, p, anchor);
+      append(p, t);
     },
-    p: noop,
+    p(ctx2, dirty) {
+      if (dirty & /*placeholder*/
+      1) set_data(
+        t,
+        /*placeholder*/
+        ctx2[0]
+      );
+    },
     d(detaching) {
       if (detaching) {
         detach(p);
@@ -24655,15 +24722,175 @@ function create_else_block$3(ctx) {
     }
   };
 }
-function create_if_block$6(ctx) {
+function create_fragment$k(ctx) {
+  let div;
+  let div_class_value;
+  let current;
+  let mounted;
+  let dispose;
+  const default_slot_template = (
+    /*#slots*/
+    ctx[8].default
+  );
+  const default_slot = create_slot(
+    default_slot_template,
+    ctx,
+    /*$$scope*/
+    ctx[7],
+    null
+  );
+  const default_slot_or_fallback = default_slot || fallback_block(ctx);
+  return {
+    c() {
+      div = element("div");
+      if (default_slot_or_fallback) default_slot_or_fallback.c();
+      attr(div, "class", div_class_value = "drag-drop-area " + /*isDragOver*/
+      (ctx[1] ? "drag-over" : "") + " svelte-FOU-12odnoa");
+      attr(div, "role", "region");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      if (default_slot_or_fallback) {
+        default_slot_or_fallback.m(div, null);
+      }
+      current = true;
+      if (!mounted) {
+        dispose = [
+          listen(div, "dragover", stop_propagation(prevent_default(
+            /*handleDragOver*/
+            ctx[2]
+          ))),
+          listen(div, "dragleave", stop_propagation(prevent_default(
+            /*handleDragLeave*/
+            ctx[3]
+          ))),
+          listen(div, "drop", stop_propagation(prevent_default(
+            /*handleDrop*/
+            ctx[4]
+          )))
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, [dirty]) {
+      if (default_slot) {
+        if (default_slot.p && (!current || dirty & /*$$scope*/
+        128)) {
+          update_slot_base(
+            default_slot,
+            default_slot_template,
+            ctx2,
+            /*$$scope*/
+            ctx2[7],
+            !current ? get_all_dirty_from_scope(
+              /*$$scope*/
+              ctx2[7]
+            ) : get_slot_changes(
+              default_slot_template,
+              /*$$scope*/
+              ctx2[7],
+              dirty,
+              null
+            ),
+            null
+          );
+        }
+      } else {
+        if (default_slot_or_fallback && default_slot_or_fallback.p && (!current || dirty & /*placeholder*/
+        1)) {
+          default_slot_or_fallback.p(ctx2, !current ? -1 : dirty);
+        }
+      }
+      if (!current || dirty & /*isDragOver*/
+      2 && div_class_value !== (div_class_value = "drag-drop-area " + /*isDragOver*/
+      (ctx2[1] ? "drag-over" : "") + " svelte-FOU-12odnoa")) {
+        attr(div, "class", div_class_value);
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(default_slot_or_fallback, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(default_slot_or_fallback, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      if (default_slot_or_fallback) default_slot_or_fallback.d(detaching);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function instance$k($$self, $$props, $$invalidate) {
+  let { $$slots: slots = {}, $$scope } = $$props;
+  let { placeholder = "Drop items here" } = $$props;
+  let { acceptType = "" } = $$props;
+  let { onDrop = () => {
+  } } = $$props;
+  let isDragOver = false;
+  function handleDragOver2(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "copy";
+    $$invalidate(1, isDragOver = true);
+  }
+  function handleDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    $$invalidate(1, isDragOver = false);
+  }
+  async function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    $$invalidate(1, isDragOver = false);
+    const textEditor = foundry.applications?.ux?.TextEditor?.implementation ?? TextEditor;
+    const data = textEditor.getDragEventData(e);
+    await onDrop(data);
+  }
+  $$self.$$set = ($$props2) => {
+    if ("placeholder" in $$props2) $$invalidate(0, placeholder = $$props2.placeholder);
+    if ("acceptType" in $$props2) $$invalidate(5, acceptType = $$props2.acceptType);
+    if ("onDrop" in $$props2) $$invalidate(6, onDrop = $$props2.onDrop);
+    if ("$$scope" in $$props2) $$invalidate(7, $$scope = $$props2.$$scope);
+  };
+  return [
+    placeholder,
+    isDragOver,
+    handleDragOver2,
+    handleDragLeave,
+    handleDrop,
+    acceptType,
+    onDrop,
+    $$scope,
+    slots
+  ];
+}
+class DropZone extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$k, create_fragment$k, safe_not_equal, { placeholder: 0, acceptType: 5, onDrop: 6 });
+  }
+}
+function get_each_context$7(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[18] = list[i];
+  child_ctx[20] = i;
+  return child_ctx;
+}
+function create_if_block_1$5(ctx) {
   let ul;
   let each_value = ensure_array_like(
-    /*sharedProps*/
-    ctx[0].associatedActors
+    /*localList*/
+    ctx[2]
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block$4(get_each_context$4(ctx, each_value, i));
+    each_blocks[i] = create_each_block$7(get_each_context$7(ctx, each_value, i));
   }
   return {
     c() {
@@ -24671,7 +24898,7 @@ function create_if_block$6(ctx) {
       for (let i = 0; i < each_blocks.length; i += 1) {
         each_blocks[i].c();
       }
-      attr(ul, "class", "associated-list");
+      attr(ul, "class", "actor-bucket__list svelte-FOU-s0hu71");
     },
     m(target, anchor) {
       insert(target, ul, anchor);
@@ -24682,19 +24909,19 @@ function create_if_block$6(ctx) {
       }
     },
     p(ctx2, dirty) {
-      if (dirty & /*sharedProps*/
-      1) {
+      if (dirty & /*handleRemove, openSheet, localList*/
+      68) {
         each_value = ensure_array_like(
-          /*sharedProps*/
-          ctx2[0].associatedActors
+          /*localList*/
+          ctx2[2]
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context$4(ctx2, each_value, i);
+          const child_ctx = get_each_context$7(ctx2, each_value, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
           } else {
-            each_blocks[i] = create_each_block$4(child_ctx);
+            each_blocks[i] = create_each_block$7(child_ctx);
             each_blocks[i].c();
             each_blocks[i].m(ul, null);
           }
@@ -24713,134 +24940,573 @@ function create_if_block$6(ctx) {
     }
   };
 }
-function create_each_block$4(ctx) {
+function create_each_block$7(ctx) {
   let li;
+  let button0;
+  let img;
+  let img_src_value;
+  let img_alt_value;
   let span;
-  let t0_value = (
-    /*sharedProps*/
-    ctx[0].getActorName(
-      /*assoc*/
-      ctx[4]
-    ) + ""
+  let t_value = (
+    /*entry*/
+    (ctx[18].name || localize("UnknownActor")) + ""
   );
-  let t0;
-  let button;
+  let t;
+  let button1;
   let mounted;
   let dispose;
   function click_handler() {
     return (
       /*click_handler*/
-      ctx[2](
+      ctx[11](
+        /*entry*/
+        ctx[18]
+      )
+    );
+  }
+  function click_handler_1() {
+    return (
+      /*click_handler_1*/
+      ctx[12](
         /*index*/
-        ctx[6]
+        ctx[20]
       )
     );
   }
   return {
     c() {
       li = element("li");
+      button0 = element("button");
+      img = element("img");
       span = element("span");
-      t0 = text(t0_value);
-      button = element("button");
-      button.textContent = "×";
-      attr(button, "class", "remove-btn");
-      attr(button, "type", "button");
+      t = text(t_value);
+      button1 = element("button");
+      button1.innerHTML = `<i class="fa fa-trash"></i>`;
+      attr(img, "class", "actor-bucket__img svelte-FOU-s0hu71");
+      if (!src_url_equal(img.src, img_src_value = /*entry*/
+      ctx[18].img || MYSTERY_MAN)) attr(img, "src", img_src_value);
+      attr(img, "alt", img_alt_value = /*entry*/
+      ctx[18].name);
+      attr(span, "class", "actor-bucket__name svelte-FOU-s0hu71");
+      attr(button0, "class", "actor-bucket__open svelte-FOU-s0hu71");
+      attr(button0, "type", "button");
+      attr(button1, "class", "actor-bucket__remove svelte-FOU-s0hu71");
+      attr(button1, "type", "button");
+      attr(button1, "data-tooltip", localize("Types.Actor.ActionButtons.Delete"));
+      attr(li, "class", "actor-bucket__entry svelte-FOU-s0hu71");
     },
     m(target, anchor) {
       insert(target, li, anchor);
-      append(li, span);
-      append(span, t0);
-      append(li, button);
+      append(li, button0);
+      append(button0, img);
+      append(button0, span);
+      append(span, t);
+      append(li, button1);
       if (!mounted) {
-        dispose = listen(button, "click", click_handler);
+        dispose = [
+          listen(button0, "click", click_handler),
+          listen(button1, "click", click_handler_1)
+        ];
         mounted = true;
       }
     },
     p(new_ctx, dirty) {
       ctx = new_ctx;
-      if (dirty & /*sharedProps*/
-      1 && t0_value !== (t0_value = /*sharedProps*/
-      ctx[0].getActorName(
-        /*assoc*/
-        ctx[4]
-      ) + "")) set_data(t0, t0_value);
+      if (dirty & /*localList*/
+      4 && !src_url_equal(img.src, img_src_value = /*entry*/
+      ctx[18].img || MYSTERY_MAN)) {
+        attr(img, "src", img_src_value);
+      }
+      if (dirty & /*localList*/
+      4 && img_alt_value !== (img_alt_value = /*entry*/
+      ctx[18].name)) {
+        attr(img, "alt", img_alt_value);
+      }
+      if (dirty & /*localList*/
+      4 && t_value !== (t_value = /*entry*/
+      (ctx[18].name || localize("UnknownActor")) + "")) set_data(t, t_value);
     },
     d(detaching) {
       if (detaching) {
         detach(li);
       }
       mounted = false;
-      dispose();
+      run_all(dispose);
     }
   };
 }
-function create_fragment$e(ctx) {
-  let div8;
-  let div7;
-  let div3;
+function create_if_block$8(ctx) {
+  let p;
+  let t;
+  return {
+    c() {
+      p = element("p");
+      t = text(
+        /*emptyText*/
+        ctx[1]
+      );
+      attr(p, "class", "actor-bucket__empty svelte-FOU-s0hu71");
+    },
+    m(target, anchor) {
+      insert(target, p, anchor);
+      append(p, t);
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*emptyText*/
+      2) set_data(
+        t,
+        /*emptyText*/
+        ctx2[1]
+      );
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(p);
+      }
+    }
+  };
+}
+function create_default_slot$8(ctx) {
+  let if_block0_anchor;
+  let if_block1_anchor;
+  let if_block0 = (
+    /*localList*/
+    ctx[2].length > 0 && create_if_block_1$5(ctx)
+  );
+  let if_block1 = (
+    /*localList*/
+    ctx[2].length === 0 && create_if_block$8(ctx)
+  );
+  return {
+    c() {
+      if (if_block0) if_block0.c();
+      if_block0_anchor = empty();
+      if (if_block1) if_block1.c();
+      if_block1_anchor = empty();
+    },
+    m(target, anchor) {
+      if (if_block0) if_block0.m(target, anchor);
+      insert(target, if_block0_anchor, anchor);
+      if (if_block1) if_block1.m(target, anchor);
+      insert(target, if_block1_anchor, anchor);
+    },
+    p(ctx2, dirty) {
+      if (
+        /*localList*/
+        ctx2[2].length > 0
+      ) {
+        if (if_block0) {
+          if_block0.p(ctx2, dirty);
+        } else {
+          if_block0 = create_if_block_1$5(ctx2);
+          if_block0.c();
+          if_block0.m(if_block0_anchor.parentNode, if_block0_anchor);
+        }
+      } else if (if_block0) {
+        if_block0.d(1);
+        if_block0 = null;
+      }
+      if (
+        /*localList*/
+        ctx2[2].length === 0
+      ) {
+        if (if_block1) {
+          if_block1.p(ctx2, dirty);
+        } else {
+          if_block1 = create_if_block$8(ctx2);
+          if_block1.c();
+          if_block1.m(if_block1_anchor.parentNode, if_block1_anchor);
+        }
+      } else if (if_block1) {
+        if_block1.d(1);
+        if_block1 = null;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(if_block0_anchor);
+        detach(if_block1_anchor);
+      }
+      if (if_block0) if_block0.d(detaching);
+      if (if_block1) if_block1.d(detaching);
+    }
+  };
+}
+function create_fragment$j(ctx) {
+  let div;
+  let h2;
+  let t0_value = localize("AssociatedActors") + "";
+  let t0;
+  let t1;
+  let t2_value = (
+    /*localList*/
+    ctx[2].length + ""
+  );
+  let t2;
+  let t3;
+  let dropzone;
+  let current;
+  let mounted;
+  let dispose;
+  dropzone = new DropZone({
+    props: {
+      placeholder: (
+        /*placeholder*/
+        ctx[0]
+      ),
+      acceptType: "",
+      onDrop: (
+        /*handleDrop*/
+        ctx[4]
+      ),
+      $$slots: { default: [create_default_slot$8] },
+      $$scope: { ctx }
+    }
+  });
+  return {
+    c() {
+      div = element("div");
+      h2 = element("h2");
+      t0 = text(t0_value);
+      t1 = text(" (");
+      t2 = text(t2_value);
+      t3 = text(")");
+      create_component(dropzone.$$.fragment);
+      attr(h2, "class", "svelte-FOU-s0hu71");
+      attr(div, "class", "actor-bucket svelte-FOU-s0hu71");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      append(div, h2);
+      append(h2, t0);
+      append(h2, t1);
+      append(h2, t2);
+      append(h2, t3);
+      mount_component(dropzone, div, null);
+      current = true;
+      if (!mounted) {
+        dispose = [
+          listen(div, "dragover", prevent_default(handleDragOver$1)),
+          listen(div, "drop", stop_propagation(prevent_default(
+            /*handleDropEvent*/
+            ctx[5]
+          )), true)
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, [dirty]) {
+      if ((!current || dirty & /*localList*/
+      4) && t2_value !== (t2_value = /*localList*/
+      ctx2[2].length + "")) set_data(t2, t2_value);
+      const dropzone_changes = {};
+      if (dirty & /*placeholder*/
+      1) dropzone_changes.placeholder = /*placeholder*/
+      ctx2[0];
+      if (dirty & /*$$scope, emptyText, localList*/
+      2097158) {
+        dropzone_changes.$$scope = { dirty, ctx: ctx2 };
+      }
+      dropzone.$set(dropzone_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(dropzone.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(dropzone.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      destroy_component(dropzone);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function entryKey(entry) {
+  return entry.uuid || entry.id;
+}
+function handleDragOver$1(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = "copy";
+}
+async function openSheet(entry) {
+  const actor = entry.uuid ? fromUuidSync(entry.uuid) : game.actors.get(entry.id);
+  actor?.sheet?.render(true);
+}
+function instance$j($$self, $$props, $$invalidate) {
+  let $doc;
+  let { listPath = "flags.shop-studio.configuration.associatedActors" } = $$props;
+  let { placeholder = localize("DragActorsHere") } = $$props;
+  let { emptyText = localize("NoAssociatedActors") } = $$props;
+  let { isEditing = false } = $$props;
+  let { onPersist = null } = $$props;
+  const doc = getContext("#doc");
+  component_subscribe($$self, doc, (value) => $$invalidate(10, $doc = value));
+  let localList = [];
+  function telemetry(stage, payload = {}) {
+    window.GAS?.log?.g?.(`GSS:ActorBucket:${stage}`, {
+      docId: $doc?.id,
+      docUuid: $doc?.uuid,
+      listPath,
+      ...payload
+    });
+  }
+  function getAssociatedActors() {
+    const flagList = $doc.getFlag?.(MODULE_ID, "configuration")?.associatedActors;
+    telemetry("read-flags", {
+      count: Array.isArray(flagList) ? flagList.length : null,
+      flagList
+    });
+    if (!Array.isArray(flagList)) return [];
+    return flagList.map((id) => {
+      if (typeof id === "object" && id !== null) return id;
+      const actor = game.actors.get(id);
+      return actor ? actorToEntry(actor) : null;
+    }).filter(Boolean);
+  }
+  async function resolveActor2(data) {
+    telemetry("resolve-start", { data });
+    if (!data) return null;
+    if (data.type === "Token") {
+      if (data.actorUuid) {
+        try {
+          const actor = await fromUuid(data.actorUuid);
+          telemetry("resolve-token-actorUuid", {
+            actorId: actor?.id,
+            actorUuid: actor?.uuid,
+            actorName: actor?.name
+          });
+          return actor;
+        } catch (err) {
+          telemetry("resolve-token-actorUuid-error", { err });
+        }
+      }
+      const token = data.uuid ? await fromUuid(data.uuid) : null;
+      telemetry("resolve-token-uuid", {
+        tokenUuid: token?.uuid,
+        actorId: token?.actor?.id,
+        actorUuid: token?.actor?.uuid,
+        actorName: token?.actor?.name
+      });
+      return token?.actor ?? null;
+    }
+    if (data.type !== "Actor") {
+      telemetry("resolve-unsupported-type", { type: data.type });
+      return null;
+    }
+    if (data.uuid) {
+      try {
+        const actor = await fromUuid(data.uuid);
+        telemetry("resolve-uuid", {
+          actorId: actor?.id,
+          actorUuid: actor?.uuid,
+          actorName: actor?.name
+        });
+        return actor;
+      } catch (err) {
+        telemetry("resolve-uuid-error", { err });
+      }
+    }
+    if (data.id) {
+      const actor = game.actors.get(data.id);
+      telemetry("resolve-id", {
+        id: data.id,
+        actorId: actor?.id,
+        actorUuid: actor?.uuid,
+        actorName: actor?.name
+      });
+      if (actor) return actor;
+    }
+    try {
+      const actor = await Actor.implementation.fromDropData(data);
+      telemetry("resolve-fromDropData", {
+        actorId: actor?.id,
+        actorUuid: actor?.uuid,
+        actorName: actor?.name
+      });
+      return actor;
+    } catch (err) {
+      telemetry("resolve-fromDropData-error", { err });
+    }
+    return null;
+  }
+  function actorToEntry(actor) {
+    return {
+      id: actor.id,
+      uuid: actor.uuid,
+      name: actor.name,
+      img: actor.img || MYSTERY_MAN
+    };
+  }
+  async function handleDrop(data) {
+    telemetry("drop-start", { data, localList });
+    if (!isEditing) {
+      ui.notifications.error(localize("EditModeRequired"));
+      return;
+    }
+    const actor = await resolveActor2(data);
+    if (!actor) {
+      telemetry("drop-no-actor", { data });
+      ui.notifications.warn(localize("CouldNotResolveActor"));
+      return;
+    }
+    const entry = actorToEntry(actor);
+    if (localList.some((existing) => entryKey(existing) === entryKey(entry))) {
+      telemetry("drop-duplicate", { entry, localList });
+      return;
+    }
+    await persist([...localList, entry]);
+    telemetry("drop-complete", {
+      entry,
+      flagsAfter: $doc.getFlag?.(MODULE_ID, "configuration")?.associatedActors
+    });
+    ui.notifications.info(`${localize("AssociatedActors")}: ${entry.name}`);
+  }
+  async function handleDropEvent(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const textEditor = foundry.applications?.ux?.TextEditor?.implementation ?? TextEditor;
+    const data = textEditor.getDragEventData(event);
+    telemetry("native-drop-event", {
+      data,
+      rawText: event.dataTransfer.getData("text/plain"),
+      types: Array.from(event.dataTransfer?.types ?? [])
+    });
+    await handleDrop(data);
+  }
+  async function handleRemove(index) {
+    telemetry("remove-start", { index, localList });
+    await persist(localList.filter((_, i) => i !== index));
+    telemetry("remove-complete", {
+      flagsAfter: $doc.getFlag?.(MODULE_ID, "configuration")?.associatedActors
+    });
+  }
+  async function persist(list) {
+    if (onPersist) {
+      telemetry("persist-external", { nextList: list });
+      await onPersist(list);
+      return;
+    }
+    const configuration = $doc.getFlag?.(MODULE_ID, "configuration") ?? {};
+    telemetry("persist-before", {
+      nextList: list,
+      existingConfiguration: configuration,
+      flagsBefore: $doc.getFlag?.(MODULE_ID, "configuration")?.associatedActors
+    });
+    await $doc.setFlag(MODULE_ID, "configuration", { ...configuration, associatedActors: list });
+    telemetry("persist-after", {
+      flagsAfter: $doc.getFlag?.(MODULE_ID, "configuration")?.associatedActors
+    });
+  }
+  const click_handler = (entry) => openSheet(entry);
+  const click_handler_1 = (index) => handleRemove(index);
+  $$self.$$set = ($$props2) => {
+    if ("listPath" in $$props2) $$invalidate(7, listPath = $$props2.listPath);
+    if ("placeholder" in $$props2) $$invalidate(0, placeholder = $$props2.placeholder);
+    if ("emptyText" in $$props2) $$invalidate(1, emptyText = $$props2.emptyText);
+    if ("isEditing" in $$props2) $$invalidate(8, isEditing = $$props2.isEditing);
+    if ("onPersist" in $$props2) $$invalidate(9, onPersist = $$props2.onPersist);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*$doc*/
+    1024) {
+      $$invalidate(2, localList = $doc ? [...getAssociatedActors()] : []);
+    }
+    if ($$self.$$.dirty & /*$doc, localList*/
+    1028) {
+      if ($doc) {
+        telemetry("state", {
+          flags: $doc.getFlag?.(MODULE_ID, "configuration")?.associatedActors,
+          localList,
+          localCount: localList.length
+        });
+      }
+    }
+  };
+  return [
+    placeholder,
+    emptyText,
+    localList,
+    doc,
+    handleDrop,
+    handleDropEvent,
+    handleRemove,
+    listPath,
+    isEditing,
+    onPersist,
+    $doc,
+    click_handler,
+    click_handler_1
+  ];
+}
+class ActorBucket extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$j, create_fragment$j, safe_not_equal, {
+      listPath: 7,
+      placeholder: 0,
+      emptyText: 1,
+      isEditing: 8,
+      onPersist: 9
+    });
+  }
+}
+function create_fragment$i(ctx) {
+  let div6;
+  let div5;
+  let div1;
+  let img;
+  let img_src_value;
   let div0;
+  let actorbucket;
+  let div4;
+  let div2;
   let h20;
   let t0_value = (
     /*sharedProps*/
-    ctx[0].localize("ProfileImage") + ""
-  );
-  let t0;
-  let img;
-  let img_src_value;
-  let button;
-  let div2;
-  let h21;
-  let t2_value = (
-    /*sharedProps*/
-    ctx[0].localize("AssociatedActors") + ""
-  );
-  let t2;
-  let div1;
-  let p0;
-  let t3_value = (
-    /*sharedProps*/
-    ctx[0].localize("DragActorsHere") + ""
-  );
-  let t3;
-  let p1;
-  let div6;
-  let div4;
-  let h22;
-  let t5_value = (
-    /*sharedProps*/
     ctx[0].localize("Name") + ""
   );
-  let t5;
+  let t0;
   let input;
   let input_value_value;
-  let div5;
-  let h23;
-  let t6_value = (
+  let input_placeholder_value;
+  let div3;
+  let h21;
+  let t1_value = (
     /*sharedProps*/
     ctx[0].localize("Description") + ""
   );
-  let t6;
+  let t1;
   let prosemirror;
   let current;
   let mounted;
   let dispose;
-  function select_block_type(ctx2, dirty) {
-    if (
-      /*sharedProps*/
-      ctx2[0].associatedActors && /*sharedProps*/
-      ctx2[0].associatedActors.length > 0
-    ) return create_if_block$6;
-    return create_else_block$3;
-  }
-  let current_block_type = select_block_type(ctx);
-  let if_block = current_block_type(ctx);
+  actorbucket = new ActorBucket({
+    props: {
+      listPath: "flags.shop-studio.configuration.associatedActors",
+      isEditing: (
+        /*sharedProps*/
+        ctx[0].isEditing
+      ),
+      onPersist: (
+        /*onActorsPersist*/
+        ctx[2]
+      )
+    }
+  });
   prosemirror = new ProseMirror$1({
     props: {
       classes: (
         /*proseMirrorClasses*/
         ctx[1]
       ),
-      attr: "system.description"
+      attr: "flags.foundryvtt-shop-studio.description"
     }
   });
   prosemirror.$on("editor:save", handleEditorSave);
@@ -24848,104 +25514,64 @@ function create_fragment$e(ctx) {
   prosemirror.$on("editor:cancel", handleEditorCancel);
   return {
     c() {
-      div8 = element("div");
-      div7 = element("div");
-      div3 = element("div");
+      div6 = element("div");
+      div5 = element("div");
+      div1 = element("div");
+      img = element("img");
       div0 = element("div");
+      create_component(actorbucket.$$.fragment);
+      div4 = element("div");
+      div2 = element("div");
       h20 = element("h2");
       t0 = text(t0_value);
-      img = element("img");
-      button = element("button");
-      button.textContent = "Change Image";
-      div2 = element("div");
-      h21 = element("h2");
-      t2 = text(t2_value);
-      div1 = element("div");
-      p0 = element("p");
-      t3 = text(t3_value);
-      p1 = element("p");
-      p1.textContent = "(Drag actor tokens or from actor directory)";
-      if_block.c();
-      div6 = element("div");
-      div4 = element("div");
-      h22 = element("h2");
-      t5 = text(t5_value);
       input = element("input");
-      div5 = element("div");
-      h23 = element("h2");
-      t6 = text(t6_value);
+      div3 = element("div");
+      h21 = element("h2");
+      t1 = text(t1_value);
       create_component(prosemirror.$$.fragment);
       attr(img, "class", "profile-img");
       if (!src_url_equal(img.src, img_src_value = /*sharedProps*/
       ctx[0].actor?.img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
       attr(img, "alt", "Shop Profile");
-      attr(button, "type", "button");
-      attr(div0, "class", "profile-section flex1");
-      attr(p0, "class", "drag-hint");
-      attr(p1, "class", "small");
-      attr(div1, "class", "drag-drop-area");
-      attr(div1, "role", "region");
-      attr(div1, "aria-label", "Associated actors drop zone");
-      attr(div2, "class", "associated-actors-section flex2");
-      attr(div3, "class", "flex1 flexcol gap-10");
+      attr(div0, "class", "associated-actors-section flex2");
+      attr(div1, "class", "flex1 flexcol gap-10");
       attr(input, "class", "name-input");
       attr(input, "type", "text");
       input.value = input_value_value = /*sharedProps*/
       ctx[0].actor?.name || "";
-      attr(input, "placeholder", "Shop Name");
-      attr(div4, "class", "name-section");
-      attr(div5, "class", "description-section");
-      attr(div6, "class", "flex2");
-      attr(div7, "class", "flexrow gap-10");
-      attr(div8, "class", "shopfront-tab");
+      attr(input, "placeholder", input_placeholder_value = /*sharedProps*/
+      ctx[0].localize("ShopNamePlaceholder"));
+      attr(div2, "class", "name-section");
+      attr(div3, "class", "description-section mt-md");
+      attr(div4, "class", "flex2 ml-sm");
+      attr(div5, "class", "flexrow gap-10 pa-md");
+      attr(div6, "class", "shopfront-tab");
     },
     m(target, anchor) {
-      insert(target, div8, anchor);
-      append(div8, div7);
-      append(div7, div3);
-      append(div3, div0);
-      append(div0, h20);
-      append(h20, t0);
-      append(div0, img);
-      append(div0, button);
-      append(div3, div2);
-      append(div2, h21);
-      append(h21, t2);
-      append(div2, div1);
-      append(div1, p0);
-      append(p0, t3);
-      append(div1, p1);
-      if_block.m(div2, null);
-      append(div7, div6);
-      append(div6, div4);
-      append(div4, h22);
-      append(h22, t5);
-      append(div4, input);
+      insert(target, div6, anchor);
       append(div6, div5);
-      append(div5, h23);
-      append(h23, t6);
-      mount_component(prosemirror, div5, null);
+      append(div5, div1);
+      append(div1, img);
+      append(div1, div0);
+      mount_component(actorbucket, div0, null);
+      append(div5, div4);
+      append(div4, div2);
+      append(div2, h20);
+      append(h20, t0);
+      append(div2, input);
+      append(div4, div3);
+      append(div3, h21);
+      append(h21, t1);
+      mount_component(prosemirror, div3, null);
       current = true;
       if (!mounted) {
         dispose = [
-          listen(button, "click", function() {
+          listen(img, "click", function() {
             if (is_function(
               /*sharedProps*/
               ctx[0].openImageEditor
             )) ctx[0].openImageEditor.apply(this, arguments);
           }),
-          listen(div1, "dragover", prevent_default(function() {
-            if (is_function(
-              /*sharedProps*/
-              ctx[0].handleDragOver
-            )) ctx[0].handleDragOver.apply(this, arguments);
-          })),
-          listen(div1, "drop", prevent_default(function() {
-            if (is_function(
-              /*sharedProps*/
-              ctx[0].handleActorDrop
-            )) ctx[0].handleActorDrop.apply(this, arguments);
-          })),
           listen(
             input,
             "change",
@@ -24958,56 +25584,49 @@ function create_fragment$e(ctx) {
     },
     p(new_ctx, [dirty]) {
       ctx = new_ctx;
-      if ((!current || dirty & /*sharedProps*/
-      1) && t0_value !== (t0_value = /*sharedProps*/
-      ctx[0].localize("ProfileImage") + "")) set_data(t0, t0_value);
       if (!current || dirty & /*sharedProps*/
       1 && !src_url_equal(img.src, img_src_value = /*sharedProps*/
       ctx[0].actor?.img || "icons/svg/mystery-man.svg")) {
         attr(img, "src", img_src_value);
       }
+      const actorbucket_changes = {};
+      if (dirty & /*sharedProps*/
+      1) actorbucket_changes.isEditing = /*sharedProps*/
+      ctx[0].isEditing;
+      actorbucket.$set(actorbucket_changes);
       if ((!current || dirty & /*sharedProps*/
-      1) && t2_value !== (t2_value = /*sharedProps*/
-      ctx[0].localize("AssociatedActors") + "")) set_data(t2, t2_value);
-      if ((!current || dirty & /*sharedProps*/
-      1) && t3_value !== (t3_value = /*sharedProps*/
-      ctx[0].localize("DragActorsHere") + "")) set_data(t3, t3_value);
-      if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block) {
-        if_block.p(ctx, dirty);
-      } else {
-        if_block.d(1);
-        if_block = current_block_type(ctx);
-        if (if_block) {
-          if_block.c();
-          if_block.m(div2, null);
-        }
-      }
-      if ((!current || dirty & /*sharedProps*/
-      1) && t5_value !== (t5_value = /*sharedProps*/
-      ctx[0].localize("Name") + "")) set_data(t5, t5_value);
+      1) && t0_value !== (t0_value = /*sharedProps*/
+      ctx[0].localize("Name") + "")) set_data(t0, t0_value);
       if (!current || dirty & /*sharedProps*/
       1 && input_value_value !== (input_value_value = /*sharedProps*/
       ctx[0].actor?.name || "") && input.value !== input_value_value) {
         input.value = input_value_value;
       }
+      if (!current || dirty & /*sharedProps*/
+      1 && input_placeholder_value !== (input_placeholder_value = /*sharedProps*/
+      ctx[0].localize("ShopNamePlaceholder"))) {
+        attr(input, "placeholder", input_placeholder_value);
+      }
       if ((!current || dirty & /*sharedProps*/
-      1) && t6_value !== (t6_value = /*sharedProps*/
-      ctx[0].localize("Description") + "")) set_data(t6, t6_value);
+      1) && t1_value !== (t1_value = /*sharedProps*/
+      ctx[0].localize("Description") + "")) set_data(t1, t1_value);
     },
     i(local) {
       if (current) return;
+      transition_in(actorbucket.$$.fragment, local);
       transition_in(prosemirror.$$.fragment, local);
       current = true;
     },
     o(local) {
+      transition_out(actorbucket.$$.fragment, local);
       transition_out(prosemirror.$$.fragment, local);
       current = false;
     },
     d(detaching) {
       if (detaching) {
-        detach(div8);
+        detach(div6);
       }
-      if_block.d();
+      destroy_component(actorbucket);
       destroy_component(prosemirror);
       mounted = false;
       run_all(dispose);
@@ -25023,20 +25642,23 @@ function handleEditorStart() {
 function handleEditorCancel() {
   console.log("ShopfrontTab: editor:cancel");
 }
-function instance$e($$self, $$props, $$invalidate) {
+function instance$i($$self, $$props, $$invalidate) {
   let { sharedProps = {} } = $$props;
   const proseMirrorClasses = ["left", "small"];
-  const click_handler = (index) => sharedProps.removeAssociated(index);
+  async function onActorsPersist(list) {
+    sharedProps.onAssociatedActorsChange(list.map((e) => e.id));
+    await sharedProps.silentSaveSettings();
+  }
   const change_handler = (e) => sharedProps.actor?.update({ name: e.target.value });
   $$self.$$set = ($$props2) => {
     if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
   };
-  return [sharedProps, proseMirrorClasses, click_handler, change_handler];
+  return [sharedProps, proseMirrorClasses, onActorsPersist, change_handler];
 }
 class ShopfrontTab extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$e, create_fragment$e, safe_not_equal, { sharedProps: 0 });
+    init(this, options, instance$i, create_fragment$i, safe_not_equal, { sharedProps: 0 });
   }
 }
 function rippleFocus({ background = "rgba(255, 255, 255, 0.7)", duration = 300, enabled = true, selector } = {}) {
@@ -25196,13 +25818,13 @@ function rippleFocus({ background = "rgba(255, 255, 255, 0.7)", duration = 300, 
     };
   };
 }
-function create_if_block_3(ctx) {
+function create_if_block_3$1(ctx) {
   let if_block_anchor;
   function select_block_type(ctx2, dirty) {
     if (
       /*iconType*/
       ctx2[8] === "font"
-    ) return create_if_block_4;
+    ) return create_if_block_4$1;
     if (
       /*iconType*/
       ctx2[8] === "img"
@@ -25309,7 +25931,7 @@ function create_if_block_5(ctx) {
     }
   };
 }
-function create_if_block_4(ctx) {
+function create_if_block_4$1(ctx) {
   let i;
   let i_class_value;
   return {
@@ -25335,7 +25957,7 @@ function create_if_block_4(ctx) {
     }
   };
 }
-function create_if_block_2$2(ctx) {
+function create_if_block_2$3(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -25464,7 +26086,7 @@ function create_if_block_1$4(ctx) {
     }
   };
 }
-function create_if_block$5(ctx) {
+function create_if_block$7(ctx) {
   let current;
   const default_slot_template = (
     /*#slots*/
@@ -25526,7 +26148,7 @@ function create_if_block$5(ctx) {
     }
   };
 }
-function create_fragment$d(ctx) {
+function create_fragment$h(ctx) {
   let button_1;
   let span1;
   let span0;
@@ -25543,9 +26165,9 @@ function create_fragment$d(ctx) {
   let dispose;
   let if_block0 = (
     /*icon*/
-    ctx[1] && create_if_block_3(ctx)
+    ctx[1] && create_if_block_3$1(ctx)
   );
-  const if_block_creators = [create_if_block$5, create_if_block_1$4, create_if_block_2$2];
+  const if_block_creators = [create_if_block$7, create_if_block_1$4, create_if_block_2$3];
   const if_blocks = [];
   function select_block_type_1(ctx2, dirty) {
     if (dirty & /*label*/
@@ -25668,7 +26290,7 @@ function create_fragment$d(ctx) {
         if (if_block0) {
           if_block0.p(ctx2, dirty);
         } else {
-          if_block0 = create_if_block_3(ctx2);
+          if_block0 = create_if_block_3$1(ctx2);
           if_block0.c();
           if_block0.m(span0, t);
         }
@@ -25755,7 +26377,7 @@ function create_fragment$d(ctx) {
     }
   };
 }
-function instance$d($$self, $$props, $$invalidate) {
+function instance$h($$self, $$props, $$invalidate) {
   let { $$slots: slots = {}, $$scope } = $$props;
   const $$slots = compute_slots(slots);
   let { button = void 0 } = $$props;
@@ -25940,7 +26562,7 @@ function instance$d($$self, $$props, $$invalidate) {
 class TJSButton extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$d, create_fragment$d, safe_not_equal, {
+    init(this, options, instance$h, create_fragment$h, safe_not_equal, {
       button: 18,
       enabled: 0,
       icon: 1,
@@ -25964,7 +26586,7 @@ class TJSSlotLabelUtil {
     return typeof label === "string" || TJSSvelte.config.isConfigEmbed(label);
   }
 }
-function create_else_block$2(ctx) {
+function create_else_block$4(ctx) {
   let current;
   const default_slot_template = (
     /*#slots*/
@@ -26026,14 +26648,14 @@ function create_else_block$2(ctx) {
     }
   };
 }
-function create_if_block$4(ctx) {
+function create_if_block$6(ctx) {
   let label_1;
   let show_if;
   let current_block_type_index;
   let if_block;
   let t;
   let current;
-  const if_block_creators = [create_if_block_1$3, create_if_block_2$1];
+  const if_block_creators = [create_if_block_1$3, create_if_block_2$2];
   const if_blocks = [];
   function select_block_type_1(ctx2, dirty) {
     if (dirty & /*label*/
@@ -26155,7 +26777,7 @@ function create_if_block$4(ctx) {
     }
   };
 }
-function create_if_block_2$1(ctx) {
+function create_if_block_2$2(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -26326,12 +26948,12 @@ function create_if_block_1$3(ctx) {
     }
   };
 }
-function create_fragment$c(ctx) {
+function create_fragment$g(ctx) {
   let current_block_type_index;
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$4, create_else_block$2];
+  const if_block_creators = [create_if_block$6, create_else_block$4];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -26391,7 +27013,7 @@ function create_fragment$c(ctx) {
     }
   };
 }
-function instance$c($$self, $$props, $$invalidate) {
+function instance$g($$self, $$props, $$invalidate) {
   let { $$slots: slots = {}, $$scope } = $$props;
   let { label = void 0 } = $$props;
   let { enabled = void 0 } = $$props;
@@ -26421,7 +27043,7 @@ function instance$c($$self, $$props, $$invalidate) {
 class TJSSlotLabel extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$c, create_fragment$c, safe_not_equal, { label: 0, enabled: 1, isPointer: 2 });
+    init(this, options, instance$g, create_fragment$g, safe_not_equal, { label: 0, enabled: 1, isPointer: 2 });
   }
 }
 function create_default_slot$7(ctx) {
@@ -26514,7 +27136,7 @@ function create_default_slot$7(ctx) {
     }
   };
 }
-function create_fragment$b(ctx) {
+function create_fragment$f(ctx) {
   let tjsslotlabel;
   let current;
   tjsslotlabel = new TJSSlotLabel({
@@ -26568,7 +27190,7 @@ function create_fragment$b(ctx) {
     }
   };
 }
-function instance$b($$self, $$props, $$invalidate) {
+function instance$f($$self, $$props, $$invalidate) {
   let $store, $$unsubscribe_store = noop, $$subscribe_store = () => ($$unsubscribe_store(), $$unsubscribe_store = subscribe(store, ($$value) => $$invalidate(6, $store = $$value)), store);
   $$self.$$.on_destroy.push(() => $$unsubscribe_store());
   let { input = void 0 } = $$props;
@@ -26642,7 +27264,7 @@ function instance$b($$self, $$props, $$invalidate) {
 class TJSInputCheckbox extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$b, create_fragment$b, safe_not_equal, {
+    init(this, options, instance$f, create_fragment$f, safe_not_equal, {
       input: 7,
       enabled: 0,
       label: 1,
@@ -26840,7 +27462,7 @@ function create_default_slot$6(ctx) {
     }
   };
 }
-function create_fragment$a(ctx) {
+function create_fragment$e(ctx) {
   let tjsslotlabel;
   let current;
   tjsslotlabel = new TJSSlotLabel({
@@ -26893,7 +27515,7 @@ function create_fragment$a(ctx) {
     }
   };
 }
-function instance$a($$self, $$props, $$invalidate) {
+function instance$e($$self, $$props, $$invalidate) {
   let $storeIsValid, $$unsubscribe_storeIsValid = noop, $$subscribe_storeIsValid = () => ($$unsubscribe_storeIsValid(), $$unsubscribe_storeIsValid = subscribe(storeIsValid, ($$value) => $$invalidate(13, $storeIsValid = $$value)), storeIsValid);
   let $store, $$unsubscribe_store = noop, $$subscribe_store = () => ($$unsubscribe_store(), $$unsubscribe_store = subscribe(store, ($$value) => $$invalidate(14, $store = $$value)), store);
   $$self.$$.on_destroy.push(() => $$unsubscribe_storeIsValid());
@@ -27067,7 +27689,7 @@ function instance$a($$self, $$props, $$invalidate) {
 class TJSInputNumber extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$a, create_fragment$a, safe_not_equal, {
+    init(this, options, instance$e, create_fragment$e, safe_not_equal, {
       input: 18,
       enabled: 0,
       label: 1,
@@ -27246,7 +27868,7 @@ function create_default_slot$5(ctx) {
     }
   };
 }
-function create_fragment$9(ctx) {
+function create_fragment$d(ctx) {
   let tjsslotlabel;
   let current;
   tjsslotlabel = new TJSSlotLabel({
@@ -27299,7 +27921,7 @@ function create_fragment$9(ctx) {
     }
   };
 }
-function instance$9($$self, $$props, $$invalidate) {
+function instance$d($$self, $$props, $$invalidate) {
   let $store, $$unsubscribe_store = noop, $$subscribe_store = () => ($$unsubscribe_store(), $$unsubscribe_store = subscribe(store, ($$value) => $$invalidate(10, $store = $$value)), store);
   $$self.$$.on_destroy.push(() => $$unsubscribe_store());
   let { input = void 0 } = $$props;
@@ -27460,7 +28082,7 @@ function instance$9($$self, $$props, $$invalidate) {
 class TJSInputRange extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$9, create_fragment$9, safe_not_equal, {
+    init(this, options, instance$d, create_fragment$d, safe_not_equal, {
       input: 15,
       enabled: 0,
       label: 1,
@@ -27647,7 +28269,7 @@ function create_default_slot$4(ctx) {
     }
   };
 }
-function create_fragment$8(ctx) {
+function create_fragment$c(ctx) {
   let tjsslotlabel;
   let current;
   tjsslotlabel = new TJSSlotLabel({
@@ -27700,7 +28322,7 @@ function create_fragment$8(ctx) {
     }
   };
 }
-function instance$8($$self, $$props, $$invalidate) {
+function instance$c($$self, $$props, $$invalidate) {
   let { input = void 0 } = $$props;
   let { enabled = void 0 } = $$props;
   let { label = void 0 } = $$props;
@@ -27793,7 +28415,7 @@ function instance$8($$self, $$props, $$invalidate) {
 class TJSInputRangeNumber extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$8, create_fragment$8, safe_not_equal, {
+    init(this, options, instance$c, create_fragment$c, safe_not_equal, {
       input: 11,
       enabled: 0,
       label: 1,
@@ -27950,7 +28572,7 @@ function create_default_slot$3(ctx) {
     }
   };
 }
-function create_fragment$7(ctx) {
+function create_fragment$b(ctx) {
   let tjsslotlabel;
   let current;
   tjsslotlabel = new TJSSlotLabel({
@@ -28003,7 +28625,7 @@ function create_fragment$7(ctx) {
     }
   };
 }
-function instance$7($$self, $$props, $$invalidate) {
+function instance$b($$self, $$props, $$invalidate) {
   let $storeIsValid, $$unsubscribe_storeIsValid = noop, $$subscribe_storeIsValid = () => ($$unsubscribe_storeIsValid(), $$unsubscribe_storeIsValid = subscribe(storeIsValid, ($$value) => $$invalidate(10, $storeIsValid = $$value)), storeIsValid);
   let $store, $$unsubscribe_store = noop, $$subscribe_store = () => ($$unsubscribe_store(), $$unsubscribe_store = subscribe(store, ($$value) => $$invalidate(11, $store = $$value)), store);
   $$self.$$.on_destroy.push(() => $$unsubscribe_storeIsValid());
@@ -28175,7 +28797,7 @@ function instance$7($$self, $$props, $$invalidate) {
 class TJSInputText extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$7, create_fragment$7, safe_not_equal, {
+    init(this, options, instance$b, create_fragment$b, safe_not_equal, {
       input: 15,
       enabled: 0,
       label: 1,
@@ -28190,12 +28812,12 @@ class TJSInputText extends SvelteComponent {
     });
   }
 }
-function get_each_context$3(ctx, list, i) {
+function get_each_context$6(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[14] = list[i];
   return child_ctx;
 }
-function create_each_block$3(ctx) {
+function create_each_block$6(ctx) {
   let option_1;
   let t0_value = localize$1(
     /*option*/
@@ -28254,7 +28876,7 @@ function create_default_slot$2(ctx) {
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block$3(get_each_context$3(ctx, each_value, i));
+    each_blocks[i] = create_each_block$6(get_each_context$6(ctx, each_value, i));
   }
   return {
     c() {
@@ -28345,11 +28967,11 @@ function create_default_slot$2(ctx) {
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context$3(ctx2, each_value, i);
+          const child_ctx = get_each_context$6(ctx2, each_value, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
           } else {
-            each_blocks[i] = create_each_block$3(child_ctx);
+            each_blocks[i] = create_each_block$6(child_ctx);
             each_blocks[i].c();
             each_blocks[i].m(select_1, null);
           }
@@ -28399,7 +29021,7 @@ function create_default_slot$2(ctx) {
     }
   };
 }
-function create_fragment$6(ctx) {
+function create_fragment$a(ctx) {
   let tjsslotlabel;
   let current;
   tjsslotlabel = new TJSSlotLabel({
@@ -28452,7 +29074,7 @@ function create_fragment$6(ctx) {
     }
   };
 }
-function instance$6($$self, $$props, $$invalidate) {
+function instance$a($$self, $$props, $$invalidate) {
   let $store, $$unsubscribe_store = noop, $$subscribe_store = () => ($$unsubscribe_store(), $$unsubscribe_store = subscribe(store, ($$value) => $$invalidate(6, $store = $$value)), store);
   $$self.$$.on_destroy.push(() => $$unsubscribe_store());
   let { select = void 0 } = $$props;
@@ -28545,7 +29167,7 @@ function instance$6($$self, $$props, $$invalidate) {
 class TJSSelect extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$6, create_fragment$6, safe_not_equal, {
+    init(this, options, instance$a, create_fragment$a, safe_not_equal, {
       select: 9,
       enabled: 0,
       label: 1,
@@ -28557,7 +29179,7 @@ class TJSSelect extends SvelteComponent {
     });
   }
 }
-function create_else_block$1(ctx) {
+function create_else_block$3(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -28727,7 +29349,7 @@ function create_if_block_1$2(ctx) {
     }
   };
 }
-function create_if_block$3(ctx) {
+function create_if_block$5(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -28842,12 +29464,12 @@ function create_if_block$3(ctx) {
     }
   };
 }
-function create_fragment$5(ctx) {
+function create_fragment$9(ctx) {
   let current_block_type_index;
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$3, create_if_block_1$2, create_else_block$1];
+  const if_block_creators = [create_if_block$5, create_if_block_1$2, create_else_block$3];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -28911,7 +29533,7 @@ function create_fragment$5(ctx) {
     }
   };
 }
-function instance$5($$self, $$props, $$invalidate) {
+function instance$9($$self, $$props, $$invalidate) {
   let { input = void 0 } = $$props;
   let { type = void 0 } = $$props;
   let component;
@@ -28984,8 +29606,28 @@ function instance$5($$self, $$props, $$invalidate) {
 class TJSInput extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$5, create_fragment$5, safe_not_equal, { input: 3, type: 0 });
+    init(this, options, instance$9, create_fragment$9, safe_not_equal, { input: 3, type: 0 });
   }
+}
+function formatDotpath(path) {
+  return path.replace(/\[/g, ".").replace(/]/g, "");
+}
+function stepwiseResolveDotpath(obj, path) {
+  const pathlets = formatDotpath(path).split(".");
+  const result = [
+    {
+      pathlet: null,
+      val: obj
+    }
+  ];
+  for (const pathlet of pathlets) {
+    obj = obj?.[pathlet];
+    result.push({
+      pathlet,
+      val: obj
+    });
+  }
+  return result;
 }
 function createFilterQuery(properties, { caseSensitive = false, store } = {}) {
   let keyword = "";
@@ -28998,25 +29640,28 @@ function createFilterQuery(properties, { caseSensitive = false, store } = {}) {
     const current = get_store_value(store);
     if (typeof current === "string") {
       keyword = Strings.normalize(current);
+      window.GAS.log.d("keyword", keyword);
       regex = new RegExp(RegExp.escape(keyword), caseSensitive ? "" : "i");
+      window.GAS.log.d("keyword", regex);
     } else {
       store.set(keyword);
     }
   }
   function filterQuery(data) {
     if (keyword === "" || !regex) {
+      window.GAS.log.d("No keyword or regex, returning true");
       return true;
     }
     if (isIterable(properties)) {
       for (const property of properties) {
-        const value2 = data?.[property];
-        if (value2 !== void 0) {
-          if (typeof value2 === "boolean") {
-            if (value2.toString() === keyword) {
+        const value = data?.[property];
+        if (value !== void 0) {
+          if (typeof value === "boolean") {
+            if (value.toString() === keyword) {
               return true;
             }
           } else {
-            const normalizedValue = Strings.normalize(value2);
+            const normalizedValue = Strings.normalize(value);
             if (regex.test(normalizedValue)) {
               return true;
             }
@@ -29024,27 +29669,35 @@ function createFilterQuery(properties, { caseSensitive = false, store } = {}) {
         }
       }
       return false;
-    }
-    const value = safeAccess(data, properties);
-    if (value !== void 0) {
-      if (typeof value === "boolean") {
-        return value.toString() === keyword;
+    } else {
+      const steps = stepwiseResolveDotpath(data, properties);
+      const value = steps[steps.length - 1].val;
+      if (value !== void 0) {
+        if (typeof value === "boolean") {
+          return value.toString() === keyword;
+        }
+        const normalizedValue = Strings.normalize(value);
+        return regex.test(normalizedValue);
       }
-      const normalizedValue = Strings.normalize(value);
-      return regex.test(normalizedValue);
+      return false;
     }
-    return false;
   }
   filterQuery.subscribe = (handler) => {
     return storeKeyword.subscribe(handler);
   };
   filterQuery.set = (value) => {
+    if (game?.system?.log?.d) {
+      window.GAS.log.d("value", value);
+    }
     if (Array.isArray(value)) {
       const pattern = value.map((v) => RegExp.escape(Strings.normalize(v))).join("|");
       keyword = value.join(", ");
       regex = new RegExp(pattern, caseSensitive ? "" : "i");
     } else if (typeof value === "string") {
       keyword = Strings.normalize(value);
+      if (game?.system?.log?.d) {
+        window.GAS.log.d("keyword", keyword);
+      }
       regex = new RegExp(RegExp.escape(keyword), caseSensitive ? "" : "i");
     } else if (typeof value === "boolean") {
       keyword = value.toString();
@@ -29054,815 +29707,3404 @@ function createFilterQuery(properties, { caseSensitive = false, store } = {}) {
   };
   return filterQuery;
 }
-const get_c5_slot_changes = (dirty) => ({});
-const get_c5_slot_context = (ctx) => ({});
-const get_c4_slot_changes = (dirty) => ({});
-const get_c4_slot_context = (ctx) => ({});
-const get_c3_slot_changes = (dirty) => ({});
-const get_c3_slot_context = (ctx) => ({});
-const get_c2_slot_changes = (dirty) => ({});
-const get_c2_slot_context = (ctx) => ({});
-const get_c1_slot_changes = (dirty) => ({});
-const get_c1_slot_context = (ctx) => ({});
-function create_if_block_1$1(ctx) {
-  let div;
-  let current;
-  const c4_slot_template = (
-    /*#slots*/
-    ctx[3].c4
-  );
-  const c4_slot = create_slot(
-    c4_slot_template,
-    ctx,
-    /*$$scope*/
-    ctx[2],
-    get_c4_slot_context
-  );
-  return {
-    c() {
-      div = element("div");
-      if (c4_slot) c4_slot.c();
-      attr(div, "class", "flex2 svelte-FOU-r3vo5o");
-    },
-    m(target, anchor) {
-      insert(target, div, anchor);
-      if (c4_slot) {
-        c4_slot.m(div, null);
-      }
-      current = true;
-    },
-    p(ctx2, dirty) {
-      if (c4_slot) {
-        if (c4_slot.p && (!current || dirty & /*$$scope*/
-        4)) {
-          update_slot_base(
-            c4_slot,
-            c4_slot_template,
-            ctx2,
-            /*$$scope*/
-            ctx2[2],
-            !current ? get_all_dirty_from_scope(
-              /*$$scope*/
-              ctx2[2]
-            ) : get_slot_changes(
-              c4_slot_template,
-              /*$$scope*/
-              ctx2[2],
-              dirty,
-              get_c4_slot_changes
-            ),
-            get_c4_slot_context
-          );
-        }
-      }
-    },
-    i(local) {
-      if (current) return;
-      transition_in(c4_slot, local);
-      current = true;
-    },
-    o(local) {
-      transition_out(c4_slot, local);
-      current = false;
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(div);
-      }
-      if (c4_slot) c4_slot.d(detaching);
+function getConfigNamespaceCandidates() {
+  const systemId = game?.system?.id ?? "";
+  const compactId = systemId.replace(/[^A-Za-z0-9]/g, "");
+  return [
+    systemId,
+    systemId.toUpperCase(),
+    compactId,
+    compactId.toUpperCase()
+  ].filter(Boolean);
+}
+function localizeCurrencyText(value, fallback = "") {
+  if (!value) return fallback;
+  if (typeof value !== "string") return String(value);
+  return game?.i18n?.has?.(value) ? game.i18n.localize(value) : value;
+}
+function isPlainObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value);
+}
+const COMMON_COIN_VALUES = Object.freeze({
+  pp: 10,
+  gp: 1,
+  ep: 0.5,
+  sp: 0.1,
+  cp: 0.01,
+  gc: 240,
+  ss: 12,
+  bp: 1
+});
+const COPPER_VALUES = Object.freeze({
+  pp: 1e3,
+  gp: 100,
+  ep: 50,
+  sp: 10,
+  cp: 1
+});
+function isDenominationMap(value) {
+  return isPlainObject(value) && Object.values(value).some((amount) => Number(amount) > 0) && Object.values(value).every((amount) => Number.isFinite(Number(amount)));
+}
+function cleanDenominationMap(value, factor = 1) {
+  return Object.fromEntries(Object.entries(value ?? {}).map(([denomination, amount]) => [denomination, Number(amount) * factor]).filter(([, amount]) => Number.isFinite(amount) && amount > 0));
+}
+function getCurrencyNamespaceConfig() {
+  for (const namespace of getConfigNamespaceCandidates()) {
+    const config = CONFIG?.[namespace];
+    if (config?.currencies) return config;
+  }
+  return Object.values(CONFIG ?? {}).find((config) => config && typeof config === "object" && config.currencies && typeof config.currencies === "object") ?? null;
+}
+function getSystemCurrencies() {
+  return getCurrencyNamespaceConfig()?.currencies ?? {};
+}
+function getDefaultCurrency() {
+  const config = getCurrencyNamespaceConfig();
+  if (config?.defaultCurrency && config.defaultCurrency in (config.currencies ?? {})) {
+    return config.defaultCurrency;
+  }
+  return Object.keys(config?.currencies ?? {})[0] ?? "";
+}
+function getCurrencyLabel(denomination, { abbreviated = true } = {}) {
+  const currency = getSystemCurrencies()[denomination];
+  if (!currency) {
+    const pf2eLabel = `PF2E.CurrencyAbbreviations.${denomination}`;
+    return game?.i18n?.has?.(pf2eLabel) ? game.i18n.localize(pf2eLabel) : denomination || "";
+  }
+  if (typeof currency === "string") return localizeCurrencyText(currency, denomination);
+  const text2 = abbreviated ? currency.abbreviation ?? currency.label ?? denomination : currency.label ?? currency.abbreviation ?? denomination;
+  return localizeCurrencyText(text2, denomination);
+}
+function getCurrencyConversion(denomination) {
+  const conversion = Number(getSystemCurrencies()[denomination]?.conversion);
+  return Number.isFinite(conversion) && conversion > 0 ? conversion : null;
+}
+function normalizePrice(price) {
+  if (isDenominationMap(price)) {
+    return {
+      value: cleanDenominationMap(price),
+      denomination: "",
+      per: 1,
+      source: price
+    };
+  }
+  if (typeof price === "number") {
+    return {
+      value: Number.isFinite(price) ? price : 0,
+      denomination: getDefaultCurrency(),
+      source: price
+    };
+  }
+  if (typeof price === "string") {
+    const value = Number(price);
+    return {
+      value: Number.isFinite(value) ? value : 0,
+      denomination: getDefaultCurrency(),
+      source: price
+    };
+  }
+  if (isPlainObject(price)) {
+    if (isDenominationMap(price.value)) {
+      return {
+        ...price,
+        value: cleanDenominationMap(price.value),
+        denomination: "",
+        per: Math.max(1, Number(price.per ?? 1)),
+        source: price
+      };
     }
-  };
-}
-function create_if_block$2(ctx) {
-  let div;
-  let current;
-  const c5_slot_template = (
-    /*#slots*/
-    ctx[3].c5
-  );
-  const c5_slot = create_slot(
-    c5_slot_template,
-    ctx,
-    /*$$scope*/
-    ctx[2],
-    get_c5_slot_context
-  );
+    const value = Number(price.value ?? price.amount ?? 0);
+    const denomination = price.denomination ?? price.currency ?? getDefaultCurrency();
+    return {
+      ...price,
+      value: Number.isFinite(value) ? value : 0,
+      denomination,
+      source: price
+    };
+  }
   return {
-    c() {
-      div = element("div");
-      if (c5_slot) c5_slot.c();
-      attr(div, "class", "actions flex right svelte-FOU-r3vo5o");
-    },
-    m(target, anchor) {
-      insert(target, div, anchor);
-      if (c5_slot) {
-        c5_slot.m(div, null);
-      }
-      current = true;
-    },
-    p(ctx2, dirty) {
-      if (c5_slot) {
-        if (c5_slot.p && (!current || dirty & /*$$scope*/
-        4)) {
-          update_slot_base(
-            c5_slot,
-            c5_slot_template,
-            ctx2,
-            /*$$scope*/
-            ctx2[2],
-            !current ? get_all_dirty_from_scope(
-              /*$$scope*/
-              ctx2[2]
-            ) : get_slot_changes(
-              c5_slot_template,
-              /*$$scope*/
-              ctx2[2],
-              dirty,
-              get_c5_slot_changes
-            ),
-            get_c5_slot_context
-          );
-        }
-      }
-    },
-    i(local) {
-      if (current) return;
-      transition_in(c5_slot, local);
-      current = true;
-    },
-    o(local) {
-      transition_out(c5_slot, local);
-      current = false;
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(div);
-      }
-      if (c5_slot) c5_slot.d(detaching);
-    }
+    value: 0,
+    denomination: getDefaultCurrency(),
+    source: price
   };
 }
-function create_fragment$4(ctx) {
-  let li;
-  let div0;
-  let div1;
-  let if_block0_anchor;
-  let li_class_value;
-  let current;
-  const c1_slot_template = (
-    /*#slots*/
-    ctx[3].c1
-  );
-  const c1_slot = create_slot(
-    c1_slot_template,
-    ctx,
-    /*$$scope*/
-    ctx[2],
-    get_c1_slot_context
-  );
-  const c2_slot_template = (
-    /*#slots*/
-    ctx[3].c2
-  );
-  const c2_slot = create_slot(
-    c2_slot_template,
-    ctx,
-    /*$$scope*/
-    ctx[2],
-    get_c2_slot_context
-  );
-  const c3_slot_template = (
-    /*#slots*/
-    ctx[3].c3
-  );
-  const c3_slot = create_slot(
-    c3_slot_template,
-    ctx,
-    /*$$scope*/
-    ctx[2],
-    get_c3_slot_context
-  );
-  let if_block0 = (
-    /*$$slots*/
-    ctx[1].c4 && create_if_block_1$1(ctx)
-  );
-  let if_block1 = (
-    /*$$slots*/
-    ctx[1].c5 && create_if_block$2(ctx)
-  );
+function getComparablePriceValue(price) {
+  const normalized = normalizePrice(price);
+  if (isDenominationMap(normalized.value)) {
+    return Object.entries(normalized.value).reduce((sum, [denomination, amount]) => {
+      return sum + Number(amount) * (COMMON_COIN_VALUES[denomination] ?? 1);
+    }, 0) / Math.max(1, Number(normalized.per ?? 1));
+  }
+  const conversion = getCurrencyConversion(normalized.denomination);
+  if (!conversion) return normalized.value;
+  return normalized.value / conversion;
+}
+function makeBasketPrice(price) {
+  const normalized = normalizePrice(price);
+  if (isDenominationMap(normalized.value)) {
+    return {
+      value: normalized.value,
+      per: normalized.per
+    };
+  }
   return {
-    c() {
-      li = element("li");
-      if (c1_slot) c1_slot.c();
-      div0 = element("div");
-      if (c2_slot) c2_slot.c();
-      div1 = element("div");
-      if (c3_slot) c3_slot.c();
-      if (if_block0) if_block0.c();
-      if_block0_anchor = empty();
-      if (if_block1) if_block1.c();
-      attr(div0, "class", "flex4 left svelte-FOU-r3vo5o");
-      attr(div1, "class", "flex2 svelte-FOU-r3vo5o");
-      attr(li, "class", li_class_value = /*rowClass*/
-      ctx[0] + " flexrow justify-vertical standard-list-row svelte-FOU-r3vo5o");
-    },
-    m(target, anchor) {
-      insert(target, li, anchor);
-      if (c1_slot) {
-        c1_slot.m(li, null);
+    value: normalized.value,
+    denomination: normalized.denomination
+  };
+}
+function applyPriceFactor(price, factorPercent = 100) {
+  const normalized = normalizePrice(price);
+  const factor = Number(factorPercent) / 100;
+  const multiplier = Number.isFinite(factor) ? factor : 1;
+  if (isDenominationMap(normalized.value)) {
+    return {
+      ...normalized,
+      value: cleanDenominationMap(normalized.value, multiplier)
+    };
+  }
+  return {
+    ...normalized,
+    value: normalized.value * multiplier
+  };
+}
+function formatPrice(price) {
+  const normalized = normalizePrice(price);
+  if (isDenominationMap(normalized.value)) {
+    const formatted = Object.entries(normalized.value).reverse().map(([denomination, amount]) => `${amount} ${getCurrencyLabel(denomination)}`).join(", ");
+    const per = Number(normalized.per ?? 1);
+    return per > 1 ? `${formatted} / ${per}` : formatted;
+  }
+  if (!normalized.value) return "—";
+  const label = getCurrencyLabel(normalized.denomination);
+  return label ? `${normalized.value} ${label}` : String(normalized.value);
+}
+function multiplyPrice(price, quantity = 1) {
+  const normalized = normalizePrice(price);
+  const factor = Math.max(0, Number(quantity ?? 0)) / Math.max(1, Number(normalized.per ?? 1));
+  if (isDenominationMap(normalized.value)) {
+    return {
+      value: cleanDenominationMap(normalized.value, factor),
+      per: 1
+    };
+  }
+  return {
+    value: normalized.value * factor,
+    denomination: normalized.denomination
+  };
+}
+function sumPrices(prices) {
+  const entries = (prices ?? []).map(({ price, quantity = 1 }) => {
+    const normalized = normalizePrice(price);
+    return {
+      ...normalized,
+      quantity: Math.max(0, Number(quantity ?? 0)),
+      conversion: getCurrencyConversion(normalized.denomination)
+    };
+  }).filter((entry) => entry.value && entry.quantity);
+  if (!entries.length) return { value: 0, denomination: getDefaultCurrency() };
+  if (entries.every((entry) => isDenominationMap(entry.value))) {
+    const value = entries.reduce((sum, entry) => {
+      const multiplied = multiplyPrice(entry, entry.quantity).value;
+      for (const [denomination, amount] of Object.entries(multiplied)) {
+        sum[denomination] = (sum[denomination] ?? 0) + amount;
       }
-      append(li, div0);
-      if (c2_slot) {
-        c2_slot.m(div0, null);
-      }
-      append(li, div1);
-      if (c3_slot) {
-        c3_slot.m(div1, null);
-      }
-      if (if_block0) if_block0.m(li, null);
-      append(li, if_block0_anchor);
-      if (if_block1) if_block1.m(li, null);
-      current = true;
-    },
-    p(ctx2, [dirty]) {
-      if (c1_slot) {
-        if (c1_slot.p && (!current || dirty & /*$$scope*/
-        4)) {
-          update_slot_base(
-            c1_slot,
-            c1_slot_template,
-            ctx2,
-            /*$$scope*/
-            ctx2[2],
-            !current ? get_all_dirty_from_scope(
-              /*$$scope*/
-              ctx2[2]
-            ) : get_slot_changes(
-              c1_slot_template,
-              /*$$scope*/
-              ctx2[2],
-              dirty,
-              get_c1_slot_changes
-            ),
-            get_c1_slot_context
-          );
-        }
-      }
-      if (c2_slot) {
-        if (c2_slot.p && (!current || dirty & /*$$scope*/
-        4)) {
-          update_slot_base(
-            c2_slot,
-            c2_slot_template,
-            ctx2,
-            /*$$scope*/
-            ctx2[2],
-            !current ? get_all_dirty_from_scope(
-              /*$$scope*/
-              ctx2[2]
-            ) : get_slot_changes(
-              c2_slot_template,
-              /*$$scope*/
-              ctx2[2],
-              dirty,
-              get_c2_slot_changes
-            ),
-            get_c2_slot_context
-          );
-        }
-      }
-      if (c3_slot) {
-        if (c3_slot.p && (!current || dirty & /*$$scope*/
-        4)) {
-          update_slot_base(
-            c3_slot,
-            c3_slot_template,
-            ctx2,
-            /*$$scope*/
-            ctx2[2],
-            !current ? get_all_dirty_from_scope(
-              /*$$scope*/
-              ctx2[2]
-            ) : get_slot_changes(
-              c3_slot_template,
-              /*$$scope*/
-              ctx2[2],
-              dirty,
-              get_c3_slot_changes
-            ),
-            get_c3_slot_context
-          );
-        }
-      }
-      if (
-        /*$$slots*/
-        ctx2[1].c4
-      ) {
-        if (if_block0) {
-          if_block0.p(ctx2, dirty);
-          if (dirty & /*$$slots*/
-          2) {
-            transition_in(if_block0, 1);
-          }
-        } else {
-          if_block0 = create_if_block_1$1(ctx2);
-          if_block0.c();
-          transition_in(if_block0, 1);
-          if_block0.m(li, if_block0_anchor);
-        }
-      } else if (if_block0) {
-        group_outros();
-        transition_out(if_block0, 1, 1, () => {
-          if_block0 = null;
-        });
-        check_outros();
-      }
-      if (
-        /*$$slots*/
-        ctx2[1].c5
-      ) {
-        if (if_block1) {
-          if_block1.p(ctx2, dirty);
-          if (dirty & /*$$slots*/
-          2) {
-            transition_in(if_block1, 1);
-          }
-        } else {
-          if_block1 = create_if_block$2(ctx2);
-          if_block1.c();
-          transition_in(if_block1, 1);
-          if_block1.m(li, null);
-        }
-      } else if (if_block1) {
-        group_outros();
-        transition_out(if_block1, 1, 1, () => {
-          if_block1 = null;
-        });
-        check_outros();
-      }
-      if (!current || dirty & /*rowClass*/
-      1 && li_class_value !== (li_class_value = /*rowClass*/
-      ctx2[0] + " flexrow justify-vertical standard-list-row svelte-FOU-r3vo5o")) {
-        attr(li, "class", li_class_value);
-      }
-    },
-    i(local) {
-      if (current) return;
-      transition_in(c1_slot, local);
-      transition_in(c2_slot, local);
-      transition_in(c3_slot, local);
-      transition_in(if_block0);
-      transition_in(if_block1);
-      current = true;
-    },
-    o(local) {
-      transition_out(c1_slot, local);
-      transition_out(c2_slot, local);
-      transition_out(c3_slot, local);
-      transition_out(if_block0);
-      transition_out(if_block1);
-      current = false;
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(li);
-      }
-      if (c1_slot) c1_slot.d(detaching);
-      if (c2_slot) c2_slot.d(detaching);
-      if (c3_slot) c3_slot.d(detaching);
-      if (if_block0) if_block0.d();
-      if (if_block1) if_block1.d();
+      return sum;
+    }, {});
+    return { value, per: 1 };
+  }
+  const defaultCurrency = getDefaultCurrency();
+  const defaultConversion = getCurrencyConversion(defaultCurrency);
+  if (defaultCurrency && defaultConversion && entries.every((entry) => entry.conversion)) {
+    const value = entries.reduce((sum, entry) => {
+      return sum + entry.value * entry.quantity / entry.conversion * defaultConversion;
+    }, 0);
+    return { value, denomination: defaultCurrency };
+  }
+  const [firstEntry] = entries;
+  if (entries.every((entry) => entry.denomination === firstEntry.denomination)) {
+    return {
+      value: entries.reduce((sum, entry) => sum + entry.value * entry.quantity, 0),
+      denomination: firstEntry.denomination
+    };
+  }
+  return entries.map((entry) => multiplyPrice(entry, entry.quantity));
+}
+function formatTotalPrice(prices) {
+  const total = sumPrices(prices);
+  if (Array.isArray(total)) return total.map((price) => formatPrice(price)).join(", ");
+  return formatPrice(total);
+}
+function getCurrencyEntriesWithConversions() {
+  return Object.entries(getSystemCurrencies()).map(([denomination, config]) => [denomination, Number(config?.conversion)]).filter(([, conversion]) => Number.isFinite(conversion) && conversion > 0);
+}
+function roundCurrency(value) {
+  const rounded = Math.round(Number(value) * 1e6) / 1e6;
+  return Object.is(rounded, -0) ? 0 : rounded;
+}
+function getActorCurrency(actor) {
+  const currency = actor?.system?.currency;
+  return isPlainObject(currency) ? foundry.utils.deepClone(currency) : null;
+}
+function getCurrencyValue(currency, denomination) {
+  return Number(currency?.[denomination] ?? 0);
+}
+function totalCurrencyInDenomination(currency, denomination) {
+  const baseConversion = getCurrencyConversion(denomination);
+  if (!baseConversion) return getCurrencyValue(currency, denomination);
+  return Object.entries(currency ?? {}).reduce((sum, [heldDenomination, amount]) => {
+    const conversion = getCurrencyConversion(heldDenomination);
+    if (!conversion) return sum;
+    return sum + Number(amount) * (baseConversion / conversion);
+  }, 0);
+}
+function deductCurrencyPart(currency, amount, denomination) {
+  const requestedAmount = roundCurrency(Math.max(0, Number(amount ?? 0)));
+  if (requestedAmount <= 0) return { success: true, currency, remainder: 0 };
+  const baseConversion = getCurrencyConversion(denomination);
+  if (!baseConversion) {
+    const available = getCurrencyValue(currency, denomination);
+    if (available < requestedAmount) {
+      return { success: false, currency, remainder: requestedAmount - available };
     }
+    currency[denomination] = roundCurrency(available - requestedAmount);
+    return { success: true, currency, remainder: 0 };
+  }
+  const currencies = getCurrencyEntriesWithConversions().filter(([heldDenomination]) => heldDenomination !== denomination).sort(([, left], [, right]) => right - left);
+  currencies.unshift([denomination, baseConversion]);
+  let passes = currencies.length;
+  while (passes > 0) {
+    const nextCurrency = foundry.utils.deepClone(currency);
+    let remainder = requestedAmount;
+    for (const [heldDenomination, conversion] of currencies) {
+      nextCurrency[heldDenomination] ??= 0;
+      const multiplier = conversion / baseConversion;
+      const heldAmount = getCurrencyValue(nextCurrency, heldDenomination);
+      const deduct = Math.min(heldAmount, Math.floor(remainder * multiplier + 1e-6));
+      remainder = roundCurrency(remainder - deduct / multiplier);
+      nextCurrency[heldDenomination] = roundCurrency(heldAmount - deduct);
+      if (remainder > 1e-6 && conversion < baseConversion && nextCurrency[heldDenomination] > 0) {
+        const rate = Math.floor(baseConversion / conversion);
+        const breaks = Math.min(nextCurrency[heldDenomination], Math.ceil(remainder / rate));
+        nextCurrency[heldDenomination] = roundCurrency(nextCurrency[heldDenomination] - breaks);
+        nextCurrency[denomination] = roundCurrency(getCurrencyValue(nextCurrency, denomination) + breaks * rate);
+        const change = Math.min(getCurrencyValue(nextCurrency, denomination), remainder);
+        remainder = roundCurrency(remainder - change);
+        nextCurrency[denomination] = roundCurrency(getCurrencyValue(nextCurrency, denomination) - change);
+      }
+      if (Math.abs(remainder) <= 1e-6) {
+        return { success: true, currency: nextCurrency, remainder: 0 };
+      }
+    }
+    currencies.push(currencies.shift());
+    passes -= 1;
+  }
+  return { success: false, currency, remainder: requestedAmount };
+}
+function priceParts(price) {
+  if (Array.isArray(price)) {
+    return price.flatMap((entry) => priceParts(entry));
+  }
+  const normalized = normalizePrice(price);
+  if (isDenominationMap(normalized.value)) {
+    return Object.entries(normalized.value).map(([denomination, value]) => ({ denomination, value: Number(value) / Math.max(1, Number(normalized.per ?? 1)) })).filter((entry) => entry.denomination && Number(entry.value) > 0);
+  }
+  return [{
+    denomination: normalized.denomination,
+    value: Number(normalized.value ?? 0)
+  }].filter((entry) => entry.denomination && Number(entry.value) > 0);
+}
+function getCoinMap(price) {
+  return priceParts(price).reduce((coins, { denomination, value }) => {
+    coins[denomination] = roundCurrency((coins[denomination] ?? 0) + Number(value));
+    return coins;
+  }, {});
+}
+function getCopperValue(price) {
+  return Object.entries(getCoinMap(price)).reduce((sum, [denomination, value]) => {
+    return sum + Number(value) * (COPPER_VALUES[denomination] ?? 0);
+  }, 0);
+}
+function getActorInventoryCoinPaymentUpdate(actor, price) {
+  const coins = getCoinMap(price);
+  const costCopperValue = getCopperValue(price);
+  const availableCopperValue = Number(actor?.inventory?.coins?.copperValue ?? 0);
+  if (!costCopperValue) {
+    return { success: true, errors: [], total: price, available: actor?.inventory?.coins ?? null, update: null, coins };
+  }
+  if (availableCopperValue < costCopperValue) {
+    return {
+      success: false,
+      errors: [`${actor?.name ?? "Actor"} cannot afford ${formatPrice(price)}. Available: ${actor?.inventory?.coins?.toString?.({ decimal: true }) ?? `${availableCopperValue} cp`}.`],
+      total: price,
+      available: actor?.inventory?.coins ?? null,
+      update: null,
+      coins
+    };
+  }
+  return {
+    success: true,
+    errors: [],
+    total: price,
+    available: actor?.inventory?.coins ?? null,
+    update: null,
+    coins
   };
 }
-function instance$4($$self, $$props, $$invalidate) {
-  let { $$slots: slots = {}, $$scope } = $$props;
-  const $$slots = compute_slots(slots);
-  let { rowClass = "" } = $$props;
-  $$self.$$set = ($$props2) => {
-    if ("rowClass" in $$props2) $$invalidate(0, rowClass = $$props2.rowClass);
-    if ("$$scope" in $$props2) $$invalidate(2, $$scope = $$props2.$$scope);
+function getActorCurrencyPaymentUpdate(actor, price) {
+  if (actor?.inventory?.removeCoins && Number.isFinite(Number(actor?.inventory?.coins?.copperValue))) {
+    return getActorInventoryCoinPaymentUpdate(actor, price);
+  }
+  const currency = getActorCurrency(actor);
+  if (!currency) {
+    return {
+      success: false,
+      errors: [`${actor?.name ?? "Actor"} has no supported currency purse.`],
+      total: price,
+      available: null,
+      update: null
+    };
+  }
+  let nextCurrency = currency;
+  const errors = [];
+  for (const part of priceParts(price)) {
+    const settlement = deductCurrencyPart(nextCurrency, part.value, part.denomination);
+    if (!settlement.success) {
+      const available = totalCurrencyInDenomination(nextCurrency, part.denomination);
+      errors.push(`${actor?.name ?? "Actor"} cannot afford ${formatPrice(part)}. Available: ${formatPrice({
+        value: roundCurrency(available),
+        denomination: part.denomination
+      })}.`);
+      continue;
+    }
+    nextCurrency = settlement.currency;
+  }
+  return {
+    success: errors.length === 0,
+    errors,
+    total: price,
+    available: currency,
+    update: { "system.currency": nextCurrency }
   };
-  return [rowClass, $$slots, $$scope, slots];
 }
-class InventoryRow extends SvelteComponent {
-  constructor(options) {
-    super();
-    init(this, options, instance$4, create_fragment$4, safe_not_equal, { rowClass: 0 });
+async function deductActorCurrency(actor, price) {
+  const payment = getActorCurrencyPaymentUpdate(actor, price);
+  if (!payment.success) return payment;
+  if (actor?.inventory?.removeCoins && payment.coins) {
+    if (Object.keys(payment.coins).length === 0) return payment;
+    const success = await actor.inventory.removeCoins(payment.coins, { byValue: true });
+    return success ? payment : {
+      ...payment,
+      success: false,
+      errors: [`${actor?.name ?? "Actor"} cannot afford ${formatPrice(price)}.`]
+    };
+  }
+  await actor.update(payment.update);
+  return payment;
+}
+const ITEM_SOURCES_SETTING = "itemSources";
+const LISTABLE_ITEM_TYPES_SETTING = "listableItemTypes";
+function getAvailableItemTypes() {
+  const configured = CONFIG?.Item?.typeLabels ?? {};
+  const documentTypes = Array.isArray(game?.documentTypes?.Item) ? game.documentTypes.Item : [];
+  const modelTypes = CONFIG?.Item?.dataModels ? Object.keys(CONFIG.Item.dataModels) : [];
+  const metadataTypes = CONFIG?.Item?.documentClass?.metadata?.types ?? [];
+  const legacyTypes = Array.isArray(CONFIG?.Item?.types) ? CONFIG.Item.types : [];
+  const compendiumTypes = game.packs?.filter((pack) => pack.documentName === "Item").flatMap((pack) => Array.from(pack.index?.values?.() ?? []).map((entry) => entry?.type)) ?? [];
+  return Array.from(/* @__PURE__ */ new Set([
+    ...Object.keys(configured),
+    ...documentTypes,
+    ...modelTypes,
+    ...metadataTypes,
+    ...legacyTypes,
+    ...compendiumTypes
+  ])).filter(Boolean).map((type) => ({ type, label: getItemTypeLabel(type) })).sort((a, b) => a.label.localeCompare(b.label, game.i18n?.lang));
+}
+function getItemTypeLabel(type) {
+  const rawLabel = CONFIG?.Item?.typeLabels?.[type] || CONFIG?.Item?.typeHints?.[type];
+  if (rawLabel) return game.i18n.localize(rawLabel);
+  try {
+    return game.i18n.localize(type);
+  } catch (_) {
+    return type;
   }
 }
-function get_each_context$2(ctx, list, i) {
+function getAllItemCompendia$1() {
+  return game.packs?.filter((pack) => pack.documentName === "Item") ?? [];
+}
+function getConfiguredListableItemTypes() {
+  const configured = safeGetSetting(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING, DEFAULT_LISTABLE_ITEM_TYPES);
+  const available = getAvailableItemTypes();
+  if (configured === null || configured === void 0) return available;
+  if (!Array.isArray(configured)) return [];
+  const allowed = new Set(configured);
+  return available.filter((entry) => allowed.has(entry.type));
+}
+function isItemTypeListable(type) {
+  const configured = safeGetSetting(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING, DEFAULT_LISTABLE_ITEM_TYPES);
+  if (configured === null || configured === void 0) return true;
+  return Array.isArray(configured) && configured.includes(type);
+}
+function autoAssignItemSources() {
+  return getAllItemCompendia$1().map((pack) => pack.collection);
+}
+const TELEMETRY_PREFIX = "[Shop Studio]";
+function shopTelemetry(scope, event, details = {}) {
+  const payload = {
+    scope,
+    event,
+    userId: globalThis.game?.user?.id,
+    isGM: globalThis.game?.user?.isGM,
+    ...details
+  };
+  const logger = globalThis.window?.GAS?.log;
+  if (logger?.p) {
+    logger.p(`${TELEMETRY_PREFIX} ${scope} | ${event}`, payload);
+    return;
+  }
+  console.debug(`${TELEMETRY_PREFIX} ${scope} | ${event}`, payload);
+}
+function itemQuantitySnapshot(items) {
+  const source = typeof items?.values === "function" ? items.values() : items;
+  return Array.from(source ?? []).map((entry) => {
+    const item = Array.isArray(entry) ? entry[1] : entry;
+    return {
+      id: item?.id,
+      name: item?.name,
+      quantity: Number(item?.system?.quantity ?? 0)
+    };
+  });
+}
+const shopSocketState = writable(/* @__PURE__ */ new Map());
+function getShopUuids(payload) {
+  const uuids = /* @__PURE__ */ new Set();
+  for (const shopUuid2 of payload?.shopUuids ?? []) {
+    if (typeof shopUuid2 === "string" && shopUuid2) uuids.add(shopUuid2);
+  }
+  const shopUuid = payload?.shopUuid ?? payload?.uuid;
+  if (typeof shopUuid === "string" && shopUuid) uuids.add(shopUuid);
+  const resolvedShopUuid = payload?.resolvedShopUuid;
+  if (typeof resolvedShopUuid === "string" && resolvedShopUuid) uuids.add(resolvedShopUuid);
+  const shopId = payload?.shopId ?? payload?.id;
+  if (typeof shopId === "string" && shopId) {
+    uuids.add(shopId.startsWith("Actor.") ? shopId : `Actor.${shopId}`);
+  }
+  return [...uuids];
+}
+function recordShopSocketResult(payload) {
+  const shopUuids = getShopUuids(payload);
+  if (shopUuids.length === 0) {
+    shopTelemetry("basketState", "record skipped: no shop uuid", {
+      kind: payload?.kind,
+      shopId: payload?.shopId,
+      targetActorId: payload?.targetActorId
+    });
+    return;
+  }
+  shopSocketState.update((state) => {
+    const nextState = new Map(state);
+    for (const shopUuid of shopUuids) {
+      const current = nextState.get(shopUuid) ?? {
+        basketsByActorId: /* @__PURE__ */ new Map(),
+        stockByItemId: /* @__PURE__ */ new Map(),
+        revision: 0
+      };
+      const nextShopState = {
+        basketsByActorId: new Map(current.basketsByActorId),
+        stockByItemId: new Map(current.stockByItemId),
+        revision: current.revision + 1
+      };
+      if (payload.targetActorId && Array.isArray(payload.basket)) {
+        nextShopState.basketsByActorId.set(
+          payload.targetActorId,
+          payload.basket.map((entry) => ({ ...entry }))
+        );
+      }
+      for (const update2 of payload.stockUpdates ?? []) {
+        if (update2?.itemId) {
+          nextShopState.stockByItemId.set(update2.itemId, Number(update2.quantity ?? 0));
+        }
+      }
+      nextState.set(shopUuid, nextShopState);
+    }
+    shopTelemetry("basketState", "recorded socket result", {
+      kind: payload.kind,
+      shopUuids,
+      targetActorId: payload.targetActorId,
+      basketLength: payload.basket?.length,
+      stockUpdates: payload.stockUpdates,
+      revisions: shopUuids.map((shopUuid) => ({
+        shopUuid,
+        revision: nextState.get(shopUuid)?.revision,
+        basketActorIds: [...nextState.get(shopUuid)?.basketsByActorId?.keys?.() ?? []]
+      }))
+    });
+    return nextState;
+  });
+}
+function get_each_context$5(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[9] = list[i];
-  child_ctx[11] = i;
+  child_ctx[32] = list[i];
+  child_ctx[34] = i;
   return child_ctx;
 }
-function create_c1_slot(ctx) {
+function get_each_context_1$3(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[35] = list[i];
+  return child_ctx;
+}
+function create_each_block_1$3(ctx) {
+  let option;
+  let t_value = (
+    /*opt*/
+    ctx[35].label + ""
+  );
+  let t;
+  let option_value_value;
+  return {
+    c() {
+      option = element("option");
+      t = text(t_value);
+      option.__value = option_value_value = /*opt*/
+      ctx[35].value;
+      set_input_value(option, option.__value);
+    },
+    m(target, anchor) {
+      insert(target, option, anchor);
+      append(option, t);
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*typeFilterOptions*/
+      4 && t_value !== (t_value = /*opt*/
+      ctx2[35].label + "")) set_data(t, t_value);
+      if (dirty[0] & /*typeFilterOptions*/
+      4 && option_value_value !== (option_value_value = /*opt*/
+      ctx2[35].value)) {
+        option.__value = option_value_value;
+        set_input_value(option, option.__value);
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(option);
+      }
+    }
+  };
+}
+function create_each_block$5(ctx) {
+  let div6;
+  let div0;
   let img;
   let img_src_value;
   let img_alt_value;
-  return {
-    c() {
-      img = element("img");
-      attr(img, "class", "icon svelte-FOU-9iqmd3");
-      if (!src_url_equal(img.src, img_src_value = /*item*/
-      ctx[9].img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
-      attr(img, "alt", img_alt_value = /*item*/
-      ctx[9].name);
-    },
-    m(target, anchor) {
-      insert(target, img, anchor);
-    },
-    p(ctx2, dirty) {
-      if (dirty & /*items*/
-      4 && !src_url_equal(img.src, img_src_value = /*item*/
-      ctx2[9].img || "icons/svg/mystery-man.svg")) {
-        attr(img, "src", img_src_value);
-      }
-      if (dirty & /*items*/
-      4 && img_alt_value !== (img_alt_value = /*item*/
-      ctx2[9].name)) {
-        attr(img, "alt", img_alt_value);
-      }
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(img);
-      }
-    }
-  };
-}
-function create_c2_slot(ctx) {
+  let div1;
   let a;
-  let t_value = (
+  let t0_value = (
     /*item*/
-    ctx[9].name + ""
+    ctx[32].name + ""
   );
-  let t;
+  let t0;
+  let a_class_value;
+  let div2;
+  let span0;
+  let t1_value = (
+    /*formatPrice*/
+    ctx[15](
+      /*item*/
+      ctx[32]
+    ) + ""
+  );
+  let t1;
+  let div4;
+  let div3;
+  let button0;
+  let span1;
+  let t2_value = (
+    /*getDisplayQuantity*/
+    ctx[14](
+      /*item*/
+      ctx[32]
+    ) + ""
+  );
+  let t2;
+  let button1;
+  let div5;
+  let button2;
   let mounted;
   let dispose;
-  function keydown_handler(...args) {
-    return (
-      /*keydown_handler*/
-      ctx[4](
-        /*item*/
-        ctx[9],
-        ...args
-      )
-    );
-  }
   return {
     c() {
+      div6 = element("div");
+      div0 = element("div");
+      img = element("img");
+      div1 = element("div");
       a = element("a");
-      t = text(t_value);
-      attr(a, "class", "stealth link");
-      attr(a, "tabindex", "0");
+      t0 = text(t0_value);
+      div2 = element("div");
+      span0 = element("span");
+      t1 = text(t1_value);
+      div4 = element("div");
+      div3 = element("div");
+      button0 = element("button");
+      button0.innerHTML = `<i class="fa fa-minus"></i>`;
+      span1 = element("span");
+      t2 = text(t2_value);
+      button1 = element("button");
+      button1.innerHTML = `<i class="fa fa-plus"></i>`;
+      div5 = element("div");
+      button2 = element("button");
+      button2.innerHTML = `<i class="fa fa-trash"></i>`;
+      attr(img, "class", "icon svelte-FOU-efukso");
+      if (!src_url_equal(img.src, img_src_value = /*item*/
+      ctx[32].img)) attr(img, "src", img_src_value);
+      attr(img, "alt", img_alt_value = /*item*/
+      ctx[32].name);
+      attr(div0, "class", "inv-col-icon svelte-FOU-efukso");
+      attr(div0, "data-tooltip", localize("View"));
+      attr(
+        div0,
+        "data-index",
+        /*index*/
+        ctx[34]
+      );
+      attr(div0, "role", "button");
+      attr(a, "class", a_class_value = "stealth link " + /*item*/
+      (ctx[32].system.isMagic ? "pulse" : "") + " svelte-FOU-efukso");
+      attr(
+        a,
+        "data-index",
+        /*index*/
+        ctx[34]
+      );
       attr(a, "role", "button");
+      attr(div1, "class", "inv-col-name svelte-FOU-efukso");
+      attr(div1, "data-tooltip", localize("View"));
+      attr(span0, "class", "price-text svelte-FOU-efukso");
+      attr(div2, "class", "inv-col-price svelte-FOU-efukso");
+      attr(button0, "class", "stealth qty-btn svelte-FOU-efukso");
+      attr(button0, "data-tooltip", "Decrease quantity");
+      attr(
+        button0,
+        "data-index",
+        /*index*/
+        ctx[34]
+      );
+      attr(span1, "class", "qty-value svelte-FOU-efukso");
+      attr(button1, "class", "stealth qty-btn svelte-FOU-efukso");
+      attr(button1, "data-tooltip", "Increase quantity");
+      attr(
+        button1,
+        "data-index",
+        /*index*/
+        ctx[34]
+      );
+      attr(div3, "class", "qty-controls svelte-FOU-efukso");
+      attr(div4, "class", "inv-col-qty svelte-FOU-efukso");
+      attr(button2, "class", "stealth negative");
+      attr(button2, "data-tooltip", localize("Types.Actor.ActionButtons.Delete"));
+      attr(
+        button2,
+        "data-index",
+        /*index*/
+        ctx[34]
+      );
+      attr(div5, "class", "inv-col-actions svelte-FOU-efukso");
+      attr(div6, "class", "inv-row svelte-FOU-efukso");
     },
     m(target, anchor) {
-      insert(target, a, anchor);
-      append(a, t);
+      insert(target, div6, anchor);
+      append(div6, div0);
+      append(div0, img);
+      append(div6, div1);
+      append(div1, a);
+      append(a, t0);
+      append(div6, div2);
+      append(div2, span0);
+      append(span0, t1);
+      append(div6, div4);
+      append(div4, div3);
+      append(div3, button0);
+      append(div3, span1);
+      append(span1, t2);
+      append(div3, button1);
+      append(div6, div5);
+      append(div5, button2);
       if (!mounted) {
         dispose = [
-          listen(a, "click", function() {
-            if (is_function(showItemSheet(
-              /*item*/
-              ctx[9]
-            ))) showItemSheet(
-              /*item*/
-              ctx[9]
-            ).apply(this, arguments);
-          }),
-          listen(a, "keydown", stop_propagation(prevent_default(keydown_handler)))
+          listen(
+            div0,
+            "click",
+            /*onShowItemClick*/
+            ctx[11]
+          ),
+          listen(
+            a,
+            "click",
+            /*onShowItemClick*/
+            ctx[11]
+          ),
+          listen(
+            button0,
+            "click",
+            /*onRemoveQtyClick*/
+            ctx[9]
+          ),
+          listen(
+            button1,
+            "click",
+            /*onAddQtyClick*/
+            ctx[8]
+          ),
+          listen(
+            button2,
+            "click",
+            /*onDeleteClick*/
+            ctx[10]
+          )
         ];
         mounted = true;
       }
     },
-    p(new_ctx, dirty) {
-      ctx = new_ctx;
-      if (dirty & /*items*/
-      4 && t_value !== (t_value = /*item*/
-      ctx[9].name + "")) set_data(t, t_value);
+    p(ctx2, dirty) {
+      if (dirty[0] & /*items*/
+      2 && !src_url_equal(img.src, img_src_value = /*item*/
+      ctx2[32].img)) {
+        attr(img, "src", img_src_value);
+      }
+      if (dirty[0] & /*items*/
+      2 && img_alt_value !== (img_alt_value = /*item*/
+      ctx2[32].name)) {
+        attr(img, "alt", img_alt_value);
+      }
+      if (dirty[0] & /*items*/
+      2 && t0_value !== (t0_value = /*item*/
+      ctx2[32].name + "")) set_data(t0, t0_value);
+      if (dirty[0] & /*items*/
+      2 && a_class_value !== (a_class_value = "stealth link " + /*item*/
+      (ctx2[32].system.isMagic ? "pulse" : "") + " svelte-FOU-efukso")) {
+        attr(a, "class", a_class_value);
+      }
+      if (dirty[0] & /*items*/
+      2 && t1_value !== (t1_value = /*formatPrice*/
+      ctx2[15](
+        /*item*/
+        ctx2[32]
+      ) + "")) set_data(t1, t1_value);
+      if (dirty[0] & /*items*/
+      2 && t2_value !== (t2_value = /*getDisplayQuantity*/
+      ctx2[14](
+        /*item*/
+        ctx2[32]
+      ) + "")) set_data(t2, t2_value);
     },
     d(detaching) {
       if (detaching) {
-        detach(a);
+        detach(div6);
       }
       mounted = false;
       run_all(dispose);
     }
   };
 }
-function create_c3_slot(ctx) {
-  let span;
-  let t_value = (
-    /*item*/
-    (ctx[9].system?.quantity ?? 0) + ""
-  );
-  let t;
-  return {
-    c() {
-      span = element("span");
-      t = text(t_value);
-      attr(span, "class", "quantity svelte-FOU-9iqmd3");
-    },
-    m(target, anchor) {
-      insert(target, span, anchor);
-      append(span, t);
-    },
-    p(ctx2, dirty) {
-      if (dirty & /*items*/
-      4 && t_value !== (t_value = /*item*/
-      (ctx2[9].system?.quantity ?? 0) + "")) set_data(t, t_value);
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(span);
-      }
-    }
-  };
-}
-function create_each_block$2(ctx) {
-  let inventoryrow;
-  let current;
-  inventoryrow = new InventoryRow({
-    props: {
-      rowClass: "inventory-item",
-      $$slots: {
-        c3: [create_c3_slot],
-        c2: [create_c2_slot],
-        c1: [create_c1_slot]
-      },
-      $$scope: { ctx }
-    }
-  });
-  return {
-    c() {
-      create_component(inventoryrow.$$.fragment);
-    },
-    m(target, anchor) {
-      mount_component(inventoryrow, target, anchor);
-      current = true;
-    },
-    p(ctx2, dirty) {
-      const inventoryrow_changes = {};
-      if (dirty & /*$$scope, items*/
-      4100) {
-        inventoryrow_changes.$$scope = { dirty, ctx: ctx2 };
-      }
-      inventoryrow.$set(inventoryrow_changes);
-    },
-    i(local) {
-      if (current) return;
-      transition_in(inventoryrow.$$.fragment, local);
-      current = true;
-    },
-    o(local) {
-      transition_out(inventoryrow.$$.fragment, local);
-      current = false;
-    },
-    d(detaching) {
-      destroy_component(inventoryrow, detaching);
-    }
-  };
-}
-function create_fragment$3(ctx) {
-  let div2;
+function create_fragment$8(ctx) {
+  let div13;
+  let div4;
   let div0;
-  let tjsinput;
-  let button;
+  let label0;
   let div1;
-  let table;
-  let thead;
-  let tr;
-  let th0;
-  let th1;
-  let t1_value = (
-    /*sharedProps*/
-    ctx[0].localize("Name") + ""
-  );
-  let t1;
-  let th2;
-  let t2_value = (
-    /*sharedProps*/
-    ctx[0].localize("Quantity") + ""
-  );
-  let t2;
-  let tbody;
+  let tjsinput;
+  let div2;
+  let label1;
+  let div3;
+  let select;
+  let div12;
+  let h1;
+  let div11;
+  let div10;
+  let div5;
+  let div6;
+  let div7;
+  let div8;
+  let div9;
+  let button;
   let current;
   let mounted;
   let dispose;
   tjsinput = new TJSInput({ props: { input: (
     /*input*/
-    ctx[1]
+    ctx[6]
   ) } });
+  let each_value_1 = ensure_array_like(
+    /*typeFilterOptions*/
+    ctx[2]
+  );
+  let each_blocks_1 = [];
+  for (let i = 0; i < each_value_1.length; i += 1) {
+    each_blocks_1[i] = create_each_block_1$3(get_each_context_1$3(ctx, each_value_1, i));
+  }
   let each_value = ensure_array_like(
     /*items*/
-    ctx[2]
+    ctx[1]
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block$2(get_each_context$2(ctx, each_value, i));
+    each_blocks[i] = create_each_block$5(get_each_context$5(ctx, each_value, i));
   }
-  const out = (i) => transition_out(each_blocks[i], 1, 1, () => {
-    each_blocks[i] = null;
-  });
   return {
     c() {
-      div2 = element("div");
+      div13 = element("div");
+      div4 = element("div");
       div0 = element("div");
-      create_component(tjsinput.$$.fragment);
-      button = element("button");
-      button.textContent = "Clear";
+      label0 = element("label");
+      label0.textContent = `${localize("Search")}`;
       div1 = element("div");
-      table = element("table");
-      thead = element("thead");
-      tr = element("tr");
-      th0 = element("th");
-      th1 = element("th");
-      t1 = text(t1_value);
-      th2 = element("th");
-      t2 = text(t2_value);
-      tbody = element("tbody");
+      create_component(tjsinput.$$.fragment);
+      div2 = element("div");
+      label1 = element("label");
+      label1.textContent = `${localize("Type")}`;
+      div3 = element("div");
+      select = element("select");
+      for (let i = 0; i < each_blocks_1.length; i += 1) {
+        each_blocks_1[i].c();
+      }
+      div12 = element("div");
+      h1 = element("h1");
+      h1.textContent = `${localize("Inventory")}`;
+      div11 = element("div");
+      div10 = element("div");
+      div5 = element("div");
+      div6 = element("div");
+      div6.textContent = `${localize("Name")}`;
+      div7 = element("div");
+      div7.textContent = `${localize("Price")}`;
+      div8 = element("div");
+      div8.textContent = `${localize("Quantity")}`;
+      div9 = element("div");
       for (let i = 0; i < each_blocks.length; i += 1) {
         each_blocks[i].c();
       }
-      attr(button, "type", "button");
-      attr(div0, "class", "inventory-controls svelte-FOU-9iqmd3");
-      attr(th0, "class", "img shrink");
-      attr(th0, "scope", "col");
-      attr(th1, "class", "left expand");
-      attr(th1, "scope", "col");
-      attr(th2, "class", "fixed");
-      attr(th2, "scope", "col");
-      attr(tr, "class", "gold");
-      attr(table, "class", "borderless");
-      attr(div1, "class", "inventory-list svelte-FOU-9iqmd3");
-      attr(div2, "class", "inventory-tab svelte-FOU-9iqmd3");
+      button = element("button");
+      button.textContent = `${localize("Instructions.RemoveAll")}`;
+      attr(div0, "class", "flexcol flex1 label-container");
+      attr(div1, "class", "flex3 left");
+      attr(div2, "class", "flexcol flex1 label-container");
+      attr(select, "class", "short");
+      attr(div3, "class", "flex3 right");
+      attr(div4, "class", "flexrow pt-sm pr-sm pl-sm");
+      attr(h1, "class", "gold");
+      attr(div5, "class", "inv-col-icon svelte-FOU-efukso");
+      attr(div6, "class", "inv-col-name svelte-FOU-efukso");
+      attr(div7, "class", "inv-col-price svelte-FOU-efukso");
+      attr(div8, "class", "inv-col-qty svelte-FOU-efukso");
+      attr(div9, "class", "inv-col-actions svelte-FOU-efukso");
+      attr(div10, "class", "inv-header svelte-FOU-efukso");
+      attr(div11, "class", "inv-table svelte-FOU-efukso");
+      attr(div12, "class", "padded svelte-FOU-efukso");
+      attr(button, "class", "mt-sm glossy-button gold-light hover-shine");
+      attr(div13, "class", "panel overflow containerx svelte-FOU-efukso");
     },
     m(target, anchor) {
-      insert(target, div2, anchor);
-      append(div2, div0);
-      mount_component(tjsinput, div0, null);
-      append(div0, button);
-      append(div2, div1);
-      append(div1, table);
-      append(table, thead);
-      append(thead, tr);
-      append(tr, th0);
-      append(tr, th1);
-      append(th1, t1);
-      append(tr, th2);
-      append(th2, t2);
-      append(table, tbody);
-      for (let i = 0; i < each_blocks.length; i += 1) {
-        if (each_blocks[i]) {
-          each_blocks[i].m(tbody, null);
+      insert(target, div13, anchor);
+      append(div13, div4);
+      append(div4, div0);
+      append(div0, label0);
+      append(div4, div1);
+      mount_component(tjsinput, div1, null);
+      append(div4, div2);
+      append(div2, label1);
+      append(div4, div3);
+      append(div3, select);
+      for (let i = 0; i < each_blocks_1.length; i += 1) {
+        if (each_blocks_1[i]) {
+          each_blocks_1[i].m(select, null);
         }
       }
+      select_option(
+        select,
+        /*typeFilterValue*/
+        ctx[0]
+      );
+      append(div13, div12);
+      append(div12, h1);
+      append(div12, div11);
+      append(div11, div10);
+      append(div10, div5);
+      append(div10, div6);
+      append(div10, div7);
+      append(div10, div8);
+      append(div10, div9);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(div11, null);
+        }
+      }
+      append(div13, button);
       current = true;
       if (!mounted) {
-        dispose = listen(button, "click", function() {
-          if (is_function(
-            /*sharedProps*/
-            ctx[0].clearFilter
-          )) ctx[0].clearFilter.apply(this, arguments);
-        });
+        dispose = [
+          listen(
+            select,
+            "change",
+            /*onTypeFilterChange*/
+            ctx[13]
+          ),
+          listen(
+            button,
+            "click",
+            /*removeAllItems*/
+            ctx[12]
+          )
+        ];
         mounted = true;
       }
     },
-    p(new_ctx, [dirty]) {
-      ctx = new_ctx;
-      const tjsinput_changes = {};
-      if (dirty & /*input*/
-      2) tjsinput_changes.input = /*input*/
-      ctx[1];
-      tjsinput.$set(tjsinput_changes);
-      if ((!current || dirty & /*sharedProps*/
-      1) && t1_value !== (t1_value = /*sharedProps*/
-      ctx[0].localize("Name") + "")) set_data(t1, t1_value);
-      if ((!current || dirty & /*sharedProps*/
-      1) && t2_value !== (t2_value = /*sharedProps*/
-      ctx[0].localize("Quantity") + "")) set_data(t2, t2_value);
-      if (dirty & /*items, showItemSheet, handleItemKeydown*/
+    p(ctx2, dirty) {
+      if (dirty[0] & /*typeFilterOptions*/
       4) {
+        each_value_1 = ensure_array_like(
+          /*typeFilterOptions*/
+          ctx2[2]
+        );
+        let i;
+        for (i = 0; i < each_value_1.length; i += 1) {
+          const child_ctx = get_each_context_1$3(ctx2, each_value_1, i);
+          if (each_blocks_1[i]) {
+            each_blocks_1[i].p(child_ctx, dirty);
+          } else {
+            each_blocks_1[i] = create_each_block_1$3(child_ctx);
+            each_blocks_1[i].c();
+            each_blocks_1[i].m(select, null);
+          }
+        }
+        for (; i < each_blocks_1.length; i += 1) {
+          each_blocks_1[i].d(1);
+        }
+        each_blocks_1.length = each_value_1.length;
+      }
+      if (!current || dirty[0] & /*typeFilterValue, typeFilterOptions*/
+      5) {
+        select_option(
+          select,
+          /*typeFilterValue*/
+          ctx2[0]
+        );
+      }
+      if (dirty[0] & /*onDeleteClick, onAddQtyClick, getDisplayQuantity, items, onRemoveQtyClick, formatPrice, onShowItemClick*/
+      52994) {
         each_value = ensure_array_like(
           /*items*/
-          ctx[2]
+          ctx2[1]
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context$2(ctx, each_value, i);
+          const child_ctx = get_each_context$5(ctx2, each_value, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
-            transition_in(each_blocks[i], 1);
           } else {
-            each_blocks[i] = create_each_block$2(child_ctx);
+            each_blocks[i] = create_each_block$5(child_ctx);
             each_blocks[i].c();
-            transition_in(each_blocks[i], 1);
-            each_blocks[i].m(tbody, null);
+            each_blocks[i].m(div11, null);
           }
         }
-        group_outros();
-        for (i = each_value.length; i < each_blocks.length; i += 1) {
-          out(i);
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
         }
-        check_outros();
+        each_blocks.length = each_value.length;
       }
     },
     i(local) {
       if (current) return;
       transition_in(tjsinput.$$.fragment, local);
-      for (let i = 0; i < each_value.length; i += 1) {
-        transition_in(each_blocks[i]);
-      }
       current = true;
     },
     o(local) {
       transition_out(tjsinput.$$.fragment, local);
-      each_blocks = each_blocks.filter(Boolean);
-      for (let i = 0; i < each_blocks.length; i += 1) {
-        transition_out(each_blocks[i]);
-      }
       current = false;
     },
     d(detaching) {
       if (detaching) {
-        detach(div2);
+        detach(div13);
       }
       destroy_component(tjsinput);
+      destroy_each(each_blocks_1, detaching);
       destroy_each(each_blocks, detaching);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function instance$8($$self, $$props, $$invalidate) {
+  let shopUuid;
+  let socketShopState;
+  let socketStockRevision;
+  let typeFilterOptions;
+  let $Actor;
+  let $typeSearch;
+  let $nameSearch;
+  let $wildcard;
+  let $shopSocketState;
+  component_subscribe($$self, shopSocketState, ($$value) => $$invalidate(24, $shopSocketState = $$value));
+  const Actor2 = getContext("#doc");
+  component_subscribe($$self, Actor2, (value) => $$invalidate(20, $Actor = value));
+  const doc = new TJSDocument($Actor);
+  let { sharedProps = {} } = $$props;
+  const typeSearch = createFilterQuery("type");
+  component_subscribe($$self, typeSearch, (value) => $$invalidate(21, $typeSearch = value));
+  const nameSearch = createFilterQuery("name");
+  component_subscribe($$self, nameSearch, (value) => $$invalidate(22, $nameSearch = value));
+  const input = {
+    store: nameSearch,
+    efx: rippleFocus(),
+    placeholder: "by Name",
+    type: "search",
+    id: "search"
+  };
+  let typeFilterValue = "all";
+  let items = [];
+  let unsubscribeActor = () => {
+  };
+  let unsubscribeWildcard = () => {
+  };
+  onMount(() => {
+    shopTelemetry("InventoryTab", "mounted", {
+      actorId: $Actor?.id,
+      actorUuid: $Actor?.uuid,
+      itemCount: $Actor?.items?.size,
+      itemQuantities: itemQuantitySnapshot($Actor?.items)
+    });
+    unsubscribeActor = Actor2.subscribe((actor, options) => {
+      shopTelemetry("InventoryTab", "Actor store emitted", {
+        action: options?.action,
+        data: options?.data,
+        actorId: actor?.id,
+        actorUuid: actor?.uuid,
+        itemCount: actor?.items?.size,
+        itemQuantities: itemQuantitySnapshot(actor?.items)
+      });
+    });
+    unsubscribeWildcard = wildcard.subscribe((value) => {
+      shopTelemetry("InventoryTab", "wildcard emitted", {
+        actorId: $Actor?.id,
+        actorUuid: $Actor?.uuid,
+        itemCount: value?.size ?? value?.length,
+        itemQuantities: itemQuantitySnapshot(value)
+      });
+    });
+  });
+  const wildcard = doc.embedded.create(Item, {
+    name: "wildcard",
+    filters: [typeSearch, nameSearch],
+    sort: (a, b) => a.name.localeCompare(b.name)
+  });
+  component_subscribe($$self, wildcard, (value) => $$invalidate(23, $wildcard = value));
+  async function addQuantity(item) {
+    const quantity = (item.system.quantity ?? 0) + 1;
+    shopTelemetry("InventoryTab", "addQuantity update start", {
+      actorId: $Actor?.id,
+      itemId: item?.id,
+      itemName: item?.name,
+      previousQuantity: Number(item?.system?.quantity ?? 0),
+      nextQuantity: quantity
+    });
+    const [result] = await $Actor.updateEmbeddedDocuments("Item", [
+      {
+        _id: item.id,
+        "system.quantity": quantity
+      }
+    ]);
+    shopTelemetry("InventoryTab", "addQuantity update complete", {
+      actorId: $Actor?.id,
+      itemId: item?.id,
+      itemName: item?.name,
+      resultQuantity: Number(result?.system?.quantity ?? item?.system?.quantity ?? 0),
+      itemQuantityAfter: Number(item?.system?.quantity ?? 0),
+      itemQuantities: itemQuantitySnapshot($Actor?.items)
+    });
+  }
+  async function removeQuantity(item) {
+    const quantity = Math.max(0, (item.system.quantity ?? 0) - 1);
+    shopTelemetry("InventoryTab", "removeQuantity update start", {
+      actorId: $Actor?.id,
+      itemId: item?.id,
+      itemName: item?.name,
+      previousQuantity: Number(item?.system?.quantity ?? 0),
+      nextQuantity: quantity
+    });
+    const [result] = await $Actor.updateEmbeddedDocuments("Item", [
+      {
+        _id: item.id,
+        "system.quantity": quantity
+      }
+    ]);
+    shopTelemetry("InventoryTab", "removeQuantity update complete", {
+      actorId: $Actor?.id,
+      itemId: item?.id,
+      itemName: item?.name,
+      resultQuantity: Number(result?.system?.quantity ?? item?.system?.quantity ?? 0),
+      itemQuantityAfter: Number(item?.system?.quantity ?? 0),
+      itemQuantities: itemQuantitySnapshot($Actor?.items)
+    });
+  }
+  function onAddQtyClick(e) {
+    const idx = parseInt(e.currentTarget.dataset.index);
+    addQuantity(items[idx]);
+  }
+  function onRemoveQtyClick(e) {
+    const idx = parseInt(e.currentTarget.dataset.index);
+    removeQuantity(items[idx]);
+  }
+  function onDeleteClick(e) {
+    const idx = parseInt(e.currentTarget.dataset.index);
+    items[idx].delete();
+  }
+  function onShowItemClick(e) {
+    const idx = parseInt(e.currentTarget.dataset.index);
+    items[idx].sheet.render(true);
+  }
+  async function removeAllItems() {
+    const okToDelete = confirm(localize("Types.Actor.Inventory.confirmDeleteAll"));
+    if (okToDelete) {
+      await $Actor.deleteAllItems("equipment");
+    }
+  }
+  function onTypeFilterChange(e) {
+    $$invalidate(0, typeFilterValue = e.target.value);
+  }
+  function getActorItems() {
+    const source = typeof $Actor?.items?.values === "function" ? $Actor.items.values() : $Actor?.items ?? [];
+    return Array.from(source);
+  }
+  function getInventoryItems() {
+    return getActorItems().filter((item) => typeSearch(item) && nameSearch(item)).sort((a, b) => a.name.localeCompare(b.name));
+  }
+  function getDisplayQuantity(item) {
+    const stock = Number(item?.system?.quantity ?? 0);
+    shopTelemetry("InventoryTab", "display quantity evaluated", {
+      shopUuid,
+      itemId: item?.id,
+      itemName: item?.name,
+      documentQuantity: Number(item?.system?.quantity ?? 0),
+      result: Math.max(0, stock),
+      socketStockRevision
+    });
+    return Math.max(0, stock);
+  }
+  function formatPrice$1(item) {
+    return formatPrice(applyPriceFactor(item?.system?.price, sharedProps.salePriceFactor ?? 100));
+  }
+  onDestroy(() => {
+    unsubscribeActor();
+    unsubscribeWildcard();
+  });
+  $$self.$$set = ($$props2) => {
+    if ("sharedProps" in $$props2) $$invalidate(16, sharedProps = $$props2.sharedProps);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty[0] & /*$Actor*/
+    1048576) {
+      doc.set($Actor);
+    }
+    if ($$self.$$.dirty[0] & /*$Actor*/
+    1048576) {
+      $$invalidate(19, shopUuid = $Actor?.uuid ?? ($Actor?.id ? `Actor.${$Actor.id}` : null));
+    }
+    if ($$self.$$.dirty[0] & /*shopUuid, $shopSocketState*/
+    17301504) {
+      $$invalidate(17, socketShopState = shopUuid ? $shopSocketState.get(shopUuid) : null);
+    }
+    if ($$self.$$.dirty[0] & /*socketShopState*/
+    131072) {
+      $$invalidate(18, socketStockRevision = socketShopState?.revision ?? 0);
+    }
+    if ($$self.$$.dirty[0] & /*typeFilterValue*/
+    1) {
+      if (typeFilterValue === "all") {
+        typeSearch.set("");
+      } else {
+        typeSearch.set([typeFilterValue]);
+      }
+    }
+    if ($$self.$$.dirty[0] & /*$Actor, $wildcard, $nameSearch, $typeSearch, socketStockRevision, items, socketShopState*/
+    16121858) {
+      {
+        $$invalidate(1, items = getInventoryItems());
+        shopTelemetry("InventoryTab", "items reassigned", {
+          actorId: $Actor?.id,
+          actorUuid: $Actor?.uuid,
+          socketStockRevision,
+          itemCount: items.length,
+          itemQuantities: itemQuantitySnapshot(items),
+          socketStock: [...(socketShopState?.stockByItemId ?? /* @__PURE__ */ new Map()).entries()]
+        });
+      }
+    }
+  };
+  $$invalidate(2, typeFilterOptions = [
+    { value: "all", label: "All" },
+    ...getConfiguredListableItemTypes().map((t) => ({ value: t.type, label: t.label }))
+  ]);
+  return [
+    typeFilterValue,
+    items,
+    typeFilterOptions,
+    Actor2,
+    typeSearch,
+    nameSearch,
+    input,
+    wildcard,
+    onAddQtyClick,
+    onRemoveQtyClick,
+    onDeleteClick,
+    onShowItemClick,
+    removeAllItems,
+    onTypeFilterChange,
+    getDisplayQuantity,
+    formatPrice$1,
+    sharedProps,
+    socketShopState,
+    socketStockRevision,
+    shopUuid,
+    $Actor,
+    $typeSearch,
+    $nameSearch,
+    $wildcard,
+    $shopSocketState
+  ];
+}
+class InventoryTab extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$8, create_fragment$8, safe_not_equal, { sharedProps: 16 }, null, [-1, -1]);
+  }
+}
+const SHOP_TARGETS_FLAG = "targetedActors";
+function safeFromUuid(uuid) {
+  if (typeof uuid !== "string" || !uuid.includes(".")) return null;
+  try {
+    return globalThis.fromUuidSync?.(uuid) ?? null;
+  } catch (error) {
+    shopTelemetry("shopTargets", "fromUuidSync failed", {
+      uuid,
+      error: error?.message
+    });
+    return null;
+  }
+}
+function resolveActor(actorOrId) {
+  if (!actorOrId) return null;
+  if (typeof actorOrId !== "string") return actorOrId;
+  return game.actors.get(actorOrId) ?? safeFromUuid(actorOrId);
+}
+function normalizeTargetEntry(entry) {
+  if (!entry?.actorId && !entry?.actorUuid) return null;
+  const actor = resolveActor(entry.actorUuid) ?? resolveActor(entry.actorId);
+  return {
+    actorId: entry.actorId ?? actor?.id,
+    actorUuid: entry.actorUuid ?? actor?.uuid,
+    tokenUuid: entry.tokenUuid ?? null,
+    name: entry.name ?? actor?.name ?? entry.actorId ?? entry.actorUuid,
+    img: entry.img ?? actor?.img ?? "icons/svg/mystery-man.svg",
+    userId: entry.userId ?? game.user?.id,
+    source: entry.source ?? "selection",
+    timestamp: Number(entry.timestamp ?? Date.now())
+  };
+}
+function getShopTargetEntries(shop) {
+  return (shop?.getFlag?.(MODULE_ID, SHOP_TARGETS_FLAG) ?? []).map(normalizeTargetEntry).filter(Boolean);
+}
+function getCurrentTokenTargetEntries({ excludeActorId = null, source = "token-target" } = {}) {
+  return [...game.user?.targets ?? []].map((token) => {
+    const actor = token?.actor;
+    if (!actor || actor.id === excludeActorId) return null;
+    return normalizeTargetEntry({
+      actorId: actor.id,
+      actorUuid: actor.uuid,
+      tokenUuid: token.document?.uuid,
+      name: actor.name,
+      img: actor.img ?? token.document?.texture?.src,
+      userId: game.user?.id,
+      source,
+      timestamp: Date.now()
+    });
+  }).filter(Boolean);
+}
+function mergeTargetEntries(currentEntries, nextEntries) {
+  const byActor = /* @__PURE__ */ new Map();
+  for (const entry of [...currentEntries, ...nextEntries]) {
+    const normalized = normalizeTargetEntry(entry);
+    if (!normalized?.actorId) continue;
+    byActor.set(normalized.actorId, normalized);
+  }
+  return [...byActor.values()];
+}
+async function registerShopTargetEntries(shop, entries) {
+  if (!shop?.setFlag || !Array.isArray(entries) || entries.length === 0) return [];
+  const currentEntries = getShopTargetEntries(shop);
+  const nextEntries = mergeTargetEntries(currentEntries, entries);
+  await shop.setFlag(MODULE_ID, SHOP_TARGETS_FLAG, nextEntries);
+  shopTelemetry("shopTargets", "registered shop target entries", {
+    shopId: shop?.id,
+    shopUuid: shop?.uuid,
+    entryActorIds: entries.map((entry) => entry?.actorId),
+    targetActorIds: nextEntries.map((entry) => entry.actorId)
+  });
+  return nextEntries;
+}
+async function registerShopTargetActor(shop, actorOrId, { source = "selection" } = {}) {
+  const actor = resolveActor(actorOrId);
+  if (!actor || actor.id === shop?.id) return [];
+  return registerShopTargetEntries(shop, [{
+    actorId: actor.id,
+    actorUuid: actor.uuid,
+    name: actor.name,
+    img: actor.img,
+    userId: game.user?.id,
+    source,
+    timestamp: Date.now()
+  }]);
+}
+function resolveShopTargetActor(shop, targetActorId) {
+  const actor = resolveActor(targetActorId);
+  if (actor) return actor;
+  const targetEntry = getShopTargetEntries(shop).find((entry) => entry.actorId === targetActorId);
+  return resolveActor(targetEntry?.actorUuid);
+}
+const LEGACY_SHOP_ACTOR_TYPE = "shop";
+const SHOP_ACTOR_TYPE = "npc";
+const SHOP_IDENTITY_KIND = MODULE_ID + ".shop";
+const SHOP_FLAG_SCOPE = MODULE_ID;
+const SHOP_FLAG_KEYS = Object.freeze({
+  configuration: "configuration",
+  stock: "stock",
+  transactions: "transactions",
+  identity: "identity"
+});
+const DEFAULT_SHOP_CONFIGURATION = Object.freeze({
+  pricingFactor: 100,
+  salePriceFactor: 100,
+  buyPriceFactor: 50,
+  priceVariance: 10,
+  variancePeriod: "daily",
+  atrophyPercent: 5,
+  associatedActors: [],
+  rollTables: []
+});
+function getShopIdentity(actor) {
+  return actor?.getFlag?.(MODULE_ID, SHOP_FLAG_KEYS.identity) ?? actor?.getFlag?.(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.identity) ?? {};
+}
+async function setShopIdentity(actor, identity2 = {}) {
+  return actor?.setFlag?.(MODULE_ID, SHOP_FLAG_KEYS.identity, {
+    isShop: true,
+    kind: SHOP_IDENTITY_KIND,
+    ...identity2
+  });
+}
+function isShopEditing(actor) {
+  return getShopIdentity(actor).isEditing ?? false;
+}
+async function setShopEditing(actor, isEditing) {
+  return actor?.setFlag?.(MODULE_ID, `${SHOP_FLAG_KEYS.identity}.isEditing`, Boolean(isEditing));
+}
+function getShopConfiguration(actor) {
+  const configuration = actor?.getFlag?.(MODULE_ID, SHOP_FLAG_KEYS.configuration) ?? actor?.getFlag?.(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.configuration) ?? {};
+  return {
+    ...DEFAULT_SHOP_CONFIGURATION,
+    ...configuration,
+    salePriceFactor: configuration.salePriceFactor ?? configuration.pricingFactor ?? DEFAULT_SHOP_CONFIGURATION.salePriceFactor,
+    buyPriceFactor: configuration.buyPriceFactor ?? DEFAULT_SHOP_CONFIGURATION.buyPriceFactor
+  };
+}
+async function setShopConfiguration(actor, update2 = {}) {
+  const configuration = foundry.utils.mergeObject(getShopConfiguration(actor), update2 ?? {}, { inplace: false });
+  return actor?.setFlag?.(MODULE_ID, SHOP_FLAG_KEYS.configuration, configuration);
+}
+function getShopStock(actor) {
+  const stock = actor?.getFlag?.(MODULE_ID, SHOP_FLAG_KEYS.stock);
+  return Array.isArray(stock) ? stock : [];
+}
+async function setShopStock(actor, stock = []) {
+  return actor?.setFlag?.(MODULE_ID, SHOP_FLAG_KEYS.stock, stock ?? []);
+}
+function getShopTransactions(actor) {
+  const transactions = actor?.getFlag?.(MODULE_ID, SHOP_FLAG_KEYS.transactions);
+  return Array.isArray(transactions) ? transactions : [];
+}
+async function appendShopTransactions(actor, transactions = []) {
+  if (!transactions.length) return actor;
+  return actor?.setFlag?.(MODULE_ID, SHOP_FLAG_KEYS.transactions, [
+    ...getShopTransactions(actor),
+    ...transactions
+  ]);
+}
+const SOCKET_NAME = `module.${MODULE_ID}`;
+const SOCKET_HANDLER_KEY = `__${MODULE_ID}_socketHandler`;
+const PENDING_BASKET_KEY = `__${MODULE_ID}_pendingBasketRequests`;
+const PENDING_PURCHASE_KEY = `__${MODULE_ID}_pendingPurchaseRequests`;
+const SHOP_DOCUMENT_STORES_KEY = `__${MODULE_ID}_shopDocumentStores`;
+const SHOP_DOCUMENT_HOOKS_KEY = `__${MODULE_ID}_shopDocumentHooksRegistered`;
+function getPendingRequests(key) {
+  if (!window[key]) {
+    window[key] = /* @__PURE__ */ new Map();
+  }
+  return window[key];
+}
+function getShopDocumentStores() {
+  if (!window[SHOP_DOCUMENT_STORES_KEY]) {
+    window[SHOP_DOCUMENT_STORES_KEY] = /* @__PURE__ */ new Map();
+  }
+  return window[SHOP_DOCUMENT_STORES_KEY];
+}
+function getShopUuid(shop) {
+  if (typeof shop === "string") {
+    return shop.includes(".") ? shop : `Actor.${shop}`;
+  }
+  const shopUuid = shop?.shopUuid ?? shop?.uuid;
+  if (typeof shopUuid === "string") return shopUuid;
+  const shopId = shop?.shopId ?? shop?.id;
+  return typeof shopId === "string" ? `Actor.${shopId}` : null;
+}
+function getShopUuidAliases(shop) {
+  const uuids = /* @__PURE__ */ new Set();
+  const shopUuid = getShopUuid(shop);
+  if (shopUuid) uuids.add(shopUuid);
+  if (typeof shop === "object" && shop) {
+    for (const alias of shop.shopUuids ?? []) {
+      if (typeof alias === "string" && alias) uuids.add(alias);
+    }
+    const resolvedShopUuid = shop.resolvedShopUuid;
+    if (typeof resolvedShopUuid === "string" && resolvedShopUuid) {
+      uuids.add(resolvedShopUuid);
+    }
+    const shopId = shop.shopId ?? shop.id;
+    if (typeof shopId === "string" && shopId) {
+      uuids.add(shopId.startsWith("Actor.") ? shopId : `Actor.${shopId}`);
+    }
+  }
+  const targetDocument = resolveShopDocument(shop);
+  const targetShopId = targetDocument?.id ?? (typeof shop === "object" ? shop?.shopId ?? shop?.id : null);
+  if (targetShopId) {
+    for (const registeredShopUuid of getShopDocumentStores().keys()) {
+      const registeredDocument = resolveShopDocument(registeredShopUuid);
+      if (registeredDocument?.id === targetShopId) {
+        uuids.add(registeredShopUuid);
+      }
+    }
+  }
+  return [...uuids];
+}
+function resolveShopDocument(shop) {
+  const shopUuid = getShopUuid(shop);
+  const document2 = shopUuid ? globalThis.fromUuidSync?.(shopUuid) : void 0;
+  if (document2) return document2;
+  if (typeof shop === "object" && shop) {
+    const shopId2 = shop.shopId ?? shop.id;
+    if (typeof shopId2 === "string" && shopId2) {
+      const actorId = shopId2.startsWith("Actor.") ? shopId2.slice("Actor.".length) : shopId2;
+      const actor = game.actors.get(actorId);
+      if (actor) return actor;
+    }
+  }
+  const shopId = typeof shop === "string" ? shop.includes(".") ? shop.split(".").pop() : shop : shop?.shopId ?? shop?.id;
+  return typeof shopId === "string" ? game.actors.get(shopId) : void 0;
+}
+function refreshShopDocumentStore(store, shop, options = {}) {
+  const document2 = resolveShopDocument(shop);
+  shopTelemetry("shopSocket", "refresh store start", {
+    shop: getShopUuid(shop),
+    documentId: document2?.id,
+    documentName: document2?.name,
+    options
+  });
+  store.set(document2, { ...options, action: "shop-socket-refresh" });
+  shopTelemetry("shopSocket", "refresh store commit", {
+    shop: getShopUuid(shop),
+    documentId: document2?.id,
+    documentName: document2?.name,
+    options
+  });
+  return document2;
+}
+function registerShopDocumentStore(shop, store) {
+  const shopUuid = getShopUuid(shop);
+  if (!shopUuid || !store?.set || !store?.subscribe) return () => {
+  };
+  const storesByShop = getShopDocumentStores();
+  if (!storesByShop.has(shopUuid)) {
+    storesByShop.set(shopUuid, /* @__PURE__ */ new Set());
+  }
+  const stores = storesByShop.get(shopUuid);
+  stores.add(store);
+  shopTelemetry("shopSocket", "registered document store", {
+    shopUuid,
+    storeCount: stores.size
+  });
+  return () => {
+    stores.delete(store);
+    shopTelemetry("shopSocket", "unregistered document store", {
+      shopUuid,
+      storeCount: stores.size
+    });
+    if (stores.size === 0) {
+      storesByShop.delete(shopUuid);
+    }
+  };
+}
+function refreshShopDocumentStores(shop, options = {}) {
+  const shopUuids = getShopUuidAliases(shop);
+  if (shopUuids.length === 0) return void 0;
+  let document2;
+  for (const shopUuid of shopUuids) {
+    const stores = getShopDocumentStores().get(shopUuid);
+    if (!stores?.size) {
+      shopTelemetry("shopSocket", "refresh skipped: no registered stores", {
+        shopUuid,
+        shopUuids,
+        options
+      });
+      document2 = document2 ?? resolveShopDocument(shopUuid);
+      continue;
+    }
+    shopTelemetry("shopSocket", "refresh registered stores", {
+      shopUuid,
+      shopUuids,
+      storeCount: stores.size,
+      options
+    });
+    for (const store of stores) {
+      document2 = refreshShopDocumentStore(store, shopUuid, options);
+    }
+  }
+  return document2;
+}
+function sanitizeBasket(entries) {
+  return (entries ?? []).filter((entry) => entry?.itemId).map((entry) => {
+    const price = makeBasketPrice(entry.price);
+    return {
+      itemId: entry.itemId,
+      itemName: entry.itemName,
+      img: entry.img,
+      price,
+      priceValue: getComparablePriceValue(price),
+      quantity: Math.max(0, Number(entry.quantity ?? 0))
+    };
+  }).filter((entry) => entry.quantity > 0);
+}
+function indexBasket(entries) {
+  return new Map((entries ?? []).map((entry) => [entry.itemId, entry]));
+}
+async function applyBasket(shop, targetActorId, nextBasket) {
+  const currentBasket = sanitizeBasket(shop.getFlag(MODULE_ID, `basket.${targetActorId}`) ?? []);
+  const desiredBasket = sanitizeBasket(nextBasket);
+  const currentByItem = indexBasket(currentBasket);
+  const desiredByItem = indexBasket(desiredBasket);
+  const itemIds = /* @__PURE__ */ new Set([...currentByItem.keys(), ...desiredByItem.keys()]);
+  const stockUpdates = [];
+  shopTelemetry("shopSocket", "applyBasket start", {
+    shopId: shop?.id,
+    shopUuid: shop?.uuid,
+    targetActorId,
+    currentBasket,
+    desiredBasket,
+    stockBefore: itemQuantitySnapshot(shop?.items)
+  });
+  for (const itemId of itemIds) {
+    const prevQty = Number(currentByItem.get(itemId)?.quantity ?? 0);
+    const nextQty = Number(desiredByItem.get(itemId)?.quantity ?? 0);
+    const delta = nextQty - prevQty;
+    if (delta <= 0) continue;
+    const shopItem = shop.items.get(itemId);
+    if (!shopItem) {
+      shopTelemetry("shopSocket", "applyBasket item missing", {
+        shopId: shop?.id,
+        targetActorId,
+        itemId,
+        desiredBasket
+      });
+      return { success: false, errors: [`Item ${desiredByItem.get(itemId)?.itemName ?? itemId} not found in shop`], basket: currentBasket };
+    }
+    const available = Number(shopItem.system?.quantity ?? 0);
+    if (available < delta) {
+      shopTelemetry("shopSocket", "applyBasket insufficient stock", {
+        shopId: shop?.id,
+        targetActorId,
+        itemId,
+        itemName: shopItem.name,
+        available,
+        delta
+      });
+      return { success: false, errors: [`Insufficient stock for ${shopItem.name}`], basket: currentBasket };
+    }
+  }
+  const itemUpdates = [];
+  for (const itemId of itemIds) {
+    const prevQty = Number(currentByItem.get(itemId)?.quantity ?? 0);
+    const nextQty = Number(desiredByItem.get(itemId)?.quantity ?? 0);
+    const delta = nextQty - prevQty;
+    if (delta === 0) continue;
+    const shopItem = shop.items.get(itemId);
+    if (!shopItem) continue;
+    const available = Number(shopItem.system?.quantity ?? 0);
+    const quantity = available - delta;
+    shopTelemetry("shopSocket", "applyBasket update item quantity", {
+      shopId: shop?.id,
+      targetActorId,
+      itemId,
+      itemName: shopItem.name,
+      previousQuantity: available,
+      delta,
+      nextQuantity: quantity
+    });
+    itemUpdates.push({ _id: itemId, "system.quantity": quantity });
+    stockUpdates.push({ itemId, quantity });
+  }
+  if (itemUpdates.length > 0) {
+    shopTelemetry("shopSocket", "applyBasket updateEmbeddedDocuments start", {
+      shopId: shop?.id,
+      shopUuid: shop?.uuid,
+      targetActorId,
+      itemUpdates
+    });
+    await shop.updateEmbeddedDocuments("Item", itemUpdates);
+    shopTelemetry("shopSocket", "applyBasket updateEmbeddedDocuments complete", {
+      shopId: shop?.id,
+      shopUuid: shop?.uuid,
+      targetActorId,
+      stockAfterEmbeddedUpdate: itemQuantitySnapshot(shop?.items)
+    });
+  }
+  await shop.setFlag(MODULE_ID, `basket.${targetActorId}`, desiredBasket);
+  shopTelemetry("shopSocket", "applyBasket complete", {
+    shopId: shop?.id,
+    shopUuid: shop?.uuid,
+    targetActorId,
+    desiredBasket,
+    stockUpdates,
+    stockAfter: itemQuantitySnapshot(shop?.items),
+    persistedBasket: shop.getFlag(MODULE_ID, `basket.${targetActorId}`) ?? []
+  });
+  return { success: true, errors: [], basket: desiredBasket, stockUpdates };
+}
+async function applyPurchase({ requestId, shopId, shopUuid: requestedShopUuid, targetActorId, basket, userId }) {
+  const shop = resolveShopDocument({ shopUuid: requestedShopUuid, shopId });
+  const responseShopUuid = requestedShopUuid ?? shop?.uuid;
+  const targetActor = resolveShopTargetActor(shop, targetActorId);
+  const errors = [];
+  const transactions = [];
+  if (!shop) {
+    errors.push("Shop not found");
+  } else if (!targetActor) {
+    errors.push("Target actor not found");
+  } else {
+    const reservedBasket = indexBasket(sanitizeBasket(shop.getFlag(MODULE_ID, `basket.${targetActorId}`) ?? []));
+    const purchaseTotal = sumPrices((basket ?? []).map((entry) => ({
+      price: entry.price,
+      quantity: entry.quantity ?? 1
+    })));
+    shopTelemetry("shopSocket", "GM handling purchaseRequest", {
+      requestId,
+      shopId,
+      requestedShopUuid,
+      shopUuid: responseShopUuid,
+      resolvedShopUuid: shop?.uuid,
+      targetActorId,
+      basket,
+      purchaseTotal,
+      reservedBasket: [...reservedBasket.values()],
+      stockBefore: itemQuantitySnapshot(shop?.items),
+      userId
+    });
+    for (const entry of basket ?? []) {
+      const shopItem = shop.items.get(entry.itemId);
+      if (!shopItem) {
+        errors.push(`Item ${entry.itemName} not found in shop`);
+        continue;
+      }
+      const qty = Number(entry.quantity ?? 1);
+      const reservedQty = Number(reservedBasket.get(entry.itemId)?.quantity ?? 0);
+      if (reservedQty < qty) {
+        errors.push(`Insufficient reserved stock for ${entry.itemName}`);
+        continue;
+      }
+      if (qty <= 0) {
+        errors.push(`Invalid quantity for ${entry.itemName}`);
+      }
+    }
+    if (errors.length === 0) {
+      const payment = await deductActorCurrency(targetActor, purchaseTotal);
+      if (!payment.success) {
+        errors.push(...payment.errors);
+        shopTelemetry("shopSocket", "purchaseRequest insufficient funds", {
+          requestId,
+          shopId,
+          requestedShopUuid,
+          shopUuid: responseShopUuid,
+          targetActorId,
+          targetActorName: targetActor.name,
+          purchaseTotal,
+          formattedTotal: Array.isArray(purchaseTotal) ? purchaseTotal.map((price) => formatPrice(price)).join(", ") : formatPrice(purchaseTotal),
+          errors: payment.errors
+        });
+      }
+    }
+    if (errors.length === 0) {
+      for (const entry of basket ?? []) {
+        const shopItem = shop.items.get(entry.itemId);
+        const qty = Number(entry.quantity ?? 1);
+        const itemData = shopItem.toObject();
+        delete itemData._id;
+        itemData.system.quantity = qty;
+        await targetActor.createEmbeddedDocuments("Item", [itemData]);
+        transactions.push({
+          itemId: entry.itemId,
+          itemName: entry.itemName,
+          quantity: qty,
+          price: getComparablePriceValue(entry.price),
+          total: getComparablePriceValue(multiplyPrice(entry.price, qty)),
+          currency: normalizePrice(entry.price).denomination,
+          buyerId: targetActorId,
+          buyerName: targetActor.name,
+          timestamp: Date.now(),
+          metadata: {
+            price: makeBasketPrice(entry.price),
+            total: multiplyPrice(entry.price, qty)
+          }
+        });
+      }
+    }
+    if (transactions.length > 0) {
+      await appendShopTransactions(shop, transactions);
+      await shop.setFlag(MODULE_ID, `basket.${targetActorId}`, []);
+    }
+  }
+  const resultBasket = errors.length === 0 ? [] : basket;
+  shopTelemetry("shopSocket", "purchaseRequest complete", {
+    requestId,
+    shopId,
+    requestedShopUuid,
+    shopUuid: responseShopUuid,
+    resolvedShopUuid: shop?.uuid,
+    targetActorId,
+    success: errors.length === 0,
+    errors,
+    resultBasket,
+    stockAfter: itemQuantitySnapshot(shop?.items)
+  });
+  return {
+    kind: "purchaseResult",
+    requestId,
+    shopId,
+    shopUuid: responseShopUuid,
+    shopUuids: getShopUuidAliases({ shopId, shopUuid: responseShopUuid, resolvedShopUuid: shop?.uuid }),
+    resolvedShopUuid: shop?.uuid,
+    targetActorId,
+    basket: resultBasket,
+    stockUpdates: [],
+    success: errors.length === 0,
+    errors,
+    targetActorName: targetActor?.name ?? "",
+    userId
+  };
+}
+function emitToSocket(payload) {
+  shopTelemetry("shopSocket", "emit socket payload", {
+    kind: payload?.payload?.kind,
+    requestId: payload?.payload?.requestId,
+    shopId: payload?.payload?.shopId,
+    shopUuid: payload?.payload?.shopUuid,
+    targetActorId: payload?.payload?.targetActorId,
+    success: payload?.payload?.success,
+    basketLength: payload?.payload?.basket?.length,
+    stockUpdates: payload?.payload?.stockUpdates,
+    userId: payload?.payload?.userId
+  });
+  game.socket.emit(SOCKET_NAME, payload);
+}
+function hasRegisteredShopDocumentStore(shop) {
+  const shopUuid = getShopUuid(shop);
+  return Boolean(shopUuid && getShopDocumentStores().has(shopUuid));
+}
+function refreshRegisteredShopDocumentStores(shop, options = {}) {
+  if (!hasRegisteredShopDocumentStore(shop)) return;
+  refreshShopDocumentStores(shop, options);
+}
+function withLocalShopUuidAliases(payload) {
+  if (!payload || typeof payload !== "object") return payload;
+  return {
+    ...payload,
+    shopUuids: getShopUuidAliases(payload)
+  };
+}
+function registerShopDocumentHooks() {
+  if (window[SHOP_DOCUMENT_HOOKS_KEY]) return;
+  window[SHOP_DOCUMENT_HOOKS_KEY] = true;
+  Hooks.on("updateActor", (actor, data, options, userId) => {
+    shopTelemetry("shopSocket", "hook updateActor", {
+      actorId: actor?.id,
+      actorUuid: actor?.uuid,
+      actorName: actor?.name,
+      changedKeys: Object.keys(data ?? {}),
+      data,
+      options,
+      userId,
+      hasRegisteredStore: hasRegisteredShopDocumentStore(actor)
+    });
+    refreshRegisteredShopDocumentStores(actor, {
+      action: "shop-hook-update-actor",
+      data,
+      options,
+      userId
+    });
+  });
+  Hooks.on("updateItem", (item, data, options, userId) => {
+    shopTelemetry("shopSocket", "hook updateItem", {
+      itemId: item?.id,
+      itemName: item?.name,
+      parentId: item?.parent?.id,
+      parentUuid: item?.parent?.uuid,
+      changedKeys: Object.keys(data ?? {}),
+      quantity: Number(item?.system?.quantity ?? 0),
+      data,
+      options,
+      userId,
+      hasRegisteredStore: hasRegisteredShopDocumentStore(item?.parent)
+    });
+    refreshRegisteredShopDocumentStores(item?.parent, {
+      action: "shop-hook-update-item",
+      data,
+      options,
+      userId
+    });
+  });
+  Hooks.on("updateActorDelta", (actorDelta, data, options, userId) => {
+    const token = actorDelta?.parent;
+    const actor = token?.actor;
+    shopTelemetry("shopSocket", "hook updateActorDelta", {
+      actorDeltaId: actorDelta?.id,
+      tokenId: token?.id,
+      tokenUuid: token?.uuid,
+      actorId: actor?.id,
+      actorUuid: actor?.uuid,
+      actorName: actor?.name,
+      changedKeys: Object.keys(data ?? {}),
+      data,
+      options,
+      userId,
+      hasRegisteredStore: hasRegisteredShopDocumentStore(actor)
+    });
+    refreshRegisteredShopDocumentStores(actor, {
+      action: "shop-hook-update-actor-delta",
+      data,
+      options,
+      userId
+    });
+  });
+}
+function registerSocket() {
+  if (!game?.socket) return;
+  registerShopDocumentHooks();
+  shopTelemetry("shopSocket", "registerSocket", {
+    socketName: SOCKET_NAME,
+    hadExistingHandler: Boolean(window[SOCKET_HANDLER_KEY])
+  });
+  const existingHandler = window[SOCKET_HANDLER_KEY];
+  if (existingHandler) {
+    game.socket.off(SOCKET_NAME, existingHandler);
+  }
+  const socketHandler = async (payload) => {
+    if (payload?.type === "ACTION") {
+      shopTelemetry("shopSocket", "received socket payload", {
+        kind: payload?.payload?.kind,
+        requestId: payload?.payload?.requestId,
+        shopId: payload?.payload?.shopId,
+        shopUuid: payload?.payload?.shopUuid,
+        targetActorId: payload?.payload?.targetActorId,
+        success: payload?.payload?.success,
+        basketLength: payload?.payload?.basket?.length,
+        stockUpdates: payload?.payload?.stockUpdates,
+        userId: payload?.payload?.userId
+      });
+      if (typeof payload.payload === "string") {
+        ui.notifications.info(payload.payload);
+        return;
+      }
+      if (payload.payload?.kind === "basketUpdateRequest") {
+        if (!game.user.isGM) return;
+        const { requestId, shopId, shopUuid: requestedShopUuid, targetActorId, nextBasket, userId } = payload.payload;
+        try {
+          const shop = resolveShopDocument({ shopUuid: requestedShopUuid, shopId });
+          const responseShopUuid = requestedShopUuid ?? shop?.uuid;
+          shopTelemetry("shopSocket", "GM handling basketUpdateRequest", {
+            requestId,
+            shopId,
+            requestedShopUuid,
+            shopUuid: responseShopUuid,
+            resolvedShopUuid: shop?.uuid,
+            targetActorId,
+            nextBasket,
+            stockBefore: itemQuantitySnapshot(shop?.items),
+            userId
+          });
+          if (!shop || !targetActorId) {
+            emitToSocket({ type: "ACTION", payload: { kind: "basketUpdateResult", requestId, success: false, errors: ["Invalid basket update request"], basket: [] } });
+            return;
+          }
+          const result = await applyBasket(shop, targetActorId, nextBasket);
+          recordShopSocketResult({ shopId, shopUuid: responseShopUuid, targetActorId, ...result });
+          refreshShopDocumentStores(responseShopUuid, {
+            action: "shop-socket-gm-basket-update",
+            requestId,
+            userId
+          });
+          if (shop?.uuid && shop.uuid !== responseShopUuid) {
+            refreshShopDocumentStores(shop.uuid, {
+              action: "shop-socket-gm-basket-update-resolved-doc",
+              requestId,
+              userId
+            });
+          }
+          emitToSocket({ type: "ACTION", payload: { kind: "basketUpdateResult", requestId, shopId, shopUuid: responseShopUuid, targetActorId, ...result, userId } });
+        } catch (error) {
+          emitToSocket({ type: "ACTION", payload: { kind: "basketUpdateResult", requestId, shopId, shopUuid: requestedShopUuid, success: false, errors: [error?.message ?? "Basket update failed"], basket: [] } });
+        }
+        return;
+      }
+      if (payload.payload?.kind === "purchaseRequest") {
+        if (!game.user.isGM) return;
+        const { requestId, userId } = payload.payload;
+        try {
+          const resultPayload = await applyPurchase(payload.payload);
+          recordShopSocketResult(resultPayload);
+          refreshShopDocumentStores(resultPayload, {
+            action: "shop-socket-gm-purchase",
+            requestId,
+            userId
+          });
+          if (resultPayload.resolvedShopUuid && resultPayload.resolvedShopUuid !== resultPayload.shopUuid) {
+            refreshShopDocumentStores(resultPayload.resolvedShopUuid, {
+              action: "shop-socket-gm-purchase-resolved-doc",
+              requestId,
+              userId
+            });
+          }
+          emitToSocket({ type: "ACTION", payload: resultPayload });
+        } catch (error) {
+          emitToSocket({
+            type: "ACTION",
+            payload: {
+              kind: "purchaseResult",
+              requestId: payload.payload.requestId,
+              shopId: payload.payload.shopId,
+              shopUuid: payload.payload.shopUuid,
+              success: false,
+              errors: [error?.message ?? "Purchase failed"],
+              targetActorName: "",
+              userId: payload.payload.userId
+            }
+          });
+        }
+        return;
+      }
+      if (payload.payload?.kind === "basketUpdateResult") {
+        const resultPayload = withLocalShopUuidAliases(payload.payload);
+        recordShopSocketResult(resultPayload);
+        refreshShopDocumentStores(resultPayload);
+      }
+      const pendingBasket = getPendingRequests(PENDING_BASKET_KEY).get(payload.payload?.requestId);
+      if (pendingBasket && payload.payload?.kind === "basketUpdateResult") {
+        getPendingRequests(PENDING_BASKET_KEY).delete(payload.payload.requestId);
+        pendingBasket(payload.payload);
+        return;
+      }
+      if (payload.payload?.kind === "purchaseResult") {
+        const resultPayload = withLocalShopUuidAliases(payload.payload);
+        recordShopSocketResult(resultPayload);
+        refreshShopDocumentStores(resultPayload);
+      }
+      const pendingPurchase = getPendingRequests(PENDING_PURCHASE_KEY).get(payload.payload?.requestId);
+      if (pendingPurchase && payload.payload?.kind === "purchaseResult") {
+        getPendingRequests(PENDING_PURCHASE_KEY).delete(payload.payload.requestId);
+        pendingPurchase(payload.payload);
+      }
+    }
+  };
+  window[SOCKET_HANDLER_KEY] = socketHandler;
+  game.socket.on(SOCKET_NAME, socketHandler);
+}
+async function requestBasketUpdate({ shopId, shopUuid, targetActorId, nextBasket }) {
+  shopTelemetry("shopSocket", "requestBasketUpdate called", {
+    shopId,
+    shopUuid,
+    targetActorId,
+    nextBasket,
+    isGM: game.user.isGM
+  });
+  if (game.user.isGM) {
+    const requestId = foundry.utils.randomID();
+    const shop = resolveShopDocument({ shopUuid, shopId });
+    const responseShopUuid = shopUuid ?? shop?.uuid;
+    if (!shop || !targetActorId) {
+      return { success: false, errors: ["Invalid basket update request"], basket: [] };
+    }
+    const result = await applyBasket(shop, targetActorId, nextBasket);
+    const resultPayload = {
+      kind: "basketUpdateResult",
+      requestId,
+      shopId,
+      shopUuid: responseShopUuid,
+      shopUuids: getShopUuidAliases({ shopId, shopUuid: responseShopUuid }),
+      resolvedShopUuid: shop?.uuid,
+      targetActorId,
+      ...result,
+      userId: game.user.id
+    };
+    recordShopSocketResult(resultPayload);
+    refreshShopDocumentStores(resultPayload);
+    if (shop?.uuid && shop.uuid !== responseShopUuid) {
+      refreshShopDocumentStores(shop.uuid);
+    }
+    emitToSocket({ type: "ACTION", payload: resultPayload });
+    return result;
+  }
+  return await new Promise((resolve) => {
+    const requestId = foundry.utils.randomID();
+    shopTelemetry("shopSocket", "queue pending basket request", {
+      requestId,
+      shopId,
+      shopUuid,
+      targetActorId,
+      nextBasket
+    });
+    getPendingRequests(PENDING_BASKET_KEY).set(requestId, resolve);
+    emitToSocket({
+      type: "ACTION",
+      payload: {
+        kind: "basketUpdateRequest",
+        requestId,
+        shopId,
+        shopUuid,
+        targetActorId,
+        nextBasket,
+        userId: game.user.id
+      }
+    });
+  });
+}
+async function requestPurchase({ shopId, shopUuid, targetActorId, basket }) {
+  if (game.user.isGM) {
+    const requestId = foundry.utils.randomID();
+    shopTelemetry("shopSocket", "GM handling purchase locally", {
+      requestId,
+      shopId,
+      shopUuid,
+      targetActorId,
+      basket
+    });
+    const resultPayload = await applyPurchase({
+      requestId,
+      shopId,
+      shopUuid,
+      targetActorId,
+      basket,
+      userId: game.user.id
+    });
+    recordShopSocketResult(resultPayload);
+    refreshShopDocumentStores(resultPayload, {
+      action: "shop-socket-gm-purchase-local",
+      requestId,
+      userId: game.user.id
+    });
+    if (resultPayload.resolvedShopUuid && resultPayload.resolvedShopUuid !== resultPayload.shopUuid) {
+      refreshShopDocumentStores(resultPayload.resolvedShopUuid, {
+        action: "shop-socket-gm-purchase-local-resolved-doc",
+        requestId,
+        userId: game.user.id
+      });
+    }
+    emitToSocket({ type: "ACTION", payload: resultPayload });
+    return resultPayload;
+  }
+  return await new Promise((resolve) => {
+    const requestId = foundry.utils.randomID();
+    shopTelemetry("shopSocket", "queue pending purchase request", {
+      requestId,
+      shopId,
+      shopUuid,
+      targetActorId,
+      basket
+    });
+    getPendingRequests(PENDING_PURCHASE_KEY).set(requestId, resolve);
+    emitToSocket({
+      type: "ACTION",
+      payload: {
+        kind: "purchaseRequest",
+        requestId,
+        shopId,
+        shopUuid,
+        targetActorId,
+        basket,
+        userId: game.user.id
+      }
+    });
+  });
+}
+const { window: window_1 } = globals;
+function get_each_context$4(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[35] = list[i];
+  child_ctx[37] = i;
+  return child_ctx;
+}
+function get_each_context_1$2(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[38] = list[i];
+  return child_ctx;
+}
+function create_else_block_2(ctx) {
+  let i;
+  let span;
+  return {
+    c() {
+      i = element("i");
+      span = element("span");
+      span.textContent = `— ${localize("BasketSelectActor")} —`;
+      attr(i, "class", "fa fa-user-circle actor-placeholder-icon svelte-FOU-107txo0");
+      attr(span, "class", "actor-name placeholder svelte-FOU-107txo0");
+    },
+    m(target, anchor) {
+      insert(target, i, anchor);
+      insert(target, span, anchor);
+    },
+    p: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(i);
+        detach(span);
+      }
+    }
+  };
+}
+function create_if_block_4(ctx) {
+  let img;
+  let img_src_value;
+  let img_alt_value;
+  let span;
+  let t_value = (
+    /*selectedActor*/
+    ctx[3].name + ""
+  );
+  let t;
+  return {
+    c() {
+      img = element("img");
+      span = element("span");
+      t = text(t_value);
+      attr(img, "class", "actor-avatar svelte-FOU-107txo0");
+      if (!src_url_equal(img.src, img_src_value = /*selectedActor*/
+      ctx[3].img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
+      attr(img, "alt", img_alt_value = /*selectedActor*/
+      ctx[3].name);
+      attr(span, "class", "actor-name svelte-FOU-107txo0");
+    },
+    m(target, anchor) {
+      insert(target, img, anchor);
+      insert(target, span, anchor);
+      append(span, t);
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*selectedActor*/
+      8 && !src_url_equal(img.src, img_src_value = /*selectedActor*/
+      ctx2[3].img || "icons/svg/mystery-man.svg")) {
+        attr(img, "src", img_src_value);
+      }
+      if (dirty[0] & /*selectedActor*/
+      8 && img_alt_value !== (img_alt_value = /*selectedActor*/
+      ctx2[3].name)) {
+        attr(img, "alt", img_alt_value);
+      }
+      if (dirty[0] & /*selectedActor*/
+      8 && t_value !== (t_value = /*selectedActor*/
+      ctx2[3].name + "")) set_data(t, t_value);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(img);
+        detach(span);
+      }
+    }
+  };
+}
+function create_if_block_2$1(ctx) {
+  let div;
+  function select_block_type_1(ctx2, dirty) {
+    if (
+      /*actorOptions*/
+      ctx2[2].length === 0
+    ) return create_if_block_3;
+    return create_else_block_1;
+  }
+  let current_block_type = select_block_type_1(ctx);
+  let if_block = current_block_type(ctx);
+  return {
+    c() {
+      div = element("div");
+      if_block.c();
+      attr(div, "class", "actor-dropdown svelte-FOU-107txo0");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      if_block.m(div, null);
+    },
+    p(ctx2, dirty) {
+      if (current_block_type === (current_block_type = select_block_type_1(ctx2)) && if_block) {
+        if_block.p(ctx2, dirty);
+      } else {
+        if_block.d(1);
+        if_block = current_block_type(ctx2);
+        if (if_block) {
+          if_block.c();
+          if_block.m(div, null);
+        }
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      if_block.d();
+    }
+  };
+}
+function create_else_block_1(ctx) {
+  let each_1_anchor;
+  let each_value_1 = ensure_array_like(
+    /*actorOptions*/
+    ctx[2]
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value_1.length; i += 1) {
+    each_blocks[i] = create_each_block_1$2(get_each_context_1$2(ctx, each_value_1, i));
+  }
+  return {
+    c() {
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      each_1_anchor = empty();
+    },
+    m(target, anchor) {
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(target, anchor);
+        }
+      }
+      insert(target, each_1_anchor, anchor);
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*actorOptions, targetActorId, selectActor*/
+      70) {
+        each_value_1 = ensure_array_like(
+          /*actorOptions*/
+          ctx2[2]
+        );
+        let i;
+        for (i = 0; i < each_value_1.length; i += 1) {
+          const child_ctx = get_each_context_1$2(ctx2, each_value_1, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block_1$2(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value_1.length;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(each_1_anchor);
+      }
+      destroy_each(each_blocks, detaching);
+    }
+  };
+}
+function create_if_block_3(ctx) {
+  let div;
+  return {
+    c() {
+      div = element("div");
+      div.textContent = `${localize("ShopHUD.NoActorOwned")}`;
+      attr(div, "class", "actor-option empty svelte-FOU-107txo0");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+    },
+    p: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+    }
+  };
+}
+function create_each_block_1$2(ctx) {
+  let button;
+  let img;
+  let img_src_value;
+  let img_alt_value;
+  let span;
+  let t_value = (
+    /*opt*/
+    ctx[38].name + ""
+  );
+  let t;
+  let mounted;
+  let dispose;
+  function click_handler_1() {
+    return (
+      /*click_handler_1*/
+      ctx[23](
+        /*opt*/
+        ctx[38]
+      )
+    );
+  }
+  return {
+    c() {
+      button = element("button");
+      img = element("img");
+      span = element("span");
+      t = text(t_value);
+      attr(img, "class", "actor-avatar svelte-FOU-107txo0");
+      if (!src_url_equal(img.src, img_src_value = /*opt*/
+      ctx[38].img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
+      attr(img, "alt", img_alt_value = /*opt*/
+      ctx[38].name);
+      attr(button, "class", "actor-option svelte-FOU-107txo0");
+      attr(button, "type", "button");
+      toggle_class(
+        button,
+        "selected",
+        /*opt*/
+        ctx[38].id === /*targetActorId*/
+        ctx[1]
+      );
+    },
+    m(target, anchor) {
+      insert(target, button, anchor);
+      append(button, img);
+      append(button, span);
+      append(span, t);
+      if (!mounted) {
+        dispose = listen(button, "click", click_handler_1);
+        mounted = true;
+      }
+    },
+    p(new_ctx, dirty) {
+      ctx = new_ctx;
+      if (dirty[0] & /*actorOptions*/
+      4 && !src_url_equal(img.src, img_src_value = /*opt*/
+      ctx[38].img || "icons/svg/mystery-man.svg")) {
+        attr(img, "src", img_src_value);
+      }
+      if (dirty[0] & /*actorOptions*/
+      4 && img_alt_value !== (img_alt_value = /*opt*/
+      ctx[38].name)) {
+        attr(img, "alt", img_alt_value);
+      }
+      if (dirty[0] & /*actorOptions*/
+      4 && t_value !== (t_value = /*opt*/
+      ctx[38].name + "")) set_data(t, t_value);
+      if (dirty[0] & /*actorOptions, targetActorId*/
+      6) {
+        toggle_class(
+          button,
+          "selected",
+          /*opt*/
+          ctx[38].id === /*targetActorId*/
+          ctx[1]
+        );
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(button);
+      }
       mounted = false;
       dispose();
     }
   };
 }
-function showItemSheet(item) {
-  item.sheet?.render(true);
-}
-function handleItemKeydown(item, event) {
-  if (event.key === "Enter" || event.key === " ") {
-    event.preventDefault();
-    showItemSheet(item);
+function create_else_block$2(ctx) {
+  let div7;
+  let div6;
+  let div0;
+  let div1;
+  let div2;
+  let div3;
+  let div4;
+  let div5;
+  let div10;
+  let div8;
+  let div9;
+  let button;
+  let mounted;
+  let dispose;
+  let each_value = ensure_array_like(
+    /*basket*/
+    ctx[0]
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value.length; i += 1) {
+    each_blocks[i] = create_each_block$4(get_each_context$4(ctx, each_value, i));
   }
-}
-function instance$3($$self, $$props, $$invalidate) {
-  let items;
-  let $Actor;
-  let { sharedProps = {} } = $$props;
-  const Actor2 = getContext("#doc");
-  component_subscribe($$self, Actor2, (value) => $$invalidate(5, $Actor = value));
-  const doc = new TJSDocument($Actor);
-  const nameSearch = createFilterQuery("name");
-  const input = {
-    store: nameSearch,
-    efx: rippleFocus(),
-    placeholder: "foundryvtt-shop-studio.FilterInventory",
-    type: "search",
-    id: "inventory-search"
-  };
-  const inventory = doc.embedded.create(Item, {
-    name: "inventory",
-    filters: [nameSearch],
-    sort: (a, b) => a.name.localeCompare(b.name)
-  });
-  onMount(() => {
-    const unsubscribe = nameSearch.subscribe((value) => {
-      if (sharedProps.filterText !== value) {
-        sharedProps.onFilterChange?.(value);
+  let if_block = (
+    /*targetActorId*/
+    ctx[1] && create_if_block_1$1(ctx)
+  );
+  return {
+    c() {
+      div7 = element("div");
+      div6 = element("div");
+      div0 = element("div");
+      div1 = element("div");
+      div1.textContent = `${localize("Name")}`;
+      div2 = element("div");
+      div2.textContent = `${localize("Price")}`;
+      div3 = element("div");
+      div3.textContent = `${localize("Quantity")}`;
+      div4 = element("div");
+      div4.textContent = `${localize("Total")}`;
+      div5 = element("div");
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
       }
-    });
-    return unsubscribe;
-  });
-  const keydown_handler = (item, e) => handleItemKeydown(item, e);
-  $$self.$$set = ($$props2) => {
-    if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
+      div10 = element("div");
+      div8 = element("div");
+      div8.textContent = `${localize("Total")}:`;
+      div9 = element("div");
+      div9.textContent = `${/*formatTotal*/
+      ctx[15]()}`;
+      button = element("button");
+      button.textContent = `${localize("ClearBasket") || "Clear Basket"}`;
+      if (if_block) if_block.c();
+      attr(div0, "class", "basket-col-icon svelte-FOU-107txo0");
+      attr(div1, "class", "basket-col-name svelte-FOU-107txo0");
+      attr(div2, "class", "basket-col-price svelte-FOU-107txo0");
+      attr(div3, "class", "basket-col-qty svelte-FOU-107txo0");
+      attr(div4, "class", "basket-col-total svelte-FOU-107txo0");
+      attr(div5, "class", "basket-col-actions svelte-FOU-107txo0");
+      attr(div6, "class", "basket-header svelte-FOU-107txo0");
+      attr(div7, "class", "basket-table svelte-FOU-107txo0");
+      attr(div8, "class", "basket-total-label svelte-FOU-107txo0");
+      attr(div9, "class", "basket-total-value svelte-FOU-107txo0");
+      attr(button, "class", "glossy-button gold-light hover-shine");
+      attr(div10, "class", "basket-footer svelte-FOU-107txo0");
+    },
+    m(target, anchor) {
+      insert(target, div7, anchor);
+      append(div7, div6);
+      append(div6, div0);
+      append(div6, div1);
+      append(div6, div2);
+      append(div6, div3);
+      append(div6, div4);
+      append(div6, div5);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(div7, null);
+        }
+      }
+      insert(target, div10, anchor);
+      append(div10, div8);
+      append(div10, div9);
+      append(div10, button);
+      if (if_block) if_block.m(div10, null);
+      if (!mounted) {
+        dispose = listen(
+          button,
+          "click",
+          /*clearBasket*/
+          ctx[11]
+        );
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*onRemoveClick, formatLineTotal, basket, onQtyClick, formatPrice, onShowItemClick*/
+      26369) {
+        each_value = ensure_array_like(
+          /*basket*/
+          ctx2[0]
+        );
+        let i;
+        for (i = 0; i < each_value.length; i += 1) {
+          const child_ctx = get_each_context$4(ctx2, each_value, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block$4(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(div7, null);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value.length;
+      }
+      if (
+        /*targetActorId*/
+        ctx2[1]
+      ) {
+        if (if_block) {
+          if_block.p(ctx2, dirty);
+        } else {
+          if_block = create_if_block_1$1(ctx2);
+          if_block.c();
+          if_block.m(div10, null);
+        }
+      } else if (if_block) {
+        if_block.d(1);
+        if_block = null;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div7);
+        detach(div10);
+      }
+      destroy_each(each_blocks, detaching);
+      if (if_block) if_block.d();
+      mounted = false;
+      dispose();
+    }
   };
-  $$self.$$.update = () => {
-    if ($$self.$$.dirty & /*sharedProps*/
-    1) {
-      if (sharedProps.filterText !== nameSearch.keyword) {
-        nameSearch.set(sharedProps.filterText || "");
+}
+function create_if_block$4(ctx) {
+  let div;
+  let i;
+  let p;
+  return {
+    c() {
+      div = element("div");
+      i = element("i");
+      p = element("p");
+      p.textContent = `${localize("BasketEmpty") || "Your basket is empty. Browse the inventory to add items."}`;
+      attr(i, "class", "fa fa-shopping-basket empty-icon svelte-FOU-107txo0");
+      attr(p, "class", "svelte-FOU-107txo0");
+      attr(div, "class", "empty-basket svelte-FOU-107txo0");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      append(div, i);
+      append(div, p);
+    },
+    p: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(div);
       }
     }
   };
-  $$invalidate(1, input.placeholder = "foundryvtt-shop-studio.FilterInventory", input);
-  $$invalidate(2, items = [...inventory]);
-  return [sharedProps, input, items, Actor2, keydown_handler];
 }
-class InventoryTab extends SvelteComponent {
+function create_each_block$4(ctx) {
+  let div7;
+  let div0;
+  let img;
+  let img_src_value;
+  let img_alt_value;
+  let div0_data_item_id_value;
+  let div1;
+  let a;
+  let t0_value = (
+    /*entry*/
+    ctx[35].itemName + ""
+  );
+  let t0;
+  let a_data_item_id_value;
+  let div2;
+  let span0;
+  let t1_value = (
+    /*formatPrice*/
+    ctx[13](
+      /*entry*/
+      ctx[35].price
+    ) + ""
+  );
+  let t1;
+  let div4;
+  let div3;
+  let button0;
+  let span1;
+  let t2_value = (
+    /*entry*/
+    (ctx[35].quantity ?? 1) + ""
+  );
+  let t2;
+  let button1;
+  let div5;
+  let span2;
+  let t3_value = (
+    /*formatLineTotal*/
+    ctx[14](
+      /*entry*/
+      ctx[35]
+    ) + ""
+  );
+  let t3;
+  let div6;
+  let button2;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      div7 = element("div");
+      div0 = element("div");
+      img = element("img");
+      div1 = element("div");
+      a = element("a");
+      t0 = text(t0_value);
+      div2 = element("div");
+      span0 = element("span");
+      t1 = text(t1_value);
+      div4 = element("div");
+      div3 = element("div");
+      button0 = element("button");
+      button0.innerHTML = `<i class="fa fa-minus"></i>`;
+      span1 = element("span");
+      t2 = text(t2_value);
+      button1 = element("button");
+      button1.innerHTML = `<i class="fa fa-plus"></i>`;
+      div5 = element("div");
+      span2 = element("span");
+      t3 = text(t3_value);
+      div6 = element("div");
+      button2 = element("button");
+      button2.innerHTML = `<i class="fa fa-trash"></i>`;
+      attr(img, "class", "icon svelte-FOU-107txo0");
+      if (!src_url_equal(img.src, img_src_value = /*entry*/
+      ctx[35].img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
+      attr(img, "alt", img_alt_value = /*entry*/
+      ctx[35].itemName);
+      attr(div0, "class", "basket-col-icon svelte-FOU-107txo0");
+      attr(div0, "data-tooltip", localize("View"));
+      attr(div0, "data-item-id", div0_data_item_id_value = /*entry*/
+      ctx[35].itemId);
+      attr(div0, "role", "button");
+      attr(a, "class", "stealth link");
+      attr(a, "data-item-id", a_data_item_id_value = /*entry*/
+      ctx[35].itemId);
+      attr(a, "role", "button");
+      attr(div1, "class", "basket-col-name svelte-FOU-107txo0");
+      attr(div1, "data-tooltip", localize("View"));
+      attr(span0, "class", "price-text svelte-FOU-107txo0");
+      attr(div2, "class", "basket-col-price svelte-FOU-107txo0");
+      attr(button0, "class", "stealth qty-btn svelte-FOU-107txo0");
+      attr(button0, "data-tooltip", "Decrease");
+      attr(
+        button0,
+        "data-index",
+        /*index*/
+        ctx[37]
+      );
+      attr(button0, "data-delta", "-1");
+      attr(span1, "class", "qty-value svelte-FOU-107txo0");
+      attr(button1, "class", "stealth qty-btn svelte-FOU-107txo0");
+      attr(button1, "data-tooltip", "Increase");
+      attr(
+        button1,
+        "data-index",
+        /*index*/
+        ctx[37]
+      );
+      attr(button1, "data-delta", "1");
+      attr(div3, "class", "qty-controls svelte-FOU-107txo0");
+      attr(div4, "class", "basket-col-qty svelte-FOU-107txo0");
+      attr(span2, "class", "total-text svelte-FOU-107txo0");
+      attr(div5, "class", "basket-col-total svelte-FOU-107txo0");
+      attr(button2, "class", "stealth negative");
+      attr(button2, "data-tooltip", "Remove");
+      attr(
+        button2,
+        "data-index",
+        /*index*/
+        ctx[37]
+      );
+      attr(div6, "class", "basket-col-actions svelte-FOU-107txo0");
+      attr(div7, "class", "basket-row svelte-FOU-107txo0");
+    },
+    m(target, anchor) {
+      insert(target, div7, anchor);
+      append(div7, div0);
+      append(div0, img);
+      append(div7, div1);
+      append(div1, a);
+      append(a, t0);
+      append(div7, div2);
+      append(div2, span0);
+      append(span0, t1);
+      append(div7, div4);
+      append(div4, div3);
+      append(div3, button0);
+      append(div3, span1);
+      append(span1, t2);
+      append(div3, button1);
+      append(div7, div5);
+      append(div5, span2);
+      append(span2, t3);
+      append(div7, div6);
+      append(div6, button2);
+      if (!mounted) {
+        dispose = [
+          listen(
+            div0,
+            "click",
+            /*onShowItemClick*/
+            ctx[10]
+          ),
+          listen(
+            a,
+            "click",
+            /*onShowItemClick*/
+            ctx[10]
+          ),
+          listen(
+            button0,
+            "click",
+            /*onQtyClick*/
+            ctx[8]
+          ),
+          listen(
+            button1,
+            "click",
+            /*onQtyClick*/
+            ctx[8]
+          ),
+          listen(
+            button2,
+            "click",
+            /*onRemoveClick*/
+            ctx[9]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*basket*/
+      1 && !src_url_equal(img.src, img_src_value = /*entry*/
+      ctx2[35].img || "icons/svg/mystery-man.svg")) {
+        attr(img, "src", img_src_value);
+      }
+      if (dirty[0] & /*basket*/
+      1 && img_alt_value !== (img_alt_value = /*entry*/
+      ctx2[35].itemName)) {
+        attr(img, "alt", img_alt_value);
+      }
+      if (dirty[0] & /*basket*/
+      1 && div0_data_item_id_value !== (div0_data_item_id_value = /*entry*/
+      ctx2[35].itemId)) {
+        attr(div0, "data-item-id", div0_data_item_id_value);
+      }
+      if (dirty[0] & /*basket*/
+      1 && t0_value !== (t0_value = /*entry*/
+      ctx2[35].itemName + "")) set_data(t0, t0_value);
+      if (dirty[0] & /*basket*/
+      1 && a_data_item_id_value !== (a_data_item_id_value = /*entry*/
+      ctx2[35].itemId)) {
+        attr(a, "data-item-id", a_data_item_id_value);
+      }
+      if (dirty[0] & /*basket*/
+      1 && t1_value !== (t1_value = /*formatPrice*/
+      ctx2[13](
+        /*entry*/
+        ctx2[35].price
+      ) + "")) set_data(t1, t1_value);
+      if (dirty[0] & /*basket*/
+      1 && t2_value !== (t2_value = /*entry*/
+      (ctx2[35].quantity ?? 1) + "")) set_data(t2, t2_value);
+      if (dirty[0] & /*basket*/
+      1 && t3_value !== (t3_value = /*formatLineTotal*/
+      ctx2[14](
+        /*entry*/
+        ctx2[35]
+      ) + "")) set_data(t3, t3_value);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div7);
+      }
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_if_block_1$1(ctx) {
+  let button;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      button = element("button");
+      button.textContent = `${localize("BuyNow") || "Buy Now"}`;
+      attr(button, "class", "glossy-button primary hover-shine buy-now-btn svelte-FOU-107txo0");
+    },
+    m(target, anchor) {
+      insert(target, button, anchor);
+      if (!mounted) {
+        dispose = listen(
+          button,
+          "click",
+          /*onBuyNow*/
+          ctx[12]
+        );
+        mounted = true;
+      }
+    },
+    p: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(button);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_fragment$7(ctx) {
+  let div2;
+  let div1;
+  let h1;
+  let div0;
+  let button;
+  let i;
+  let mounted;
+  let dispose;
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*selectedActor*/
+      ctx2[3]
+    ) return create_if_block_4;
+    return create_else_block_2;
+  }
+  let current_block_type = select_block_type(ctx);
+  let if_block0 = current_block_type(ctx);
+  let if_block1 = (
+    /*dropdownOpen*/
+    ctx[4] && create_if_block_2$1(ctx)
+  );
+  function select_block_type_2(ctx2, dirty) {
+    if (
+      /*basket*/
+      ctx2[0].length === 0
+    ) return create_if_block$4;
+    return create_else_block$2;
+  }
+  let current_block_type_1 = select_block_type_2(ctx);
+  let if_block2 = current_block_type_1(ctx);
+  return {
+    c() {
+      div2 = element("div");
+      div1 = element("div");
+      h1 = element("h1");
+      h1.textContent = `${localize("Basket")}`;
+      div0 = element("div");
+      button = element("button");
+      if_block0.c();
+      i = element("i");
+      if (if_block1) if_block1.c();
+      if_block2.c();
+      attr(h1, "class", "gold");
+      attr(i, "class", "fa fa-chevron-down chevron svelte-FOU-107txo0");
+      toggle_class(
+        i,
+        "open",
+        /*dropdownOpen*/
+        ctx[4]
+      );
+      attr(button, "class", "actor-trigger svelte-FOU-107txo0");
+      attr(button, "type", "button");
+      attr(div0, "class", "actor-select-faux svelte-FOU-107txo0");
+      attr(div1, "class", "padded svelte-FOU-107txo0");
+      attr(div2, "class", "panel overflow containerx svelte-FOU-107txo0");
+    },
+    m(target, anchor) {
+      insert(target, div2, anchor);
+      append(div2, div1);
+      append(div1, h1);
+      append(div1, div0);
+      append(div0, button);
+      if_block0.m(button, null);
+      append(button, i);
+      if (if_block1) if_block1.m(div0, null);
+      if_block2.m(div1, null);
+      if (!mounted) {
+        dispose = [
+          listen(
+            window_1,
+            "click",
+            /*closeDropdown*/
+            ctx[7]
+          ),
+          listen(
+            button,
+            "click",
+            /*click_handler*/
+            ctx[22]
+          ),
+          listen(div0, "click", click_handler_2)
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (current_block_type === (current_block_type = select_block_type(ctx2)) && if_block0) {
+        if_block0.p(ctx2, dirty);
+      } else {
+        if_block0.d(1);
+        if_block0 = current_block_type(ctx2);
+        if (if_block0) {
+          if_block0.c();
+          if_block0.m(button, i);
+        }
+      }
+      if (dirty[0] & /*dropdownOpen*/
+      16) {
+        toggle_class(
+          i,
+          "open",
+          /*dropdownOpen*/
+          ctx2[4]
+        );
+      }
+      if (
+        /*dropdownOpen*/
+        ctx2[4]
+      ) {
+        if (if_block1) {
+          if_block1.p(ctx2, dirty);
+        } else {
+          if_block1 = create_if_block_2$1(ctx2);
+          if_block1.c();
+          if_block1.m(div0, null);
+        }
+      } else if (if_block1) {
+        if_block1.d(1);
+        if_block1 = null;
+      }
+      if (current_block_type_1 === (current_block_type_1 = select_block_type_2(ctx2)) && if_block2) {
+        if_block2.p(ctx2, dirty);
+      } else {
+        if_block2.d(1);
+        if_block2 = current_block_type_1(ctx2);
+        if (if_block2) {
+          if_block2.c();
+          if_block2.m(div1, null);
+        }
+      }
+    },
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(div2);
+      }
+      if_block0.d();
+      if (if_block1) if_block1.d();
+      if_block2.d();
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+const click_handler_2 = (e) => e.stopPropagation();
+function instance$7($$self, $$props, $$invalidate) {
+  let targetActorId;
+  let selectedActor;
+  let shopUuid;
+  let socketShopState;
+  let actorOptions;
+  let totalPrice;
+  let $doc;
+  let $shopSocketState;
+  component_subscribe($$self, shopSocketState, ($$value) => $$invalidate(21, $shopSocketState = $$value));
+  const doc = getContext("#doc");
+  component_subscribe($$self, doc, (value) => $$invalidate(20, $doc = value));
+  let { sharedProps = {} } = $$props;
+  let tokenTargetRevision = 0;
+  let dropdownOpen = false;
+  let unsubscribeDoc = () => {
+  };
+  let targetTokenHookId = null;
+  function selectActor(id) {
+    const targetEntry = actorOptions.find((option) => option.id === id);
+    shopTelemetry("BasketTab", "select actor", {
+      previousTargetActorId: targetActorId,
+      nextTargetActorId: id,
+      shopId: $doc?.id,
+      shopUuid,
+      targetEntry
+    });
+    $$invalidate(4, dropdownOpen = false);
+    sharedProps.onTargetActorChange?.(id ?? null, targetEntry);
+  }
+  function closeDropdown() {
+    $$invalidate(4, dropdownOpen = false);
+  }
+  let basket = [];
+  function getBasketTotal(entries) {
+    return formatTotalPrice(entries.map((entry) => ({
+      price: entry.price,
+      quantity: entry.quantity ?? 1
+    })));
+  }
+  function getBasketTotalPrice(entries) {
+    return sumPrices(entries.map((entry) => ({
+      price: entry.price,
+      quantity: entry.quantity ?? 1
+    })));
+  }
+  function removeFromBasket(index) {
+    const removedItem = basket[index];
+    window.GAS.log.p("removeFromBasket | removing item:", removedItem?.itemName, "| index:", index, "| basket length before:", basket.length);
+    $$invalidate(0, basket = basket.filter((_, i) => i !== index));
+    window.GAS.log.p("removeFromBasket | basket length after:", basket.length);
+    persistBasket();
+  }
+  function onQtyClick(e) {
+    const idx = parseInt(e.currentTarget.dataset.index);
+    const delta = parseInt(e.currentTarget.dataset.delta);
+    changeQuantity(idx, delta);
+  }
+  function onRemoveClick(e) {
+    const idx = parseInt(e.currentTarget.dataset.index);
+    removeFromBasket(idx);
+  }
+  function onShowItemClick(e) {
+    const itemId = e.currentTarget.dataset.itemId;
+    showItemSheet(itemId);
+  }
+  function changeQuantity(index, delta) {
+    const oldQty = basket[index].quantity ?? 1;
+    const newQty = oldQty + delta;
+    window.GAS.log.p("changeQuantity | changing qty for item:", basket[index].itemName, "| index:", index, "| old qty:", oldQty, "| delta:", delta, "| new qty:", newQty);
+    if (newQty <= 0) {
+      removeFromBasket(index);
+      return;
+    }
+    $$invalidate(0, basket = basket.map((entry, i) => i === index ? { ...entry, quantity: newQty } : { ...entry }));
+    window.GAS.log.p("changeQuantity | updated basket length:", basket.length);
+    persistBasket();
+  }
+  async function persistBasket() {
+    if (!targetActorId) return;
+    const nextBasket = basket.map((entry) => ({ ...entry }));
+    shopTelemetry("BasketTab", "persistBasket start", {
+      shopId: $doc?.id,
+      shopUuid,
+      targetActorId,
+      nextBasket,
+      isGM: game.user.isGM
+    });
+    const result = await requestBasketUpdate({
+      shopId: $doc.id,
+      shopUuid: $doc.uuid,
+      targetActorId,
+      nextBasket
+    });
+    shopTelemetry("BasketTab", "persistBasket socket result", {
+      shopId: $doc?.id,
+      shopUuid,
+      targetActorId,
+      result
+    });
+    if (!result.success) {
+      (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
+      return;
+    }
+    $$invalidate(0, basket = (result.basket ?? nextBasket).map((entry) => ({ ...entry })));
+  }
+  async function clearBasket() {
+    if (!targetActorId) return;
+    shopTelemetry("BasketTab", "clearBasket start", {
+      shopId: $doc?.id,
+      shopUuid,
+      targetActorId,
+      currentBasket: basket,
+      isGM: game.user.isGM
+    });
+    $$invalidate(0, basket = []);
+    const result = await requestBasketUpdate({
+      shopId: $doc.id,
+      shopUuid: $doc.uuid,
+      targetActorId,
+      nextBasket: []
+    });
+    shopTelemetry("BasketTab", "clearBasket socket result", {
+      shopId: $doc?.id,
+      shopUuid,
+      targetActorId,
+      result
+    });
+    if (!result.success) {
+      (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
+    }
+  }
+  async function onBuyNow() {
+    window.GAS.log.p("onBuyNow | attempting purchase for shop:", $doc?.name, "| basket length:", basket.length, "| targetActorId:", targetActorId);
+    if (!targetActorId) {
+      ui.notifications.warn(localize("NoTargetActor"));
+      return;
+    }
+    if (basket.length === 0) {
+      window.GAS.log.p("onBuyNow | basket is empty, nothing to purchase");
+      return;
+    }
+    const targetActor = resolveShopTargetActor($doc, targetActorId);
+    if (!targetActor || !targetActor.isOwner && !game.user.isGM) {
+      ui.notifications.warn(localize("NoTargetActor"));
+      return;
+    }
+    const payment = getActorCurrencyPaymentUpdate(targetActor, getBasketTotalPrice(basket));
+    if (!payment.success) {
+      payment.errors.forEach((err) => ui.notifications.warn(err));
+      return;
+    }
+    window.GAS.log.p("onBuyNow | requesting purchase via socket");
+    const result = await requestPurchase({
+      shopId: $doc.id,
+      shopUuid: $doc.uuid,
+      targetActorId,
+      basket: basket.map((entry) => serializeBasketEntry(entry))
+    });
+    window.GAS.log.p("onBuyNow | socket purchase result:", result.success, "| errors:", result.errors?.length || 0);
+    if (result.errors?.length) {
+      result.errors.forEach((err) => ui.notifications.warn(err));
+    } else {
+      window.GAS.log.p("onBuyNow | purchase successful, clearing local basket state");
+      $$invalidate(0, basket = []);
+      ui.notifications.info(game.i18n.format("PurchaseComplete", { actorName: targetActor.name }));
+    }
+  }
+  function formatPrice$1(price) {
+    return formatPrice(price);
+  }
+  function formatLineTotal(entry) {
+    return formatPrice$1(multiplyPrice(entry.price, entry.quantity ?? 1));
+  }
+  function formatTotal() {
+    return totalPrice;
+  }
+  function serializeBasketEntry(entry) {
+    return {
+      itemId: entry.itemId,
+      itemName: entry.itemName,
+      quantity: entry.quantity ?? 1,
+      price: makeBasketPrice(entry.price)
+    };
+  }
+  function showItemSheet(itemId) {
+    const item = $doc.items.get(itemId);
+    if (item) item.sheet.render(true);
+  }
+  onMount(() => {
+    shopTelemetry("BasketTab", "mounted", {
+      shopId: $doc?.id,
+      shopUuid,
+      targetActorId,
+      basketActorIds: Object.keys($doc?.flags?.[MODULE_ID]?.basket ?? {}),
+      shopTargetActorIds: getShopTargetEntries($doc).map((entry) => entry.actorId),
+      currentTokenTargetActorIds: getCurrentTokenTargetEntries({ excludeActorId: $doc?.id }).map((entry) => entry.actorId),
+      associatedActors: sharedProps.associatedActors ?? [],
+      actorOptions
+    });
+    if (game.user.isGM) {
+      targetTokenHookId = Hooks.on("targetToken", (user) => {
+        if (user?.id !== game.user.id) return;
+        $$invalidate(17, tokenTargetRevision += 1);
+        shopTelemetry("BasketTab", "targetToken hook", {
+          shopId: $doc?.id,
+          shopUuid,
+          tokenTargetRevision,
+          currentTokenTargetActorIds: getCurrentTokenTargetEntries({ excludeActorId: $doc?.id }).map((entry) => entry.actorId)
+        });
+      });
+    }
+    unsubscribeDoc = doc.subscribe((document2, options) => {
+      shopTelemetry("BasketTab", "doc store emitted", {
+        action: options?.action,
+        data: options?.data,
+        shopId: document2?.id,
+        shopUuid: document2?.uuid,
+        targetActorId,
+        basketActorIds: Object.keys(document2?.flags?.[MODULE_ID]?.basket ?? {}),
+        shopTargetActorIds: getShopTargetEntries(document2).map((entry) => entry.actorId),
+        targetBasket: targetActorId ? document2?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? [] : []
+      });
+    });
+  });
+  onDestroy(() => {
+    unsubscribeDoc();
+    if (targetTokenHookId !== null) Hooks.off("targetToken", targetTokenHookId);
+  });
+  const click_handler = () => $$invalidate(4, dropdownOpen = !dropdownOpen);
+  const click_handler_1 = (opt) => selectActor(opt.id);
+  $$self.$$set = ($$props2) => {
+    if ("sharedProps" in $$props2) $$invalidate(16, sharedProps = $$props2.sharedProps);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty[0] & /*sharedProps*/
+    65536) {
+      $$invalidate(1, targetActorId = sharedProps.targetActorId ?? null);
+    }
+    if ($$self.$$.dirty[0] & /*targetActorId, $doc*/
+    1048578) {
+      $$invalidate(3, selectedActor = targetActorId ? resolveShopTargetActor($doc, targetActorId) : null);
+    }
+    if ($$self.$$.dirty[0] & /*$doc*/
+    1048576) {
+      $$invalidate(18, shopUuid = $doc?.uuid ?? ($doc?.id ? `Actor.${$doc.id}` : null));
+    }
+    if ($$self.$$.dirty[0] & /*shopUuid, $shopSocketState*/
+    2359296) {
+      $$invalidate(19, socketShopState = shopUuid ? $shopSocketState.get(shopUuid) : null);
+    }
+    if ($$self.$$.dirty[0] & /*tokenTargetRevision, $doc*/
+    1179648) {
+      $$invalidate(2, actorOptions = (() => {
+        if (game.user.isGM) {
+          const targetEntries = [
+            ...getShopTargetEntries($doc),
+            ...getCurrentTokenTargetEntries({
+              excludeActorId: $doc?.id,
+              source: "gm-token-target"
+            })
+          ];
+          return [
+            ...new Map(targetEntries.map((entry) => [entry.actorId, entry])).values()
+          ].filter((entry) => entry?.actorId).filter(Boolean).map((entry) => ({
+            id: entry.actorId,
+            actorUuid: entry.actorUuid,
+            tokenUuid: entry.tokenUuid,
+            name: entry.name,
+            img: entry.img
+          }));
+        } else {
+          return game.actors.filter((a) => a.isOwner).map((a) => ({
+            id: a.id,
+            actorUuid: a.uuid,
+            name: a.name,
+            img: a.img
+          }));
+        }
+      })());
+    }
+    if ($$self.$$.dirty[0] & /*$doc, targetActorId, socketShopState, shopUuid, selectedActor, basket, sharedProps, actorOptions*/
+    1900559) {
+      {
+        if ($doc && targetActorId) {
+          const documentBasket = $doc?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? [];
+          const hasSocketBasket = socketShopState?.basketsByActorId?.has(targetActorId) ?? false;
+          const socketBasket = socketShopState?.basketsByActorId?.get(targetActorId) ?? [];
+          const sourceBasket = hasSocketBasket ? socketBasket : documentBasket;
+          $$invalidate(0, basket = sourceBasket.map((entry) => ({ ...entry })));
+          shopTelemetry("BasketTab", "basket derived", {
+            shopId: $doc?.id,
+            shopUuid,
+            targetActorId,
+            selectedActorName: selectedActor?.name,
+            source: hasSocketBasket ? "socket" : "document",
+            documentBasketLength: documentBasket.length,
+            socketBasketLength: socketBasket.length,
+            resultBasketLength: basket.length,
+            documentBasket,
+            socketBasket,
+            basketActorIds: Object.keys($doc?.flags?.[MODULE_ID]?.basket ?? {}),
+            socketBasketActorIds: [...socketShopState?.basketsByActorId?.keys?.() ?? []],
+            shopTargetActorIds: getShopTargetEntries($doc).map((entry) => entry.actorId),
+            currentTokenTargetActorIds: getCurrentTokenTargetEntries({ excludeActorId: $doc?.id }).map((entry) => entry.actorId),
+            associatedActors: sharedProps.associatedActors ?? [],
+            actorOptions,
+            isGM: game.user.isGM
+          });
+        } else {
+          $$invalidate(0, basket = []);
+          shopTelemetry("BasketTab", "basket derived empty: missing doc or target", {
+            hasDoc: Boolean($doc),
+            shopId: $doc?.id,
+            shopUuid,
+            targetActorId,
+            basketActorIds: Object.keys($doc?.flags?.[MODULE_ID]?.basket ?? {}),
+            socketBasketActorIds: [...socketShopState?.basketsByActorId?.keys?.() ?? []],
+            shopTargetActorIds: getShopTargetEntries($doc).map((entry) => entry.actorId),
+            currentTokenTargetActorIds: getCurrentTokenTargetEntries({ excludeActorId: $doc?.id }).map((entry) => entry.actorId),
+            associatedActors: sharedProps.associatedActors ?? [],
+            actorOptions,
+            isGM: game.user.isGM
+          });
+        }
+      }
+    }
+    if ($$self.$$.dirty[0] & /*basket*/
+    1) {
+      totalPrice = basket.length ? getBasketTotal(basket) : "—";
+    }
+    if ($$self.$$.dirty[0] & /*$doc, basket*/
+    1048577) {
+      {
+        if ($doc && basket.length > 0) {
+          window.GAS.log.p("BasketTab | basket has items:", basket.length, "| first item:", basket[0].itemName);
+        }
+        if ($doc && basket.length === 0) {
+          window.GAS.log.p("BasketTab | basket is empty");
+        }
+      }
+    }
+  };
+  game.user.id;
+  return [
+    basket,
+    targetActorId,
+    actorOptions,
+    selectedActor,
+    dropdownOpen,
+    doc,
+    selectActor,
+    closeDropdown,
+    onQtyClick,
+    onRemoveClick,
+    onShowItemClick,
+    clearBasket,
+    onBuyNow,
+    formatPrice$1,
+    formatLineTotal,
+    formatTotal,
+    sharedProps,
+    tokenTargetRevision,
+    shopUuid,
+    socketShopState,
+    $doc,
+    $shopSocketState,
+    click_handler,
+    click_handler_1
+  ];
+}
+class BasketTab extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$3, create_fragment$3, safe_not_equal, { sharedProps: 0 });
+    init(this, options, instance$7, create_fragment$7, safe_not_equal, { sharedProps: 16 }, null, [-1, -1]);
   }
 }
-function get_each_context$1(ctx, list, i) {
+function get_each_context$3(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[4] = list[i];
   child_ctx[6] = i;
   return child_ctx;
 }
-function create_else_block(ctx) {
+function create_else_block$1(ctx) {
   let p;
   return {
     c() {
@@ -29881,7 +33123,7 @@ function create_else_block(ctx) {
     }
   };
 }
-function create_if_block$1(ctx) {
+function create_if_block$3(ctx) {
   let ul;
   let each_value = ensure_array_like(
     /*sharedProps*/
@@ -29889,7 +33131,7 @@ function create_if_block$1(ctx) {
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block$1(get_each_context$1(ctx, each_value, i));
+    each_blocks[i] = create_each_block$3(get_each_context$3(ctx, each_value, i));
   }
   return {
     c() {
@@ -29916,11 +33158,11 @@ function create_if_block$1(ctx) {
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context$1(ctx2, each_value, i);
+          const child_ctx = get_each_context$3(ctx2, each_value, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
           } else {
-            each_blocks[i] = create_each_block$1(child_ctx);
+            each_blocks[i] = create_each_block$3(child_ctx);
             each_blocks[i].c();
             each_blocks[i].m(ul, null);
           }
@@ -29939,7 +33181,7 @@ function create_if_block$1(ctx) {
     }
   };
 }
-function create_each_block$1(ctx) {
+function create_each_block$3(ctx) {
   let li;
   let span;
   let t0_value = (
@@ -30000,7 +33242,7 @@ function create_each_block$1(ctx) {
     }
   };
 }
-function create_fragment$2(ctx) {
+function create_fragment$6(ctx) {
   let div8;
   let div7;
   let label0;
@@ -30011,14 +33253,14 @@ function create_fragment$2(ctx) {
     ctx[0].localize("SalePriceFactor") + ""
   );
   let t0;
-  let t1;
   let strong0;
-  let t2_value = (
+  let t1_value = formatFactor(
     /*sharedProps*/
-    ctx[0].pricingFactor + ""
-  );
+    ctx[0].salePriceFactor,
+    100
+  ) + "";
+  let t1;
   let t2;
-  let t3;
   let input0;
   let input0_value_value;
   let div1;
@@ -30028,17 +33270,17 @@ function create_fragment$2(ctx) {
   let span3;
   let t6_value = (
     /*sharedProps*/
-    ctx[0].localize("SalePriceFactor") + ""
+    ctx[0].localize("BuyPriceFactor") + ""
   );
   let t6;
-  let t7;
   let strong1;
-  let t8_value = (
+  let t7_value = formatFactor(
     /*sharedProps*/
-    ctx[0].pricingFactor + ""
-  );
+    ctx[0].buyPriceFactor,
+    50
+  ) + "";
+  let t7;
   let t8;
-  let t9;
   let input1;
   let input1_value_value;
   let div3;
@@ -30073,8 +33315,8 @@ function create_fragment$2(ctx) {
       /*sharedProps*/
       ctx2[0].rollTables && /*sharedProps*/
       ctx2[0].rollTables.length > 0
-    ) return create_if_block$1;
-    return create_else_block;
+    ) return create_if_block$3;
+    return create_else_block$1;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type(ctx);
@@ -30086,28 +33328,26 @@ function create_fragment$2(ctx) {
       div0 = element("div");
       span0 = element("span");
       t0 = text(t0_value);
-      t1 = text(" (affects all prices) ");
       strong0 = element("strong");
-      t2 = text(t2_value);
-      t3 = text("% ");
+      t1 = text(t1_value);
+      t2 = text("%");
       input0 = element("input");
       div1 = element("div");
       div1.innerHTML = `<span>50%</span><span>200%</span>`;
       p0 = element("p");
-      p0.innerHTML = ``;
+      p0.textContent = "Affects prices charged to buyers.";
       label1 = element("label");
       div2 = element("div");
       span3 = element("span");
       t6 = text(t6_value);
-      t7 = text(" (affects all prices) ");
       strong1 = element("strong");
-      t8 = text(t8_value);
-      t9 = text("% ");
+      t7 = text(t7_value);
+      t8 = text("%");
       input1 = element("input");
       div3 = element("div");
       div3.innerHTML = `<span>50%</span><span>200%</span>`;
       p1 = element("p");
-      p1.innerHTML = ``;
+      p1.textContent = "Affects prices paid when buying from actors.";
       div5 = element("div");
       h3 = element("h3");
       t12 = text(t12_value);
@@ -30123,24 +33363,30 @@ function create_fragment$2(ctx) {
       button1.textContent = "Save Settings";
       attr(div0, "class", "setting-label");
       attr(input0, "type", "range");
-      input0.value = input0_value_value = /*sharedProps*/
-      ctx[0].salePriceFactor;
+      input0.value = input0_value_value = formatFactor(
+        /*sharedProps*/
+        ctx[0].salePriceFactor,
+        100
+      );
       attr(input0, "min", "50");
       attr(input0, "max", "200");
       attr(input0, "step", "1");
-      attr(input0, "class", "svelte-FOU-1xuueht");
       attr(div1, "class", "setting-range");
       attr(p0, "class", "setting-help");
+      attr(label0, "class", "setting-control");
       attr(div2, "class", "setting-label");
       attr(input1, "type", "range");
-      input1.value = input1_value_value = /*sharedProps*/
-      ctx[0].buyPriceFactor;
+      input1.value = input1_value_value = formatFactor(
+        /*sharedProps*/
+        ctx[0].buyPriceFactor,
+        50
+      );
       attr(input1, "min", "50");
       attr(input1, "max", "200");
       attr(input1, "step", "1");
-      attr(input1, "class", "svelte-FOU-1xuueht");
       attr(div3, "class", "setting-range");
       attr(p1, "class", "setting-help");
+      attr(label1, "class", "setting-control");
       attr(p2, "class", "drag-hint");
       attr(div4, "class", "drag-drop-area");
       attr(div4, "role", "region");
@@ -30151,7 +33397,7 @@ function create_fragment$2(ctx) {
       attr(button1, "class", "save-btn");
       attr(button1, "type", "button");
       attr(div6, "class", "actions");
-      attr(div7, "class", "settings-form");
+      attr(div7, "class", "settings-form ma-lg");
       attr(div8, "class", "settings-tab");
     },
     m(target, anchor) {
@@ -30161,10 +33407,9 @@ function create_fragment$2(ctx) {
       append(label0, div0);
       append(div0, span0);
       append(span0, t0);
-      append(span0, t1);
       append(div0, strong0);
+      append(strong0, t1);
       append(strong0, t2);
-      append(strong0, t3);
       append(label0, input0);
       append(label0, div1);
       append(label0, p0);
@@ -30172,10 +33417,9 @@ function create_fragment$2(ctx) {
       append(label1, div2);
       append(div2, span3);
       append(span3, t6);
-      append(span3, t7);
       append(div2, strong1);
+      append(strong1, t7);
       append(strong1, t8);
-      append(strong1, t9);
       append(label1, input1);
       append(label1, div3);
       append(label1, p1);
@@ -30196,13 +33440,13 @@ function create_fragment$2(ctx) {
           listen(
             input0,
             "input",
-            /*input_handler*/
+            /*onSaleFactorInput*/
             ctx[1]
           ),
           listen(
             input1,
             "input",
-            /*input_handler_1*/
+            /*onBuyFactorInput*/
             ctx[2]
           ),
           listen(div4, "dragover", prevent_default(function() {
@@ -30239,22 +33483,34 @@ function create_fragment$2(ctx) {
       1 && t0_value !== (t0_value = /*sharedProps*/
       ctx[0].localize("SalePriceFactor") + "")) set_data(t0, t0_value);
       if (dirty & /*sharedProps*/
-      1 && t2_value !== (t2_value = /*sharedProps*/
-      ctx[0].pricingFactor + "")) set_data(t2, t2_value);
+      1 && t1_value !== (t1_value = formatFactor(
+        /*sharedProps*/
+        ctx[0].salePriceFactor,
+        100
+      ) + "")) set_data(t1, t1_value);
       if (dirty & /*sharedProps*/
-      1 && input0_value_value !== (input0_value_value = /*sharedProps*/
-      ctx[0].salePriceFactor)) {
+      1 && input0_value_value !== (input0_value_value = formatFactor(
+        /*sharedProps*/
+        ctx[0].salePriceFactor,
+        100
+      ))) {
         input0.value = input0_value_value;
       }
       if (dirty & /*sharedProps*/
       1 && t6_value !== (t6_value = /*sharedProps*/
-      ctx[0].localize("SalePriceFactor") + "")) set_data(t6, t6_value);
+      ctx[0].localize("BuyPriceFactor") + "")) set_data(t6, t6_value);
       if (dirty & /*sharedProps*/
-      1 && t8_value !== (t8_value = /*sharedProps*/
-      ctx[0].pricingFactor + "")) set_data(t8, t8_value);
+      1 && t7_value !== (t7_value = formatFactor(
+        /*sharedProps*/
+        ctx[0].buyPriceFactor,
+        50
+      ) + "")) set_data(t7, t7_value);
       if (dirty & /*sharedProps*/
-      1 && input1_value_value !== (input1_value_value = /*sharedProps*/
-      ctx[0].buyPriceFactor)) {
+      1 && input1_value_value !== (input1_value_value = formatFactor(
+        /*sharedProps*/
+        ctx[0].buyPriceFactor,
+        50
+      ))) {
         input1.value = input1_value_value;
       }
       if (dirty & /*sharedProps*/
@@ -30289,20 +33545,1745 @@ function create_fragment$2(ctx) {
     }
   };
 }
-function instance$2($$self, $$props, $$invalidate) {
+function formatFactor(value, fallback) {
+  const factor = Number(value ?? fallback);
+  return Number.isFinite(factor) ? factor : fallback;
+}
+function instance$6($$self, $$props, $$invalidate) {
   let { sharedProps = {} } = $$props;
-  const input_handler = (e) => sharedProps.onPricingFactorChange?.(e.target.value);
-  const input_handler_1 = (e) => sharedProps.onPricingFactorChange?.(e.target.value);
+  function onSaleFactorInput(event) {
+    sharedProps.onSalePriceFactorChange?.(event.target.value);
+  }
+  function onBuyFactorInput(event) {
+    sharedProps.onBuyPriceFactorChange?.(event.target.value);
+  }
   const click_handler = (index) => sharedProps.removeRollTable(index);
   $$self.$$set = ($$props2) => {
     if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
   };
-  return [sharedProps, input_handler, input_handler_1, click_handler];
+  return [sharedProps, onSaleFactorInput, onBuyFactorInput, click_handler];
 }
 class SettingsTab extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$2, create_fragment$2, safe_not_equal, { sharedProps: 0 });
+    init(this, options, instance$6, create_fragment$6, safe_not_equal, { sharedProps: 0 });
+  }
+}
+function create_fragment$5(ctx) {
+  let section;
+  let main;
+  let tabs_1;
+  let updating_activeTab;
+  let current;
+  function tabs_1_activeTab_binding(value) {
+    ctx[19](value);
+  }
+  let tabs_1_props = {
+    class: "gas-tabs",
+    tabs: (
+      /*tabs*/
+      ctx[3]
+    ),
+    sharedProps: (
+      /*tabProps*/
+      ctx[2]
+    )
+  };
+  if (
+    /*activeTab*/
+    ctx[1] !== void 0
+  ) {
+    tabs_1_props.activeTab = /*activeTab*/
+    ctx[1];
+  }
+  tabs_1 = new Tabs({ props: tabs_1_props });
+  binding_callbacks.push(() => bind(tabs_1, "activeTab", tabs_1_activeTab_binding));
+  return {
+    c() {
+      section = element("section");
+      main = element("main");
+      create_component(tabs_1.$$.fragment);
+      attr(main, "class", "shop-sheet__body svelte-FOU-16wefko");
+      attr(section, "class", "shop-sheet svelte-FOU-16wefko");
+    },
+    m(target, anchor) {
+      insert(target, section, anchor);
+      append(section, main);
+      mount_component(tabs_1, main, null);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      const tabs_1_changes = {};
+      if (dirty[0] & /*tabs*/
+      8) tabs_1_changes.tabs = /*tabs*/
+      ctx2[3];
+      if (dirty[0] & /*tabProps*/
+      4) tabs_1_changes.sharedProps = /*tabProps*/
+      ctx2[2];
+      if (!updating_activeTab && dirty[0] & /*activeTab*/
+      2) {
+        updating_activeTab = true;
+        tabs_1_changes.activeTab = /*activeTab*/
+        ctx2[1];
+        add_flush_callback(() => updating_activeTab = false);
+      }
+      tabs_1.$set(tabs_1_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tabs_1.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tabs_1.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(section);
+      }
+      destroy_component(tabs_1);
+    }
+  };
+}
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "copy";
+}
+function openItemSheet(item) {
+  item.sheet?.render(true);
+}
+function getActorName$1(id) {
+  const a = game.actors.get(id);
+  return a?.name || id || "Unknown Actor";
+}
+function getRollTableName(id) {
+  const rt = game.tables.get(id);
+  return rt?.name || id || "Unknown Table";
+}
+function instance$5($$self, $$props, $$invalidate) {
+  let actor;
+  let config;
+  let isEditing;
+  let tabs;
+  let tabProps;
+  let $documentStore, $$unsubscribe_documentStore = noop, $$subscribe_documentStore = () => ($$unsubscribe_documentStore(), $$unsubscribe_documentStore = subscribe(documentStore, ($$value) => $$invalidate(18, $documentStore = $$value)), documentStore);
+  $$self.$$.on_destroy.push(() => $$unsubscribe_documentStore());
+  let { documentStore } = $$props;
+  $$subscribe_documentStore();
+  const application = getContext("#external").application;
+  setContext("#doc", documentStore);
+  let activeTab = "shopfront";
+  let filterText = "";
+  let associatedActors = [];
+  let rollTables = [];
+  let salePriceFactor = 100;
+  let buyPriceFactor = 50;
+  let priceVariance = 10;
+  let variancePeriod = "daily";
+  let atrophyPercent = 5;
+  let selectedActorId = null;
+  let initializedActorId = null;
+  let restoredSelectionActorId = null;
+  let _filePickerInstance = {};
+  async function selectTargetActor(id, targetEntry = null) {
+    shopTelemetry("ShopSheetGM", "select target actor", {
+      shopId: actor?.id,
+      actorUuid: actor?.uuid,
+      previousSelectedActorId: selectedActorId,
+      nextSelectedActorId: id,
+      targetEntry,
+      basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
+      associatedActors
+    });
+    $$invalidate(12, selectedActorId = id);
+    if (actor?.id) {
+      await game.user.setFlag(MODULE_ID, `selectedActor.${actor.id}`, id ?? "");
+    }
+    if (actor && targetEntry) {
+      await registerShopTargetEntries(actor, [
+        {
+          ...targetEntry,
+          source: "gm-selection",
+          userId: game.user?.id,
+          timestamp: Date.now()
+        }
+      ]);
+    } else if (actor && id) {
+      await registerShopTargetActor(actor, id, { source: "gm-selection" });
+    }
+  }
+  async function saveSettings() {
+    if (!actor?.isOwner) {
+      ui.notifications.warn(localize("NoPermission"));
+      return;
+    }
+    await setShopConfiguration(actor, {
+      salePriceFactor: parseFloat(salePriceFactor),
+      buyPriceFactor: parseFloat(buyPriceFactor),
+      priceVariance: parseFloat(priceVariance),
+      variancePeriod,
+      atrophyPercent: parseFloat(atrophyPercent),
+      associatedActors,
+      rollTables
+    });
+    ui.notifications.info(localize("SettingsSaved"));
+  }
+  async function silentSaveSettings() {
+    if (!actor?.isOwner) return;
+    await setShopConfiguration(actor, {
+      salePriceFactor: parseFloat(salePriceFactor),
+      buyPriceFactor: parseFloat(buyPriceFactor),
+      priceVariance: parseFloat(priceVariance),
+      variancePeriod,
+      atrophyPercent: parseFloat(atrophyPercent),
+      associatedActors,
+      rollTables
+    });
+  }
+  async function provisionStore() {
+    if (!actor?.isOwner) return;
+    ui.notifications.info("Provisioning store... This will roll on configured tables, apply pricing variance, and update inventory.");
+    const numToAdd = 5;
+    ui.notifications.info(`Added ${numToAdd} items to inventory.`);
+  }
+  function handleDrop(e, dropType) {
+    e.preventDefault();
+    if (!isEditing) {
+      ui.notifications.error(localize("EditModeRequired"));
+      return;
+    }
+    try {
+      const data = JSON.parse(e.dataTransfer.getData("text/plain") || "{}");
+      if (dropType === "actor" && data.type === "Actor" && (data.uuid || data.id)) {
+        const actorId = data.id || data.uuid.split(".").pop();
+        if (!associatedActors.includes(actorId)) {
+          $$invalidate(5, associatedActors = [...associatedActors, actorId]);
+          saveSettings();
+        }
+      } else if (dropType === "rolltable" && data.type === "RollTable" && data.uuid) {
+        const tableId = data.id || data.uuid.split(".").pop();
+        if (!rollTables.includes(tableId)) {
+          $$invalidate(6, rollTables = [...rollTables, tableId]);
+          saveSettings();
+        }
+      }
+    } catch (err) {
+      console.error("Drop error:", err);
+    }
+  }
+  function handleActorDrop(e) {
+    handleDrop(e, "actor");
+  }
+  function handleRollTableDrop(e) {
+    handleDrop(e, "rolltable");
+  }
+  function removeAssociated(index) {
+    $$invalidate(5, associatedActors = associatedActors.filter((_, i) => i !== index));
+    saveSettings();
+  }
+  function removeRollTable(index) {
+    $$invalidate(6, rollTables = rollTables.filter((_, i) => i !== index));
+    saveSettings();
+  }
+  function clearFilter() {
+    $$invalidate(4, filterText = "");
+  }
+  function openImageEditor() {
+    const current = actor?.img;
+    if (_filePickerInstance instanceof FilePicker && !_filePickerInstance?.rendered) {
+      _filePickerInstance.render(true);
+      return;
+    }
+    _filePickerInstance = new FilePicker({
+      type: "image",
+      current,
+      callback: (path) => {
+        $documentStore.update({ img: path });
+      },
+      top: application.position.top + 40,
+      left: application.position.left + 10
+    });
+    return _filePickerInstance.browse();
+  }
+  function calculateSalePrice(basePrice = 0) {
+    const factor = salePriceFactor / 100;
+    const variance = (Math.random() * 2 - 1) * (priceVariance / 100);
+    return Math.round(basePrice * factor * (1 + variance));
+  }
+  function tabs_1_activeTab_binding(value) {
+    activeTab = value;
+    $$invalidate(1, activeTab);
+  }
+  $$self.$$set = ($$props2) => {
+    if ("documentStore" in $$props2) $$subscribe_documentStore($$invalidate(0, documentStore = $$props2.documentStore));
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty[0] & /*$documentStore*/
+    262144) {
+      $$invalidate(15, actor = $documentStore);
+    }
+    if ($$self.$$.dirty[0] & /*actor*/
+    32768) {
+      actor?.name ?? game.i18n.localize("foundryvtt-shop-studio.ShopSheetTitle");
+    }
+    if ($$self.$$.dirty[0] & /*actor*/
+    32768) {
+      $$invalidate(17, config = getShopConfiguration(actor));
+    }
+    if ($$self.$$.dirty[0] & /*actor*/
+    32768) {
+      $$invalidate(16, isEditing = isShopEditing(actor));
+    }
+    if ($$self.$$.dirty[0] & /*actor, initializedActorId, config*/
+    172032) {
+      if (actor?.id && actor.id !== initializedActorId) {
+        $$invalidate(7, salePriceFactor = config.salePriceFactor ?? 100);
+        $$invalidate(8, buyPriceFactor = config.buyPriceFactor ?? 50);
+        $$invalidate(9, priceVariance = config.priceVariance ?? 10);
+        $$invalidate(10, variancePeriod = config.variancePeriod ?? "daily");
+        $$invalidate(11, atrophyPercent = config.atrophyPercent ?? 5);
+        $$invalidate(5, associatedActors = config.associatedActors ?? []);
+        $$invalidate(6, rollTables = config.rollTables ?? []);
+        $$invalidate(13, initializedActorId = actor.id);
+      }
+    }
+    if ($$self.$$.dirty[0] & /*actor, restoredSelectionActorId, selectedActorId, config*/
+    184320) {
+      if (actor?.id && actor.id !== restoredSelectionActorId) {
+        $$invalidate(14, restoredSelectionActorId = actor.id);
+        $$invalidate(12, selectedActorId = game.user.getFlag(MODULE_ID, `selectedActor.${actor.id}`) ?? null);
+        shopTelemetry("ShopSheetGM", "restored selected actor", {
+          shopId: actor.id,
+          shopUuid: actor.uuid,
+          selectedActorId,
+          basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
+          configuredAssociatedActors: config.associatedActors ?? []
+        });
+      }
+    }
+    if ($$self.$$.dirty[0] & /*actor, isEditing, associatedActors, filterText, selectedActorId, salePriceFactor, buyPriceFactor, priceVariance, variancePeriod, atrophyPercent, rollTables*/
+    106480) {
+      $$invalidate(2, tabProps = {
+        actor,
+        isEditing,
+        associatedActors,
+        filterText,
+        items: actor?.items || [],
+        targetActorId: selectedActorId,
+        salePriceFactor,
+        buyPriceFactor,
+        priceVariance,
+        variancePeriod,
+        atrophyPercent,
+        onFilterChange: (value) => {
+          $$invalidate(4, filterText = value);
+        },
+        onSalePriceFactorChange: (value) => {
+          $$invalidate(7, salePriceFactor = Number(value));
+        },
+        onBuyPriceFactorChange: (value) => {
+          $$invalidate(8, buyPriceFactor = Number(value));
+        },
+        onPriceVarianceChange: (value) => {
+          $$invalidate(9, priceVariance = Number(value));
+        },
+        onVariancePeriodChange: (value) => {
+          $$invalidate(10, variancePeriod = value);
+        },
+        onAtrophyPercentChange: (value) => {
+          $$invalidate(11, atrophyPercent = Number(value));
+        },
+        onAssociatedActorsChange: (list) => {
+          $$invalidate(5, associatedActors = list);
+        },
+        onTargetActorChange: selectTargetActor,
+        rollTables,
+        localize,
+        openImageEditor,
+        handleDragOver,
+        handleActorDrop,
+        handleRollTableDrop,
+        getActorName: getActorName$1,
+        getRollTableName,
+        removeAssociated,
+        removeRollTable,
+        clearFilter,
+        calculateSalePrice,
+        openItemSheet,
+        provisionStore,
+        saveSettings,
+        silentSaveSettings
+      });
+    }
+  };
+  $$invalidate(3, tabs = [
+    {
+      id: "shopfront",
+      label: localize("Shopfront"),
+      component: ShopfrontTab
+    },
+    {
+      id: "inventory",
+      label: localize("Inventory"),
+      component: InventoryTab
+    },
+    {
+      id: "basket",
+      label: localize("Basket"),
+      component: BasketTab
+    },
+    {
+      id: "settings",
+      label: localize("Settings"),
+      component: SettingsTab
+    }
+  ]);
+  return [
+    documentStore,
+    activeTab,
+    tabProps,
+    tabs,
+    filterText,
+    associatedActors,
+    rollTables,
+    salePriceFactor,
+    buyPriceFactor,
+    priceVariance,
+    variancePeriod,
+    atrophyPercent,
+    selectedActorId,
+    initializedActorId,
+    restoredSelectionActorId,
+    actor,
+    isEditing,
+    config,
+    $documentStore,
+    tabs_1_activeTab_binding
+  ];
+}
+class ShopSheetGM extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$5, create_fragment$5, safe_not_equal, { documentStore: 0 }, null, [-1, -1]);
+  }
+  get documentStore() {
+    return this.$$.ctx[0];
+  }
+  set documentStore(documentStore) {
+    this.$$set({ documentStore });
+    flush();
+  }
+}
+function get_each_context$2(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[6] = list[i];
+  return child_ctx;
+}
+function create_if_block$2(ctx) {
+  let div;
+  let h2;
+  let t_value = (
+    /*sharedProps*/
+    ctx[0].localize("AssociatedActors") + ""
+  );
+  let t;
+  let ul;
+  let each_value = ensure_array_like(
+    /*sharedProps*/
+    ctx[0].associatedActors
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value.length; i += 1) {
+    each_blocks[i] = create_each_block$2(get_each_context$2(ctx, each_value, i));
+  }
+  return {
+    c() {
+      div = element("div");
+      h2 = element("h2");
+      t = text(t_value);
+      ul = element("ul");
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      attr(h2, "class", "svelte-FOU-e6blig");
+      attr(ul, "class", "associated-list svelte-FOU-e6blig");
+      attr(div, "class", "associated-actors-section svelte-FOU-e6blig");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      append(div, h2);
+      append(h2, t);
+      append(div, ul);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(ul, null);
+        }
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*sharedProps*/
+      1 && t_value !== (t_value = /*sharedProps*/
+      ctx2[0].localize("AssociatedActors") + "")) set_data(t, t_value);
+      if (dirty & /*sharedProps, openActorSheet, game*/
+      1) {
+        each_value = ensure_array_like(
+          /*sharedProps*/
+          ctx2[0].associatedActors
+        );
+        let i;
+        for (i = 0; i < each_value.length; i += 1) {
+          const child_ctx = get_each_context$2(ctx2, each_value, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block$2(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(ul, null);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value.length;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      destroy_each(each_blocks, detaching);
+    }
+  };
+}
+function create_each_block$2(ctx) {
+  let li;
+  let button;
+  let img;
+  let img_src_value;
+  let img_alt_value;
+  let span;
+  let t_value = (
+    /*sharedProps*/
+    ctx[0].getActorName(
+      /*actorId*/
+      ctx[6]
+    ) + ""
+  );
+  let t;
+  let button_data_tooltip_value;
+  let mounted;
+  let dispose;
+  function click_handler() {
+    return (
+      /*click_handler*/
+      ctx[5](
+        /*actorId*/
+        ctx[6]
+      )
+    );
+  }
+  return {
+    c() {
+      li = element("li");
+      button = element("button");
+      img = element("img");
+      span = element("span");
+      t = text(t_value);
+      attr(img, "class", "associated-img svelte-FOU-e6blig");
+      if (!src_url_equal(img.src, img_src_value = game.actors.get(
+        /*actorId*/
+        ctx[6]
+      )?.img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
+      attr(img, "alt", img_alt_value = /*sharedProps*/
+      ctx[0].getActorName(
+        /*actorId*/
+        ctx[6]
+      ));
+      attr(span, "class", "associated-name svelte-FOU-e6blig");
+      attr(button, "class", "associated-link svelte-FOU-e6blig");
+      attr(button, "type", "button");
+      attr(button, "data-tooltip", button_data_tooltip_value = /*sharedProps*/
+      ctx[0].getActorName(
+        /*actorId*/
+        ctx[6]
+      ));
+      attr(li, "class", "associated-entry svelte-FOU-e6blig");
+    },
+    m(target, anchor) {
+      insert(target, li, anchor);
+      append(li, button);
+      append(button, img);
+      append(button, span);
+      append(span, t);
+      if (!mounted) {
+        dispose = listen(button, "click", click_handler);
+        mounted = true;
+      }
+    },
+    p(new_ctx, dirty) {
+      ctx = new_ctx;
+      if (dirty & /*sharedProps*/
+      1 && !src_url_equal(img.src, img_src_value = game.actors.get(
+        /*actorId*/
+        ctx[6]
+      )?.img || "icons/svg/mystery-man.svg")) {
+        attr(img, "src", img_src_value);
+      }
+      if (dirty & /*sharedProps*/
+      1 && img_alt_value !== (img_alt_value = /*sharedProps*/
+      ctx[0].getActorName(
+        /*actorId*/
+        ctx[6]
+      ))) {
+        attr(img, "alt", img_alt_value);
+      }
+      if (dirty & /*sharedProps*/
+      1 && t_value !== (t_value = /*sharedProps*/
+      ctx[0].getActorName(
+        /*actorId*/
+        ctx[6]
+      ) + "")) set_data(t, t_value);
+      if (dirty & /*sharedProps*/
+      1 && button_data_tooltip_value !== (button_data_tooltip_value = /*sharedProps*/
+      ctx[0].getActorName(
+        /*actorId*/
+        ctx[6]
+      ))) {
+        attr(button, "data-tooltip", button_data_tooltip_value);
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(li);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_fragment$4(ctx) {
+  let div6;
+  let div5;
+  let div0;
+  let img;
+  let img_src_value;
+  let button;
+  let div4;
+  let div1;
+  let h20;
+  let t1_value = (
+    /*sharedProps*/
+    ctx[0].localize("Name") + ""
+  );
+  let t1;
+  let p;
+  let t2_value = (
+    /*sharedProps*/
+    (ctx[0].actor?.name || "") + ""
+  );
+  let t2;
+  let div3;
+  let h21;
+  let t3_value = (
+    /*sharedProps*/
+    ctx[0].localize("Description") + ""
+  );
+  let t3;
+  let div2;
+  let mounted;
+  let dispose;
+  let if_block = (
+    /*sharedProps*/
+    ctx[0].associatedActors && /*sharedProps*/
+    ctx[0].associatedActors.length > 0 && create_if_block$2(ctx)
+  );
+  return {
+    c() {
+      div6 = element("div");
+      div5 = element("div");
+      div0 = element("div");
+      img = element("img");
+      button = element("button");
+      button.textContent = "Socket Test";
+      if (if_block) if_block.c();
+      div4 = element("div");
+      div1 = element("div");
+      h20 = element("h2");
+      t1 = text(t1_value);
+      p = element("p");
+      t2 = text(t2_value);
+      div3 = element("div");
+      h21 = element("h2");
+      t3 = text(t3_value);
+      div2 = element("div");
+      attr(img, "class", "profile-img svelte-FOU-e6blig");
+      if (!src_url_equal(img.src, img_src_value = /*sharedProps*/
+      ctx[0].actor?.img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
+      attr(img, "alt", "Shop Profile");
+      attr(button, "class", "socket-test-btn");
+      attr(button, "type", "button");
+      attr(div0, "class", "flex1 flexcol gap-10");
+      attr(p, "class", "shop-name svelte-FOU-e6blig");
+      attr(div1, "class", "name-section");
+      attr(div2, "class", "description-content");
+      attr(div3, "class", "description-section mt-md");
+      attr(div4, "class", "flex2");
+      attr(div5, "class", "flexrow gap-10");
+      attr(div6, "class", "shopfront-player-tab svelte-FOU-e6blig");
+    },
+    m(target, anchor) {
+      insert(target, div6, anchor);
+      append(div6, div5);
+      append(div5, div0);
+      append(div0, img);
+      append(div0, button);
+      if (if_block) if_block.m(div0, null);
+      append(div5, div4);
+      append(div4, div1);
+      append(div1, h20);
+      append(h20, t1);
+      append(div1, p);
+      append(p, t2);
+      append(div4, div3);
+      append(div3, h21);
+      append(h21, t3);
+      append(div3, div2);
+      div2.innerHTML = /*enrichedDescription*/
+      ctx[1];
+      if (!mounted) {
+        dispose = listen(button, "click", onSocketTestClick);
+        mounted = true;
+      }
+    },
+    p(ctx2, [dirty]) {
+      if (dirty & /*sharedProps*/
+      1 && !src_url_equal(img.src, img_src_value = /*sharedProps*/
+      ctx2[0].actor?.img || "icons/svg/mystery-man.svg")) {
+        attr(img, "src", img_src_value);
+      }
+      if (
+        /*sharedProps*/
+        ctx2[0].associatedActors && /*sharedProps*/
+        ctx2[0].associatedActors.length > 0
+      ) {
+        if (if_block) {
+          if_block.p(ctx2, dirty);
+        } else {
+          if_block = create_if_block$2(ctx2);
+          if_block.c();
+          if_block.m(div0, null);
+        }
+      } else if (if_block) {
+        if_block.d(1);
+        if_block = null;
+      }
+      if (dirty & /*sharedProps*/
+      1 && t1_value !== (t1_value = /*sharedProps*/
+      ctx2[0].localize("Name") + "")) set_data(t1, t1_value);
+      if (dirty & /*sharedProps*/
+      1 && t2_value !== (t2_value = /*sharedProps*/
+      (ctx2[0].actor?.name || "") + "")) set_data(t2, t2_value);
+      if (dirty & /*sharedProps*/
+      1 && t3_value !== (t3_value = /*sharedProps*/
+      ctx2[0].localize("Description") + "")) set_data(t3, t3_value);
+      if (dirty & /*enrichedDescription*/
+      2) div2.innerHTML = /*enrichedDescription*/
+      ctx2[1];
+    },
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(div6);
+      }
+      if (if_block) if_block.d();
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function openActorSheet(actorId) {
+  const actor = fromUuidSync(`Actor.${actorId}`);
+  actor?.sheet?.render(true);
+}
+function onSocketTestClick() {
+  game.socket.emit("module.foundryvtt-shop-studio", { type: "ACTION", payload: "Foo" });
+}
+function instance$4($$self, $$props, $$invalidate) {
+  let $doc;
+  let { sharedProps = {} } = $$props;
+  const doc = getContext("#doc");
+  component_subscribe($$self, doc, (value) => $$invalidate(4, $doc = value));
+  let rawDescription = "";
+  let enrichedDescription = "";
+  const click_handler = (actorId) => openActorSheet(actorId);
+  $$self.$$set = ($$props2) => {
+    if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*$doc, rawDescription*/
+    24) {
+      if ($doc) {
+        $$invalidate(3, rawDescription = $doc.getFlag("foundryvtt-shop-studio", "description") ?? "");
+        getTextEditorAPI().enrichHTML(rawDescription, { secrets: true }).then((html) => {
+          $$invalidate(1, enrichedDescription = html);
+        });
+      }
+    }
+  };
+  return [sharedProps, enrichedDescription, doc, rawDescription, $doc, click_handler];
+}
+class ShopfrontPlayerTab extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$4, create_fragment$4, safe_not_equal, { sharedProps: 0 });
+  }
+}
+function get_each_context$1(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[31] = list[i];
+  child_ctx[33] = i;
+  return child_ctx;
+}
+function get_each_context_1$1(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[34] = list[i];
+  return child_ctx;
+}
+function create_each_block_1$1(ctx) {
+  let option;
+  let t_value = (
+    /*opt*/
+    ctx[34].label + ""
+  );
+  let t;
+  let option_value_value;
+  return {
+    c() {
+      option = element("option");
+      t = text(t_value);
+      option.__value = option_value_value = /*opt*/
+      ctx[34].value;
+      set_input_value(option, option.__value);
+    },
+    m(target, anchor) {
+      insert(target, option, anchor);
+      append(option, t);
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*typeFilterOptions*/
+      4 && t_value !== (t_value = /*opt*/
+      ctx2[34].label + "")) set_data(t, t_value);
+      if (dirty[0] & /*typeFilterOptions*/
+      4 && option_value_value !== (option_value_value = /*opt*/
+      ctx2[34].value)) {
+        option.__value = option_value_value;
+        set_input_value(option, option.__value);
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(option);
+      }
+    }
+  };
+}
+function create_each_block$1(ctx) {
+  let div5;
+  let div0;
+  let img;
+  let img_src_value;
+  let img_alt_value;
+  let div1;
+  let a;
+  let t0_value = (
+    /*item*/
+    ctx[31].name + ""
+  );
+  let t0;
+  let a_class_value;
+  let div2;
+  let span0;
+  let t1_value = (
+    /*formatPrice*/
+    ctx[13](
+      /*item*/
+      ctx[31]
+    ) + ""
+  );
+  let t1;
+  let div3;
+  let span1;
+  let t2_value = (
+    /*getDisplayQuantity*/
+    ctx[11](
+      /*item*/
+      ctx[31]
+    ) + ""
+  );
+  let t2;
+  let div4;
+  let button;
+  let i;
+  let button_disabled_value;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      div5 = element("div");
+      div0 = element("div");
+      img = element("img");
+      div1 = element("div");
+      a = element("a");
+      t0 = text(t0_value);
+      div2 = element("div");
+      span0 = element("span");
+      t1 = text(t1_value);
+      div3 = element("div");
+      span1 = element("span");
+      t2 = text(t2_value);
+      div4 = element("div");
+      button = element("button");
+      i = element("i");
+      attr(img, "class", "icon svelte-FOU-syf4k7");
+      if (!src_url_equal(img.src, img_src_value = /*item*/
+      ctx[31].img)) attr(img, "src", img_src_value);
+      attr(img, "alt", img_alt_value = /*item*/
+      ctx[31].name);
+      attr(div0, "class", "inv-col-icon svelte-FOU-syf4k7");
+      attr(div0, "data-tooltip", localize("View"));
+      attr(
+        div0,
+        "data-index",
+        /*index*/
+        ctx[33]
+      );
+      attr(div0, "role", "button");
+      attr(a, "class", a_class_value = "stealth link " + /*item*/
+      (ctx[31].system.isMagic ? "pulse" : "") + " svelte-FOU-syf4k7");
+      attr(
+        a,
+        "data-index",
+        /*index*/
+        ctx[33]
+      );
+      attr(a, "role", "button");
+      attr(div1, "class", "inv-col-name svelte-FOU-syf4k7");
+      attr(div1, "data-tooltip", localize("View"));
+      attr(span0, "class", "price-text svelte-FOU-syf4k7");
+      attr(div2, "class", "inv-col-price svelte-FOU-syf4k7");
+      attr(span1, "class", "qty-value svelte-FOU-syf4k7");
+      attr(div3, "class", "inv-col-qty svelte-FOU-syf4k7");
+      attr(i, "class", "fa fa-shopping-basket");
+      attr(button, "class", "stealth basket-btn svelte-FOU-syf4k7");
+      button.disabled = button_disabled_value = /*isOutOfStock*/
+      ctx[12](
+        /*item*/
+        ctx[31]
+      );
+      attr(button, "data-tooltip", "Add to basket");
+      attr(
+        button,
+        "data-index",
+        /*index*/
+        ctx[33]
+      );
+      attr(div4, "class", "inv-col-actions svelte-FOU-syf4k7");
+      attr(div5, "class", "inv-row svelte-FOU-syf4k7");
+    },
+    m(target, anchor) {
+      insert(target, div5, anchor);
+      append(div5, div0);
+      append(div0, img);
+      append(div5, div1);
+      append(div1, a);
+      append(a, t0);
+      append(div5, div2);
+      append(div2, span0);
+      append(span0, t1);
+      append(div5, div3);
+      append(div3, span1);
+      append(span1, t2);
+      append(div5, div4);
+      append(div4, button);
+      append(button, i);
+      if (!mounted) {
+        dispose = [
+          listen(
+            div0,
+            "click",
+            /*onShowItemClick*/
+            ctx[8]
+          ),
+          listen(
+            a,
+            "click",
+            /*onShowItemClick*/
+            ctx[8]
+          ),
+          listen(
+            button,
+            "click",
+            /*onAddToBasketClick*/
+            ctx[9]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*items*/
+      2 && !src_url_equal(img.src, img_src_value = /*item*/
+      ctx2[31].img)) {
+        attr(img, "src", img_src_value);
+      }
+      if (dirty[0] & /*items*/
+      2 && img_alt_value !== (img_alt_value = /*item*/
+      ctx2[31].name)) {
+        attr(img, "alt", img_alt_value);
+      }
+      if (dirty[0] & /*items*/
+      2 && t0_value !== (t0_value = /*item*/
+      ctx2[31].name + "")) set_data(t0, t0_value);
+      if (dirty[0] & /*items*/
+      2 && a_class_value !== (a_class_value = "stealth link " + /*item*/
+      (ctx2[31].system.isMagic ? "pulse" : "") + " svelte-FOU-syf4k7")) {
+        attr(a, "class", a_class_value);
+      }
+      if (dirty[0] & /*items*/
+      2 && t1_value !== (t1_value = /*formatPrice*/
+      ctx2[13](
+        /*item*/
+        ctx2[31]
+      ) + "")) set_data(t1, t1_value);
+      if (dirty[0] & /*items*/
+      2 && t2_value !== (t2_value = /*getDisplayQuantity*/
+      ctx2[11](
+        /*item*/
+        ctx2[31]
+      ) + "")) set_data(t2, t2_value);
+      if (dirty[0] & /*items*/
+      2 && button_disabled_value !== (button_disabled_value = /*isOutOfStock*/
+      ctx2[12](
+        /*item*/
+        ctx2[31]
+      ))) {
+        button.disabled = button_disabled_value;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div5);
+      }
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_fragment$3(ctx) {
+  let div13;
+  let div4;
+  let div0;
+  let label0;
+  let div1;
+  let tjsinput;
+  let div2;
+  let label1;
+  let div3;
+  let select;
+  let div12;
+  let h1;
+  let div11;
+  let div10;
+  let div5;
+  let div6;
+  let div7;
+  let div8;
+  let div9;
+  let current;
+  let mounted;
+  let dispose;
+  tjsinput = new TJSInput({ props: { input: (
+    /*input*/
+    ctx[6]
+  ) } });
+  let each_value_1 = ensure_array_like(
+    /*typeFilterOptions*/
+    ctx[2]
+  );
+  let each_blocks_1 = [];
+  for (let i = 0; i < each_value_1.length; i += 1) {
+    each_blocks_1[i] = create_each_block_1$1(get_each_context_1$1(ctx, each_value_1, i));
+  }
+  let each_value = ensure_array_like(
+    /*items*/
+    ctx[1]
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value.length; i += 1) {
+    each_blocks[i] = create_each_block$1(get_each_context$1(ctx, each_value, i));
+  }
+  return {
+    c() {
+      div13 = element("div");
+      div4 = element("div");
+      div0 = element("div");
+      label0 = element("label");
+      label0.textContent = `${localize("Search")}`;
+      div1 = element("div");
+      create_component(tjsinput.$$.fragment);
+      div2 = element("div");
+      label1 = element("label");
+      label1.textContent = `${localize("Type")}`;
+      div3 = element("div");
+      select = element("select");
+      for (let i = 0; i < each_blocks_1.length; i += 1) {
+        each_blocks_1[i].c();
+      }
+      div12 = element("div");
+      h1 = element("h1");
+      h1.textContent = `${localize("Inventory")}`;
+      div11 = element("div");
+      div10 = element("div");
+      div5 = element("div");
+      div6 = element("div");
+      div6.textContent = `${localize("Name")}`;
+      div7 = element("div");
+      div7.textContent = `${localize("Price")}`;
+      div8 = element("div");
+      div8.textContent = `${localize("Quantity")}`;
+      div9 = element("div");
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      attr(div0, "class", "flexcol flex1 label-container");
+      attr(div1, "class", "flex3 left");
+      attr(div2, "class", "flexcol flex1 label-container");
+      attr(select, "class", "short");
+      attr(div3, "class", "flex3 right");
+      attr(div4, "class", "flexrow pt-sm pr-sm pl-sm");
+      attr(h1, "class", "gold");
+      attr(div5, "class", "inv-col-icon svelte-FOU-syf4k7");
+      attr(div6, "class", "inv-col-name svelte-FOU-syf4k7");
+      attr(div7, "class", "inv-col-price svelte-FOU-syf4k7");
+      attr(div8, "class", "inv-col-qty svelte-FOU-syf4k7");
+      attr(div9, "class", "inv-col-actions svelte-FOU-syf4k7");
+      attr(div10, "class", "inv-header svelte-FOU-syf4k7");
+      attr(div11, "class", "inv-table svelte-FOU-syf4k7");
+      attr(div12, "class", "padded svelte-FOU-syf4k7");
+      attr(div13, "class", "panel overflow containerx svelte-FOU-syf4k7");
+    },
+    m(target, anchor) {
+      insert(target, div13, anchor);
+      append(div13, div4);
+      append(div4, div0);
+      append(div0, label0);
+      append(div4, div1);
+      mount_component(tjsinput, div1, null);
+      append(div4, div2);
+      append(div2, label1);
+      append(div4, div3);
+      append(div3, select);
+      for (let i = 0; i < each_blocks_1.length; i += 1) {
+        if (each_blocks_1[i]) {
+          each_blocks_1[i].m(select, null);
+        }
+      }
+      select_option(
+        select,
+        /*typeFilterValue*/
+        ctx[0]
+      );
+      append(div13, div12);
+      append(div12, h1);
+      append(div12, div11);
+      append(div11, div10);
+      append(div10, div5);
+      append(div10, div6);
+      append(div10, div7);
+      append(div10, div8);
+      append(div10, div9);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(div11, null);
+        }
+      }
+      current = true;
+      if (!mounted) {
+        dispose = listen(
+          select,
+          "change",
+          /*onTypeFilterChange*/
+          ctx[10]
+        );
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*typeFilterOptions*/
+      4) {
+        each_value_1 = ensure_array_like(
+          /*typeFilterOptions*/
+          ctx2[2]
+        );
+        let i;
+        for (i = 0; i < each_value_1.length; i += 1) {
+          const child_ctx = get_each_context_1$1(ctx2, each_value_1, i);
+          if (each_blocks_1[i]) {
+            each_blocks_1[i].p(child_ctx, dirty);
+          } else {
+            each_blocks_1[i] = create_each_block_1$1(child_ctx);
+            each_blocks_1[i].c();
+            each_blocks_1[i].m(select, null);
+          }
+        }
+        for (; i < each_blocks_1.length; i += 1) {
+          each_blocks_1[i].d(1);
+        }
+        each_blocks_1.length = each_value_1.length;
+      }
+      if (!current || dirty[0] & /*typeFilterValue, typeFilterOptions*/
+      5) {
+        select_option(
+          select,
+          /*typeFilterValue*/
+          ctx2[0]
+        );
+      }
+      if (dirty[0] & /*isOutOfStock, items, onAddToBasketClick, getDisplayQuantity, formatPrice, onShowItemClick*/
+      15106) {
+        each_value = ensure_array_like(
+          /*items*/
+          ctx2[1]
+        );
+        let i;
+        for (i = 0; i < each_value.length; i += 1) {
+          const child_ctx = get_each_context$1(ctx2, each_value, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block$1(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(div11, null);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value.length;
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tjsinput.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tjsinput.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div13);
+      }
+      destroy_component(tjsinput);
+      destroy_each(each_blocks_1, detaching);
+      destroy_each(each_blocks, detaching);
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function instance$3($$self, $$props, $$invalidate) {
+  let targetActorId;
+  let shopUuid;
+  let socketShopState;
+  let socketStockRevision;
+  let typeFilterOptions;
+  let $typeSearch;
+  let $nameSearch;
+  let $wildcard;
+  let $Actor;
+  let $shopSocketState;
+  component_subscribe($$self, shopSocketState, ($$value) => $$invalidate(22, $shopSocketState = $$value));
+  const Actor2 = getContext("#doc");
+  component_subscribe($$self, Actor2, (value) => $$invalidate(21, $Actor = value));
+  const doc = new TJSDocument($Actor);
+  let { sharedProps = {} } = $$props;
+  const typeSearch = createFilterQuery("type");
+  component_subscribe($$self, typeSearch, (value) => $$invalidate(18, $typeSearch = value));
+  const nameSearch = createFilterQuery("name");
+  component_subscribe($$self, nameSearch, (value) => $$invalidate(19, $nameSearch = value));
+  const input = {
+    store: nameSearch,
+    efx: rippleFocus(),
+    placeholder: "by Name",
+    type: "search",
+    id: "search"
+  };
+  let typeFilterValue = "all";
+  let items = [];
+  let unsubscribeActor = () => {
+  };
+  let unsubscribeWildcard = () => {
+  };
+  const wildcard = doc.embedded.create(Item, {
+    name: "wildcard",
+    filters: [typeSearch, nameSearch],
+    sort: (a, b) => a.name.localeCompare(b.name)
+  });
+  component_subscribe($$self, wildcard, (value) => $$invalidate(20, $wildcard = value));
+  function onShowItemClick(e) {
+    const idx = parseInt(e.currentTarget.dataset.index);
+    items[idx].sheet.render(true);
+  }
+  function onAddToBasketClick(e) {
+    const idx = parseInt(e.currentTarget.dataset.index);
+    shopTelemetry("InventoryPlayerTab", "add button clicked", {
+      index: idx,
+      itemId: items[idx]?.id,
+      itemName: items[idx]?.name,
+      displayQuantity: items[idx] ? getDisplayQuantity(items[idx]) : null
+    });
+    addToBasket(items[idx]);
+  }
+  function onTypeFilterChange(e) {
+    $$invalidate(0, typeFilterValue = e.target.value);
+  }
+  function getActorItems() {
+    const source = typeof $Actor?.items?.values === "function" ? $Actor.items.values() : $Actor?.items ?? [];
+    return Array.from(source);
+  }
+  function getInventoryItems() {
+    return getActorItems().filter((item) => typeSearch(item) && nameSearch(item)).sort((a, b) => a.name.localeCompare(b.name));
+  }
+  function getDisplayQuantity(item) {
+    const socketStock = socketShopState?.stockByItemId?.get(item?.id);
+    const stock = Number(socketStock ?? item?.system?.quantity ?? 0);
+    shopTelemetry("InventoryPlayerTab", "display quantity evaluated", {
+      shopUuid,
+      itemId: item?.id,
+      itemName: item?.name,
+      documentQuantity: Number(item?.system?.quantity ?? 0),
+      socketStock,
+      result: Math.max(0, stock),
+      socketStockRevision
+    });
+    return Math.max(0, stock);
+  }
+  function isOutOfStock(item) {
+    return getDisplayQuantity(item) <= 0;
+  }
+  function formatPrice$1(item) {
+    return formatPrice(getSalePrice(item));
+  }
+  function getSalePrice(item) {
+    return applyPriceFactor(item?.system?.price, sharedProps.salePriceFactor ?? 100);
+  }
+  async function addToBasket(item) {
+    shopTelemetry("InventoryPlayerTab", "addToBasket start", {
+      shopId: $Actor?.id,
+      shopUuid: $Actor?.uuid,
+      targetActorId,
+      itemId: item?.id,
+      itemName: item?.name,
+      itemQuantity: Number(item?.system?.quantity ?? 0),
+      displayQuantity: item ? getDisplayQuantity(item) : null,
+      currentBasket: targetActorId ? $Actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? [] : [],
+      allBasketActorIds: Object.keys($Actor?.flags?.[MODULE_ID]?.basket ?? {})
+    });
+    if (!targetActorId) {
+      ui.notifications.warn(localize("NoTargetActor"));
+      return;
+    }
+    const shopId = $Actor.id;
+    if (isOutOfStock(item)) {
+      ui.notifications.warn(game.i18n.format("InsufficientStock", { itemName: item.name }));
+      return;
+    }
+    const currentBasket = targetActorId ? $Actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? [] : [];
+    const nextBasket = currentBasket.map((entry) => ({ ...entry }));
+    const existing = nextBasket.find((entry) => entry.itemId === item.id);
+    if (existing) {
+      existing.quantity = (existing.quantity ?? 1) + 1;
+    } else {
+      nextBasket.push({
+        itemId: item.id,
+        itemName: item.name,
+        img: item.img,
+        price: makeBasketPrice(getSalePrice(item)),
+        quantity: 1
+      });
+    }
+    const result = await requestBasketUpdate({
+      shopId,
+      shopUuid: $Actor.uuid,
+      targetActorId,
+      nextBasket
+    });
+    shopTelemetry("InventoryPlayerTab", "addToBasket socket result", { shopId, targetActorId, result });
+    if (!result.success) {
+      (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
+      return;
+    }
+    ui.notifications.info(`${item.name} added to basket`);
+  }
+  onMount(() => {
+    shopTelemetry("InventoryPlayerTab", "mounted", {
+      actorId: $Actor?.id,
+      actorUuid: $Actor?.uuid,
+      itemCount: $Actor?.items?.size,
+      itemQuantities: itemQuantitySnapshot($Actor?.items)
+    });
+    unsubscribeActor = Actor2.subscribe((actor, options) => {
+      shopTelemetry("InventoryPlayerTab", "Actor store emitted", {
+        action: options?.action,
+        data: options?.data,
+        actorId: actor?.id,
+        actorUuid: actor?.uuid,
+        itemCount: actor?.items?.size,
+        itemQuantities: itemQuantitySnapshot(actor?.items),
+        basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
+        targetBasket: targetActorId ? actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? [] : []
+      });
+    });
+    unsubscribeWildcard = wildcard.subscribe((value) => {
+      shopTelemetry("InventoryPlayerTab", "wildcard emitted", {
+        shopUuid,
+        socketStockRevision,
+        itemCount: value?.size ?? value?.length,
+        itemQuantities: itemQuantitySnapshot(value)
+      });
+    });
+  });
+  onDestroy(() => {
+    unsubscribeActor();
+    unsubscribeWildcard();
+  });
+  $$self.$$set = ($$props2) => {
+    if ("sharedProps" in $$props2) $$invalidate(14, sharedProps = $$props2.sharedProps);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty[0] & /*$Actor*/
+    2097152) {
+      doc.set($Actor);
+    }
+    if ($$self.$$.dirty[0] & /*sharedProps*/
+    16384) {
+      targetActorId = sharedProps.targetActorId ?? null;
+    }
+    if ($$self.$$.dirty[0] & /*$Actor*/
+    2097152) {
+      $$invalidate(17, shopUuid = $Actor?.uuid ?? ($Actor?.id ? `Actor.${$Actor.id}` : null));
+    }
+    if ($$self.$$.dirty[0] & /*shopUuid, $shopSocketState*/
+    4325376) {
+      $$invalidate(15, socketShopState = shopUuid ? $shopSocketState.get(shopUuid) : null);
+    }
+    if ($$self.$$.dirty[0] & /*socketShopState*/
+    32768) {
+      $$invalidate(16, socketStockRevision = socketShopState?.revision ?? 0);
+    }
+    if ($$self.$$.dirty[0] & /*typeFilterValue*/
+    1) {
+      if (typeFilterValue === "all") {
+        typeSearch.set("");
+      } else {
+        typeSearch.set([typeFilterValue]);
+      }
+    }
+    if ($$self.$$.dirty[0] & /*$Actor, $wildcard, $nameSearch, $typeSearch, socketStockRevision, shopUuid, items, socketShopState*/
+    4161538) {
+      {
+        $$invalidate(1, items = getInventoryItems());
+        shopTelemetry("InventoryPlayerTab", "items reassigned", {
+          shopUuid,
+          socketStockRevision,
+          itemCount: items.length,
+          itemQuantities: itemQuantitySnapshot(items),
+          socketStock: [...(socketShopState?.stockByItemId ?? /* @__PURE__ */ new Map()).entries()]
+        });
+      }
+    }
+  };
+  $$invalidate(2, typeFilterOptions = [
+    { value: "all", label: "All" },
+    ...getConfiguredListableItemTypes().map((t) => ({ value: t.type, label: t.label }))
+  ]);
+  return [
+    typeFilterValue,
+    items,
+    typeFilterOptions,
+    Actor2,
+    typeSearch,
+    nameSearch,
+    input,
+    wildcard,
+    onShowItemClick,
+    onAddToBasketClick,
+    onTypeFilterChange,
+    getDisplayQuantity,
+    isOutOfStock,
+    formatPrice$1,
+    sharedProps,
+    socketShopState,
+    socketStockRevision,
+    shopUuid,
+    $typeSearch,
+    $nameSearch,
+    $wildcard,
+    $Actor,
+    $shopSocketState
+  ];
+}
+class InventoryPlayerTab extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$3, create_fragment$3, safe_not_equal, { sharedProps: 14 }, null, [-1, -1]);
+  }
+}
+function create_fragment$2(ctx) {
+  let section;
+  let main;
+  let tabs_1;
+  let updating_activeTab;
+  let current;
+  function tabs_1_activeTab_binding(value) {
+    ctx[13](value);
+  }
+  let tabs_1_props = {
+    class: "gas-tabs",
+    tabs: (
+      /*tabs*/
+      ctx[3]
+    ),
+    sharedProps: (
+      /*tabProps*/
+      ctx[2]
+    )
+  };
+  if (
+    /*activeTab*/
+    ctx[1] !== void 0
+  ) {
+    tabs_1_props.activeTab = /*activeTab*/
+    ctx[1];
+  }
+  tabs_1 = new Tabs({ props: tabs_1_props });
+  binding_callbacks.push(() => bind(tabs_1, "activeTab", tabs_1_activeTab_binding));
+  return {
+    c() {
+      section = element("section");
+      main = element("main");
+      create_component(tabs_1.$$.fragment);
+      attr(main, "class", "shop-sheet-player__body svelte-FOU-jmv0bv");
+      attr(section, "class", "shop-sheet-player svelte-FOU-jmv0bv");
+    },
+    m(target, anchor) {
+      insert(target, section, anchor);
+      append(section, main);
+      mount_component(tabs_1, main, null);
+      current = true;
+    },
+    p(ctx2, [dirty]) {
+      const tabs_1_changes = {};
+      if (dirty & /*tabs*/
+      8) tabs_1_changes.tabs = /*tabs*/
+      ctx2[3];
+      if (dirty & /*tabProps*/
+      4) tabs_1_changes.sharedProps = /*tabProps*/
+      ctx2[2];
+      if (!updating_activeTab && dirty & /*activeTab*/
+      2) {
+        updating_activeTab = true;
+        tabs_1_changes.activeTab = /*activeTab*/
+        ctx2[1];
+        add_flush_callback(() => updating_activeTab = false);
+      }
+      tabs_1.$set(tabs_1_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(tabs_1.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(tabs_1.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(section);
+      }
+      destroy_component(tabs_1);
+    }
+  };
+}
+function getActorName(id) {
+  const a = game.actors.get(id);
+  return a?.name || id || "Unknown Actor";
+}
+function instance$2($$self, $$props, $$invalidate) {
+  let actor;
+  let shopId;
+  let config;
+  let isEditing;
+  let tabs;
+  let tabProps;
+  let $documentStore, $$unsubscribe_documentStore = noop, $$subscribe_documentStore = () => ($$unsubscribe_documentStore(), $$unsubscribe_documentStore = subscribe(documentStore, ($$value) => $$invalidate(12, $documentStore = $$value)), documentStore);
+  $$self.$$.on_destroy.push(() => $$unsubscribe_documentStore());
+  let { documentStore } = $$props;
+  $$subscribe_documentStore();
+  let { targetActorId = null } = $$props;
+  setContext("#doc", documentStore);
+  let activeTab = "shopfront";
+  let filterText = "";
+  let selectedActorId = null;
+  let _shopIdRestored = null;
+  function clearFilter() {
+    $$invalidate(5, filterText = "");
+  }
+  async function selectTargetActor(id, targetEntry = null) {
+    shopTelemetry("ShopSheetPlayer", "select target actor", {
+      shopId,
+      actorUuid: actor?.uuid,
+      previousSelectedActorId: selectedActorId,
+      nextSelectedActorId: id,
+      targetEntry,
+      basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {})
+    });
+    $$invalidate(6, selectedActorId = id);
+    if (shopId) {
+      await game.user.setFlag(MODULE_ID, `selectedActor.${shopId}`, id ?? "");
+    }
+    if (actor && targetEntry) {
+      await registerShopTargetEntries(actor, [
+        {
+          ...targetEntry,
+          source: "player-selection",
+          userId: game.user?.id,
+          timestamp: Date.now()
+        }
+      ]);
+    } else if (actor && id) {
+      await registerShopTargetActor(actor, id, { source: "player-selection" });
+    }
+  }
+  function tabs_1_activeTab_binding(value) {
+    activeTab = value;
+    $$invalidate(1, activeTab);
+  }
+  $$self.$$set = ($$props2) => {
+    if ("documentStore" in $$props2) $$subscribe_documentStore($$invalidate(0, documentStore = $$props2.documentStore));
+    if ("targetActorId" in $$props2) $$invalidate(4, targetActorId = $$props2.targetActorId);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*$documentStore*/
+    4096) {
+      $$invalidate(8, actor = $documentStore);
+    }
+    if ($$self.$$.dirty & /*actor*/
+    256) {
+      $$invalidate(9, shopId = actor?.id ?? null);
+    }
+    if ($$self.$$.dirty & /*actor*/
+    256) {
+      $$invalidate(10, config = getShopConfiguration(actor));
+    }
+    if ($$self.$$.dirty & /*actor*/
+    256) {
+      $$invalidate(11, isEditing = isShopEditing(actor));
+    }
+    if ($$self.$$.dirty & /*shopId, _shopIdRestored, actor, selectedActorId, config*/
+    1984) {
+      if (shopId && shopId !== _shopIdRestored) {
+        $$invalidate(7, _shopIdRestored = shopId);
+        $$invalidate(6, selectedActorId = game.user.getFlag(MODULE_ID, `selectedActor.${shopId}`) ?? null);
+        shopTelemetry("ShopSheetPlayer", "restored selected actor", {
+          shopId,
+          actorUuid: actor?.uuid,
+          selectedActorId,
+          basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
+          associatedActors: config.associatedActors ?? []
+        });
+        if (actor && selectedActorId) {
+          registerShopTargetActor(actor, selectedActorId, { source: "player-restored-selection" });
+        }
+      }
+    }
+    if ($$self.$$.dirty & /*actor, isEditing, filterText, selectedActorId, config*/
+    3424) {
+      $$invalidate(2, tabProps = {
+        actor,
+        isEditing,
+        filterText,
+        items: actor?.items || [],
+        targetActorId: selectedActorId,
+        salePriceFactor: config.salePriceFactor ?? 100,
+        localize,
+        clearFilter,
+        onFilterChange: (value) => {
+          $$invalidate(5, filterText = value);
+        },
+        onTargetActorChange: selectTargetActor,
+        associatedActors: config.associatedActors ?? [],
+        getActorName
+      });
+    }
+  };
+  $$invalidate(3, tabs = [
+    {
+      id: "shopfront",
+      label: localize("Shopfront"),
+      component: ShopfrontPlayerTab
+    },
+    {
+      id: "inventory",
+      label: localize("Inventory"),
+      component: InventoryPlayerTab
+    },
+    {
+      id: "basket",
+      label: localize("Basket"),
+      component: BasketTab
+    }
+  ]);
+  return [
+    documentStore,
+    activeTab,
+    tabProps,
+    tabs,
+    targetActorId,
+    filterText,
+    selectedActorId,
+    _shopIdRestored,
+    actor,
+    shopId,
+    config,
+    isEditing,
+    $documentStore,
+    tabs_1_activeTab_binding
+  ];
+}
+class ShopSheetPlayer extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance$2, create_fragment$2, safe_not_equal, { documentStore: 0, targetActorId: 4 });
+  }
+  get documentStore() {
+    return this.$$.ctx[0];
+  }
+  set documentStore(documentStore) {
+    this.$$set({ documentStore });
+    flush();
+  }
+  get targetActorId() {
+    return this.$$.ctx[4];
+  }
+  set targetActorId(targetActorId) {
+    this.$$set({ targetActorId });
+    flush();
   }
 }
 const THEME_DARK = "theme-dark";
@@ -30364,80 +35345,162 @@ function observeFoundryBodyTheme(elementRoot) {
     }
   };
 }
-function create_default_slot$1(ctx) {
-  let section;
-  let main;
-  let tabs_1;
-  let updating_activeTab;
+function create_else_block(ctx) {
+  let shopsheetplayer;
+  let updating_targetActorId;
   let current;
-  function tabs_1_activeTab_binding(value) {
-    ctx[17](value);
+  function shopsheetplayer_targetActorId_binding(value) {
+    ctx[10](value);
   }
-  let tabs_1_props = {
-    class: "gas-tabs",
-    tabs: (
-      /*tabs*/
-      ctx[4]
-    ),
-    sharedProps: (
-      /*tabProps*/
-      ctx[3]
-    )
-  };
+  let shopsheetplayer_props = { documentStore: (
+    /*documentStore*/
+    ctx[1]
+  ) };
   if (
-    /*activeTab*/
-    ctx[2] !== void 0
+    /*targetActorId*/
+    ctx[3] !== void 0
   ) {
-    tabs_1_props.activeTab = /*activeTab*/
-    ctx[2];
+    shopsheetplayer_props.targetActorId = /*targetActorId*/
+    ctx[3];
   }
-  tabs_1 = new Tabs({ props: tabs_1_props });
-  binding_callbacks.push(() => bind(tabs_1, "activeTab", tabs_1_activeTab_binding));
+  shopsheetplayer = new ShopSheetPlayer({ props: shopsheetplayer_props });
+  binding_callbacks.push(() => bind(shopsheetplayer, "targetActorId", shopsheetplayer_targetActorId_binding));
   return {
     c() {
-      section = element("section");
-      main = element("main");
-      create_component(tabs_1.$$.fragment);
-      attr(main, "class", "shop-sheet__body");
-      attr(section, "class", "shop-sheet");
+      create_component(shopsheetplayer.$$.fragment);
     },
     m(target, anchor) {
-      insert(target, section, anchor);
-      append(section, main);
-      mount_component(tabs_1, main, null);
+      mount_component(shopsheetplayer, target, anchor);
       current = true;
     },
     p(ctx2, dirty) {
-      const tabs_1_changes = {};
-      if (dirty[0] & /*tabs*/
-      16) tabs_1_changes.tabs = /*tabs*/
-      ctx2[4];
-      if (dirty[0] & /*tabProps*/
-      8) tabs_1_changes.sharedProps = /*tabProps*/
-      ctx2[3];
-      if (!updating_activeTab && dirty[0] & /*activeTab*/
-      4) {
-        updating_activeTab = true;
-        tabs_1_changes.activeTab = /*activeTab*/
-        ctx2[2];
-        add_flush_callback(() => updating_activeTab = false);
+      const shopsheetplayer_changes = {};
+      if (dirty & /*documentStore*/
+      2) shopsheetplayer_changes.documentStore = /*documentStore*/
+      ctx2[1];
+      if (!updating_targetActorId && dirty & /*targetActorId*/
+      8) {
+        updating_targetActorId = true;
+        shopsheetplayer_changes.targetActorId = /*targetActorId*/
+        ctx2[3];
+        add_flush_callback(() => updating_targetActorId = false);
       }
-      tabs_1.$set(tabs_1_changes);
+      shopsheetplayer.$set(shopsheetplayer_changes);
     },
     i(local) {
       if (current) return;
-      transition_in(tabs_1.$$.fragment, local);
+      transition_in(shopsheetplayer.$$.fragment, local);
       current = true;
     },
     o(local) {
-      transition_out(tabs_1.$$.fragment, local);
+      transition_out(shopsheetplayer.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(shopsheetplayer, detaching);
+    }
+  };
+}
+function create_if_block$1(ctx) {
+  let shopsheetgm;
+  let current;
+  shopsheetgm = new ShopSheetGM({
+    props: { documentStore: (
+      /*documentStore*/
+      ctx[1]
+    ) }
+  });
+  return {
+    c() {
+      create_component(shopsheetgm.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(shopsheetgm, target, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      const shopsheetgm_changes = {};
+      if (dirty & /*documentStore*/
+      2) shopsheetgm_changes.documentStore = /*documentStore*/
+      ctx2[1];
+      shopsheetgm.$set(shopsheetgm_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(shopsheetgm.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(shopsheetgm.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(shopsheetgm, detaching);
+    }
+  };
+}
+function create_default_slot$1(ctx) {
+  let current_block_type_index;
+  let if_block;
+  let if_block_anchor;
+  let current;
+  const if_block_creators = [create_if_block$1, create_else_block];
+  const if_blocks = [];
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*showGM*/
+      ctx2[2]
+    ) return 0;
+    return 1;
+  }
+  current_block_type_index = select_block_type(ctx);
+  if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
+  return {
+    c() {
+      if_block.c();
+      if_block_anchor = empty();
+    },
+    m(target, anchor) {
+      if_blocks[current_block_type_index].m(target, anchor);
+      insert(target, if_block_anchor, anchor);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      let previous_block_index = current_block_type_index;
+      current_block_type_index = select_block_type(ctx2);
+      if (current_block_type_index === previous_block_index) {
+        if_blocks[current_block_type_index].p(ctx2, dirty);
+      } else {
+        group_outros();
+        transition_out(if_blocks[previous_block_index], 1, 1, () => {
+          if_blocks[previous_block_index] = null;
+        });
+        check_outros();
+        if_block = if_blocks[current_block_type_index];
+        if (!if_block) {
+          if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx2);
+          if_block.c();
+        } else {
+          if_block.p(ctx2, dirty);
+        }
+        transition_in(if_block, 1);
+        if_block.m(if_block_anchor.parentNode, if_block_anchor);
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(if_block);
+      current = true;
+    },
+    o(local) {
+      transition_out(if_block);
       current = false;
     },
     d(detaching) {
       if (detaching) {
-        detach(section);
+        detach(if_block_anchor);
       }
-      destroy_component(tabs_1);
+      if_blocks[current_block_type_index].d(detaching);
     }
   };
 }
@@ -30446,7 +35509,7 @@ function create_fragment$1(ctx) {
   let updating_elementRoot;
   let current;
   function applicationshell_elementRoot_binding(value) {
-    ctx[18](value);
+    ctx[11](value);
   }
   let applicationshell_props = {
     $$slots: { default: [create_default_slot$1] },
@@ -30469,14 +35532,13 @@ function create_fragment$1(ctx) {
       mount_component(applicationshell, target, anchor);
       current = true;
     },
-    p(ctx2, dirty) {
+    p(ctx2, [dirty]) {
       const applicationshell_changes = {};
-      if (dirty[0] & /*tabs, tabProps, activeTab*/
-      28 | dirty[1] & /*$$scope*/
-      4) {
+      if (dirty & /*$$scope, documentStore, showGM, targetActorId*/
+      16398) {
         applicationshell_changes.$$scope = { dirty, ctx: ctx2 };
       }
-      if (!updating_elementRoot && dirty[0] & /*elementRoot*/
+      if (!updating_elementRoot && dirty & /*elementRoot*/
       1) {
         updating_elementRoot = true;
         applicationshell_changes.elementRoot = /*elementRoot*/
@@ -30499,140 +35561,48 @@ function create_fragment$1(ctx) {
     }
   };
 }
-function handleDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = "copy";
-}
-function openItemSheet(item) {
-  item.sheet?.render(true);
-}
-function getActorName(uuidOrId) {
-  const a = game.actors.get(uuidOrId) || game.actors.getName(uuidOrId);
-  return a?.name || uuidOrId.split(".").pop() || "Unknown Actor";
-}
-function getRollTableName(uuid) {
-  const rt = game.tables.get(uuid) || game.tables.getName(uuid.split(".").pop());
-  return rt?.name || "Unknown Table";
-}
 function instance$1($$self, $$props, $$invalidate) {
   let actor;
-  let config;
-  let tabs;
-  let tabProps;
-  let $documentStore, $$unsubscribe_documentStore = noop, $$subscribe_documentStore = () => ($$unsubscribe_documentStore(), $$unsubscribe_documentStore = subscribe(documentStore, ($$value) => $$invalidate(16, $documentStore = $$value)), documentStore);
+  let isEditing;
+  let showGM;
+  let targetActorId;
+  let $documentStore, $$unsubscribe_documentStore = noop, $$subscribe_documentStore = () => ($$unsubscribe_documentStore(), $$unsubscribe_documentStore = subscribe(documentStore, ($$value) => $$invalidate(9, $documentStore = $$value)), documentStore);
   $$self.$$.on_destroy.push(() => $$unsubscribe_documentStore());
   let { elementRoot } = $$props;
   let { documentStore } = $$props;
   $$subscribe_documentStore();
+  let { document: document2 = void 0 } = $$props;
   setContext("#doc", documentStore);
   const application = getContext("#external").application;
-  let activeTab = "shopfront";
-  let filterText = "";
-  let associatedActors = [];
-  let rollTables = [];
-  let salePriceFactor = 100;
-  let buyPriceFactor = 50;
-  let priceVariance = 10;
-  let variancePeriod = "daily";
-  let atrophyPercent = 5;
-  let initializedActorId = null;
   let disconnectFoundryTheme = () => {
   };
-  let _filePickerInstance = {};
-  async function saveSettings() {
-    if (!actor?.isOwner) {
-      ui.notifications.warn(localize("NoPermission"));
-      return;
-    }
-    await actor.system.updateShopConfiguration({
-      salePriceFactor: parseFloat(salePriceFactor),
-      buyPriceFactor: parseFloat(buyPriceFactor),
-      priceVariance: parseFloat(priceVariance),
-      variancePeriod,
-      atrophyPercent: parseFloat(atrophyPercent),
-      associatedActors,
-      rollTables
-    });
-    ui.notifications.info(localize("SettingsSaved"));
-  }
-  async function provisionStore() {
-    if (!actor?.isOwner) return;
-    ui.notifications.info("Provisioning store... This will roll on configured tables, apply pricing variance, and update inventory.");
-    const numToAdd = 5;
-    ui.notifications.info(`Added ${numToAdd} items to inventory.`);
-  }
-  function handleDrop(e, dropType) {
-    e.preventDefault();
-    try {
-      const data = JSON.parse(e.dataTransfer.getData("text/plain") || "{}");
-      if (dropType === "actor" && data.type === "Actor" && data.uuid) {
-        const actorId = data.uuid || data.id;
-        if (!associatedActors.includes(actorId)) {
-          $$invalidate(6, associatedActors = [...associatedActors, actorId]);
-          saveSettings();
-        }
-      } else if (dropType === "rolltable" && data.type === "RollTable" && data.uuid) {
-        if (!rollTables.includes(data.uuid)) {
-          $$invalidate(7, rollTables = [...rollTables, data.uuid]);
-          saveSettings();
-        }
-      }
-    } catch (err) {
-      console.error("Drop error:", err);
-    }
-  }
-  function handleActorDrop(e) {
-    handleDrop(e, "actor");
-  }
-  function handleRollTableDrop(e) {
-    handleDrop(e, "rolltable");
-  }
-  function removeAssociated(index) {
-    $$invalidate(6, associatedActors = associatedActors.filter((_, i) => i !== index));
-    saveSettings();
-  }
-  function removeRollTable(index) {
-    $$invalidate(7, rollTables = rollTables.filter((_, i) => i !== index));
-    saveSettings();
-  }
-  function clearFilter() {
-    $$invalidate(5, filterText = "");
-  }
-  function openImageEditor() {
-    const current = actor?.img;
-    if (_filePickerInstance instanceof FilePicker && !_filePickerInstance?.rendered) {
-      _filePickerInstance.render(true);
-      return;
-    }
-    _filePickerInstance = new FilePicker({
-      type: "image",
-      current,
-      callback: (path) => {
-        $documentStore.update({ img: path });
-      },
-      top: application.position.top + 40,
-      left: application.position.left + 10
-    });
-    return _filePickerInstance.browse();
-  }
-  function calculateSalePrice(basePrice = 0) {
-    const factor = salePriceFactor / 100;
-    const variance = (Math.random() * 2 - 1) * (priceVariance / 100);
-    return Math.round(basePrice * factor * (1 + variance));
-  }
+  let unregisterShopDocumentStore = () => {
+  };
+  let registeredShopUuid = null;
   onMount(() => {
-    console.log("ShopSheet: onMount - sheet rendered");
+    shopTelemetry("ShopSheet", "mounted", {
+      actorId: $documentStore?.id,
+      actorUuid: $documentStore?.uuid,
+      actorName: $documentStore?.name,
+      isEditing,
+      showGM,
+      targetActorId
+    });
     disconnectFoundryTheme = observeFoundryBodyTheme(elementRoot);
     application.reactive.draggable = true;
-    log?.d("ShopSheet mounted for actor", actor?.name);
   });
   onDestroy(() => {
-    console.log("ShopSheet: onDestroy - sheet destroyed");
+    shopTelemetry("ShopSheet", "destroyed", {
+      registeredShopUuid,
+      actorId: $documentStore?.id,
+      actorUuid: $documentStore?.uuid
+    });
+    unregisterShopDocumentStore();
     disconnectFoundryTheme();
   });
-  function tabs_1_activeTab_binding(value) {
-    activeTab = value;
-    $$invalidate(2, activeTab);
+  function shopsheetplayer_targetActorId_binding(value) {
+    targetActorId = value;
+    $$invalidate(3, targetActorId), $$invalidate(9, $documentStore);
   }
   function applicationshell_elementRoot_binding(value) {
     elementRoot = value;
@@ -30641,124 +35611,69 @@ function instance$1($$self, $$props, $$invalidate) {
   $$self.$$set = ($$props2) => {
     if ("elementRoot" in $$props2) $$invalidate(0, elementRoot = $$props2.elementRoot);
     if ("documentStore" in $$props2) $$subscribe_documentStore($$invalidate(1, documentStore = $$props2.documentStore));
+    if ("document" in $$props2) $$invalidate(4, document2 = $$props2.document);
   };
   $$self.$$.update = () => {
-    if ($$self.$$.dirty[0] & /*$documentStore*/
-    65536) {
-      $$invalidate(14, actor = $documentStore);
+    if ($$self.$$.dirty & /*$documentStore*/
+    512) {
+      $$invalidate(8, actor = $documentStore);
     }
-    if ($$self.$$.dirty[0] & /*actor*/
-    16384) {
-      actor?.name ?? game.i18n.localize("foundryvtt-shop-studio.ShopSheetTitle");
+    if ($$self.$$.dirty & /*actor*/
+    256) {
+      $$invalidate(7, isEditing = isShopEditing(actor));
     }
-    if ($$self.$$.dirty[0] & /*actor*/
-    16384) {
-      $$invalidate(15, config = actor?.shopConfiguration ?? {});
+    if ($$self.$$.dirty & /*isEditing*/
+    128) {
+      $$invalidate(2, showGM = game.user?.isGM && isEditing);
     }
-    if ($$self.$$.dirty[0] & /*actor, initializedActorId, config*/
-    57344) {
-      if (actor?.id && actor.id !== initializedActorId) {
-        $$invalidate(8, salePriceFactor = config.salePriceFactor ?? 100);
-        $$invalidate(9, buyPriceFactor = config.buyPriceFactor ?? 50);
-        $$invalidate(10, priceVariance = config.priceVariance ?? 10);
-        $$invalidate(11, variancePeriod = config.variancePeriod ?? "daily");
-        $$invalidate(12, atrophyPercent = config.atrophyPercent ?? 5);
-        $$invalidate(6, associatedActors = config.associatedActors ?? []);
-        $$invalidate(7, rollTables = config.rollTables ?? []);
-        $$invalidate(13, initializedActorId = actor.id);
+    if ($$self.$$.dirty & /*$documentStore*/
+    512) {
+      $$invalidate(3, targetActorId = $documentStore ? $documentStore.getFlag(MODULE_ID, `targetActor.${game.user.id}`) ?? null : null);
+    }
+    if ($$self.$$.dirty & /*$documentStore, registeredShopUuid, isEditing, showGM, unregisterShopDocumentStore, documentStore*/
+    742) {
+      {
+        const shopUuid = $documentStore?.uuid ?? null;
+        if (shopUuid !== registeredShopUuid) {
+          shopTelemetry("ShopSheet", "document store registration changed", {
+            previousShopUuid: registeredShopUuid,
+            nextShopUuid: shopUuid,
+            actorId: $documentStore?.id,
+            actorName: $documentStore?.name,
+            isEditing,
+            showGM
+          });
+          unregisterShopDocumentStore();
+          $$invalidate(6, registeredShopUuid = shopUuid);
+          $$invalidate(5, unregisterShopDocumentStore = shopUuid ? registerShopDocumentStore(shopUuid, documentStore) : () => {
+          });
+        }
       }
     }
-    if ($$self.$$.dirty[0] & /*actor, associatedActors, filterText, salePriceFactor, buyPriceFactor, priceVariance, variancePeriod, atrophyPercent, rollTables*/
-    24544) {
-      $$invalidate(3, tabProps = {
-        actor,
-        associatedActors,
-        filterText,
-        items: actor?.items || [],
-        salePriceFactor,
-        buyPriceFactor,
-        priceVariance,
-        variancePeriod,
-        atrophyPercent,
-        onFilterChange: (value) => {
-          $$invalidate(5, filterText = value);
-        },
-        salePriceFactorChange: (value) => {
-          $$invalidate(8, salePriceFactor = Number(value));
-        },
-        buyPriceFactorChange: (value) => {
-          $$invalidate(9, buyPriceFactor = Number(value));
-        },
-        onPriceVarianceChange: (value) => {
-          $$invalidate(10, priceVariance = Number(value));
-        },
-        onVariancePeriodChange: (value) => {
-          $$invalidate(11, variancePeriod = value);
-        },
-        onAtrophyPercentChange: (value) => {
-          $$invalidate(12, atrophyPercent = Number(value));
-        },
-        rollTables,
-        localize,
-        openImageEditor,
-        handleDragOver,
-        handleActorDrop,
-        handleRollTableDrop,
-        getActorName,
-        getRollTableName,
-        removeAssociated,
-        removeRollTable,
-        clearFilter,
-        calculateSalePrice,
-        openItemSheet,
-        provisionStore,
-        saveSettings
-      });
-    }
   };
-  $$invalidate(4, tabs = [
-    {
-      id: "shopfront",
-      label: localize("Shopfront"),
-      component: ShopfrontTab
-    },
-    {
-      id: "inventory",
-      label: localize("Inventory"),
-      component: InventoryTab
-    },
-    {
-      id: "settings",
-      label: localize("Settings"),
-      component: SettingsTab
-    }
-  ]);
   return [
     elementRoot,
     documentStore,
-    activeTab,
-    tabProps,
-    tabs,
-    filterText,
-    associatedActors,
-    rollTables,
-    salePriceFactor,
-    buyPriceFactor,
-    priceVariance,
-    variancePeriod,
-    atrophyPercent,
-    initializedActorId,
+    showGM,
+    targetActorId,
+    document2,
+    unregisterShopDocumentStore,
+    registeredShopUuid,
+    isEditing,
     actor,
-    config,
     $documentStore,
-    tabs_1_activeTab_binding,
+    shopsheetplayer_targetActorId_binding,
     applicationshell_elementRoot_binding
   ];
 }
 class ShopSheet extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$1, create_fragment$1, safe_not_equal, { elementRoot: 0, documentStore: 1 }, null, [-1, -1]);
+    init(this, options, instance$1, create_fragment$1, safe_not_equal, {
+      elementRoot: 0,
+      documentStore: 1,
+      document: 4
+    });
   }
   get elementRoot() {
     return this.$$.ctx[0];
@@ -30774,11 +35689,18 @@ class ShopSheet extends SvelteComponent {
     this.$$set({ documentStore });
     flush();
   }
+  get document() {
+    return this.$$.ctx[4];
+  }
+  set document(document2) {
+    this.$$set({ document: document2 });
+    flush();
+  }
 }
 class SvelteDocumentSheet extends SvelteApp {
   #documentStore = new TJSDocument(void 0, { delete: this.close.bind(this) });
   constructor(object) {
-    super(object);
+    super();
     this.options.document = object;
     Object.defineProperty(this.reactive, "document", {
       get: () => this.#documentStore.get(),
@@ -30805,14 +35727,20 @@ class SvelteDocumentSheet extends SvelteApp {
   }
 }
 class ShopActorSheet extends SvelteDocumentSheet {
+  /**
+   * Unique per-instance application ID so multiple shop sheets can be open simultaneously.
+   */
+  get id() {
+    const docId = this.reactive?.document?.id || foundry.utils.randomID();
+    return `shop-studio-sheet-${docId}`;
+  }
   static get defaultOptions() {
-    const classes = [MODULE_CODE, MODULE_ID, "shop-actor-sheet"];
+    const classes = [MODULE_CODE, MODULE_ID];
     if (Number(game.version) >= 13) {
       classes.push("gas-v13-plus");
     }
     const foundryVersion = game.version || "";
     return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "foundryvtt-shop-studio-sheet",
       title: `${localize("ShopStudio")} v${version} | Foundry: ${foundryVersion}`,
       classes,
       width: 640,
@@ -30829,237 +35757,241 @@ class ShopActorSheet extends SvelteDocumentSheet {
     const systemVersion = game.system?.version || "";
     return `${shopName} | Shop Studio v${version} | Foundry: ${game.version || ""} | ${game.system?.id || ""}: ${systemVersion}`;
   }
-}
-const LEGACY_SHOP_ACTOR_TYPE = "shop";
-const SHOP_ACTOR_TYPE = "npc";
-const SHOP_IDENTITY_KIND = "shop-studio.shop";
-const SHOP_FLAG_SCOPE = "shop-studio";
-const SHOP_FLAG_KEYS = Object.freeze({
-  configuration: "configuration",
-  stock: "stock",
-  transactions: "transactions",
-  identity: "identity"
-});
-const DEFAULT_SHOP_CONFIGURATION = Object.freeze({
-  pricingFactor: 100,
-  priceVariance: 10,
-  variancePeriod: "daily",
-  atrophyPercent: 5,
-  associatedActors: [],
-  rollTables: []
-});
-const {
-  ArrayField,
-  BooleanField,
-  DocumentUUIDField,
-  HTMLField,
-  NumberField,
-  SchemaField,
-  StringField
-} = foundry.data.fields;
-const VARIANCE_PERIODS = Object.freeze(["daily", "weekly", "monthly"]);
-class BaseActorModel extends foundry.abstract.TypeDataModel {
-  static defineSchema() {
-    return {
-      description: new HTMLField({ required: false, blank: true, initial: "" })
-    };
-  }
-}
-class ShopActorModel extends BaseActorModel {
   /**
-   * Defines the schema for shop actor system data.
-   * @returns {object} The schema definition object.
-   */
-  static defineSchema() {
-    return {
-      ...super.defineSchema(),
-      currency: new SchemaField({}),
-      configuration: new SchemaField({
-        salePriceFactor: new NumberField({ required: true, min: 0, initial: 100 }),
-        buyPriceFactor: new NumberField({ required: true, min: 0, initial: 100 }),
-        priceVariance: new NumberField({ required: false, min: 0, initial: 10 }),
-        variancePeriod: new StringField({
-          required: true,
-          choices: VARIANCE_PERIODS,
-          initial: "daily"
-        }),
-        atrophyPercent: new NumberField({ required: false, min: 0, initial: 5 }),
-        associatedActors: new ArrayField(
-          new StringField({ required: false, blank: true }),
-          { initial: () => [] }
-        ),
-        rollTables: new ArrayField(
-          new StringField({ required: false, blank: true }),
-          { initial: () => [] }
-        )
-      }),
-      stock: new ArrayField(
-        new SchemaField({
-          itemId: new StringField({ required: false, blank: true }),
-          itemName: new StringField({ required: false, blank: true }),
-          basePrice: new NumberField({ required: false, min: 0, initial: 0 }),
-          price: new NumberField({ required: false, min: 0, initial: 0 }),
-          quantity: new NumberField({ required: false, min: 0, initial: 0 }),
-          currency: new StringField({ required: false, blank: true }),
-          metadata: new SchemaField({})
-        }),
-        { initial: () => [] }
-      ),
-      transactions: new ArrayField(
-        new SchemaField({
-          itemId: new StringField({ required: false, blank: true }),
-          itemName: new StringField({ required: false, blank: true }),
-          quantity: new NumberField({ required: false, min: 0, initial: 0 }),
-          price: new NumberField({ required: false, min: 0, initial: 0 }),
-          total: new NumberField({ required: false, min: 0, initial: 0 }),
-          currency: new StringField({ required: false, blank: true }),
-          buyerId: new StringField({ required: false, blank: true }),
-          buyerName: new StringField({ required: false, blank: true }),
-          timestamp: new NumberField({ required: false, min: 0, initial: 0 }),
-          metadata: new SchemaField({})
-        }),
-        { initial: () => [] }
-      ),
-      identity: new SchemaField({
-        isShop: new BooleanField({ required: true, initial: true }),
-        kind: new StringField({ required: true, initial: SHOP_ACTOR_TYPE })
-      })
-    };
-  }
-  /**
-   * Retrieves shop configuration data from system data.
-   * @returns {Record<string, unknown>}
-   */
-  get shopConfiguration() {
-    return this.configuration ?? {};
-  }
-  /**
-   * Updates shop configuration data in system data.
-   * @param {Record<string, unknown>} update
-   * @returns {Promise<this>}
-   */
-  async updateShopConfiguration(update2) {
-    const merged = foundry.utils.mergeObject(this.shopConfiguration, update2 ?? {}, { inplace: false });
-    return this.parent?.update({ system: { configuration: merged } });
-  }
-  /**
-   * Returns the persisted stock snapshot from system data.
-   * @returns {Array<Record<string, unknown>>}
-   */
-  get stockSnapshot() {
-    return this.stock ?? [];
-  }
-  /**
-   * Persists a new stock snapshot in system data.
-   * @param {Array<Record<string, unknown>>} stock
-   * @returns {Promise<this>}
-   */
-  async setStockSnapshot(stock) {
-    return this.parent?.update({ system: { stock: stock ?? [] } });
-  }
-  /**
-   * Updates the shop identity fields.
-   * @returns {Promise<this>}
-   */
-  async setShopIdentity() {
-    return this.parent?.update({ system: { identity: { isShop: true, kind: SHOP_ACTOR_TYPE } } });
-  }
-}
-class ShopActor extends Actor {
-  /**
-   * Creates a new Shop Actor
-   * @param {object} data - The actor data
-   * @param {object} context - The initialization context
-   */
-  constructor(data = {}, context) {
-    super(data, context);
-  }
-  /**
-   * Indicates whether the Actor is managed by Shop Studio.
+   * Foundry calls this from sidebar context menus to determine whether
+   * a sheet should be shown as viewable.
+   * @param {User} user
    * @returns {boolean}
    */
-  get isShop() {
-    const identity2 = this.getFlag(MODULE_ID, "identity");
-    return identity2?.isShop === true || identity2?.kind === "shop-studio.shop";
+  _canUserView(user) {
+    const actor = this.reactive.document;
+    if (!actor?.testUserPermission) return true;
+    return actor.testUserPermission(user, CONST.DOCUMENT_OWNERSHIP_LEVELS.LIMITED);
   }
   /**
-   * Retrieves configuration data for this shop.
-   * @returns {Record<string, unknown>}
+   * Closes the sheet and resets editing state if it was active.
+   * @param {object} [options] - Close options
+   * @returns {Promise<void>}
    */
-  get shopConfiguration() {
-    return this.system?.configuration ?? {};
+  async close(options = {}) {
+    const isEditing = isShopEditing(this.reactive.document);
+    if (isEditing && this.reactive.document?.isOwner) {
+      await setShopEditing(this.reactive.document, false);
+    }
+    await super.close(options);
   }
   /**
-   * Updates shop configuration data.
-   * @param {Record<string, unknown>} update
+   * Gets the header buttons for the sheet window.
+   * GMs see an edit/preview toggle that switches between the full
+   * GM edit sheet and a player-facing read-only sheet.
+   * Players have no toggle and always see the player sheet.
+   * @returns {Array<object>} Header button configurations
    */
-  async updateShopConfiguration(update2) {
-    return this.update({ system: { configuration: foundry.utils.mergeObject(this.shopConfiguration, update2 ?? {}, { inplace: false }) } });
+  _getHeaderButtons() {
+    const buttons = super._getHeaderButtons();
+    if (game.user.isGM) {
+      const isEditing = isShopEditing(this.reactive.document);
+      buttons.unshift({
+        label: localize("EditToggle"),
+        class: "edit-shop" + (isEditing ? " active" : ""),
+        icon: "fas " + (isEditing ? "fa-toggle-on" : "fa-toggle-off"),
+        onPress: (ev) => this._onToggleEdit(ev)
+      });
+    }
+    return buttons;
   }
   /**
-   * Returns the persisted stock snapshot.
-   * @returns {Array<Record<string, unknown>>}
+   * Handles toggling between GM edit mode and player preview mode.
+   * Only GMs can toggle; players always see the player view.
+   * @param {Event} event - The triggering event
+   * @returns {Promise<void>}
    */
-  get stockSnapshot() {
-    return this.system?.stock ?? [];
+  async _onToggleEdit(event) {
+    if (event?.event) {
+      event.event.preventDefault();
+    }
+    const actor = this.reactive.document;
+    const current = isShopEditing(actor);
+    await setShopEditing(actor, !current);
+    this.render();
+  }
+  /* ------------------------------------------------------------------ */
+  /*  Drag & Drop                                                       */
+  /* ------------------------------------------------------------------ */
+  _canDragStart(selector) {
+    return true;
+  }
+  _canDragDrop(selector) {
+    return this.reactive.document?.isOwner || game.user?.isGM;
+  }
+  _onDragOver(event) {
+  }
+  _onDragStart(event) {
+    const li = event.currentTarget;
+    if (event.target.classList.contains("content-link")) return;
+    const actor = this.reactive.document;
+    let dragData;
+    if (li.dataset.itemId) {
+      const item = actor.items.get(li.dataset.itemId);
+      dragData = item?.toDragData();
+    }
+    if (li.dataset.effectId) {
+      const effect = actor.effects.get(li.dataset.effectId);
+      dragData = effect?.toDragData();
+    }
+    if (!dragData) return;
+    event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
   }
   /**
-   * Persists a new stock snapshot.
-   * @param {Array<Record<string, unknown>>} stock
+   * Handles dropping content onto the sheet — routes to typed handlers.
    */
-  async setStockSnapshot(stock) {
-    return this.update({ system: { stock: stock ?? [] } });
+  async _onDrop(event) {
+    const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+    const actor = this.reactive.document;
+    if (!actor || actor.documentName !== "Actor") return;
+    if (!isShopEditing(actor)) {
+      ui.notifications.error(localize("EditModeRequired"));
+      return false;
+    }
+    const allowed = Hooks.call("dropActorSheetData", actor, this, data);
+    if (allowed === false) return;
+    window.GAS.log.g("ITEM TYPE", data.type);
+    switch (data.type) {
+      case "Item":
+        return this._onDropItem(event, data);
+      case "Actor":
+        return this._onDropActor(event, data);
+      case "ActiveEffect":
+        return this._onDropActiveEffect(event, data);
+      default:
+        return;
+    }
   }
   /**
-   * Marks the actor as a shop when the underlying system does not support a custom type.
-   * @returns {Promise<foundry.abstract.Document>} update result
+   * Handles dropping an Item onto the sheet.
+   * Validates the item type against module settings and creates embedded items
+   * via Foundry's API so all hooks fire and TJSDocument reactivity works.
    */
-  async setShopIdentity() {
-    return this.update({ system: { identity: { isShop: true, kind: "shop-studio.shop" } } });
+  async _onDropItem(event, data) {
+    window.GAS.log.g("DROP ITEM", event, data);
+    const actor = this.reactive.document;
+    if (!actor?.isOwner) {
+      ui.notifications.warn(localize("NoPermission"));
+      return false;
+    }
+    const droppedItem = await fromUuid(data.uuid);
+    window.GAS.log.g("DROPPED ITEM", droppedItem);
+    if (!droppedItem) return false;
+    if (!isItemTypeListable(droppedItem.type)) {
+      ui.notifications.warn(localize("ItemTypeNotAllowed"));
+      return false;
+    }
+    const duplicate = actor.items.find((i) => i.name === droppedItem.name);
+    if (duplicate) {
+      await duplicate.update({
+        system: { quantity: (duplicate.system?.quantity ?? 0) + 1 }
+      });
+      window.GAS.log.g("DUPLICATE ITEM", duplicate);
+      window.GAS.log.g("ACTOR ITEMS", actor.items);
+      return true;
+    }
+    const item = await Item.implementation.fromDropData(data);
+    const itemData = item.toObject();
+    window.GAS.log.g("ITEM FROM DROP DATA", item);
+    window.GAS.log.g("ITEM TO OBJECT, BEFORE CREATION", itemData);
+    if (actor.uuid === item.parent?.uuid) {
+      window.GAS.log.g("SORTING WITHIN ACTOR");
+      return this._onSortItem(event, itemData);
+    }
+    return this._onDropItemCreate(itemData);
+  }
+  /** Handles actor-on-actor drops (no-op for shops) */
+  async _onDropActor(event, data) {
+    return false;
+  }
+  /** Handles active-effect drops */
+  async _onDropActiveEffect(event, data) {
+    const actor = this.reactive.document;
+    const effect = await ActiveEffect.implementation.fromDropData(data);
+    if (!actor?.isOwner || !effect || actor.uuid === effect.parent?.uuid) {
+      return false;
+    }
+    return ActiveEffect.create(effect.toObject(), { parent: actor });
+  }
+  /**
+   * Creates embedded Item documents on the actor — this fires Foundry hooks
+   * that TJSDocument's DynMapReducer listens to for reactive updates.
+   */
+  async _onDropItemCreate(itemData) {
+    const actor = this.reactive.document;
+    const data = Array.isArray(itemData) ? itemData : [itemData];
+    window.GAS.log.g("DROP ITEM DATA", data);
+    for (const d of data) delete d._id;
+    return actor.createEmbeddedDocuments("Item", data);
   }
 }
 let RegisteredShopActor = null;
+function getShopActorType() {
+  const systemActorTypes = game?.system?.documentTypes?.Actor;
+  const actorTypes = Array.isArray(systemActorTypes) ? systemActorTypes : Object.keys(systemActorTypes ?? CONFIG.Actor?.typeLabels ?? {});
+  if (actorTypes.includes(SHOP_ACTOR_TYPE)) return SHOP_ACTOR_TYPE;
+  return CONFIG.Actor?.defaultType ?? actorTypes[0] ?? SHOP_ACTOR_TYPE;
+}
 function registerShopActor() {
+  const BaseActorClass = CONFIG.Actor.documentClass;
   if (RegisteredShopActor) {
     return RegisteredShopActor;
   }
-  CONFIG.Actor.documentClass = ShopActor;
-  CONFIG.Actor.dataModels[SHOP_ACTOR_TYPE] = ShopActorModel;
+  class ShopActor extends BaseActorClass {
+    /**
+     * Indicates whether the Actor is managed by Shop Studio.
+     * @returns {boolean}
+     */
+    get isShop() {
+      if (this.type === LEGACY_SHOP_ACTOR_TYPE) {
+        return true;
+      }
+      const identity2 = this.getFlag(MODULE_ID, SHOP_FLAG_KEYS.identity);
+      return identity2?.isShop === true || identity2?.kind === SHOP_IDENTITY_KIND;
+    }
+    /**
+     * Retrieves configuration data for this shop.
+     * @returns {Record<string, unknown>}
+     */
+    get shopConfiguration() {
+      return getShopConfiguration(this);
+    }
+    /**
+     * Updates shop configuration data.
+     * @param {Record<string, unknown>} update
+     */
+    async updateShopConfiguration(update2) {
+      return setShopConfiguration(this, update2);
+    }
+    /**
+     * Returns the persisted stock snapshot.
+     * @returns {Array<Record<string, unknown>>}
+     */
+    get stockSnapshot() {
+      return getShopStock(this);
+    }
+    /**
+     * Persists a new stock snapshot.
+     * @param {Array<Record<string, unknown>>} stock
+     */
+    async setStockSnapshot(stock) {
+      return setShopStock(this, stock);
+    }
+    /**
+     * Marks the actor as a shop when the underlying system does not support a custom type.
+     * @returns {Promise<foundry.abstract.Document>} update result
+     */
+    async setShopIdentity() {
+      return setShopIdentity(this);
+    }
+  }
   RegisteredShopActor = ShopActor;
   return ShopActor;
-}
-const ITEM_SOURCES_SETTING = "itemSources";
-const LISTABLE_ITEM_TYPES_SETTING = "listableItemTypes";
-function getAvailableItemTypes() {
-  const configured = CONFIG?.Item?.typeLabels ?? {};
-  const documentTypes = Array.isArray(game?.documentTypes?.Item) ? game.documentTypes.Item : [];
-  const modelTypes = CONFIG?.Item?.dataModels ? Object.keys(CONFIG.Item.dataModels) : [];
-  const metadataTypes = CONFIG?.Item?.documentClass?.metadata?.types ?? [];
-  const legacyTypes = Array.isArray(CONFIG?.Item?.types) ? CONFIG.Item.types : [];
-  const compendiumTypes = game.packs?.filter((pack) => pack.documentName === "Item").flatMap((pack) => Array.from(pack.index?.values?.() ?? []).map((entry) => entry?.type)) ?? [];
-  return Array.from(/* @__PURE__ */ new Set([
-    ...Object.keys(configured),
-    ...documentTypes,
-    ...modelTypes,
-    ...metadataTypes,
-    ...legacyTypes,
-    ...compendiumTypes
-  ])).filter(Boolean).map((type) => ({ type, label: getItemTypeLabel(type) })).sort((a, b) => a.label.localeCompare(b.label, game.i18n?.lang));
-}
-function getItemTypeLabel(type) {
-  const rawLabel = CONFIG?.Item?.typeLabels?.[type] || CONFIG?.Item?.typeHints?.[type];
-  if (rawLabel) return game.i18n.localize(rawLabel);
-  try {
-    return game.i18n.localize(type);
-  } catch (_) {
-    return type;
-  }
-}
-function getAllItemCompendia$1() {
-  return game.packs?.filter((pack) => pack.documentName === "Item") ?? [];
-}
-function autoAssignItemSources() {
-  return getAllItemCompendia$1().map((pack) => pack.collection);
 }
 function get_each_context(ctx, list, i) {
   const child_ctx = ctx.slice();
@@ -32021,7 +36953,7 @@ class ItemSourcesButton extends FormApplication {
   }
 }
 function registerSettings(app) {
-  log.i("Building module settings");
+  window.GAS.log.g("Building module settings");
   debugSetting();
   debugHooksSetting();
   registerUISettings();
@@ -32173,10 +37105,21 @@ function applyShopCreationFields(form) {
   ensureShopHiddenField(form, `flags.${SHOP_FLAG_SCOPE}.${SHOP_FLAG_KEYS.identity}.kind`, SHOP_IDENTITY_KIND);
   ensureShopHiddenField(form, "img", "icons/environment/settlement/warehouse-crates.webp");
 }
+function applyShopDialogSelection(form) {
+  const selectedType = getSelectedType(form);
+  if (selectedType !== SHOP_DIALOG_TYPE) {
+    clearShopHiddenFields(form);
+    return false;
+  }
+  setSelectedType(form, getShopActorType());
+  applyShopCreationFields(form);
+  return true;
+}
 function addShopTypeToRadioList(form) {
   const list = form.querySelector("ol.unlist.card, ol.card, ol.unlist");
-  const npcInput = form.querySelector(`input[name="type"][value="${SHOP_ACTOR_TYPE}"]`);
-  if (!list || !npcInput) return;
+  const backingType = getShopActorType();
+  const backingInput = form.querySelector(`input[name="type"][value="${backingType}"]`);
+  if (!list || !backingInput) return;
   if (form.querySelector(`input[name="type"][value="${SHOP_DIALOG_TYPE}"]`)) return;
   const li = document.createElement("li");
   li.className = "gss-shop-type-option";
@@ -32196,9 +37139,9 @@ function addShopTypeToRadioList(form) {
   input.required = true;
   label.append(icon, text2, input);
   li.appendChild(label);
-  const npcRow = npcInput.closest("li");
-  if (npcRow?.parentNode) {
-    npcRow.parentNode.insertBefore(li, npcRow.nextSibling);
+  const backingRow = backingInput.closest("li");
+  if (backingRow?.parentNode) {
+    backingRow.parentNode.insertBefore(li, backingRow.nextSibling);
   } else {
     list.appendChild(li);
   }
@@ -32220,14 +37163,13 @@ function renderShopTypeInCreateActorApplication(app, html) {
   addShopTypeToRadioList(form);
   addShopTypeToSelect(form);
   if (form.dataset.gssShopTypeBound === "true") return;
+  form.addEventListener("click", (event) => {
+    const button = event.target?.closest?.("button");
+    if (!button || button.type === "button") return;
+    applyShopDialogSelection(form);
+  }, true);
   form.addEventListener("submit", () => {
-    const selectedType = getSelectedType(form);
-    if (selectedType !== SHOP_DIALOG_TYPE) {
-      clearShopHiddenFields(form);
-      return;
-    }
-    setSelectedType(form, SHOP_ACTOR_TYPE);
-    applyShopCreationFields(form);
+    applyShopDialogSelection(form);
   }, true);
   form.dataset.gssShopTypeBound = "true";
 }
@@ -32266,7 +37208,9 @@ function getShopStudioButton(buttonId) {
 const renderShopStudioSidebarButton = (app) => {
   if (!game.modules.get(MODULE_ID)?.active) return;
   if (!safeGetSetting(MODULE_ID, "showButtonInSideBar", true)) return;
-  if (!app || app.constructor.name !== "ActorDirectory" && app.constructor.name !== "ActorDirectoryV2") return;
+  const appName = app?.constructor?.name ?? "";
+  const isActorDirectory = appName.includes("ActorDirectory") || app?.collection === game.actors || app?.id === "actors" || app?.tabName === "actors";
+  if (!isActorDirectory) return;
   const element2 = game.version >= 13 ? app.element : app._element || app.element || $(app.element);
   if (!element2) return;
   const elementId = `shop-sidebar-${app.id || "default"}`;
@@ -32312,7 +37256,7 @@ async function createOrOpenShop() {
     const shopName = `Shop ${shopNumber}`;
     const shopActor = await Actor.create({
       name: shopName,
-      type: SHOP_ACTOR_TYPE,
+      type: getShopActorType(),
       flags: {
         core: {
           sheetClass: `${MODULE_ID}.ShopActorSheet`
@@ -32333,18 +37277,56 @@ async function createOrOpenShop() {
     console.error(err);
   }
 }
-window.log = log;
-log.level = log.DEBUG;
+function onRenderTokenHUD(app, html, data) {
+  const token = app.object;
+  if (!token) {
+    console.log("[ShopHUD] bail: no app.object");
+    return;
+  }
+  const actor = token.document?.actor;
+  if (!actor) {
+    console.log("[ShopHUD] bail: no actor");
+    return;
+  }
+  const root = html instanceof HTMLElement ? html : html?.[0];
+  if (!root) {
+    console.log("[ShopHUD] bail: no HUD root");
+    return;
+  }
+  const flagIdentity = actor.getFlag(MODULE_ID, "identity");
+  const isShop = actor.isShop === true || flagIdentity?.isShop === true || flagIdentity?.kind === SHOP_IDENTITY_KIND;
+  if (!isShop) {
+    console.log("[ShopHUD] bail: not a shop", { flagIdentity });
+    return;
+  }
+  const leftCol = root.querySelector(".col.left");
+  const midCol = root.querySelector(".col.middle");
+  const rightCol = root.querySelector(".col.right");
+  if (leftCol) {
+    leftCol.querySelectorAll('.attribute.elevation, .control-icon[data-action="sort"], .control-icon[data-action="togglePalette"], .palette').forEach((node) => node.remove());
+    if (!game.user.isGM) leftCol.querySelectorAll('.control-icon[data-action="locked"]').forEach((node) => node.remove());
+    if (!game.user.isGM) leftCol.querySelectorAll('.control-icon[data-action="config"]').forEach((node) => node.remove());
+  }
+  if (midCol) midCol.replaceChildren();
+  if (rightCol) {
+    rightCol.querySelectorAll('.control-icon[data-action="togglePalette"], .palette, .control-icon[data-action="target"], .control-icon[data-action="combat"]').forEach((node) => node.remove());
+    if (!game.user.isGM) rightCol.querySelectorAll('.control-icon[data-action="visibility"]').forEach((node) => node.remove());
+  }
+}
+window.GAS = window.GAS || {};
 Hooks.once("init", (app, html, data) => {
-  log.i("Initialising");
+  window.GAS.log = log;
+  window.GAS.log.level = log.VERBOSE;
+  window.GAS.log.g("Initialising");
   CONFIG.debug.hooks = true;
+  registerSocket();
   registerShopActor();
   CONFIG.Actor.typeLabels ??= {};
   if (!CONFIG.Actor.typeLabels[LEGACY_SHOP_ACTOR_TYPE]) {
     CONFIG.Actor.typeLabels[LEGACY_SHOP_ACTOR_TYPE] = "Shop (Legacy)";
   }
-  Actors.registerSheet(MODULE_ID, ShopActorSheet, {
-    types: [SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE],
+  foundry.documents.collections.Actors.registerSheet(MODULE_ID, ShopActorSheet, {
+    types: [.../* @__PURE__ */ new Set([getShopActorType(), SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE])],
     makeDefault: false,
     label: "Shop Studio"
   });
@@ -32355,11 +37337,12 @@ Hooks.once("init", (app, html, data) => {
   registerSettings();
 });
 Hooks.once("ready", (app, html, data) => {
+  window.GAS.log.g("GSS ready hook");
   if (!game.modules.get(MODULE_ID).active) {
-    log.w("Module is not active");
+    window.GAS.log.w("GSS Module is not active");
     return;
   }
-  if (!game.settings.get(MODULE_ID, "dontShowWelcome")) {
+  if (!safeGetSetting(MODULE_ID, "dontShowWelcome", false)) {
     new WelcomeApplication().render(true, { focus: true });
   }
 });
@@ -32385,7 +37368,8 @@ Hooks.on("renderApplication", (app, html) => {
 Hooks.on("renderApplicationV2", (app, html) => {
   renderShopTypeInCreateActorApplication(app, html);
 });
+Hooks.on("renderTokenHUD", onRenderTokenHUD);
 Hooks.on("gss.openShopStudio", () => {
-  log.i("Shop Studio opened via sidebar button");
+  window.GAS.log.i("Shop Studio opened via sidebar button");
 });
 //# sourceMappingURL=index.js.map

@@ -43,8 +43,10 @@ function setNestedProperty(target, path, value) {
  */
 function extractPackItems(pack, entries) {
   const nonIndexKeys = [
+    'system.price',
     'system.price.value',
     'system.price.denomination',
+    'system.price.per',
     'system.quantity'
   ];
 
@@ -86,8 +88,10 @@ export async function loadCatalogItems() {
 
   try {
     const nonIndexKeys = [
+      'system.price',
       'system.price.value',
       'system.price.denomination',
+      'system.price.per',
       'system.quantity'
     ];
 

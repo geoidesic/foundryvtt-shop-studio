@@ -79,7 +79,8 @@ export class ShopActorModel extends BaseActorModel {
       ),
       identity: new SchemaField({
         isShop: new BooleanField({ required: true, initial: true }),
-        kind: new StringField({ required: true, initial: SHOP_ACTOR_TYPE })
+        kind: new StringField({ required: true, initial: SHOP_ACTOR_TYPE }),
+        isEditing: new BooleanField({ required: true, initial: false })
       })
     };
   }

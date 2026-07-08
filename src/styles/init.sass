@@ -154,6 +154,21 @@
     margin-top: 0
     margin-bottom: 0
 
+  .ma-lg
+    margin: var(--size-lg)
+
+  .ma-md
+    margin: var(--size-md)
+
+  .ma-sm
+    margin: var(--size-sm)
+
+  .ma-xs
+    margin: var(--size-xs)
+
+  .ma-xxs
+    margin: var(--size-xxs)
+
   .mt-lg
     margin-top: var(--size-lg)
 
@@ -532,7 +547,7 @@
             background-color: #000
             color:  var(--gas-color-text)
             
-#foundryvtt-shop-studio-sheet.theme-dark
+.foundryvtt-shop-studio.theme-dark
   a.content-link
     background: none
 
@@ -783,6 +798,61 @@ body.game #gas-settings-submenu.app.window-app
 .GSS
   .custom-select
     min-height: var(--tjs-select-height, 32px)
+
+  // Inventory table image styles
+  img.icon
+    margin-top: -0.2rem
+    max-height: 2rem
+    border: 1px solid transparent
+    border-top-left-radius: var(--border-radius)
+    border-bottom-left-radius: var(--border-radius)
+    border-top-right-radius: 0px
+    border-bottom-right-radius: 0px
+
+    &:not(.nopointer)
+      cursor: pointer
+
+  td.img
+    position: relative
+    min-width: 32px
+
+    img.icon
+      margin-top: 3px
+      position: absolute
+      top: -4px
+      left: 0
+
+  // Button row styles for inventory action buttons
+  .buttons
+    position: relative
+    display: flex
+    flex-direction: row
+    flex-wrap: nowrap
+    justify-content: flex-start
+    align-items: center
+    gap: 4px
+    margin: 0
+    padding: 0
+    list-style: none
+
+  td.buttons
+    text-align: right
+    white-space: nowrap
+
+  td.min
+    width: 2%
+    white-space: nowrap
+
+  td.fixed
+    width: 10%
+    white-space: nowrap
+
+  td.shrink
+    width: 8%
+    white-space: nowrap
+
+  td.expand
+    width: auto
     
     .selected-option
       min-height: var(--tjs-select-height, 32px)

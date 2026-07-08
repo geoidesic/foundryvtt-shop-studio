@@ -1,10 +1,9 @@
-import { log } from '~/src/helpers/utility';
 import { MODULE_ID } from '~/src/helpers/constants';
 import ItemSourcesButton from './ItemSourcesButton';
 
 
 export function registerSettings(app) {
-  log.i("Building module settings");
+  window.GAS.log.g("Building module settings");
 
   /** World Settings */
   debugSetting();

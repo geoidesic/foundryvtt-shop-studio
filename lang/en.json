@@ -56,10 +56,24 @@
     "ShopSheetTitle": "Shop",
     "Shopfront": "Shopfront",
     "Inventory": "Inventory",
+    "Basket": "Basket",
+    "BasketEmpty": "Your basket is empty. Browse the inventory to add items.",
+    "BasketTargetActor": "Shopping as",
+    "BasketSelectActor": "Select a character",
+    "ClearBasket": "Clear Basket",
+    "Price": "Price",
+    "Total": "Total",
     "Settings": "Settings",
     "ProfileImage": "Profile Image",
+    "Name": "Name",
+    "Quantity": "Quantity",
+    "ChangeImage": "Change Image",
+    "ClearFilter": "Clear",
+    "ShopNamePlaceholder": "Shop Name",
+    "DragActorTokensHint": "(Drag actor tokens or from actor directory)",
+    "NoAssociatedActors": "No associated actors yet.",
     "Description": "Description",
-    "AssociatedActors": "Associated Actors",
+    "AssociatedActors": "Associates",
     "DragActorsHere": "Drag actors here to associate with this shop",
     "SalePriceFactor": "Sale Price Factor",
     "BuyPriceFactor": "Buy Price Factor",
@@ -70,11 +84,54 @@
     "Monthly": "Monthly",
     "RollTables": "Roll Tables",
     "DragRollTablesHere": "Drag roll tables here",
+    "CouldNotResolveRollTable": "Could not resolve roll table.",
     "ProvisionStore": "Provision Store",
+    "ProvisioningStore": "Provisioning store...",
+    "ProvisionComplete": "Added {count} items to inventory.",
+    "ProvisionNoItems": "No item results were rolled.",
+    "NoRollTablesConfigured": "No roll tables configured.",
     "Atrophy": "Atrophy (%)",
     "FilterInventory": "Filter Inventory...",
     "NoPermission": "You don't have permission to modify this shop.",
+    "EditModeRequired": "Enable edit mode before changing this shop.",
     "SettingsSaved": "Shop settings have been saved.",
-    "NoPermission": "Permission denied."
+    "EditToggle": "Edit Mode",
+    "ItemTypeNotAllowed": "This item type is not allowed for sale. Configure allowed types in module settings.",
+    "ShopHUD": {
+      "Basket": "Open Shop",
+      "TargetActor": "Select Character",
+      "TargetActorPrompt": "Which character would you like to shop with?",
+      "Select": "Select",
+      "NoActorOwned": "You don't own any actors to shop with."
+    },
+    "BuyNow": "Buy Now",
+    "NoTargetActor": "Please select a character first.",
+    "InsufficientStock": "Not enough {itemName} in stock.",
+    "PurchaseComplete": "Purchase complete! Items added to {actorName}'s inventory.",
+    "UnknownActor": "Unknown Actor",
+    "CouldNotResolveActor": "Could not resolve the dropped actor.",
+    "Search": "Search",
+    "Type": "Type",
+    "Use": "Use",
+    "View": "View",
+    "Increase": "Increase",
+    "Decrease": "Decrease",
+    "RollCount": "Roll count",
+    "Bookmark": "Bookmark",
+    "Types": {
+      "Actor": {
+        "ActionButtons": {
+          "Edit": "Edit",
+          "Duplicate": "Duplicate",
+          "Delete": "Delete"
+        },
+        "Inventory": {
+          "confirmDeleteAll": "Are you sure you want to delete ALL items? This cannot be undone."
+        }
+      }
+    },
+    "Instructions": {
+      "RemoveAll": "Remove All Items"
+    }
   }
 }

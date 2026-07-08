@@ -3,20 +3,23 @@ import '~/src/styles/init.sass'; // Import any styles as this includes them in t
 
 import WelcomeApplication from '~/src/components/pages/WelcomeApplication.js';
 import ShopActorSheet from '~/src/sheets/ShopActorSheet';
-
-import { registerShopActor, SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE } from '~/src/actors/ShopActor';
+import { getShopActorType, registerShopActor, SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE } from '~/src/actors/ShopActor';
 import { MODULE_ID } from '~/src/helpers/constants';
 import { log, safeGetSetting } from '~/src/helpers/utility';
 import { registerSettings } from '~/src/settings';
 import { renderShopStudioSidebarButton, renderShopTypeInCreateActorApplication } from '~/src/hooks/shopStudioButtons.js';
+import { onRenderTokenHUD } from '~/src/hud/shopHUD.js';
+import { registerSocket } from '~/src/helpers/shopSocket.js';
 
-window.log = log;
-log.level = log.DEBUG;
+window.GAS = window.GAS || {};
 
 Hooks.once("init", (app, html, data) => {
-  log.i('Initialising');
+  window.GAS.log = log;
+  window.GAS.log.level = log.VERBOSE;
+  window.GAS.log.g('Initialising');
   CONFIG.debug.hooks = true;
 
+  registerSocket();
   registerShopActor();
 
   CONFIG.Actor.typeLabels ??= {};
@@ -24,8 +27,8 @@ Hooks.once("init", (app, html, data) => {
     CONFIG.Actor.typeLabels[LEGACY_SHOP_ACTOR_TYPE] = 'Shop (Legacy)';
   }
 
-  Actors.registerSheet(MODULE_ID, ShopActorSheet, {
-    types: [SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE],
+  foundry.documents.collections.Actors.registerSheet(MODULE_ID, ShopActorSheet, {
+    types: [...new Set([getShopActorType(), SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE])],
     makeDefault: false,
     label: 'Shop Studio'
   });
@@ -37,14 +40,16 @@ Hooks.once("init", (app, html, data) => {
   }
   
   registerSettings(app);
+
 });
 
 Hooks.once("ready", (app, html, data) => {
+  window.GAS.log.g('GSS ready hook');
   if (!game.modules.get(MODULE_ID).active) {
-    log.w('Module is not active');
+    window.GAS.log.w('GSS Module is not active');
     return;
   }
-  if (!game.settings.get(MODULE_ID, 'dontShowWelcome')) {
+  if (!safeGetSetting(MODULE_ID, 'dontShowWelcome', false)) {
     new WelcomeApplication().render(true, { focus: true });
   }
 });
@@ -83,7 +88,10 @@ Hooks.on('renderApplicationV2', (app, html) => {
   renderShopTypeInCreateActorApplication(app, html);
 });
 
+// Inject shop basket button into TokenHUD for shop tokens
+Hooks.on('renderTokenHUD', onRenderTokenHUD);
+
 Hooks.on('gss.openShopStudio', () => {
-  log.i('Shop Studio opened via sidebar button');
+  window.GAS.log.i('Shop Studio opened via sidebar button');
   // Can be extended for more complex open logic
 });

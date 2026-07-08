@@ -6,9 +6,10 @@
   import { TJSInput } from "#standard/component/form";
   import { createFilterQuery } from "~/src/filters/itemFilterQuery";
   import { localize } from "~/src/helpers/utility";
-  import { applyPriceFactor, formatPrice as formatCurrencyPrice } from "~/src/helpers/currency.js";
+  import { MODULE_ID } from "~/src/helpers/constants";
+  import { applyPriceFactor, formatPrice as formatCurrencyPrice, makeBasketPrice } from "~/src/helpers/currency.js";
   import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
-  import ScrollingContainer from "~/src/helpers/svelte-components/ScrollingContainer.svelte";
+  import { requestBasketUpdate } from "~/src/helpers/shopSocket.js";
   import { shopSocketState } from "~/src/stores/basketState.js";
   import { itemQuantitySnapshot, shopTelemetry } from "~/src/helpers/telemetry.js";
 
@@ -19,11 +20,12 @@
 
   export let sharedProps = {};
 
-  const typeSearch = createFilterQuery("type");
-  const nameSearch = createFilterQuery("name");
+  $: targetActorId = sharedProps.targetActorId ?? null;
   $: shopUuid = $Actor?.uuid ?? ($Actor?.id ? `Actor.${$Actor.id}` : null);
   $: socketShopState = shopUuid ? $shopSocketState.get(shopUuid) : null;
   $: socketStockRevision = socketShopState?.revision ?? 0;
+  const typeSearch = createFilterQuery("type");
+  const nameSearch = createFilterQuery("name");
 
   const input = {
     store: nameSearch,
@@ -46,35 +48,6 @@
     })),
   ];
 
-  onMount(() => {
-    shopTelemetry('InventoryTab', 'mounted', {
-      actorId: $Actor?.id,
-      actorUuid: $Actor?.uuid,
-      itemCount: $Actor?.items?.size,
-      itemQuantities: itemQuantitySnapshot($Actor?.items),
-    });
-
-    unsubscribeActor = Actor.subscribe((actor, options) => {
-      shopTelemetry('InventoryTab', 'Actor store emitted', {
-        action: options?.action,
-        data: options?.data,
-        actorId: actor?.id,
-        actorUuid: actor?.uuid,
-        itemCount: actor?.items?.size,
-        itemQuantities: itemQuantitySnapshot(actor?.items),
-      });
-    });
-
-    unsubscribeWildcard = wildcard.subscribe((value) => {
-      shopTelemetry('InventoryTab', 'wildcard emitted', {
-        actorId: $Actor?.id,
-        actorUuid: $Actor?.uuid,
-        itemCount: value?.size ?? value?.length,
-        itemQuantities: itemQuantitySnapshot(value),
-      });
-    });
-  });
-
   /** @type {import('@typhonjs-fvtt/runtime/svelte/store').DynMapReducer<string, Item>} */
   const wildcard = doc.embedded.create(Item, {
     name: "wildcard",
@@ -82,65 +55,8 @@
     sort: (a, b) => a.name.localeCompare(b.name),
   });
 
-  async function addQuantity(item) {
-    const quantity = (item.system.quantity ?? 0) + 1;
-    shopTelemetry('InventoryTab', 'addQuantity update start', {
-      actorId: $Actor?.id,
-      itemId: item?.id,
-      itemName: item?.name,
-      previousQuantity: Number(item?.system?.quantity ?? 0),
-      nextQuantity: quantity,
-    });
-    const [result] = await $Actor.updateEmbeddedDocuments('Item', [{
-      _id: item.id,
-      'system.quantity': quantity,
-    }]);
-    shopTelemetry('InventoryTab', 'addQuantity update complete', {
-      actorId: $Actor?.id,
-      itemId: item?.id,
-      itemName: item?.name,
-      resultQuantity: Number(result?.system?.quantity ?? item?.system?.quantity ?? 0),
-      itemQuantityAfter: Number(item?.system?.quantity ?? 0),
-      itemQuantities: itemQuantitySnapshot($Actor?.items),
-    });
-  }
-
-  async function removeQuantity(item) {
-    const quantity = Math.max(0, (item.system.quantity ?? 0) - 1);
-    shopTelemetry('InventoryTab', 'removeQuantity update start', {
-      actorId: $Actor?.id,
-      itemId: item?.id,
-      itemName: item?.name,
-      previousQuantity: Number(item?.system?.quantity ?? 0),
-      nextQuantity: quantity,
-    });
-    const [result] = await $Actor.updateEmbeddedDocuments('Item', [{
-      _id: item.id,
-      'system.quantity': quantity,
-    }]);
-    shopTelemetry('InventoryTab', 'removeQuantity update complete', {
-      actorId: $Actor?.id,
-      itemId: item?.id,
-      itemName: item?.name,
-      resultQuantity: Number(result?.system?.quantity ?? item?.system?.quantity ?? 0),
-      itemQuantityAfter: Number(item?.system?.quantity ?? 0),
-      itemQuantities: itemQuantitySnapshot($Actor?.items),
-    });
-  }
-
-  function onAddQtyClick(e) {
-    const idx = parseInt(e.currentTarget.dataset.index);
-    addQuantity(items[idx]);
-  }
-
-  function onRemoveQtyClick(e) {
-    const idx = parseInt(e.currentTarget.dataset.index);
-    removeQuantity(items[idx]);
-  }
-
-  function onDeleteClick(e) {
-    const idx = parseInt(e.currentTarget.dataset.index);
-    items[idx].delete();
+  function showItemSheet(item) {
+    item.sheet.render(true);
   }
 
   function onShowItemClick(e) {
@@ -148,11 +64,15 @@
     items[idx].sheet.render(true);
   }
 
-  async function removeAllItems() {
-    const okToDelete = confirm(localize("Types.Actor.Inventory.confirmDeleteAll"));
-    if (okToDelete) {
-      await $Actor.deleteAllItems('equipment');
-    }
+  function onAddToBasketClick(e) {
+    const idx = parseInt(e.currentTarget.dataset.index);
+    shopTelemetry('InventoryPlayerTab', 'add button clicked', {
+      index: idx,
+      itemId: items[idx]?.id,
+      itemName: items[idx]?.name,
+      displayQuantity: items[idx] ? getDisplayQuantity(items[idx]) : null,
+    });
+    addToBasket(items[idx]);
   }
 
   function onTypeFilterChange(e) {
@@ -173,21 +93,122 @@
   }
 
   function getDisplayQuantity(item) {
-    const stock = Number(item?.system?.quantity ?? 0);
-    shopTelemetry('InventoryTab', 'display quantity evaluated', {
+    const socketStock = socketShopState?.stockByItemId?.get(item?.id);
+    const stock = Number(socketStock ?? item?.system?.quantity ?? 0);
+    shopTelemetry('InventoryPlayerTab', 'display quantity evaluated', {
       shopUuid,
       itemId: item?.id,
       itemName: item?.name,
       documentQuantity: Number(item?.system?.quantity ?? 0),
+      socketStock,
       result: Math.max(0, stock),
       socketStockRevision,
     });
     return Math.max(0, stock);
   }
 
-  function formatPrice(item) {
-    return formatCurrencyPrice(applyPriceFactor(item?.system?.price, sharedProps.salePriceFactor ?? 100));
+  function isOutOfStock(item) {
+    return getDisplayQuantity(item) <= 0;
   }
+
+  function formatPrice(item) {
+    return formatCurrencyPrice(getSalePrice(item));
+  }
+
+  function getSalePrice(item) {
+    return applyPriceFactor(item?.system?.price, sharedProps.salePriceFactor ?? 100);
+  }
+
+  /** Add item to the player's basket (stored in a flag on the current user). */
+  async function addToBasket(item) {
+    shopTelemetry('InventoryPlayerTab', 'addToBasket start', {
+      shopId: $Actor?.id,
+      shopUuid: $Actor?.uuid,
+      targetActorId,
+      itemId: item?.id,
+      itemName: item?.name,
+      itemQuantity: Number(item?.system?.quantity ?? 0),
+      displayQuantity: item ? getDisplayQuantity(item) : null,
+      currentBasket: targetActorId ? ($Actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [],
+      allBasketActorIds: Object.keys($Actor?.flags?.[MODULE_ID]?.basket ?? {}),
+    });
+
+    if (!targetActorId) {
+      ui.notifications.warn(localize('NoTargetActor'));
+      return;
+    }
+
+    const shopId = $Actor.id;
+    if (isOutOfStock(item)) {
+      ui.notifications.warn(game.i18n.format('InsufficientStock', { itemName: item.name }));
+      return;
+    }
+
+    const currentBasket = targetActorId ? ($Actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [];
+    const nextBasket = currentBasket.map((entry) => ({ ...entry }));
+    
+    const existing = nextBasket.find((entry) => entry.itemId === item.id);
+    if (existing) {
+      existing.quantity = (existing.quantity ?? 1) + 1;
+    } else {
+      nextBasket.push({
+        itemId: item.id,
+        itemName: item.name,
+        img: item.img,
+        price: makeBasketPrice(getSalePrice(item)),
+        quantity: 1,
+      });
+    }
+    
+    const result = await requestBasketUpdate({
+      shopId,
+      shopUuid: $Actor.uuid,
+      targetActorId,
+      nextBasket,
+    });
+    shopTelemetry('InventoryPlayerTab', 'addToBasket socket result', {
+      shopId,
+      targetActorId,
+      result,
+    });
+    if (!result.success) {
+      (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
+      return;
+    }
+    
+    ui.notifications.info(`${item.name} added to basket`);
+  }
+
+  onMount(() => {
+    shopTelemetry('InventoryPlayerTab', 'mounted', {
+      actorId: $Actor?.id,
+      actorUuid: $Actor?.uuid,
+      itemCount: $Actor?.items?.size,
+      itemQuantities: itemQuantitySnapshot($Actor?.items),
+    });
+
+    unsubscribeActor = Actor.subscribe((actor, options) => {
+      shopTelemetry('InventoryPlayerTab', 'Actor store emitted', {
+        action: options?.action,
+        data: options?.data,
+        actorId: actor?.id,
+        actorUuid: actor?.uuid,
+        itemCount: actor?.items?.size,
+        itemQuantities: itemQuantitySnapshot(actor?.items),
+        basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
+        targetBasket: targetActorId ? (actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [],
+      });
+    });
+
+    unsubscribeWildcard = wildcard.subscribe((value) => {
+      shopTelemetry('InventoryPlayerTab', 'wildcard emitted', {
+        shopUuid,
+        socketStockRevision,
+        itemCount: value?.size ?? value?.length,
+        itemQuantities: itemQuantitySnapshot(value),
+      });
+    });
+  });
 
   onDestroy(() => {
     unsubscribeActor();
@@ -207,9 +228,8 @@
     $typeSearch;
     socketStockRevision;
     items = getInventoryItems();
-    shopTelemetry('InventoryTab', 'items reassigned', {
-      actorId: $Actor?.id,
-      actorUuid: $Actor?.uuid,
+    shopTelemetry('InventoryPlayerTab', 'items reassigned', {
+      shopUuid,
       socketStockRevision,
       itemCount: items.length,
       itemQuantities: itemQuantitySnapshot(items),
@@ -250,17 +270,10 @@
               .inv-col-price
                 span.price-text {formatPrice(item)}
               .inv-col-qty
-                .qty-controls
-                  button.stealth.qty-btn(data-tooltip="Decrease quantity" data-index="{index}" on:click!="{onRemoveQtyClick}")
-                    i.fa.fa-minus
-                  span.qty-value {getDisplayQuantity(item)}
-                  button.stealth.qty-btn(data-tooltip="Increase quantity" data-index="{index}" on:click!="{onAddQtyClick}")
-                    i.fa.fa-plus
+                span.qty-value {getDisplayQuantity(item)}
               .inv-col-actions
-                button.stealth.negative(data-tooltip="{localize('Types.Actor.ActionButtons.Delete')}" data-index="{index}" on:click!="{onDeleteClick}")
-                  i.fa.fa-trash
-            
-      button.mt-sm.glossy-button.gold-light.hover-shine(on:click!="{removeAllItems}") {localize("Instructions.RemoveAll")}
+                button.stealth.basket-btn(disabled="{isOutOfStock(item)}" data-tooltip="Add to basket" data-index="{index}" on:click!="{onAddToBasketClick}")
+                  i.fa.fa-shopping-basket
             
 </template>
 
@@ -286,7 +299,7 @@
 
 .inv-header
   display: grid
-  grid-template-columns: 36px 1fr 90px 100px 50px
+  grid-template-columns: 36px 1fr 90px 80px 50px
   gap: 4px
   align-items: center
   padding: 4px 4px
@@ -297,7 +310,7 @@
 
 .inv-row
   display: grid
-  grid-template-columns: 36px 1fr 90px 100px 50px
+  grid-template-columns: 36px 1fr 90px 80px 50px
   gap: 4px
   align-items: center
   padding: 2px 4px
@@ -342,28 +355,24 @@
   justify-content: center
   gap: 2px
 
-.qty-controls
-  display: flex
-  align-items: center
-  gap: 2px
-
-.qty-btn
-  width: 20px
-  height: 20px
-  padding: 0
-  display: flex
-  align-items: center
-  justify-content: center
-  font-size: 0.65rem
-  border-radius: 3px
-  background: rgba(255, 255, 255, 0.1)
-
-  &:hover
-    background: rgba(255, 255, 255, 0.25)
-
 .qty-value
   min-width: 24px
   text-align: center
   font-size: 0.85rem
   font-weight: 500
+
+.basket-btn
+  width: 28px
+  height: 28px
+  padding: 0
+  display: flex
+  align-items: center
+  justify-content: center
+  font-size: 0.85rem
+  border-radius: 3px
+  color: var(--dnd5e-color-gold, #b59e54)
+
+  &:hover
+    background: rgba(255, 255, 255, 0.15)
+    color: #fff
 </style>

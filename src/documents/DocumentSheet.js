@@ -7,7 +7,10 @@ export default class SvelteDocumentSheet extends SvelteApplication {
   #documentStore = new TJSDocument(void 0, { delete: this.close.bind(this) });
 
   constructor(object) {
-    super(object);
+    super();
+
+    // Ensure options.document is set for Foundry V2 sheet contract
+    this.options.document = object;
 
     // Ensure options.document is set for Foundry V2 sheet contract
     this.options.document = object;

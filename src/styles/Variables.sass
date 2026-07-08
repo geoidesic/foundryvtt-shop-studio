@@ -44,7 +44,7 @@
     --gas-footer-input-background: rgba(0, 0, 0, 0.6)
     --gas-footer-input-border: rgba(255, 255, 255, 0.28)
 
-#foundryvtt-shop-studio-sheet, #foundryvtt-shop-studio-welcome
+.foundryvtt-shop-studio, #foundryvtt-shop-studio-welcome
   --size-xxs: 0.1rem
   --size-xs: 0.2rem
   --size-ms: 0.3rem
@@ -126,10 +126,10 @@
     @include gas-dark-tokens(rgba(0, 0, 0, 0.9), true, false)
 
 // v13+: body.theme-dark / Foundry 14 .themed.theme-dark ancestor — tokens on app root only.
-.theme-dark #foundryvtt-shop-studio-sheet, .theme-dark #foundryvtt-shop-studio-welcome, .themed.theme-dark #foundryvtt-shop-studio-sheet, .themed.theme-dark #foundryvtt-shop-studio-welcome
+.theme-dark .foundryvtt-shop-studio, .theme-dark #foundryvtt-shop-studio-welcome, .themed.theme-dark .foundryvtt-shop-studio, .themed.theme-dark #foundryvtt-shop-studio-welcome
   @include gas-dark-tokens(rgba(0, 0, 0, 0.9), true, true)
 
-#foundryvtt-shop-studio-sheet.theme-light, #foundryvtt-shop-studio-welcome.theme-light
+.foundryvtt-shop-studio.theme-light, #foundryvtt-shop-studio-welcome.theme-light
   --gas-sheet-background: #cccccc
   --gas-tabs-list-background: #dbd9cd
   --gas-tabs-content-background: rgba(249, 249, 249, 0.8)
@@ -144,5 +144,5 @@
   --gas-button-hover-border: #999
   --gas-color-text-dark-secondary: inherit
 
-#foundryvtt-shop-studio-sheet.theme-dark, #foundryvtt-shop-studio-welcome.theme-dark, #foundryvtt-shop-studio-sheet.themed.theme-dark, #foundryvtt-shop-studio-welcome.themed.theme-dark
+.foundryvtt-shop-studio.theme-dark, #foundryvtt-shop-studio-welcome.theme-dark, .foundryvtt-shop-studio.themed.theme-dark, #foundryvtt-shop-studio-welcome.themed.theme-dark
   @include gas-dark-tokens(rgba(0, 0, 0, 0.9), false, true)
