@@ -2,7 +2,7 @@
   "id": "foundryvtt-shop-studio",
   "title": "Shop Studio [Aardvark Games]",
   "description": "Easily create shop actors for your PCs to interact with in-game",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "socket": true,
   "styles": [
     "dist/style.css"
