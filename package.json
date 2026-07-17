@@ -2,7 +2,7 @@
   "description": "Easily create shop actors for your PCs to interact with in-game",
   "license": "MIT",
   "private": false,
-  "version": "0.0.1",
+  "version": "0.0.0",
   "type": "module",
   "authors": [
     {
@@ -46,8 +46,20 @@
     "not IE 11"
   ],
   "scripts": {
-    "dev": " > style.css; /* blank the style.css to enable HMR for css in dev */; vite;",
+    "dev": " > dist/style.css; > style.css; /* blank for HMR */; vite;",
     "build": "vite build",
-    "eslint": "eslint ."
+    "eslint": "eslint .",
+    "release": "node release.js patch",
+    "release:patch": "node release.js patch",
+    "release:minor": "node release.js minor",
+    "release:major": "node release.js major",
+    "release:draft": "node release.js patch draft",
+    "release:draft:patch": "node release.js patch draft",
+    "release:draft:minor": "node release.js minor draft",
+    "release:draft:major": "node release.js major draft",
+    "release:pre": "node release.js patch pre",
+    "release:pre:patch": "node release.js patch pre",
+    "release:pre:minor": "node release.js minor pre",
+    "release:pre:major": "node release.js major pre"
   }
 }
