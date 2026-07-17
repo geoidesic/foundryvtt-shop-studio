@@ -162,7 +162,9 @@ if (!isDraft) {
   execSync(`git commit -m "chore: build and bump version to ${newVersion}"`);
 }
 
-const releaseNotes = generateReleaseNotes(getPreviousTag());
+// Get previous tag BEFORE creating the new tag
+const previousTag = getPreviousTag();
+const releaseNotes = generateReleaseNotes(previousTag);
 const releaseNotesPath = path.join(__dirname, 'release-notes.md');
 fs.writeFileSync(releaseNotesPath, releaseNotes);
 
