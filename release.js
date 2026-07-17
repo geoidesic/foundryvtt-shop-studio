@@ -172,6 +172,7 @@ if (!isDraft) {
   execSync(`git tag ${newVersion}`);
   execSync('git push origin HEAD');
   execSync(`git push origin ${newVersion}`);
+  console.log(`Package version bumped from ${previousTag || 'none'} -> ${newVersion}`);
 }
 
 let ghCmd = `gh release create ${newVersion} --title "Version ${newVersion}" --notes-file ${releaseNotesPath}`;
