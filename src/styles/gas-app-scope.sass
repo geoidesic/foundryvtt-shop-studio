@@ -1,0 +1,34 @@
+// Shop Studio application roots only — never use bare .theme-dark or .GSS selectors
+// (body.theme-dark would leak into Foundry core UI).
+
+$gas-app-ids: '.foundryvtt-shop-studio', '#foundryvtt-shop-studio-welcome'
+
+@mixin gas-app-roots
+  @each $id in $gas-app-ids
+    #{$id}
+      @content
+
+// v12: theme-dark on app element; v13+: body.theme-dark or Foundry 14 .themed.theme-dark
+@mixin gas-app-themed-dark
+  @each $id in $gas-app-ids
+    #{$id}.theme-dark,
+    .theme-dark #{$id},
+    #{$id}.themed.theme-dark,
+    .themed.theme-dark #{$id}
+      @content
+
+// Strip Foundry core parchment.jpg from Shop Studio windows only (never bare .theme-dark.window-app).
+@mixin gas-app-dark-window-shell
+  @each $id in $gas-app-ids
+    #{$id}.theme-dark.window-app,
+    .theme-dark #{$id}.window-app,
+    #{$id}.themed.theme-dark.window-app,
+    .themed.theme-dark #{$id}.window-app
+      // background-color: var(--gas-sheet-background, #1a1a1a) !important
+
+      > .window-content
+        background: var(--gas-sheet-background, #1a1a1a)
+        // background-color: var(--gas-sheet-background, #1a1a1a) !important
+        // background-image: none !important
+        // backdrop-filter: none !important
+        // -webkit-backdrop-filter: none !important

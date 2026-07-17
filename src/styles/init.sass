@@ -1,0 +1,872 @@
+/* Shop Studio */
+
+// Abstracts
+@import 'Variables.sass'
+@import 'Fonts.sass'
+@import 'Mixins.sass'
+@import 'gas-app-scope.sass'
+@import 'Animations.sass'
+@import '_buttons.sass'
+
+// Features
+@import 'features/equipment-purchase.sass'
+@import 'features/npc-index-loading.sass'
+@import 'features/gas-dark-theme.sass'
+
+// Base
+/**
+ * Provides styles used across all demo applications. Take note that `classes: ['tjs-essential-svelte-esm']` is added to
+ * all applications and dialogs which allows targeting just the `essential-svelte-esm` GUI.
+ *
+ * Vite / Rollup includes style files by importing them; see: `./src/index.js`.
+ */
+
+.gas-settings-h4
+  font-size: 1.1em
+  color: var(--gas-color-highlight)
+
+.GSS
+  /* integration with popout module */
+  .popout-module-button
+    display: none
+    align-self: right
+    flex: 0
+
+  /* Correct advancement dropdowns color in dark mode*/
+  &.theme-dark select,
+  &.theme-dark select option,
+  &.theme-dark select optgroup 
+    color: #fff !important
+    background-color: #222 !important
+  
+  /* Correct advancement dropdowns color in light mode*/
+  &.theme-light select,
+  &.theme-light select option,
+  &.theme-light select optgroup 
+    color: #000 !important
+    background-color: #f0f0f0 !important
+
+  color: var(--gas-color-text)
+
+  &.theme-dark
+    color: var(--gas-color-text)
+
+  // padding margins
+  .py-md
+    padding: var(--size-md) 0
+
+  .py-sm
+    padding: var(--size-sm) 0
+
+  .py-xs
+    padding: var(--size-xs) 0
+
+  .py-xxs
+    padding: var(--size-xxs) 0
+
+  .px-xs
+    padding-right: var(--size-xs)
+    padding-left: var(--size-xs)
+
+  .px-sm
+    padding-right: var(--size-sm)
+    padding-left: var(--size-sm)
+
+  .px-md
+    padding-right: var(--size-md)
+    padding-left: var(--size-md)
+
+  .pa-sm
+    padding: var(--size-sm) var(--size-md)
+
+  .pa-xxs
+    padding: var(--size-xxs) va(--size-xs)
+
+  .pa-xs
+    padding: var(--size-xs) var(--size-sm)
+
+  .pa-md
+    padding: var(--size-md) var(--size-md)
+
+  .pl-sm
+    padding-left: var(--size-sm)
+
+  .pl-md
+    padding-left: var(--size-md)
+
+  .pr-none
+    padding-right: 0px !important
+
+  .pr-sm
+    padding-right: var(--size-sm)
+
+  .pr-md
+    padding-right: var(--size-md)
+
+  .pr-xs
+    padding-right: var(--size-xs)
+
+  .pb-sm
+    padding-bottom: var(--size-sm)
+
+  .pt-xxs
+    padding-top: var(--size-xxs)
+
+  .pt-xs
+    padding-top: var(--size-xs)
+
+  .pt-sm
+    padding-top: var(--size-sm)
+
+  .pt-ms
+    padding-top: var(--size-ms)
+
+  .ma-sm
+    margin: var(--size-sm)
+
+  .mx-sm
+    margin-right: var(--size-sm)
+    margin-left: var(--size-sm)
+
+  .mx-xs
+    margin-right: var(--size-xs)
+    margin-left: var(--size-xs)
+
+  .my-sm
+    margin-top: var(--size-sm)
+    margin-bottom: var(--size-sm)
+
+  .my-md
+    margin-top: var(--size-md)
+    margin-bottom: var(--size-md)
+
+  .my-ms
+    margin-top: var(--size-ms)
+    margin-bottom: var(--size-ms)
+
+  .mt-none
+    margin-top: 0
+
+  .ma-none
+    margin: 0
+
+  .my-none
+    margin-top: 0
+    margin-bottom: 0
+
+  .ma-lg
+    margin: var(--size-lg)
+
+  .ma-md
+    margin: var(--size-md)
+
+  .ma-sm
+    margin: var(--size-sm)
+
+  .ma-xs
+    margin: var(--size-xs)
+
+  .ma-xxs
+    margin: var(--size-xxs)
+
+  .mt-lg
+    margin-top: var(--size-lg)
+
+  .mt-md
+    margin-top: var(--size-md)
+
+  .mt-sm
+    margin-top: var(--size-sm)
+
+  .mt-xs
+    margin-top: var(--size-xs)
+
+  .mt-xxs
+    margin-top: var(--size-xxs)
+
+  .mb-md
+    margin-bottom: var(--size-md)
+
+  .mb-sm
+    margin-bottom: var(--size-sm)
+
+  .mb-xs
+    margin-bottom: var(--size-xs)
+
+  .mr-sm
+    margin-right: var(--size-sm)
+
+  .mr-xs
+    margin-right: var(--size-xs)
+
+  .mr-md
+    margin-right: var(--size-md)
+
+  .ml-xs
+    margin-left: var(--size-xs)
+
+  .ml-sm
+    margin-left: var(--size-sm)
+
+  .ml-md
+    margin-left: var(--size-md)
+
+  .ml-lg
+    margin-left: var(--size-lg)
+
+  .ml-xl
+    margin-left: var(--size-xl)
+    
+  .left
+    text-align: left
+
+  .right
+    text-align: right
+
+  .center
+    text-align: center
+
+  .hide
+    visibility: hidden
+    height: 0
+
+  .relative
+    position: relative
+
+  .flexrow
+    align-items: flex-start
+
+  .justify-flexrow-vertical
+    align-items: center
+
+  .smalltext
+    font-size: 0.5rem
+  .tight
+    padding: 0
+
+  .wide
+    width: 100%
+
+  .tall
+    height: 100%
+
+  a.button, button
+    padding: 0 0.4rem
+
+  .capitalise
+    text-transform: capitalize
+
+  img
+    border: none
+
+  warning
+    display: block
+    border: 1px solid var(--dnd5e-color-gold)
+    background: var(--gas-color-negative)
+    color: #fff
+    margin: 1rem 0 0 0
+    padding: 0.5rem 0.3rem
+    border-radius: var(--border-radius)
+    &::before
+      content: "⚠️"
+      margin-right: 0.3rem
+      display: inline-block
+
+
+  .header-control
+    margin: 5px -1px !important
+    &::before
+      font-size: 1.5rem
+      font-weight: 700
+      position: absolute
+      right: 10px
+      top: 5px
+      
+  &.application
+    table
+      margin: 0
+      // border-spacing: 0
+
+  .gas-tooltip
+    text-align: left !important
+    // line-height: 1.3rem !important;
+
+    & a
+
+
+    & a i
+      color: #fff
+
+    & .content-link
+      border-radius: var(--border-radius)
+      margin: 0 3px
+      color: var(--color-text-hyperlink)
+
+    & .content-link i
+      color: var(--color-text-hyperlink)
+
+  // alter heading styles for Configure Settings
+  #client-settings
+    h4
+      font-size: 1em
+      border-bottom: 1px solid var(--color-underline-header)
+
+  .gas-add-dt-folders
+    background-color: #fff
+    &:hover
+      background-color: var(--color-text-hyperlink)
+      border-color: black
+
+  .flex
+    display: flex !important
+
+  .flexrow>.flex4,
+  .flexcol>.flex4
+    flex: 4
+
+  .justify-flexrow-vertical
+    align-items: center
+
+  .justify-flexrow-vertical-top
+    align-items: top
+
+  .inline
+    display: inline
+
+  .small
+    font-size: small
+  .smaller
+    font-size: smaller
+  
+  .tabs-list
+    padding: 0.25rem 1.5rem !important
+    --color-border-highlight: #416dbe
+    transition: all 0.4s ease-in-out
+    
+  .gas-tabs,
+  .tabs.gas-tabs
+    border: none
+    position: relative
+    display: flex
+    flex-direction: column
+    flex: 1
+    min-height: 0
+    overflow: hidden
+    padding-top: 0
+    .tabs-list
+
+      background: var(--gas-tabs-list-background) !important
+      position: relative
+      top: auto
+      left: auto
+      width: 100%
+      height: 2.5rem !important
+      padding-top: 0.25rem !important
+      flex-shrink: 0
+      z-index: 10
+      button
+        background-color: var(--gas-button-background) !important
+        color: var(--gas-color-text) !important
+
+
+  // .gas-tabs .tabs-list::after
+  //   content: ""
+  //   display: block
+  //   position: fixed
+  //   top: 71px
+  //   left: auto
+  //   width: 95%
+  //   height: 17px
+  //   background: black
+  //   background: linear-gradient(0deg, rgba(219, 217, 205, 0) 0%, #f9f9f9 100%)
+  //   z-index: 1 
+
+  .gas-tabs .tabs-list button:not(.active):hover
+    box-shadow: 0px -3px 11px -2px var(--gas-color-shadow-primary)
+    transition: all 0.3s ease-out
+
+  .gas-tabs .tabs-list button.active
+    color: var(--tab-active-color, var(--dnd5e-color-gold, #b59e54)) !important
+    box-shadow: 0px -2px 11px -2px var(--gas-color-shadow-secondary)
+
+  .gas-tabs .tabs-list button.active:hover
+    color: var(--tab-active-hover-color, var(--tab-active-color, var(--dnd5e-color-gold, #b59e54))) !important
+    box-shadow: 0px -4px 14px -2px var(--gas-color-shadow-secondary)
+
+  .tab-content
+    --tjs-app-overflow: auto
+    padding: 0
+    border: 2px solid transparent
+    border-radius: 10px 
+    background-color: var(--gas-tabs-content-background)
+    position: relative
+    z-index: 11
+    flex: 1
+    min-height: 0
+    overflow-x: hidden
+    overflow-y: auto
+    margin-top: 0
+    color: var(--gas-color-text)
+
+  &.gas-v13-plus .tabs.gas-tabs .tab-content
+    margin-top: 0
+
+  .tab-content .scroll
+    box-sizing: content-box
+    padding: 15px
+
+  .tab-content .col-a
+    padding: 1rem
+
+  .tab-content ul.icon-list .image
+    min-width: 24px
+    li
+      
+
+  .tab-content ul.icon-list
+    list-style-type: none !important
+    padding: 0
+    position: relative
+    margin: 0
+
+  .tab-content ul.icon-list li
+    margin: 3px 0
+    box-shadow: 0 0 0 1px var(--li-inset-color) inset
+    padding: 0.5rem 0.3rem
+    border-radius: var(--border-radius)
+    background: var(--gas-li-background)
+
+  .tab-content ul.icon-list .image img.icon
+    position: absolute
+    top: -3px
+    left: 0
+    width: 24px
+    height: 24px
+    vertical-align: middle
+    border: 0
+
+  .tab-content ul.icon-list li.tight .flexcol
+    gap: 0
+    line-height: 11px
+    height: 19px
+    margin: 4px 0 5px 0
+
+  .tab-content ul.icon-list li.tight .image img.icon
+    top: 2px
+    left: 2px
+    
+  &.theme-dark
+    
+    // Completely disable backdrop-filter in theme-dark to prevent tab positioning issues
+    .window-content
+      backdrop-filter: none !important
+      -webkit-backdrop-filter: none !important
+
+    input, input.keyword-filter
+      color: var(--gas-color-text)
+      // background-color: var(--gas-li-background) //- this interferes with welcome page checkbox
+    
+    .icon-list
+      .advancement
+        color: var(--gas-color-text)
+  
+  .tab-content ul.icon-list 
+    .image
+      min-width: 24px
+    li
+      ul.icon-list
+        li
+          background-color: #222
+          color: var(--gas-color-text)
+  .icon-list
+    color: var(--gas-color-text)
+    .advancement
+      background-color: var(--gas-tabs-content-background)
+
+  .npc-stat-block
+    background: var(--gas-tabs-content-background)
+    background-color: rgba(255,255,255,0.5)
+    background-blend-mode: lighten
+    padding: 1rem
+
+    --gas-text-header-color: #6e0000
+    text-align: left
+    background-position-x: initial
+    background-position-y: initial
+    background-size: initial
+    background-repeat: repeat
+    background-attachment: initial
+    background-origin: initial
+    background-clip: initial
+    border-top: 5px ridge #c27e17
+    border-bottom: 5px ridge #c27e17
+
+    h2
+      color: var(--gas-text-header-color)
+      // letter-spacing: 1px
+      font-kerning: 1px
+      font-variant: small-caps
+    
+    .label
+      color: var(--actor-studio-color-tertiary)
+      font-weight: bold
+
+    .value
+      display: inline
+      
+    hr
+      background-image: linear-gradient(90deg, #8f1010 0%, transparent 100%)
+      height: 4px
+
+  &.theme-dark
+    .npc-stat-block
+      --gas-text-header-color: var(--dnd5e-color-gold)
+      background: var(--gas-sheet-background)
+      background-blend-mode: normal
+      h2, .label
+        color: var(--dnd5e-color-gold) !important
+      hr
+        background-image: linear-gradient(90deg, var(--dnd5e-color-gold) 0%, transparent 100%)
+      
+    .icon-select
+      background-color: #000
+      border: none
+      .selected-option
+        background-color: #000
+        border: 1px solid #000
+        margin-top: 2px
+        margin-bottom: 2px
+        color: var(--dnd5e-color-gold)
+      .options-dropdown
+        background-color: #111
+        border: 1px solid #000
+
+        .option
+          color: var(--dnd5e-color-gold)
+          &:hover
+            background-color: #000
+            color:  var(--gas-color-text)
+            
+.foundryvtt-shop-studio.theme-dark
+  a.content-link
+    background: none
+
+body.game #gas-settings-submenu.app.window-app
+  .flexrow, .flexcol
+    .flex0
+      flex: 0
+
+#geoidesic-shop-studio-sidebar-button
+  
+
+    font-size: 2rem
+    color: var(--actor-studio-color-secondary)
+
+    display: flex 
+    align-items: center
+    justify-content: center
+    background-color: white
+    padding: 0
+    margin: 0.2rem 0.5rem 0 0.5rem
+    height: 40px
+    &.v13
+      margin: 0.2rem 0.5rem
+
+
+
+#geoidesic-shop-studio-dialog-button
+    background-color: white
+    
+@include gas-app-roots
+  .window-content
+    color: var(--gas-color-text)
+
+  // Dark window shell (no parchment): gas-app-dark-window-shell in gas-dark-theme.sass (app IDs only).
+
+  // Header uses Foundry/dnd5e chrome; do not inherit --gas-color-text from .GSS content rules
+  .window-header
+    display: flex
+    align-items: center
+    color: #fff
+    border-bottom: 2px solid var(--gas-border-dark)
+
+    .window-title
+      flex: 1
+      margin: 0
+      line-height: 1.25
+      align-self: center
+      color: #fff
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.45)
+
+    .header-control
+      color: #fff
+
+      &::before
+        color: #fff
+
+    .tjs-app-icon
+      background: transparent
+
+  table.core-class-traits
+    th, td
+      vertical-align: top
+
+  .content .properties-list > li
+    padding: 4px
+    color: var(--gas-color-text)
+    background-color: var(--gas-li-background)
+    border: none
+  p:has(a.content-link)
+    line-height: 1.5rem
+  
+
+  select.tjs-select
+    color: var(--tjs-select-option-color) //- this makes dark theme advancments unreadable
+    
+  h2, h3, h4:not(.window-title), h5
+    color: var(--gas-color-highlight)
+    text-shadow: none
+
+  h1
+    font-size: 2.5rem
+  h2
+    font-size: 2rem
+  h3
+    font-size: 1.5rem
+  h4
+    font-family: var(--dnd5e-font-modesto)
+    font-size: 1.3rem
+  h5
+    font-size: 1.15rem
+  .border-right
+    border-right: 6px ridge var(--gas-color-highlight)
+
+  .right-border-gradient-mask
+    mask-image: linear-gradient(0deg, transparent 0%, black 100%)
+
+  .white
+    color: #fff
+
+  .black
+    color: #000000
+
+  .gold
+    color: var(--dnd5e-color-gold)
+
+  // alignment, accent and visibility
+  .bold
+    font-weight: 700
+
+  // headings and text
+  h1, h2, h3, h4, h5
+    font-family: var(--dnd5e-font-modesto)
+
+  .caption
+    font-size: smaller
+
+  .light
+    opacity: 0.5
+
+  .window-title
+    font-size: 1.5em
+    font-weight: 700
+
+  .gap-4
+    gap: 4px
+
+  .gap-10
+    gap: 10px
+
+  .no-wrap, .nowrap
+    white-space: nowrap
+    flex-wrap: nowrap
+
+  .pre-wrap
+    white-space: pre-wrap
+
+  .no-padding
+    padding: 0px
+  .no-margin
+    margin: 0px
+
+  .required
+    font-size: large
+    margin-right: 2px
+    color: var(--gas-color-positive)
+    display: none
+    &.active
+      display: block
+      color: var(--gas-color-negative)
+      animation: pulse 0.5s infinite
+
+  // Colours
+  .negative
+    color: var(--gas-color-negative)
+
+  .positive
+    color: var(--gas-color-positive)
+
+  .pointer
+    cursor: pointer
+
+
+  //-debug
+  .bg-green
+    background-color: #008000
+
+  //- dnd
+  dnd5e-checkbox
+    flex: 0
+
+
+  a.button.active, button.active 
+    outline: none
+    box-shadow: 0px -3px 11px -2px var(--gas-color-shadow-primary)
+
+  // Keep gas tab active states distinct from the global active-button blue shadow.
+  .gas-tabs .tabs-list button.active
+    box-shadow: 0px -2px 8px -2px rgba(106, 57, 20, 0.55) !important
+
+  .gas-tabs .tabs-list button.active:hover
+    box-shadow: 0px -4px 14px -2px rgba(106, 57, 20, 0.75) !important
+    
+  .black-link
+    white-space: pre-wrap
+    
+    a.content-link
+      color: #000000
+    &:not(a.content-link)
+      padding-left: 4px
+
+  &.theme-dark
+    .black-link
+      a.content-link
+        color: var(--dnd5e-color-gold)
+
+  &.theme-dark
+    .description-fill,
+    .illuminated-description,
+    .col-b,
+    .tab-content .scroll
+      color: var(--gas-color-text)
+
+      p, li, span, div, td, th
+        color: inherit
+
+      a.content-link
+        color: var(--dnd5e-color-gold, #b59e54)
+
+      a.content-link i
+        color: var(--dnd5e-color-gold, #b59e54)
+
+    table
+      color: var(--gas-color-text)
+
+      th, td
+        color: var(--gas-color-text)
+
+    .gas-tabs .tabs-list button
+      color: var(--gas-color-text) !important
+
+      &.active
+        background: var(--gas-tab-active-background) !important
+        color: var(--tab-active-color, var(--dnd5e-color-gold, #b59e54)) !important
+
+  .illuminated-description
+    position: relative
+    
+    .illuminated-initial
+      float: left
+      width: var(--illuminated-initial-width, 64px)
+      height: var(--illuminated-initial-height, 64px)
+      margin: 0 10px 5px 0
+      background-size: cover
+      background-position: center
+      border-radius: 5px
+      box-shadow: 0 0 10px rgba(0,0,0,0.3)
+
+.app.window-app.dnd5e.sheet.advancement.gas.v3x
+  height: 565px !important
+
+// Ensure notifications have a proper background (for some reason they were transparent)
+#notifications .notification.warning
+  background-color: var(--color-level-warning-bg)
+  color: #fff
+  border-color: var(--color-level-warning)
+
+// Defensive styling for IconSelect component to ensure compatibility across Foundry versions
+.GSS
+  .custom-select
+    min-height: var(--tjs-select-height, 32px)
+
+  // Inventory table image styles
+  img.icon
+    margin-top: -0.2rem
+    max-height: 2rem
+    border: 1px solid transparent
+    border-top-left-radius: var(--border-radius)
+    border-bottom-left-radius: var(--border-radius)
+    border-top-right-radius: 0px
+    border-bottom-right-radius: 0px
+
+    &:not(.nopointer)
+      cursor: pointer
+
+  td.img
+    position: relative
+    min-width: 32px
+
+    img.icon
+      margin-top: 3px
+      position: absolute
+      top: -4px
+      left: 0
+
+  // Button row styles for inventory action buttons
+  .buttons
+    position: relative
+    display: flex
+    flex-direction: row
+    flex-wrap: nowrap
+    justify-content: flex-start
+    align-items: center
+    gap: 4px
+    margin: 0
+    padding: 0
+    list-style: none
+
+  td.buttons
+    text-align: right
+    white-space: nowrap
+
+  td.min
+    width: 2%
+    white-space: nowrap
+
+  td.fixed
+    width: 10%
+    white-space: nowrap
+
+  td.shrink
+    width: 8%
+    white-space: nowrap
+
+  td.expand
+    width: auto
+    
+    .selected-option
+      min-height: var(--tjs-select-height, 32px)
+      height: auto
+      line-height: 1.5
+      box-sizing: border-box
+      
+      // Fix for older Foundry versions where height might collapse
+      &:empty::before
+        content: "\00a0" // non-breaking space
+        
+  // Additional fallback for very old versions
+  .icon-select
+    min-height: var(--tjs-select-height, 32px)
+    
+    .selected-option
+      min-height: 24px

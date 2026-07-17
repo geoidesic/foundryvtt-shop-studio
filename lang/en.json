@@ -1,0 +1,137 @@
+{
+  "foundryvtt-shop-studio": {
+    "Title": "Aardvark Shop Studio",
+    "Welcome": {
+      "CreatedBy": "Created by"
+    },
+    "Setting": {
+      "DontShowWelcome": {
+        "Name": "Don't show this message again",
+        "Hint": "Don't show the welcome application when Foundry first loads. (You can always undo this via Configure Settings)."
+      },
+      "Debug": {
+        "Name": "Debug",
+        "Hint": "Enable debug mode"
+      },
+      "DebugHooks": {
+        "Name": "Debug Hooks",
+        "Hint": "Enable debug hooks"
+      },
+      "UI": {
+        "Name": "UI Settings",
+        "Hint": "Configure the user interface for Shop Studio",
+        "Label": "Configure UI"
+      },
+      "showButtonInSideBar": {
+        "Name": "Show Button in Sidebar",
+        "Hint": "Show the Shop Studio button in the Actors sidebar directory"
+      },
+      "ItemSources": {
+        "Name": "Item Sources",
+        "Hint": "Configure which item compendia to use as sources for the shop",
+        "Label": "Item Sources",
+        "ListableItemTypesName": "Listable Item Types",
+        "ListableItemTypesHint": "Select which item types to include in the shop catalog. Leave empty to include all types."
+      }
+    },
+    "ItemSources": {
+      "SearchPlaceholder": "Search sources...",
+      "ShowSelectedOnly": "Show selected only",
+      "ExpandAll": "Expand all",
+      "ItemCompendia": "Item Compendia",
+      "ListableItemTypes": "Listable Item Types",
+      "SelectVisible": "Select visible",
+      "ClearVisible": "Clear visible",
+      "AutoAssign": "Auto-assign all",
+      "SelectAllTypes": "Select all types",
+      "ClearAllTypes": "Clear all types",
+      "ResetTypes": "Reset types",
+      "Cancel": "Cancel",
+      "Save": "Save",
+      "NoItemCompendia": "No item compendia found",
+      "NoItemTypes": "No item types found",
+      "NoMatchesFilter": "No compendia match the current filter. Uncheck 'Show selected only' or clear the search to see all available sources."
+    },
+    "ShopStudio": "Shop Studio",
+    "ShopSheetTitle": "Shop",
+    "Shopfront": "Shopfront",
+    "Inventory": "Inventory",
+    "Basket": "Basket",
+    "BasketEmpty": "Your basket is empty. Browse the inventory to add items.",
+    "BasketTargetActor": "Shopping as",
+    "BasketSelectActor": "Select a character",
+    "ClearBasket": "Clear Basket",
+    "Price": "Price",
+    "Total": "Total",
+    "Settings": "Settings",
+    "ProfileImage": "Profile Image",
+    "Name": "Name",
+    "Quantity": "Quantity",
+    "ChangeImage": "Change Image",
+    "ClearFilter": "Clear",
+    "ShopNamePlaceholder": "Shop Name",
+    "DragActorTokensHint": "(Drag actor tokens or from actor directory)",
+    "NoAssociatedActors": "No associated actors yet.",
+    "Description": "Description",
+    "AssociatedActors": "Associates",
+    "DragActorsHere": "Drag actors here to associate with this shop",
+    "SalePriceFactor": "Sale Price Factor",
+    "BuyPriceFactor": "Buy Price Factor",
+    "PriceVariance": "Price Variance (%)",
+    "VariancePeriod": "Variance Period",
+    "Daily": "Daily",
+    "Weekly": "Weekly",
+    "Monthly": "Monthly",
+    "RollTables": "Roll Tables",
+    "DragRollTablesHere": "Drag roll tables here",
+    "CouldNotResolveRollTable": "Could not resolve roll table.",
+    "ProvisionStore": "Provision Store",
+    "ProvisioningStore": "Provisioning store...",
+    "ProvisionComplete": "Added {count} items to inventory.",
+    "ProvisionNoItems": "No item results were rolled.",
+    "NoRollTablesConfigured": "No roll tables configured.",
+    "Atrophy": "Atrophy (%)",
+    "FilterInventory": "Filter Inventory...",
+    "NoPermission": "You don't have permission to modify this shop.",
+    "EditModeRequired": "Enable edit mode before changing this shop.",
+    "SettingsSaved": "Shop settings have been saved.",
+    "EditToggle": "Edit Mode",
+    "ItemTypeNotAllowed": "This item type is not allowed for sale. Configure allowed types in module settings.",
+    "ShopHUD": {
+      "Basket": "Open Shop",
+      "TargetActor": "Select Character",
+      "TargetActorPrompt": "Which character would you like to shop with?",
+      "Select": "Select",
+      "NoActorOwned": "You don't own any actors to shop with."
+    },
+    "BuyNow": "Buy Now",
+    "NoTargetActor": "Please select a character first.",
+    "InsufficientStock": "Not enough {itemName} in stock.",
+    "PurchaseComplete": "Purchase complete! Items added to {actorName}'s inventory.",
+    "UnknownActor": "Unknown Actor",
+    "CouldNotResolveActor": "Could not resolve the dropped actor.",
+    "Search": "Search",
+    "Type": "Type",
+    "Use": "Use",
+    "View": "View",
+    "Increase": "Increase",
+    "Decrease": "Decrease",
+    "RollCount": "Roll count",
+    "Bookmark": "Bookmark",
+    "Types": {
+      "Actor": {
+        "ActionButtons": {
+          "Edit": "Edit",
+          "Duplicate": "Duplicate",
+          "Delete": "Delete"
+        },
+        "Inventory": {
+          "confirmDeleteAll": "Are you sure you want to delete ALL items? This cannot be undone."
+        }
+      }
+    },
+    "Instructions": {
+      "RemoveAll": "Remove All Items"
+    }
+  }
+}
