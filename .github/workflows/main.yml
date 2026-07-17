@@ -1,0 +1,217 @@
+name: Release Creation
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      # Substitute the Manifest and Download URLs in the module.json
+      # for a FULL RELEASE
+      - name: Echo Start Full Release Substitution
+        run: echo "Starting full release substitution..."
+      - name: Substitute Manifest and Download Links For Versioned Ones
+        if: "!github.event.release.prerelease"
+        id: sub_release_manifest_version
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: 'module.json'
+        env:
+          version: ${{github.event.release.tag_name}}
+          url: https://github.com/${{github.repository}}
+          manifest: https://github.com/${{github.repository}}/releases/latest/download/module.json
+          download: https://github.com/${{github.repository}}/releases/download/${{github.event.release.tag_name}}/module.zip
+      - name: Echo End Full Release Substitution
+        if: "!github.event.release.prerelease"
+        run: echo "Full release substitution completed."
+
+      # Substitute the Manifest and Download URLs in the module.json
+      # for a PRE RELEASE (beta channel → next branch manifest).
+      - name: Echo Start Pre Release Substitution
+        if: "github.event.release.prerelease && contains(github.event.release.tag_name, '-beta.')"
+        run: echo "Starting pre release substitution..."
+      - name: Substitute Manifest and Download Links For Versioned Ones
+        if: "github.event.release.prerelease && contains(github.event.release.tag_name, '-beta.')"
+        id: sub_prerelease_manifest_version
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: 'module.json'
+        env:
+          version: ${{github.event.release.tag_name}}
+          url: https://github.com/${{github.repository}}
+          manifest: https://raw.githubusercontent.com/${{github.repository}}/next/module.json
+          download: https://github.com/${{github.repository}}/releases/download/${{github.event.release.tag_name}}/module.zip
+      - name: Echo End Pre Release Substitution
+        if: "github.event.release.prerelease && contains(github.event.release.tag_name, '-beta.')"
+        run: echo "Pre release substitution completed."
+
+      # Suffix pre-releases (e.g. 2.9.5-aura) — tag-scoped manifest, no next branch.
+      - name: Echo Start Suffix Pre Release Substitution
+        if: "github.event.release.prerelease && !contains(github.event.release.tag_name, '-beta.')"
+        run: echo "Starting suffix pre release substitution..."
+      - name: Substitute Manifest and Download Links For Suffix Pre Release
+        if: "github.event.release.prerelease && !contains(github.event.release.tag_name, '-beta.')"
+        id: sub_suffix_prerelease_manifest_version
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: 'module.json'
+        env:
+          version: ${{github.event.release.tag_name}}
+          url: https://github.com/${{github.repository}}
+          manifest: https://github.com/${{github.repository}}/releases/download/${{github.event.release.tag_name}}/module.json
+          download: https://github.com/${{github.repository}}/releases/download/${{github.event.release.tag_name}}/module.zip
+      - name: Echo End Suffix Pre Release Substitution
+        if: "github.event.release.prerelease && !contains(github.event.release.tag_name, '-beta.')"
+        run: echo "Suffix pre release substitution completed."
+
+      # Build the project so the dist/ folder is available for zipping (dist is purposely gitignored)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Bun (for local bun.lockb users)
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 'latest'
+
+      - name: Install dependencies and build (prefer bun when bun.lockb exists)
+        run: |
+          if [ -f bun.lockb ]; then
+            echo "bun.lockb found — installing with bun and building with bun"
+            bun install --no-save
+            bun run build
+          else
+            echo "No bun.lockb found — falling back to npm"
+            if [ -f package-lock.json ]; then
+              echo "package-lock.json found, running 'npm ci' for reproducible install"
+              npm ci
+            else
+              echo "No package-lock.json found, running 'npm install'"
+              npm install
+            fi
+            npm run build
+          fi
+
+      - name: Verify dist output
+        run: |
+          echo "Contents of dist:"
+          ls -la dist || true
+          if [ ! -d dist ] || [ -z "$(ls -A dist)" ]; then
+            echo "❌ dist is empty or missing; aborting release. Run 'npm run build' locally to reproduce.";
+            exit 1;
+          fi
+          if [ ! -f dist/style.css ]; then
+            echo "❌ dist/style.css is missing; aborting release. Build did not emit CSS. Run 'npm run build' locally to reproduce.";
+            exit 1;
+          fi
+
+      # Create a zip file with all files required by the module to add to the release
+      - name: Echo Start Zip Creation
+        run: echo "Starting zip creation..."
+      - run: zip -r ./module.zip module.json LICENSE index.js dist/ templates/ lang/ assets/
+      - name: Echo End Zip Creation
+        run: echo "Zip creation completed."
+
+      - name: Echo Start Zip Verification
+        run: echo "Starting module.zip verification..."
+      - name: Verify module.zip includes dist/style.css
+        run: |
+          echo "Listing module.zip contents:"
+          unzip -l module.zip
+          if ! unzip -l module.zip | awk '{print $4}' | grep -q '^dist/style.css$'; then
+            echo "❌ module.zip does not include dist/style.css; aborting release.";
+            exit 1;
+          else
+            echo "✅ module.zip contains dist/style.css";
+          fi
+      - name: Echo End Zip Verification
+        run: echo "Zip verification completed."
+
+      # Create a release for this specific version
+      - name: Echo Start Full Release Update
+        if: "!github.event.release.prerelease"
+        run: echo "Starting full release update..."
+      - name: Update Release with Files
+        if: "!github.event.release.prerelease"
+        id: create_version_release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true # Set this to false if you want to prevent updating existing releases
+          name: ${{ github.event.release.name }}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: './module.json, ./module.zip'
+          tag: ${{ github.event.release.tag_name }}
+          body: ${{ github.event.release.body }}
+      - name: Echo End Full Release Update
+        if: "!github.event.release.prerelease"
+        run: echo "Full release update completed."
+
+      #  OR create a pre-release for this specific version
+      - name: Echo Start Pre Release Update
+        if: "github.event.release.prerelease"
+        run: echo "Starting pre release update..."
+      - name: Update Release with Files
+        if: "github.event.release.prerelease"
+        id: create_version_prerelease
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true # Set this to false if you want to prevent updating existing releases
+          name: ${{ github.event.release.name }}
+          draft: false
+          prerelease: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: './module.json, ./module.zip'
+          tag: ${{ github.event.release.tag_name }}
+          body: ${{ github.event.release.body }}
+      - name: Echo End Pre Release Update
+        if: "github.event.release.prerelease"
+        run: echo "Pre release update completed."
+
+      # Update next branch (beta pre-releases only; suffix tags e.g. 2.9.5-aura skip this)
+      - name: Echo Start Repository Preparation
+        if: "github.event.release.prerelease && contains(github.event.release.tag_name, '-beta.')"
+        run: echo "Starting repository preparation..."
+      - name: Prepare repository
+        if: "github.event.release.prerelease && contains(github.event.release.tag_name, '-beta.')"
+        run: |
+          git config --global user.name '${{github.actor}}'
+          git config --global user.email '${{github.actor}}@users.noreply.github.com'
+          echo "Git config completed."
+          
+          # Save the modified module.json to a temporary file
+          cp module.json /tmp/modified-module.json
+          echo "Saved modified module.json to temp file."
+          
+          git reset --hard
+          git clean -fd
+          git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY"
+          git fetch origin "next"
+          git switch -c "next" "origin/next"
+          
+          # Restore the modified module.json
+          cp /tmp/modified-module.json module.json
+          echo "Restored modified module.json."
+          
+          git add module.json
+          echo "Staged changes:"
+          git status
+          git diff --staged
+          
+          # Only commit if there are actual changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit - next branch is already up to date."
+          else
+            git commit -m "${{github.event.release.tag_name}} manifest"
+            git push -f
+            echo "Committed and pushed manifest update."
+          fi
+      - name: Echo End Repository Preparation
+        if: "github.event.release.prerelease && contains(github.event.release.tag_name, '-beta.')"
+        run: echo "Repository preparation completed."
