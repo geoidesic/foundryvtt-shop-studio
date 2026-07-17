@@ -4,8 +4,12 @@
   "description": "Easily create shop actors for your PCs to interact with in-game",
   "version": "0.0.1",
   "socket": true,
-  "styles": ["dist/style.css"],
-  "esmodules": ["index.js"],
+  "styles": [
+    "dist/style.css"
+  ],
+  "esmodules": [
+    "index.js"
+  ],
   "languages": [
     {
       "lang": "en",
@@ -34,8 +38,12 @@
   },
   "flags": {
     "hotReload": {
-      "extensions": ["json"],
-      "paths": ["lang"]
+      "extensions": [
+        "json"
+      ],
+      "paths": [
+        "lang"
+      ]
     }
   }
 }

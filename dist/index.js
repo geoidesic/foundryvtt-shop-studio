@@ -17206,7 +17206,7 @@ function create_if_block$f(ctx) {
     if (
       /*iconType*/
       ctx2[3] === "font"
-    ) return create_if_block_1$8;
+    ) return create_if_block_1$9;
     if (
       /*iconType*/
       ctx2[3] === "img"
@@ -17313,7 +17313,7 @@ function create_if_block_2$5(ctx) {
     }
   };
 }
-function create_if_block_1$8(ctx) {
+function create_if_block_1$9(ctx) {
   let i;
   let i_class_value;
   return {
@@ -17648,7 +17648,7 @@ function create_if_block_2$4(ctx) {
     }
   };
 }
-function create_if_block_1$7(ctx) {
+function create_if_block_1$8(ctx) {
   let i;
   let i_class_value;
   return {
@@ -17902,7 +17902,7 @@ function create_key_block(ctx) {
     if (
       /*mediaType*/
       ctx2[8] === "font"
-    ) return create_if_block_1$7;
+    ) return create_if_block_1$8;
     if (
       /*mediaType*/
       ctx2[8] === "svg"
@@ -18736,7 +18736,7 @@ class TJSFocusWrap extends SvelteComponent {
     init(this, options, instance$r, create_fragment$r, safe_not_equal, { elementRoot: 2, enabled: 3 });
   }
 }
-function create_else_block$7(ctx) {
+function create_else_block$6(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -19326,7 +19326,7 @@ function create_fragment$q(ctx) {
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$d, create_else_block$7];
+  const if_block_creators = [create_if_block$d, create_else_block$6];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -19888,7 +19888,7 @@ class ApplicationShell extends SvelteComponent {
     flush();
   }
 }
-function create_else_block$6(ctx) {
+function create_else_block$5(ctx) {
   let div;
   let tjsapplicationheader;
   let t0;
@@ -20478,7 +20478,7 @@ function create_fragment$p(ctx) {
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$c, create_else_block$6];
+  const if_block_creators = [create_if_block$c, create_else_block$5];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -21154,7 +21154,7 @@ const log = {
     return this.loggingLevel;
   }
 };
-function create_default_slot$9(ctx) {
+function create_default_slot$a(ctx) {
   let main;
   let footer;
   let div0;
@@ -21205,7 +21205,7 @@ function create_fragment$o(ctx) {
     ctx[3](value);
   }
   let applicationshell_props = {
-    $$slots: { default: [create_default_slot$9] },
+    $$slots: { default: [create_default_slot$a] },
     $$scope: { ctx }
   };
   if (
@@ -23882,7 +23882,7 @@ class TJSPasteUUID {
     return text2;
   }
 }
-function create_if_block_1$6(ctx) {
+function create_if_block_1$7(ctx) {
   let a;
   let mounted;
   let dispose;
@@ -23916,7 +23916,7 @@ function create_if_block_1$6(ctx) {
     }
   };
 }
-function create_else_block$5(ctx) {
+function create_else_block$4(ctx) {
   let div;
   return {
     c() {
@@ -23970,14 +23970,14 @@ function create_fragment$m(ctx) {
   let dispose;
   let if_block0 = (
     /*editorButton*/
-    ctx[6] && create_if_block_1$6(ctx)
+    ctx[6] && create_if_block_1$7(ctx)
   );
   function select_block_type(ctx2, dirty) {
     if (
       /*editorActive*/
       ctx2[4]
     ) return create_if_block$a;
-    return create_else_block$5;
+    return create_else_block$4;
   }
   let current_block_type = select_block_type(ctx);
   let if_block1 = current_block_type(ctx);
@@ -24063,7 +24063,7 @@ function create_fragment$m(ctx) {
         if (if_block0) {
           if_block0.p(ctx2, dirty);
         } else {
-          if_block0 = create_if_block_1$6(ctx2);
+          if_block0 = create_if_block_1$7(ctx2);
           if_block0.c();
           if_block0.m(div, t);
         }
@@ -24882,7 +24882,7 @@ function get_each_context$7(ctx, list, i) {
   child_ctx[20] = i;
   return child_ctx;
 }
-function create_if_block_1$5(ctx) {
+function create_if_block_1$6(ctx) {
   let ul;
   let each_value = ensure_array_like(
     /*localList*/
@@ -25066,12 +25066,12 @@ function create_if_block$8(ctx) {
     }
   };
 }
-function create_default_slot$8(ctx) {
+function create_default_slot$9(ctx) {
   let if_block0_anchor;
   let if_block1_anchor;
   let if_block0 = (
     /*localList*/
-    ctx[2].length > 0 && create_if_block_1$5(ctx)
+    ctx[2].length > 0 && create_if_block_1$6(ctx)
   );
   let if_block1 = (
     /*localList*/
@@ -25098,7 +25098,7 @@ function create_default_slot$8(ctx) {
         if (if_block0) {
           if_block0.p(ctx2, dirty);
         } else {
-          if_block0 = create_if_block_1$5(ctx2);
+          if_block0 = create_if_block_1$6(ctx2);
           if_block0.c();
           if_block0.m(if_block0_anchor.parentNode, if_block0_anchor);
         }
@@ -25159,7 +25159,7 @@ function create_fragment$j(ctx) {
         /*handleDrop*/
         ctx[4]
       ),
-      $$slots: { default: [create_default_slot$8] },
+      $$slots: { default: [create_default_slot$9] },
       $$scope: { ctx }
     }
   });
@@ -25361,7 +25361,9 @@ function instance$j($$self, $$props, $$invalidate) {
       telemetry("drop-duplicate", { entry, localList });
       return;
     }
-    await persist([...localList, entry]);
+    const nextList = [...localList, entry];
+    await persist(nextList);
+    $$invalidate(2, localList = nextList);
     telemetry("drop-complete", {
       entry,
       flagsAfter: $doc.getFlag?.(MODULE_ID, "configuration")?.associatedActors
@@ -25382,7 +25384,9 @@ function instance$j($$self, $$props, $$invalidate) {
   }
   async function handleRemove(index) {
     telemetry("remove-start", { index, localList });
-    await persist(localList.filter((_, i) => i !== index));
+    const nextList = localList.filter((_, i) => i !== index);
+    await persist(nextList);
+    $$invalidate(2, localList = nextList);
     telemetry("remove-complete", {
       flagsAfter: $doc.getFlag?.(MODULE_ID, "configuration")?.associatedActors
     });
@@ -26057,7 +26061,7 @@ function create_if_block_2$3(ctx) {
     }
   };
 }
-function create_if_block_1$4(ctx) {
+function create_if_block_1$5(ctx) {
   let t_value = localize$1(
     /*label*/
     ctx[2]
@@ -26167,7 +26171,7 @@ function create_fragment$h(ctx) {
     /*icon*/
     ctx[1] && create_if_block_3$1(ctx)
   );
-  const if_block_creators = [create_if_block$7, create_if_block_1$4, create_if_block_2$3];
+  const if_block_creators = [create_if_block$7, create_if_block_1$5, create_if_block_2$3];
   const if_blocks = [];
   function select_block_type_1(ctx2, dirty) {
     if (dirty & /*label*/
@@ -26586,7 +26590,7 @@ class TJSSlotLabelUtil {
     return typeof label === "string" || TJSSvelte.config.isConfigEmbed(label);
   }
 }
-function create_else_block$4(ctx) {
+function create_else_block$3(ctx) {
   let current;
   const default_slot_template = (
     /*#slots*/
@@ -26655,7 +26659,7 @@ function create_if_block$6(ctx) {
   let if_block;
   let t;
   let current;
-  const if_block_creators = [create_if_block_1$3, create_if_block_2$2];
+  const if_block_creators = [create_if_block_1$4, create_if_block_2$2];
   const if_blocks = [];
   function select_block_type_1(ctx2, dirty) {
     if (dirty & /*label*/
@@ -26893,7 +26897,7 @@ function create_if_block_2$2(ctx) {
     }
   };
 }
-function create_if_block_1$3(ctx) {
+function create_if_block_1$4(ctx) {
   let span;
   let t_value = localize$1(
     /*label*/
@@ -26953,7 +26957,7 @@ function create_fragment$g(ctx) {
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$6, create_else_block$4];
+  const if_block_creators = [create_if_block$6, create_else_block$3];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -27046,7 +27050,7 @@ class TJSSlotLabel extends SvelteComponent {
     init(this, options, instance$g, create_fragment$g, safe_not_equal, { label: 0, enabled: 1, isPointer: 2 });
   }
 }
-function create_default_slot$7(ctx) {
+function create_default_slot$8(ctx) {
   let div;
   let input_1;
   let input_1_disabled_value;
@@ -27150,7 +27154,7 @@ function create_fragment$f(ctx) {
         ctx[0]
       ),
       isPointer: true,
-      $$slots: { default: [create_default_slot$7] },
+      $$slots: { default: [create_default_slot$8] },
       $$scope: { ctx }
     }
   });
@@ -27275,7 +27279,7 @@ class TJSInputCheckbox extends SvelteComponent {
     });
   }
 }
-function create_default_slot$6(ctx) {
+function create_default_slot$7(ctx) {
   let div;
   let input_1;
   let input_1_disabled_value;
@@ -27475,7 +27479,7 @@ function create_fragment$e(ctx) {
         /*enabled*/
         ctx[0]
       ),
-      $$slots: { default: [create_default_slot$6] },
+      $$slots: { default: [create_default_slot$7] },
       $$scope: { ctx }
     }
   });
@@ -27706,7 +27710,7 @@ class TJSInputNumber extends SvelteComponent {
     });
   }
 }
-function create_default_slot$5(ctx) {
+function create_default_slot$6(ctx) {
   let div;
   let input_1;
   let input_1_disabled_value;
@@ -27881,7 +27885,7 @@ function create_fragment$d(ctx) {
         /*enabled*/
         ctx[0]
       ),
-      $$slots: { default: [create_default_slot$5] },
+      $$slots: { default: [create_default_slot$6] },
       $$scope: { ctx }
     }
   });
@@ -28097,7 +28101,7 @@ class TJSInputRange extends SvelteComponent {
     });
   }
 }
-function create_default_slot$4(ctx) {
+function create_default_slot$5(ctx) {
   let tjsinputrange;
   let t;
   let tjsinputnumber;
@@ -28282,7 +28286,7 @@ function create_fragment$c(ctx) {
         /*enabled*/
         ctx[0]
       ),
-      $$slots: { default: [create_default_slot$4] },
+      $$slots: { default: [create_default_slot$5] },
       $$scope: { ctx }
     }
   });
@@ -28431,7 +28435,7 @@ class TJSInputRangeNumber extends SvelteComponent {
     });
   }
 }
-function create_default_slot$3(ctx) {
+function create_default_slot$4(ctx) {
   let div;
   let input_1;
   let input_1_disabled_value;
@@ -28585,7 +28589,7 @@ function create_fragment$b(ctx) {
         /*enabled*/
         ctx[0]
       ),
-      $$slots: { default: [create_default_slot$3] },
+      $$slots: { default: [create_default_slot$4] },
       $$scope: { ctx }
     }
   });
@@ -28863,7 +28867,7 @@ function create_each_block$6(ctx) {
     }
   };
 }
-function create_default_slot$2(ctx) {
+function create_default_slot$3(ctx) {
   let div;
   let select_1;
   let select_1_disabled_value;
@@ -29034,7 +29038,7 @@ function create_fragment$a(ctx) {
         /*enabled*/
         ctx[0]
       ),
-      $$slots: { default: [create_default_slot$2] },
+      $$slots: { default: [create_default_slot$3] },
       $$scope: { ctx }
     }
   });
@@ -29179,7 +29183,7 @@ class TJSSelect extends SvelteComponent {
     });
   }
 }
-function create_else_block$3(ctx) {
+function create_else_block$2(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -29264,7 +29268,7 @@ function create_else_block$3(ctx) {
     }
   };
 }
-function create_if_block_1$2(ctx) {
+function create_if_block_1$3(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -29469,7 +29473,7 @@ function create_fragment$9(ctx) {
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block$5, create_if_block_1$2, create_else_block$3];
+  const if_block_creators = [create_if_block$5, create_if_block_1$3, create_else_block$2];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -31086,7 +31090,8 @@ const DEFAULT_SHOP_CONFIGURATION = Object.freeze({
   variancePeriod: "daily",
   atrophyPercent: 5,
   associatedActors: [],
-  rollTables: []
+  rollTables: [],
+  rollTableRolls: []
 });
 function getShopIdentity(actor) {
   return actor?.getFlag?.(MODULE_ID, SHOP_FLAG_KEYS.identity) ?? actor?.getFlag?.(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.identity) ?? {};
@@ -32137,7 +32142,7 @@ function create_each_block_1$2(ctx) {
     }
   };
 }
-function create_else_block$2(ctx) {
+function create_else_block$1(ctx) {
   let div7;
   let div6;
   let div0;
@@ -32162,7 +32167,7 @@ function create_else_block$2(ctx) {
   }
   let if_block = (
     /*targetActorId*/
-    ctx[1] && create_if_block_1$1(ctx)
+    ctx[1] && create_if_block_1$2(ctx)
   );
   return {
     c() {
@@ -32262,7 +32267,7 @@ function create_else_block$2(ctx) {
         if (if_block) {
           if_block.p(ctx2, dirty);
         } else {
-          if_block = create_if_block_1$1(ctx2);
+          if_block = create_if_block_1$2(ctx2);
           if_block.c();
           if_block.m(div10, null);
         }
@@ -32542,7 +32547,7 @@ function create_each_block$4(ctx) {
     }
   };
 }
-function create_if_block_1$1(ctx) {
+function create_if_block_1$2(ctx) {
   let button;
   let mounted;
   let dispose;
@@ -32601,7 +32606,7 @@ function create_fragment$7(ctx) {
       /*basket*/
       ctx2[0].length === 0
     ) return create_if_block$4;
-    return create_else_block$2;
+    return create_else_block$1;
   }
   let current_block_type_1 = select_block_type_2(ctx);
   let if_block2 = current_block_type_1(ctx);
@@ -33098,36 +33103,27 @@ class BasketTab extends SvelteComponent {
     init(this, options, instance$7, create_fragment$7, safe_not_equal, { sharedProps: 16 }, null, [-1, -1]);
   }
 }
+const shopConfig = writable({
+  salePriceFactor: 100,
+  buyPriceFactor: 50,
+  priceVariance: 10,
+  variancePeriod: "daily",
+  atrophyPercent: 5,
+  associatedActors: [],
+  rollTables: [],
+  rollTableRolls: []
+});
 function get_each_context$3(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[4] = list[i];
-  child_ctx[6] = i;
+  child_ctx[18] = list[i];
+  child_ctx[20] = i;
   return child_ctx;
 }
-function create_else_block$1(ctx) {
-  let p;
-  return {
-    c() {
-      p = element("p");
-      p.textContent = "No roll tables configured. Drag some here to enable provisioning.";
-      attr(p, "class", "no-items");
-    },
-    m(target, anchor) {
-      insert(target, p, anchor);
-    },
-    p: noop,
-    d(detaching) {
-      if (detaching) {
-        detach(p);
-      }
-    }
-  };
-}
-function create_if_block$3(ctx) {
+function create_if_block_1$1(ctx) {
   let ul;
   let each_value = ensure_array_like(
-    /*sharedProps*/
-    ctx[0].rollTables
+    /*rollTables*/
+    ctx[1]
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
@@ -33139,7 +33135,7 @@ function create_if_block$3(ctx) {
       for (let i = 0; i < each_blocks.length; i += 1) {
         each_blocks[i].c();
       }
-      attr(ul, "class", "rolltable-list");
+      attr(ul, "class", "rolltable-bucket__list svelte-FOU-ug9k9m");
     },
     m(target, anchor) {
       insert(target, ul, anchor);
@@ -33150,11 +33146,11 @@ function create_if_block$3(ctx) {
       }
     },
     p(ctx2, dirty) {
-      if (dirty & /*sharedProps*/
-      1) {
+      if (dirty & /*sharedProps, handleRemoveRollTableClick, handleRollCountStepClick, rollTableRolls, handleRollCountInput, handleOpenRollTableClick, formatRollTableName, rollTables, formatRollTableImage*/
+      7815) {
         each_value = ensure_array_like(
-          /*sharedProps*/
-          ctx2[0].rollTables
+          /*rollTables*/
+          ctx2[1]
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
@@ -33183,68 +33179,319 @@ function create_if_block$3(ctx) {
 }
 function create_each_block$3(ctx) {
   let li;
+  let button0;
+  let img;
+  let img_src_value;
+  let img_alt_value;
   let span;
-  let t0_value = (
-    /*sharedProps*/
-    ctx[0].getRollTableName(
+  let t_value = (
+    /*formatRollTableName*/
+    ctx[7](
       /*rtUuid*/
-      ctx[4]
+      ctx[18]
     ) + ""
   );
-  let t0;
-  let button;
+  let t;
+  let div;
+  let button1;
+  let i0;
+  let button1_data_tooltip_value;
+  let input;
+  let input_value_value;
+  let input_aria_label_value;
+  let button2;
+  let i1;
+  let button2_data_tooltip_value;
+  let button3;
+  let i2;
+  let button3_data_tooltip_value;
   let mounted;
   let dispose;
-  function click_handler() {
-    return (
-      /*click_handler*/
-      ctx[3](
-        /*index*/
-        ctx[6]
-      )
-    );
-  }
   return {
     c() {
       li = element("li");
+      button0 = element("button");
+      img = element("img");
       span = element("span");
-      t0 = text(t0_value);
-      button = element("button");
-      button.textContent = "×";
-      attr(button, "class", "remove-btn");
-      attr(button, "type", "button");
+      t = text(t_value);
+      div = element("div");
+      button1 = element("button");
+      i0 = element("i");
+      input = element("input");
+      button2 = element("button");
+      i1 = element("i");
+      button3 = element("button");
+      i2 = element("i");
+      attr(img, "class", "rolltable-bucket__img svelte-FOU-ug9k9m");
+      if (!src_url_equal(img.src, img_src_value = formatRollTableImage(
+        /*rtUuid*/
+        ctx[18]
+      ))) attr(img, "src", img_src_value);
+      attr(img, "alt", img_alt_value = /*formatRollTableName*/
+      ctx[7](
+        /*rtUuid*/
+        ctx[18]
+      ));
+      attr(span, "class", "rolltable-bucket__name svelte-FOU-ug9k9m");
+      attr(button0, "class", "rolltable-bucket__open svelte-FOU-ug9k9m");
+      attr(button0, "type", "button");
+      attr(
+        button0,
+        "data-index",
+        /*index*/
+        ctx[20]
+      );
+      attr(i0, "class", "fa fa-minus");
+      attr(button1, "class", "rolltable-bucket__step svelte-FOU-ug9k9m");
+      attr(button1, "type", "button");
+      attr(
+        button1,
+        "data-index",
+        /*index*/
+        ctx[20]
+      );
+      attr(button1, "data-delta", "-1");
+      attr(button1, "data-tooltip", button1_data_tooltip_value = /*sharedProps*/
+      ctx[0].localize("Decrease"));
+      attr(input, "class", "rolltable-bucket__count svelte-FOU-ug9k9m");
+      attr(input, "type", "number");
+      attr(input, "min", "1");
+      attr(input, "step", "1");
+      attr(
+        input,
+        "data-index",
+        /*index*/
+        ctx[20]
+      );
+      input.value = input_value_value = /*rollTableRolls*/
+      ctx[2][
+        /*index*/
+        ctx[20]
+      ] ?? 1;
+      attr(input, "aria-label", input_aria_label_value = /*sharedProps*/
+      ctx[0].localize("RollCount"));
+      attr(i1, "class", "fa fa-plus");
+      attr(button2, "class", "rolltable-bucket__step svelte-FOU-ug9k9m");
+      attr(button2, "type", "button");
+      attr(
+        button2,
+        "data-index",
+        /*index*/
+        ctx[20]
+      );
+      attr(button2, "data-delta", "1");
+      attr(button2, "data-tooltip", button2_data_tooltip_value = /*sharedProps*/
+      ctx[0].localize("Increase"));
+      attr(div, "class", "rolltable-bucket__rolls svelte-FOU-ug9k9m");
+      attr(i2, "class", "fa fa-trash");
+      attr(button3, "class", "rolltable-bucket__remove svelte-FOU-ug9k9m");
+      attr(button3, "type", "button");
+      attr(
+        button3,
+        "data-index",
+        /*index*/
+        ctx[20]
+      );
+      attr(button3, "data-tooltip", button3_data_tooltip_value = /*sharedProps*/
+      ctx[0].localize("Types.Actor.ActionButtons.Delete"));
+      attr(li, "class", "rolltable-bucket__entry svelte-FOU-ug9k9m");
     },
     m(target, anchor) {
       insert(target, li, anchor);
-      append(li, span);
-      append(span, t0);
-      append(li, button);
+      append(li, button0);
+      append(button0, img);
+      append(button0, span);
+      append(span, t);
+      append(li, div);
+      append(div, button1);
+      append(button1, i0);
+      append(div, input);
+      append(div, button2);
+      append(button2, i1);
+      append(li, button3);
+      append(button3, i2);
       if (!mounted) {
-        dispose = listen(button, "click", click_handler);
+        dispose = [
+          listen(
+            button0,
+            "click",
+            /*handleOpenRollTableClick*/
+            ctx[12]
+          ),
+          listen(
+            button1,
+            "click",
+            /*handleRollCountStepClick*/
+            ctx[10]
+          ),
+          listen(
+            input,
+            "input",
+            /*handleRollCountInput*/
+            ctx[9]
+          ),
+          listen(
+            button2,
+            "click",
+            /*handleRollCountStepClick*/
+            ctx[10]
+          ),
+          listen(
+            button3,
+            "click",
+            /*handleRemoveRollTableClick*/
+            ctx[11]
+          )
+        ];
         mounted = true;
       }
     },
-    p(new_ctx, dirty) {
-      ctx = new_ctx;
-      if (dirty & /*sharedProps*/
-      1 && t0_value !== (t0_value = /*sharedProps*/
-      ctx[0].getRollTableName(
+    p(ctx2, dirty) {
+      if (dirty & /*rollTables*/
+      2 && !src_url_equal(img.src, img_src_value = formatRollTableImage(
         /*rtUuid*/
-        ctx[4]
-      ) + "")) set_data(t0, t0_value);
+        ctx2[18]
+      ))) {
+        attr(img, "src", img_src_value);
+      }
+      if (dirty & /*rollTables*/
+      2 && img_alt_value !== (img_alt_value = /*formatRollTableName*/
+      ctx2[7](
+        /*rtUuid*/
+        ctx2[18]
+      ))) {
+        attr(img, "alt", img_alt_value);
+      }
+      if (dirty & /*rollTables*/
+      2 && t_value !== (t_value = /*formatRollTableName*/
+      ctx2[7](
+        /*rtUuid*/
+        ctx2[18]
+      ) + "")) set_data(t, t_value);
+      if (dirty & /*sharedProps*/
+      1 && button1_data_tooltip_value !== (button1_data_tooltip_value = /*sharedProps*/
+      ctx2[0].localize("Decrease"))) {
+        attr(button1, "data-tooltip", button1_data_tooltip_value);
+      }
+      if (dirty & /*rollTableRolls*/
+      4 && input_value_value !== (input_value_value = /*rollTableRolls*/
+      ctx2[2][
+        /*index*/
+        ctx2[20]
+      ] ?? 1) && input.value !== input_value_value) {
+        input.value = input_value_value;
+      }
+      if (dirty & /*sharedProps*/
+      1 && input_aria_label_value !== (input_aria_label_value = /*sharedProps*/
+      ctx2[0].localize("RollCount"))) {
+        attr(input, "aria-label", input_aria_label_value);
+      }
+      if (dirty & /*sharedProps*/
+      1 && button2_data_tooltip_value !== (button2_data_tooltip_value = /*sharedProps*/
+      ctx2[0].localize("Increase"))) {
+        attr(button2, "data-tooltip", button2_data_tooltip_value);
+      }
+      if (dirty & /*sharedProps*/
+      1 && button3_data_tooltip_value !== (button3_data_tooltip_value = /*sharedProps*/
+      ctx2[0].localize("Types.Actor.ActionButtons.Delete"))) {
+        attr(button3, "data-tooltip", button3_data_tooltip_value);
+      }
     },
     d(detaching) {
       if (detaching) {
         detach(li);
       }
       mounted = false;
-      dispose();
+      run_all(dispose);
+    }
+  };
+}
+function create_if_block$3(ctx) {
+  let p;
+  return {
+    c() {
+      p = element("p");
+      p.textContent = "No roll tables configured. Drag some here to enable provisioning.";
+      attr(p, "class", "rolltable-bucket__empty svelte-FOU-ug9k9m");
+    },
+    m(target, anchor) {
+      insert(target, p, anchor);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(p);
+      }
+    }
+  };
+}
+function create_default_slot$2(ctx) {
+  let if_block0_anchor;
+  let if_block1_anchor;
+  let if_block0 = (
+    /*rollTables*/
+    ctx[1].length > 0 && create_if_block_1$1(ctx)
+  );
+  let if_block1 = (
+    /*rollTables*/
+    ctx[1].length === 0 && create_if_block$3()
+  );
+  return {
+    c() {
+      if (if_block0) if_block0.c();
+      if_block0_anchor = empty();
+      if (if_block1) if_block1.c();
+      if_block1_anchor = empty();
+    },
+    m(target, anchor) {
+      if (if_block0) if_block0.m(target, anchor);
+      insert(target, if_block0_anchor, anchor);
+      if (if_block1) if_block1.m(target, anchor);
+      insert(target, if_block1_anchor, anchor);
+    },
+    p(ctx2, dirty) {
+      if (
+        /*rollTables*/
+        ctx2[1].length > 0
+      ) {
+        if (if_block0) {
+          if_block0.p(ctx2, dirty);
+        } else {
+          if_block0 = create_if_block_1$1(ctx2);
+          if_block0.c();
+          if_block0.m(if_block0_anchor.parentNode, if_block0_anchor);
+        }
+      } else if (if_block0) {
+        if_block0.d(1);
+        if_block0 = null;
+      }
+      if (
+        /*rollTables*/
+        ctx2[1].length === 0
+      ) {
+        if (if_block1) ;
+        else {
+          if_block1 = create_if_block$3();
+          if_block1.c();
+          if_block1.m(if_block1_anchor.parentNode, if_block1_anchor);
+        }
+      } else if (if_block1) {
+        if_block1.d(1);
+        if_block1 = null;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(if_block0_anchor);
+        detach(if_block1_anchor);
+      }
+      if (if_block0) if_block0.d(detaching);
+      if (if_block1) if_block1.d(detaching);
     }
   };
 }
 function create_fragment$6(ctx) {
-  let div8;
   let div7;
+  let div6;
   let label0;
   let div0;
   let span0;
@@ -33255,14 +33502,13 @@ function create_fragment$6(ctx) {
   let t0;
   let strong0;
   let t1_value = formatFactor(
-    /*sharedProps*/
-    ctx[0].salePriceFactor,
+    /*$config*/
+    ctx[3].salePriceFactor,
     100
   ) + "";
   let t1;
   let t2;
   let input0;
-  let input0_value_value;
   let div1;
   let p0;
   let label1;
@@ -33275,55 +33521,60 @@ function create_fragment$6(ctx) {
   let t6;
   let strong1;
   let t7_value = formatFactor(
-    /*sharedProps*/
-    ctx[0].buyPriceFactor,
+    /*$config*/
+    ctx[3].buyPriceFactor,
     50
   ) + "";
   let t7;
   let t8;
   let input1;
-  let input1_value_value;
   let div3;
   let p1;
-  let div5;
-  let h3;
+  let div4;
+  let h2;
   let t12_value = (
     /*sharedProps*/
     ctx[0].localize("RollTables") + ""
   );
   let t12;
-  let div4;
-  let p2;
-  let t13_value = (
-    /*sharedProps*/
-    ctx[0].localize("DragRollTablesHere") + ""
-  );
   let t13;
+  let t14_value = (
+    /*rollTables*/
+    ctx[1].length + ""
+  );
   let t14;
-  let div6;
+  let t15;
+  let dropzone;
+  let div5;
   let button0;
-  let t15_value = (
+  let t16_value = (
     /*sharedProps*/
     ctx[0].localize("ProvisionStore") + ""
   );
-  let t15;
+  let t16;
   let button1;
+  let current;
   let mounted;
   let dispose;
-  function select_block_type(ctx2, dirty) {
-    if (
-      /*sharedProps*/
-      ctx2[0].rollTables && /*sharedProps*/
-      ctx2[0].rollTables.length > 0
-    ) return create_if_block$3;
-    return create_else_block$1;
-  }
-  let current_block_type = select_block_type(ctx);
-  let if_block = current_block_type(ctx);
+  dropzone = new DropZone({
+    props: {
+      placeholder: (
+        /*sharedProps*/
+        ctx[0].localize("DragRollTablesHere")
+      ),
+      acceptType: "RollTable",
+      onDrop: (
+        /*handleRollTableDrop*/
+        ctx[8]
+      ),
+      $$slots: { default: [create_default_slot$2] },
+      $$scope: { ctx }
+    }
+  });
   return {
     c() {
-      div8 = element("div");
       div7 = element("div");
+      div6 = element("div");
       label0 = element("label");
       div0 = element("div");
       span0 = element("span");
@@ -33348,26 +33599,20 @@ function create_fragment$6(ctx) {
       div3.innerHTML = `<span>50%</span><span>200%</span>`;
       p1 = element("p");
       p1.textContent = "Affects prices paid when buying from actors.";
-      div5 = element("div");
-      h3 = element("h3");
-      t12 = text(t12_value);
       div4 = element("div");
-      p2 = element("p");
-      t13 = text(t13_value);
-      t14 = text(" (from compendium or tables sidebar)");
-      if_block.c();
-      div6 = element("div");
+      h2 = element("h2");
+      t12 = text(t12_value);
+      t13 = text(" (");
+      t14 = text(t14_value);
+      t15 = text(")");
+      create_component(dropzone.$$.fragment);
+      div5 = element("div");
       button0 = element("button");
-      t15 = text(t15_value);
+      t16 = text(t16_value);
       button1 = element("button");
       button1.textContent = "Save Settings";
       attr(div0, "class", "setting-label");
       attr(input0, "type", "range");
-      input0.value = input0_value_value = formatFactor(
-        /*sharedProps*/
-        ctx[0].salePriceFactor,
-        100
-      );
       attr(input0, "min", "50");
       attr(input0, "max", "200");
       attr(input0, "step", "1");
@@ -33376,34 +33621,26 @@ function create_fragment$6(ctx) {
       attr(label0, "class", "setting-control");
       attr(div2, "class", "setting-label");
       attr(input1, "type", "range");
-      input1.value = input1_value_value = formatFactor(
-        /*sharedProps*/
-        ctx[0].buyPriceFactor,
-        50
-      );
       attr(input1, "min", "50");
       attr(input1, "max", "200");
       attr(input1, "step", "1");
       attr(div3, "class", "setting-range");
       attr(p1, "class", "setting-help");
       attr(label1, "class", "setting-control");
-      attr(p2, "class", "drag-hint");
-      attr(div4, "class", "drag-drop-area");
-      attr(div4, "role", "region");
-      attr(div4, "aria-label", "Roll table drop zone");
-      attr(div5, "class", "rolltables-section");
+      attr(h2, "class", "svelte-FOU-ug9k9m");
+      attr(div4, "class", "rolltables-section");
       attr(button0, "class", "provision-btn");
       attr(button0, "type", "button");
       attr(button1, "class", "save-btn");
       attr(button1, "type", "button");
-      attr(div6, "class", "actions");
-      attr(div7, "class", "settings-form ma-lg");
-      attr(div8, "class", "settings-tab");
+      attr(div5, "class", "actions");
+      attr(div6, "class", "settings-form ma-lg");
+      attr(div7, "class", "settings-tab");
     },
     m(target, anchor) {
-      insert(target, div8, anchor);
-      append(div8, div7);
-      append(div7, label0);
+      insert(target, div7, anchor);
+      append(div7, div6);
+      append(div6, label0);
       append(label0, div0);
       append(div0, span0);
       append(span0, t0);
@@ -33411,9 +33648,14 @@ function create_fragment$6(ctx) {
       append(strong0, t1);
       append(strong0, t2);
       append(label0, input0);
+      set_input_value(
+        input0,
+        /*$config*/
+        ctx[3].salePriceFactor
+      );
       append(label0, div1);
       append(label0, p0);
-      append(div7, label1);
+      append(div6, label1);
       append(label1, div2);
       append(div2, span3);
       append(span3, t6);
@@ -33421,46 +33663,63 @@ function create_fragment$6(ctx) {
       append(strong1, t7);
       append(strong1, t8);
       append(label1, input1);
+      set_input_value(
+        input1,
+        /*$config*/
+        ctx[3].buyPriceFactor
+      );
       append(label1, div3);
       append(label1, p1);
-      append(div7, div5);
-      append(div5, h3);
-      append(h3, t12);
-      append(div5, div4);
-      append(div4, p2);
-      append(p2, t13);
-      append(p2, t14);
-      if_block.m(div5, null);
-      append(div7, div6);
-      append(div6, button0);
-      append(button0, t15);
-      append(div6, button1);
+      append(div6, div4);
+      append(div4, h2);
+      append(h2, t12);
+      append(h2, t13);
+      append(h2, t14);
+      append(h2, t15);
+      mount_component(dropzone, div4, null);
+      append(div6, div5);
+      append(div5, button0);
+      append(button0, t16);
+      append(div5, button1);
+      current = true;
       if (!mounted) {
         dispose = [
           listen(
             input0,
+            "change",
+            /*input0_change_input_handler*/
+            ctx[13]
+          ),
+          listen(
+            input0,
+            "input",
+            /*input0_change_input_handler*/
+            ctx[13]
+          ),
+          listen(
+            input0,
             "input",
             /*onSaleFactorInput*/
-            ctx[1]
+            ctx[5]
+          ),
+          listen(
+            input1,
+            "change",
+            /*input1_change_input_handler*/
+            ctx[14]
+          ),
+          listen(
+            input1,
+            "input",
+            /*input1_change_input_handler*/
+            ctx[14]
           ),
           listen(
             input1,
             "input",
             /*onBuyFactorInput*/
-            ctx[2]
+            ctx[6]
           ),
-          listen(div4, "dragover", prevent_default(function() {
-            if (is_function(
-              /*sharedProps*/
-              ctx[0].handleDragOver
-            )) ctx[0].handleDragOver.apply(this, arguments);
-          })),
-          listen(div4, "drop", prevent_default(function() {
-            if (is_function(
-              /*sharedProps*/
-              ctx[0].handleRollTableDrop
-            )) ctx[0].handleRollTableDrop.apply(this, arguments);
-          })),
           listen(button0, "click", function() {
             if (is_function(
               /*sharedProps*/
@@ -33479,67 +33738,73 @@ function create_fragment$6(ctx) {
     },
     p(new_ctx, [dirty]) {
       ctx = new_ctx;
-      if (dirty & /*sharedProps*/
-      1 && t0_value !== (t0_value = /*sharedProps*/
+      if ((!current || dirty & /*sharedProps*/
+      1) && t0_value !== (t0_value = /*sharedProps*/
       ctx[0].localize("SalePriceFactor") + "")) set_data(t0, t0_value);
-      if (dirty & /*sharedProps*/
-      1 && t1_value !== (t1_value = formatFactor(
-        /*sharedProps*/
-        ctx[0].salePriceFactor,
+      if ((!current || dirty & /*$config*/
+      8) && t1_value !== (t1_value = formatFactor(
+        /*$config*/
+        ctx[3].salePriceFactor,
         100
       ) + "")) set_data(t1, t1_value);
-      if (dirty & /*sharedProps*/
-      1 && input0_value_value !== (input0_value_value = formatFactor(
-        /*sharedProps*/
-        ctx[0].salePriceFactor,
-        100
-      ))) {
-        input0.value = input0_value_value;
+      if (dirty & /*$config*/
+      8) {
+        set_input_value(
+          input0,
+          /*$config*/
+          ctx[3].salePriceFactor
+        );
       }
-      if (dirty & /*sharedProps*/
-      1 && t6_value !== (t6_value = /*sharedProps*/
+      if ((!current || dirty & /*sharedProps*/
+      1) && t6_value !== (t6_value = /*sharedProps*/
       ctx[0].localize("BuyPriceFactor") + "")) set_data(t6, t6_value);
-      if (dirty & /*sharedProps*/
-      1 && t7_value !== (t7_value = formatFactor(
-        /*sharedProps*/
-        ctx[0].buyPriceFactor,
+      if ((!current || dirty & /*$config*/
+      8) && t7_value !== (t7_value = formatFactor(
+        /*$config*/
+        ctx[3].buyPriceFactor,
         50
       ) + "")) set_data(t7, t7_value);
-      if (dirty & /*sharedProps*/
-      1 && input1_value_value !== (input1_value_value = formatFactor(
-        /*sharedProps*/
-        ctx[0].buyPriceFactor,
-        50
-      ))) {
-        input1.value = input1_value_value;
+      if (dirty & /*$config*/
+      8) {
+        set_input_value(
+          input1,
+          /*$config*/
+          ctx[3].buyPriceFactor
+        );
       }
-      if (dirty & /*sharedProps*/
-      1 && t12_value !== (t12_value = /*sharedProps*/
+      if ((!current || dirty & /*sharedProps*/
+      1) && t12_value !== (t12_value = /*sharedProps*/
       ctx[0].localize("RollTables") + "")) set_data(t12, t12_value);
+      if ((!current || dirty & /*rollTables*/
+      2) && t14_value !== (t14_value = /*rollTables*/
+      ctx[1].length + "")) set_data(t14, t14_value);
+      const dropzone_changes = {};
       if (dirty & /*sharedProps*/
-      1 && t13_value !== (t13_value = /*sharedProps*/
-      ctx[0].localize("DragRollTablesHere") + "")) set_data(t13, t13_value);
-      if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block) {
-        if_block.p(ctx, dirty);
-      } else {
-        if_block.d(1);
-        if_block = current_block_type(ctx);
-        if (if_block) {
-          if_block.c();
-          if_block.m(div5, null);
-        }
+      1) dropzone_changes.placeholder = /*sharedProps*/
+      ctx[0].localize("DragRollTablesHere");
+      if (dirty & /*$$scope, rollTables, sharedProps, rollTableRolls*/
+      2097159) {
+        dropzone_changes.$$scope = { dirty, ctx };
       }
-      if (dirty & /*sharedProps*/
-      1 && t15_value !== (t15_value = /*sharedProps*/
-      ctx[0].localize("ProvisionStore") + "")) set_data(t15, t15_value);
+      dropzone.$set(dropzone_changes);
+      if ((!current || dirty & /*sharedProps*/
+      1) && t16_value !== (t16_value = /*sharedProps*/
+      ctx[0].localize("ProvisionStore") + "")) set_data(t16, t16_value);
     },
-    i: noop,
-    o: noop,
+    i(local) {
+      if (current) return;
+      transition_in(dropzone.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(dropzone.$$.fragment, local);
+      current = false;
+    },
     d(detaching) {
       if (detaching) {
-        detach(div8);
+        detach(div7);
       }
-      if_block.d();
+      destroy_component(dropzone);
       mounted = false;
       run_all(dispose);
     }
@@ -33549,19 +33814,179 @@ function formatFactor(value, fallback) {
   const factor = Number(value ?? fallback);
   return Number.isFinite(factor) ? factor : fallback;
 }
+function normalizeRollTableRolls$1(tables, rolls) {
+  const tableList = Array.isArray(tables) ? tables : [];
+  const rollList = Array.isArray(rolls) ? rolls : [];
+  return tableList.map((_, index) => {
+    const count = Number.parseInt(rollList[index], 10);
+    return Number.isFinite(count) && count > 0 ? count : 1;
+  });
+}
+function arraysEqual(left, right) {
+  return Array.isArray(left) && Array.isArray(right) && left.length === right.length && left.every((value, index) => value === right[index]);
+}
+function getRollTableKey(entry) {
+  if (typeof entry === "object" && entry !== null) return entry.uuid || entry.id;
+  return entry;
+}
+async function resolveRollTable(data) {
+  if (!data || data.type !== "RollTable") return null;
+  if (data.uuid) {
+    try {
+      const table = await fromUuid(data.uuid);
+      if (table) return table;
+    } catch (err) {
+      console.error("RollTable UUID resolve error:", err);
+    }
+  }
+  if (data.id) return game.tables.get(data.id) ?? null;
+  try {
+    return await RollTable.implementation.fromDropData(data);
+  } catch (err) {
+    console.error("RollTable drop resolve error:", err);
+    return null;
+  }
+}
+function toRollTableEntry(table) {
+  return {
+    id: table.id,
+    uuid: table.uuid,
+    name: table.name,
+    img: table.img || null
+  };
+}
+function formatRollTableImage(entry) {
+  if (typeof entry === "object" && entry !== null) return entry.img || "icons/svg/d20-grey.svg";
+  return "icons/svg/d20-grey.svg";
+}
+function openRollTable(entry) {
+  const table = typeof entry === "object" && entry !== null ? entry.uuid ? fromUuidSync(entry.uuid) : game.tables.get(entry.id) : entry?.includes?.(".") ? fromUuidSync(entry) : game.tables.get(entry);
+  table?.sheet?.render(true);
+}
 function instance$6($$self, $$props, $$invalidate) {
+  let $config;
   let { sharedProps = {} } = $$props;
+  const config = getContext("shopConfig") || shopConfig;
+  component_subscribe($$self, config, (value) => $$invalidate(3, $config = value));
+  let rollTables = [];
+  let rollTableRolls = [];
   function onSaleFactorInput(event) {
-    sharedProps.onSalePriceFactorChange?.(event.target.value);
+    config.update((current) => ({
+      ...current,
+      salePriceFactor: Number(event.target.value)
+    }));
   }
   function onBuyFactorInput(event) {
-    sharedProps.onBuyPriceFactorChange?.(event.target.value);
+    config.update((current) => ({
+      ...current,
+      buyPriceFactor: Number(event.target.value)
+    }));
   }
-  const click_handler = (index) => sharedProps.removeRollTable(index);
+  function syncRollTableRolls(tables, normalizedRolls, currentRolls) {
+    if (arraysEqual(normalizedRolls, currentRolls)) return;
+    config.update((current) => ({
+      ...current,
+      rollTableRolls: normalizedRolls
+    }));
+  }
+  function formatRollTableName(entry) {
+    if (typeof entry === "object" && entry !== null) {
+      return entry.name || sharedProps.getRollTableName?.(entry) || entry.uuid || entry.id;
+    }
+    return sharedProps.getRollTableName?.(entry) || entry;
+  }
+  async function handleRollTableDrop(data) {
+    if (!sharedProps.isEditing) {
+      ui.notifications.error(sharedProps.localize("EditModeRequired"));
+      return;
+    }
+    const table = await resolveRollTable(data);
+    if (!table) {
+      ui.notifications.warn(sharedProps.localize("CouldNotResolveRollTable") || "Could not resolve roll table.");
+      return;
+    }
+    const entry = toRollTableEntry(table);
+    if (rollTables.some((existing) => getRollTableKey(existing) === getRollTableKey(entry))) return;
+    config.update((current) => ({
+      ...current,
+      rollTables: [...rollTables, entry],
+      rollTableRolls: [...rollTableRolls, 1]
+    }));
+    await sharedProps.silentSaveSettings?.();
+  }
+  async function removeRollTable(index) {
+    config.update((current) => ({
+      ...current,
+      rollTables: rollTables.filter((_, i) => i !== index),
+      rollTableRolls: rollTableRolls.filter((_, i) => i !== index)
+    }));
+    await sharedProps.silentSaveSettings?.();
+  }
+  function setRollTableRollCount(index, value) {
+    const nextRolls = [...rollTableRolls];
+    const count = Number.parseInt(value, 10);
+    nextRolls[index] = Number.isFinite(count) && count > 0 ? count : 1;
+    config.update((current) => ({
+      ...current,
+      rollTableRolls: normalizeRollTableRolls$1(rollTables, nextRolls)
+    }));
+  }
+  function handleRollCountInput(event) {
+    setRollTableRollCount(Number(event.currentTarget.dataset.index), event.currentTarget.value);
+  }
+  function handleRollCountStepClick(event) {
+    const index = Number(event.currentTarget.dataset.index);
+    const delta = Number(event.currentTarget.dataset.delta);
+    setRollTableRollCount(index, (rollTableRolls[index] ?? 1) + delta);
+  }
+  function handleRemoveRollTableClick(event) {
+    removeRollTable(Number(event.currentTarget.dataset.index));
+  }
+  function handleOpenRollTableClick(event) {
+    openRollTable(rollTables[Number(event.currentTarget.dataset.index)]);
+  }
+  function input0_change_input_handler() {
+    $config.salePriceFactor = to_number(this.value);
+    config.set($config);
+  }
+  function input1_change_input_handler() {
+    $config.buyPriceFactor = to_number(this.value);
+    config.set($config);
+  }
   $$self.$$set = ($$props2) => {
     if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
   };
-  return [sharedProps, onSaleFactorInput, onBuyFactorInput, click_handler];
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*$config*/
+    8) {
+      $$invalidate(1, rollTables = Array.isArray($config.rollTables) ? $config.rollTables : []);
+    }
+    if ($$self.$$.dirty & /*rollTables, $config*/
+    10) {
+      $$invalidate(2, rollTableRolls = normalizeRollTableRolls$1(rollTables, $config.rollTableRolls));
+    }
+    if ($$self.$$.dirty & /*rollTables, rollTableRolls, $config*/
+    14) {
+      syncRollTableRolls(rollTables, rollTableRolls, $config.rollTableRolls);
+    }
+  };
+  return [
+    sharedProps,
+    rollTables,
+    rollTableRolls,
+    $config,
+    config,
+    onSaleFactorInput,
+    onBuyFactorInput,
+    formatRollTableName,
+    handleRollTableDrop,
+    handleRollCountInput,
+    handleRollCountStepClick,
+    handleRemoveRollTableClick,
+    handleOpenRollTableClick,
+    input0_change_input_handler,
+    input1_change_input_handler
+  ];
 }
 class SettingsTab extends SvelteComponent {
   constructor(options) {
@@ -33576,7 +34001,7 @@ function create_fragment$5(ctx) {
   let updating_activeTab;
   let current;
   function tabs_1_activeTab_binding(value) {
-    ctx[19](value);
+    ctx[20](value);
   }
   let tabs_1_props = {
     class: "gas-tabs",
@@ -33646,6 +34071,129 @@ function create_fragment$5(ctx) {
     }
   };
 }
+function normalizeRollTableRolls(tables = [], rolls = []) {
+  const tableList = Array.isArray(tables) ? tables : [];
+  const rollList = Array.isArray(rolls) ? rolls : [];
+  return tableList.map((_, index) => {
+    const count = Number.parseInt(rollList[index], 10);
+    return Number.isFinite(count) && count > 0 ? count : 1;
+  });
+}
+async function drawRollTableResults(table, count) {
+  const drawOptions = { displayChat: false, recursive: true };
+  if (typeof table.drawMany === "function") {
+    try {
+      return getRollTableDrawResults(await table.drawMany(count, drawOptions));
+    } catch (err) {
+      console.error("Roll table drawMany error:", err);
+    }
+  }
+  const results = [];
+  for (let index = 0; index < count; index += 1) {
+    try {
+      results.push(...getRollTableDrawResults(await table.draw(drawOptions)));
+    } catch (err) {
+      console.error("Roll table draw error:", err);
+    }
+  }
+  return results;
+}
+function getRollTableDrawResults(draw) {
+  return toArray(draw?.results ?? draw?.RollTableDraw?.results);
+}
+function toArray(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value.contents)) return value.contents;
+  if (typeof value.values === "function") return Array.from(value.values());
+  return [];
+}
+async function resolveConfiguredRollTable(entry) {
+  if (typeof entry === "object" && entry !== null) {
+    if (entry.uuid) {
+      try {
+        return await fromUuid(entry.uuid);
+      } catch (err) {
+        console.error("Configured roll table UUID resolve error:", err);
+        return null;
+      }
+    }
+    if (entry.id) return game.tables.get(entry.id) ?? null;
+    return null;
+  }
+  if (entry?.includes?.(".")) {
+    try {
+      return await fromUuid(entry);
+    } catch (err) {
+      console.error("Configured roll table UUID resolve error:", err);
+      return null;
+    }
+  }
+  return game.tables.get(entry) ?? null;
+}
+async function resolveTableResultDocument(result) {
+  if (!result) return null;
+  if (result.document) return result.document;
+  if (typeof result.getDocument === "function") {
+    try {
+      const document2 = await result.getDocument();
+      if (document2) return document2;
+    } catch (err) {
+      console.error("Roll table result getDocument error:", err);
+    }
+  }
+  const uuids = getTableResultDocumentUuids(result);
+  for (const uuid of uuids) {
+    try {
+      const document2 = await fromUuid(uuid);
+      if (document2) return document2;
+    } catch (err) {
+      console.error("Roll table result UUID resolve error:", err);
+    }
+  }
+  if (result.uuid) {
+    try {
+      const document2 = await fromUuid(result.uuid);
+      if (document2) return document2;
+    } catch (err) {
+      console.error("Roll table result UUID resolve error:", err);
+    }
+  }
+  const collectionName = result.documentCollection;
+  const documentId = result.documentId;
+  if (!collectionName || !documentId) return null;
+  const worldCollection = getWorldCollection(collectionName);
+  const worldDocument = worldCollection?.get?.(documentId);
+  if (worldDocument) return worldDocument;
+  const pack = game.packs?.get(collectionName);
+  if (pack) return pack.getDocument(documentId);
+  return null;
+}
+function getTableResultDocumentUuids(result) {
+  const documentUuid = result.documentUuid ?? result.documentUUID;
+  if (documentUuid) return [documentUuid];
+  const collectionName = result.documentCollection;
+  const documentId = result.documentId;
+  if (!collectionName || !documentId) return [];
+  if (collectionName.startsWith("Compendium.")) return [`${collectionName}.${documentId}`];
+  if (game.packs?.has(collectionName)) return [`Compendium.${collectionName}.${documentId}`];
+  const documentName = getDocumentName(collectionName);
+  const uuids = [`${collectionName}.${documentId}`];
+  if (documentName && documentName !== collectionName) uuids.push(`${documentName}.${documentId}`);
+  return uuids;
+}
+function getWorldCollection(collectionName) {
+  const documentName = getDocumentName(collectionName);
+  return game.collections?.get(collectionName) ?? game.collections?.get(documentName) ?? game[collectionName] ?? game[collectionName.toLowerCase?.()] ?? game[`${collectionName.toLowerCase?.()}s`] ?? game[`${documentName?.toLowerCase?.()}s`] ?? null;
+}
+function getDocumentName(collectionName) {
+  if (!collectionName || collectionName.startsWith("Compendium.") || collectionName.includes(".")) return null;
+  if (collectionName === "items") return "Item";
+  return collectionName.charAt(0).toUpperCase() + collectionName.slice(1).replace(/s$/, "");
+}
+function getProvisionItemKey(item) {
+  return `${item.type}::${item.name}`;
+}
 function handleDragOver(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = "copy";
@@ -33657,9 +34205,16 @@ function getActorName$1(id) {
   const a = game.actors.get(id);
   return a?.name || id || "Unknown Actor";
 }
-function getRollTableName(id) {
-  const rt = game.tables.get(id);
-  return rt?.name || id || "Unknown Table";
+function getRollTableName(entry) {
+  if (typeof entry === "object" && entry !== null) {
+    if (entry.name) return entry.name;
+    const uuidTable2 = entry.uuid ? fromUuidSync(entry.uuid) : null;
+    const idTable2 = entry.id ? game.tables.get(entry.id) : null;
+    return uuidTable2?.name || idTable2?.name || entry.uuid || entry.id || "Unknown Table";
+  }
+  const uuidTable = entry?.includes?.(".") ? fromUuidSync(entry) : null;
+  const idTable = game.tables.get(entry);
+  return uuidTable?.name || idTable?.name || entry || "Unknown Table";
 }
 function instance$5($$self, $$props, $$invalidate) {
   let actor;
@@ -33668,15 +34223,19 @@ function instance$5($$self, $$props, $$invalidate) {
   let tabs;
   let tabProps;
   let $documentStore, $$unsubscribe_documentStore = noop, $$subscribe_documentStore = () => ($$unsubscribe_documentStore(), $$unsubscribe_documentStore = subscribe(documentStore, ($$value) => $$invalidate(18, $documentStore = $$value)), documentStore);
+  let $shopConfig;
+  component_subscribe($$self, shopConfig, ($$value) => $$invalidate(19, $shopConfig = $$value));
   $$self.$$.on_destroy.push(() => $$unsubscribe_documentStore());
   let { documentStore } = $$props;
   $$subscribe_documentStore();
   const application = getContext("#external").application;
   setContext("#doc", documentStore);
+  setContext("shopConfig", shopConfig);
   let activeTab = "shopfront";
   let filterText = "";
   let associatedActors = [];
   let rollTables = [];
+  let rollTableRolls = [];
   let salePriceFactor = 100;
   let buyPriceFactor = 50;
   let priceVariance = 10;
@@ -33718,34 +34277,117 @@ function instance$5($$self, $$props, $$invalidate) {
       ui.notifications.warn(localize("NoPermission"));
       return;
     }
-    await setShopConfiguration(actor, {
-      salePriceFactor: parseFloat(salePriceFactor),
-      buyPriceFactor: parseFloat(buyPriceFactor),
-      priceVariance: parseFloat(priceVariance),
-      variancePeriod,
-      atrophyPercent: parseFloat(atrophyPercent),
-      associatedActors,
-      rollTables
-    });
+    const nextConfig = {
+      ...$shopConfig,
+      salePriceFactor: parseFloat($shopConfig.salePriceFactor),
+      buyPriceFactor: parseFloat($shopConfig.buyPriceFactor),
+      priceVariance: parseFloat($shopConfig.priceVariance),
+      variancePeriod: $shopConfig.variancePeriod,
+      atrophyPercent: parseFloat($shopConfig.atrophyPercent),
+      associatedActors: $shopConfig.associatedActors,
+      rollTables: $shopConfig.rollTables,
+      rollTableRolls: normalizeRollTableRolls($shopConfig.rollTables, $shopConfig.rollTableRolls)
+    };
+    await setShopConfiguration(actor, nextConfig);
+    shopConfig.set(nextConfig);
     ui.notifications.info(localize("SettingsSaved"));
   }
   async function silentSaveSettings() {
     if (!actor?.isOwner) return;
-    await setShopConfiguration(actor, {
-      salePriceFactor: parseFloat(salePriceFactor),
-      buyPriceFactor: parseFloat(buyPriceFactor),
-      priceVariance: parseFloat(priceVariance),
-      variancePeriod,
-      atrophyPercent: parseFloat(atrophyPercent),
-      associatedActors,
-      rollTables
-    });
+    const nextConfig = {
+      ...$shopConfig,
+      salePriceFactor: parseFloat($shopConfig.salePriceFactor),
+      buyPriceFactor: parseFloat($shopConfig.buyPriceFactor),
+      priceVariance: parseFloat($shopConfig.priceVariance),
+      variancePeriod: $shopConfig.variancePeriod,
+      atrophyPercent: parseFloat($shopConfig.atrophyPercent),
+      associatedActors: $shopConfig.associatedActors,
+      rollTables: $shopConfig.rollTables,
+      rollTableRolls: normalizeRollTableRolls($shopConfig.rollTables, $shopConfig.rollTableRolls)
+    };
+    await setShopConfiguration(actor, nextConfig);
+    shopConfig.set(nextConfig);
   }
   async function provisionStore() {
-    if (!actor?.isOwner) return;
-    ui.notifications.info("Provisioning store... This will roll on configured tables, apply pricing variance, and update inventory.");
-    const numToAdd = 5;
-    ui.notifications.info(`Added ${numToAdd} items to inventory.`);
+    if (!actor?.isOwner) {
+      ui.notifications.warn(localize("NoPermission"));
+      return;
+    }
+    const configuredTables = Array.isArray($shopConfig.rollTables) ? $shopConfig.rollTables : [];
+    const configuredRolls = normalizeRollTableRolls(configuredTables, $shopConfig.rollTableRolls);
+    if (!configuredTables.length) {
+      ui.notifications.warn(localize("NoRollTablesConfigured") || "No roll tables configured.");
+      return;
+    }
+    ui.notifications.info(localize("ProvisioningStore") || "Provisioning store...");
+    const items = await rollProvisionItems(configuredTables, configuredRolls);
+    if (!items.length) {
+      ui.notifications.warn(localize("ProvisionNoItems") || "No item results were rolled.");
+      return;
+    }
+    const addedCount = await upsertProvisionItems(items);
+    ui.notifications.info(game.i18n.format(`${MODULE_ID}.ProvisionComplete`, { count: addedCount }) || `Added ${addedCount} items to inventory.`);
+  }
+  async function rollProvisionItems(configuredTables, configuredRolls) {
+    const rollPlans = [];
+    for (const [index, entry] of configuredTables.entries()) {
+      const table = await resolveConfiguredRollTable(entry);
+      if (table) {
+        rollPlans.push({
+          table,
+          count: Math.max(1, Number(configuredRolls[index] ?? 1))
+        });
+      }
+    }
+    const items = [];
+    for (const plan of rollPlans) {
+      const results = await drawRollTableResults(plan.table, plan.count);
+      for (const result of results) {
+        const document2 = await resolveTableResultDocument(result);
+        if (document2?.documentName === "Item" && isItemTypeListable(document2.type)) {
+          items.push(document2);
+        }
+      }
+    }
+    return items;
+  }
+  async function upsertProvisionItems(items) {
+    let addedCount = 0;
+    const provisionedByKey = /* @__PURE__ */ new Map();
+    for (const item of items) {
+      const key = getProvisionItemKey(item);
+      const entry = provisionedByKey.get(key);
+      if (entry) {
+        entry.quantity += 1;
+      } else {
+        provisionedByKey.set(key, { item, quantity: 1 });
+      }
+      addedCount += 1;
+    }
+    const updates = [];
+    const createData = [];
+    for (const { item, quantity } of provisionedByKey.values()) {
+      const duplicate = actor.items.find((candidate) => getProvisionItemKey(candidate) === getProvisionItemKey(item));
+      if (duplicate) {
+        updates.push({
+          _id: duplicate.id,
+          "system.quantity": Number(duplicate.system?.quantity ?? 0) + quantity
+        });
+        continue;
+      }
+      const itemData = item.toObject();
+      delete itemData._id;
+      itemData.system = itemData.system ?? {};
+      itemData.system.quantity = Math.max(1, Number(itemData.system.quantity ?? 1)) + quantity - 1;
+      createData.push(itemData);
+    }
+    if (updates.length) {
+      await actor.updateEmbeddedDocuments("Item", updates);
+    }
+    if (createData.length) {
+      await actor.createEmbeddedDocuments("Item", createData);
+    }
+    return addedCount;
   }
   function handleDrop(e, dropType) {
     e.preventDefault();
@@ -33758,13 +34400,20 @@ function instance$5($$self, $$props, $$invalidate) {
       if (dropType === "actor" && data.type === "Actor" && (data.uuid || data.id)) {
         const actorId = data.id || data.uuid.split(".").pop();
         if (!associatedActors.includes(actorId)) {
-          $$invalidate(5, associatedActors = [...associatedActors, actorId]);
+          shopConfig.update((current) => ({
+            ...current,
+            associatedActors: [...associatedActors, actorId]
+          }));
           saveSettings();
         }
       } else if (dropType === "rolltable" && data.type === "RollTable" && data.uuid) {
         const tableId = data.id || data.uuid.split(".").pop();
         if (!rollTables.includes(tableId)) {
-          $$invalidate(6, rollTables = [...rollTables, tableId]);
+          shopConfig.update((current) => ({
+            ...current,
+            rollTables: [...rollTables, tableId],
+            rollTableRolls: [...normalizeRollTableRolls(rollTables, rollTableRolls), 1]
+          }));
           saveSettings();
         }
       }
@@ -33779,11 +34428,18 @@ function instance$5($$self, $$props, $$invalidate) {
     handleDrop(e, "rolltable");
   }
   function removeAssociated(index) {
-    $$invalidate(5, associatedActors = associatedActors.filter((_, i) => i !== index));
+    shopConfig.update((current) => ({
+      ...current,
+      associatedActors: associatedActors.filter((_, i) => i !== index)
+    }));
     saveSettings();
   }
   function removeRollTable(index) {
-    $$invalidate(6, rollTables = rollTables.filter((_, i) => i !== index));
+    shopConfig.update((current) => ({
+      ...current,
+      rollTables: rollTables.filter((_, i) => i !== index),
+      rollTableRolls: normalizeRollTableRolls(rollTables, rollTableRolls).filter((_, i) => i !== index)
+    }));
     saveSettings();
   }
   function clearFilter() {
@@ -33835,18 +34491,54 @@ function instance$5($$self, $$props, $$invalidate) {
     32768) {
       $$invalidate(16, isEditing = isShopEditing(actor));
     }
-    if ($$self.$$.dirty[0] & /*actor, initializedActorId, config*/
-    172032) {
+    if ($$self.$$.dirty[0] & /*actor, initializedActorId*/
+    40960) {
       if (actor?.id && actor.id !== initializedActorId) {
-        $$invalidate(7, salePriceFactor = config.salePriceFactor ?? 100);
-        $$invalidate(8, buyPriceFactor = config.buyPriceFactor ?? 50);
-        $$invalidate(9, priceVariance = config.priceVariance ?? 10);
-        $$invalidate(10, variancePeriod = config.variancePeriod ?? "daily");
-        $$invalidate(11, atrophyPercent = config.atrophyPercent ?? 5);
-        $$invalidate(5, associatedActors = config.associatedActors ?? []);
-        $$invalidate(6, rollTables = config.rollTables ?? []);
+        const config2 = getShopConfiguration(actor);
+        shopConfig.set({
+          salePriceFactor: config2.salePriceFactor ?? 100,
+          buyPriceFactor: config2.buyPriceFactor ?? 50,
+          priceVariance: config2.priceVariance ?? 10,
+          variancePeriod: config2.variancePeriod ?? "daily",
+          atrophyPercent: config2.atrophyPercent ?? 5,
+          associatedActors: config2.associatedActors ?? [],
+          rollTables: config2.rollTables ?? [],
+          rollTableRolls: normalizeRollTableRolls(config2.rollTables ?? [], config2.rollTableRolls ?? [])
+        });
         $$invalidate(13, initializedActorId = actor.id);
       }
+    }
+    if ($$self.$$.dirty[0] & /*$shopConfig*/
+    524288) {
+      $$invalidate(7, salePriceFactor = $shopConfig.salePriceFactor);
+    }
+    if ($$self.$$.dirty[0] & /*$shopConfig*/
+    524288) {
+      $$invalidate(8, buyPriceFactor = $shopConfig.buyPriceFactor);
+    }
+    if ($$self.$$.dirty[0] & /*$shopConfig*/
+    524288) {
+      $$invalidate(9, priceVariance = $shopConfig.priceVariance);
+    }
+    if ($$self.$$.dirty[0] & /*$shopConfig*/
+    524288) {
+      $$invalidate(10, variancePeriod = $shopConfig.variancePeriod);
+    }
+    if ($$self.$$.dirty[0] & /*$shopConfig*/
+    524288) {
+      $$invalidate(11, atrophyPercent = $shopConfig.atrophyPercent);
+    }
+    if ($$self.$$.dirty[0] & /*$shopConfig*/
+    524288) {
+      $$invalidate(5, associatedActors = $shopConfig.associatedActors);
+    }
+    if ($$self.$$.dirty[0] & /*$shopConfig*/
+    524288) {
+      $$invalidate(6, rollTables = $shopConfig.rollTables);
+    }
+    if ($$self.$$.dirty[0] & /*$shopConfig*/
+    524288) {
+      rollTableRolls = $shopConfig.rollTableRolls;
     }
     if ($$self.$$.dirty[0] & /*actor, restoredSelectionActorId, selectedActorId, config*/
     184320) {
@@ -33895,7 +34587,7 @@ function instance$5($$self, $$props, $$invalidate) {
           $$invalidate(11, atrophyPercent = Number(value));
         },
         onAssociatedActorsChange: (list) => {
-          $$invalidate(5, associatedActors = list);
+          shopConfig.update((current) => ({ ...current, associatedActors: list }));
         },
         onTargetActorChange: selectTargetActor,
         rollTables,
@@ -33959,6 +34651,7 @@ function instance$5($$self, $$props, $$invalidate) {
     isEditing,
     config,
     $documentStore,
+    $shopConfig,
     tabs_1_activeTab_binding
   ];
 }
@@ -35701,6 +36394,7 @@ class SvelteDocumentSheet extends SvelteApp {
   #documentStore = new TJSDocument(void 0, { delete: this.close.bind(this) });
   constructor(object) {
     super();
+    this.options.document = object;
     this.options.document = object;
     Object.defineProperty(this.reactive, "document", {
       get: () => this.#documentStore.get(),
