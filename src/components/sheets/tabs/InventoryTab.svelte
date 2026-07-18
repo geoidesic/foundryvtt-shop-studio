@@ -224,7 +224,7 @@
 <template lang="pug">
 
     .panel.overflow.containerx
-      .flexrow.pt-sm.pr-sm.pl-sm
+      .flexrow.pt-sm.pr-sm.pl-sm.justify-flexrow-vertical.gap-10
         .flexcol.flex1.label-container
           label {localize('Search')}
         .flex3.left
