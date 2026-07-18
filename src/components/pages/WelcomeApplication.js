@@ -20,8 +20,8 @@ export default class WelcomeApplication extends SvelteApplication
          classes: [MODULE_ID, MODULE_CODE],
          resizable: true,
          minimizable: true,
-         width: 220,
-         height: 400,
+         width: 320,
+         height: 620,
          headerIcon: 'modules/foundryvtt-shop-studio/assets/shop-studio-logo-dragon-be7c41ff.webp',
          title: game.i18n.localize(`${MODULE_TITLE} v${version}`),
          svelte: {
