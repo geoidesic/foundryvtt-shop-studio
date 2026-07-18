@@ -595,59 +595,59 @@ const application = getContext('#external').application;
       flex: 1
       min-height: 0
 
-  :global(.associated-actors-section),
-  :global(.inventory-controls),
-  :global(.inventory-list),
-  :global(.rolltables-section)
-    background: color-mix(in srgb, var(--gas-tabs-content-background) 80%, transparent)
-    border: 1px solid color-mix(in srgb, var(--gas-tab-inactive-border) 45%, transparent)
-    border-radius: var(--border-radius)
-    box-shadow: 0 0 0 1px var(--gas-li-inset) inset
-    padding: var(--size-md)
+    :global(.associated-actors-section),
+    :global(.inventory-controls),
+    :global(.inventory-list),
+    :global(.rolltables-section)
+      background: color-mix(in srgb, var(--gas-tabs-content-background) 80%, transparent)
+      border: 1px solid color-mix(in srgb, var(--gas-tab-inactive-border) 45%, transparent)
+      border-radius: var(--border-radius)
+      box-shadow: 0 0 0 1px var(--gas-li-inset) inset
+      padding: var(--size-md)
 
-  :global(.description-section)
-    align-self: start
-    min-height: 220px
-    display: flex
-    flex-direction: column
+    :global(.description-section)
+      align-self: start
+      min-height: 220px
+      display: flex
+      flex-direction: column
 
-  :global(.description-section h2)
-    flex-shrink: 0
+    :global(.description-section h2)
+      flex-shrink: 0
 
-  :global(.description-section .prosemirror)
-    flex: 1
-    min-height: 180px
+    :global(.description-section .prosemirror)
+      flex: 1
+      min-height: 180px
 
-  :global(h2),
-  :global(h3)
-    margin: 0 0 var(--size-sm)
-    color: var(--gas-tab-active-color)
-    border-bottom: 1px solid color-mix(in srgb, var(--gas-tab-active-indicator) 45%, transparent)
-    padding-bottom: var(--size-xs)
+    :global(h2),
+    :global(h3)
+      margin: 0 0 var(--size-sm)
+      color: var(--gas-tab-active-color)
+      border-bottom: 1px solid color-mix(in srgb, var(--gas-tab-active-indicator) 45%, transparent)
+      padding-bottom: var(--size-xs)
 
-  :global(.profile-img)
-    width: 100%
-    object-fit: cover
-    border: 2px solid color-mix(in srgb, var(--gas-tab-active-indicator) 55%, transparent)
-    border-radius: 6px
-    display: block
-    margin: 0 auto var(--size-sm)
-    background: var(--gas-input-background)
+    :global(.profile-img)
+      width: 100%
+      object-fit: cover
+      border: 2px solid color-mix(in srgb, var(--gas-tab-active-indicator) 55%, transparent)
+      border-radius: 6px
+      display: block
+      margin: 0 auto var(--size-sm)
+      background: var(--gas-input-background)
 
-  :global(input),
-  :global(select)
-    width: 100%
-    color: var(--gas-color-text)
-    background: var(--gas-input-background)
-    border: 1px solid var(--gas-input-border)
-    border-radius: var(--border-radius)
-    padding: 0.5rem 0.6rem
+    :global(input),
+    :global(select)
+      width: 100%
+      color: var(--gas-color-text)
+      background: var(--gas-input-background)
+      border: 1px solid var(--gas-input-border)
+      border-radius: var(--border-radius)
+      padding: 0.5rem 0.6rem
 
-  :global(textarea)
-    min-height: 180px
-    resize: vertical
+    :global(textarea)
+      min-height: 180px
+      resize: vertical
 
-  :global(.drag-drop-area)
-    padding: 0.5rem
-    border: 2px dashed color-mix(in srgb, var(--gas-tab-active-indicator) 50%, transparent)
+    :global(.drag-drop-area)
+      padding: 0.5rem
+      border: 2px dashed color-mix(in srgb, var(--gas-tab-active-indicator) 50%, transparent)
 </style>

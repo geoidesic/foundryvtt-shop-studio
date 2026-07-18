@@ -3,6 +3,7 @@ import { safeGetSetting } from '~/src/helpers/utility';
 
 export const ITEM_SOURCES_SETTING = 'itemSources';
 export const LISTABLE_ITEM_TYPES_SETTING = 'listableItemTypes';
+export const SHOW_SELECTED_ONLY_SETTING = 'itemSourcesShowSelectedOnly';
 
 /**
  * Get the item subtypes currently exposed by the active game system.

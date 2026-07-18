@@ -1,6 +1,6 @@
 import ItemSourcesAppShell from './ItemSourcesAppShell.svelte';
 import { SvelteApplication } from '@typhonjs-fvtt/runtime/svelte/application';
-
+import { MODULE_CODE, MODULE_ID } from '~/src/helpers/constants'
 export default class ItemSourcesApp extends SvelteApplication {
   static get defaultOptions() {
     const viewportWidth = globalThis?.innerWidth ?? 1640;
@@ -9,6 +9,7 @@ export default class ItemSourcesApp extends SvelteApplication {
     return foundry.utils.mergeObject(super.defaultOptions, {
       title: 'Shop Studio - Item Sources',
       id: 'foundryvtt-shop-studio-item-sources-settings',
+      classes: [MODULE_ID, MODULE_CODE],
       resizable: true,
       minimizable: true,
       draggable: true,

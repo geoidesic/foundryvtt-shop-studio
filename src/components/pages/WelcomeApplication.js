@@ -16,8 +16,8 @@ export default class WelcomeApplication extends SvelteApplication
    static get defaultOptions()
    {
       return foundry.utils.mergeObject(super.defaultOptions, {
-        id: `${MODULE_ID}-welcome`,
-            classes: [MODULE_CODE],
+         id: `${MODULE_ID}-welcome`,
+         classes: [MODULE_ID, MODULE_CODE],
          resizable: true,
          minimizable: true,
          width: 220,

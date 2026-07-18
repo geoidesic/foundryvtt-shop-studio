@@ -45,6 +45,15 @@ function registerItemSourcesSettings() {
     type: Array,
   });
 
+  game.settings.register(MODULE_ID, 'itemSourcesShowSelectedOnly', {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.ShowSelectedOnlyName`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.ShowSelectedOnlyHint`),
+    scope: 'world',
+    config: false,
+    default: false,
+    type: Boolean,
+  });
+
   game.settings.registerMenu(MODULE_ID, 'itemSources', {
     name: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.Name`),
     hint: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.Hint`),

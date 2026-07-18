@@ -31,7 +31,9 @@
         "Hint": "Configure which item compendia to use as sources for the shop",
         "Label": "Item Sources",
         "ListableItemTypesName": "Listable Item Types",
-        "ListableItemTypesHint": "Select which item types to include in the shop catalog. Leave empty to include all types."
+        "ListableItemTypesHint": "Select which item types to include in the shop catalog. Leave empty to include all types.",
+        "ShowSelectedOnlyName": "Item Sources: Show Selected Only",
+        "ShowSelectedOnlyHint": "Remember the 'Show selected only' filter state in the Item Sources configuration between sessions."
       }
     },
     "ItemSources": {
@@ -40,6 +42,7 @@
       "ExpandAll": "Expand all",
       "ItemCompendia": "Item Compendia",
       "ListableItemTypes": "Listable Item Types",
+      "ListableItemTypesDescription": "Choose which kinds of items from the selected compendia can appear in a shop's catalog. Clear the selection to hide all item types.",
       "SelectVisible": "Select visible",
       "ClearVisible": "Clear visible",
       "AutoAssign": "Auto-assign all",
