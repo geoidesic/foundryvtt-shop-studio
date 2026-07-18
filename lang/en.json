@@ -1,8 +1,21 @@
 {
   "foundryvtt-shop-studio": {
-    "Title": "Aardvark Shop Studio",
+    "Title": "Shop Studio",
     "Welcome": {
-      "CreatedBy": "Created by"
+      "To": "Welcome to the",
+      "CreatedBy": "for FoundryVTT developed by",
+      "IntroductionTitle": "Introduction",
+      "Introduction": "Shop Studio is a tool to help you build and populate shops, markets, and merchant inventories for your game. Stock your stores from any item compendia, fine-tune what players can browse, and open a living storefront in just a few clicks.",
+      "UsageTitle": "Usage Instructions",
+      "Issues": "If you have any issues, please report them on",
+      "Github": "GitHub.",
+      "IssuesLinkText": "GitHub Issues",
+      "Support": "If you wish to support the development of this module, please consider a monthly donation via",
+      "SponsorLinkText": "GitHub Sponsors",
+      "PayPalLinkText": "PayPal",
+      "JoinDiscord": "Join the",
+      "DiscordLinkText": "Shop Studio Discord server",
+      "Thanks": "Thank you for using Shop Studio!"
     },
     "Setting": {
       "DontShowWelcome": {
@@ -93,6 +106,15 @@
     "ProvisionComplete": "Added {count} items to inventory.",
     "ProvisionNoItems": "No item results were rolled.",
     "NoRollTablesConfigured": "No roll tables configured.",
+    "NoCompendiumProvisionConfigured": "No compendium item types configured for provisioning.",
+    "NoItemSourcesConfigured": "No item sources configured. Set them in module settings.",
+    "Pricing": "Pricing",
+    "Provisioning": "Provisioning",
+    "ProvisionByRollTable": "Provision by roll table",
+    "ProvisionByCompendium": "Provision by compendium",
+    "ProvisionModeTooltip": "Toggle between provisioning from roll tables and from item compendia.",
+    "CompendiumProvisionHint": "Set a quantity per item type. The provision button draws random items from the configured item sources until the summed total is reached.",
+    "NoListableTypes": "No listable item types configured. Set them in module settings.",
     "Atrophy": "Atrophy (%)",
     "FilterInventory": "Filter Inventory...",
     "NoPermission": "You don't have permission to modify this shop.",
