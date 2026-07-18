@@ -17210,11 +17210,11 @@ function create_if_block$f(ctx) {
     if (
       /*iconType*/
       ctx2[3] === "img"
-    ) return create_if_block_2$5;
+    ) return create_if_block_2$6;
     if (
       /*iconType*/
       ctx2[3] === "svg"
-    ) return create_if_block_3$3;
+    ) return create_if_block_3$4;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type && current_block_type(ctx);
@@ -17249,7 +17249,7 @@ function create_if_block$f(ctx) {
     }
   };
 }
-function create_if_block_3$3(ctx) {
+function create_if_block_3$4(ctx) {
   let svg;
   let inlineSvg_action;
   let mounted;
@@ -17285,7 +17285,7 @@ function create_if_block_3$3(ctx) {
     }
   };
 }
-function create_if_block_2$5(ctx) {
+function create_if_block_2$6(ctx) {
   let img;
   let img_src_value;
   return {
@@ -17607,12 +17607,12 @@ function get_each_context$9(ctx, list, i) {
   child_ctx[40] = list[i];
   return child_ctx;
 }
-function get_each_context_1$4(ctx, list, i) {
+function get_each_context_1$5(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[40] = list[i];
   return child_ctx;
 }
-function create_if_block_2$4(ctx) {
+function create_if_block_2$5(ctx) {
   let svg;
   let inlineSvg_action;
   let mounted;
@@ -17706,7 +17706,7 @@ function create_if_block$e(ctx) {
     }
   };
 }
-function create_each_block_1$4(ctx) {
+function create_each_block_1$5(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -17906,7 +17906,7 @@ function create_key_block(ctx) {
     if (
       /*mediaType*/
       ctx2[8] === "svg"
-    ) return create_if_block_2$4;
+    ) return create_if_block_2$5;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type && current_block_type(ctx);
@@ -17916,7 +17916,7 @@ function create_key_block(ctx) {
   );
   let each_blocks_1 = [];
   for (let i = 0; i < each_value_1.length; i += 1) {
-    each_blocks_1[i] = create_each_block_1$4(get_each_context_1$4(ctx, each_value_1, i));
+    each_blocks_1[i] = create_each_block_1$5(get_each_context_1$5(ctx, each_value_1, i));
   }
   const out = (i) => transition_out(each_blocks_1[i], 1, 1, () => {
     each_blocks_1[i] = null;
@@ -18042,12 +18042,12 @@ function create_key_block(ctx) {
         );
         let i;
         for (i = 0; i < each_value_1.length; i += 1) {
-          const child_ctx = get_each_context_1$4(ctx2, each_value_1, i);
+          const child_ctx = get_each_context_1$5(ctx2, each_value_1, i);
           if (each_blocks_1[i]) {
             each_blocks_1[i].p(child_ctx, dirty);
             transition_in(each_blocks_1[i], 1);
           } else {
-            each_blocks_1[i] = create_each_block_1$4(child_ctx);
+            each_blocks_1[i] = create_each_block_1$5(child_ctx);
             each_blocks_1[i].c();
             transition_in(each_blocks_1[i], 1);
             each_blocks_1[i].m(header, t3);
@@ -21042,10 +21042,11 @@ class TJSApplicationShell extends SvelteComponent {
 }
 Hooks.once("init", () => FVTTConfigure$1.initialize());
 const MODULE_ID = "foundryvtt-shop-studio";
-const MODULE_TITLE = "Aardvark Shop Studio";
+const MODULE_TITLE = "Shop Studio";
 const MODULE_CODE = "GSS";
 const LOG_PREFIX = "GSS |";
 const MYSTERY_MAN = "icons/svg/mystery-man.svg";
+const DEFAULT_ITEM_SOURCES = [];
 const DEFAULT_LISTABLE_ITEM_TYPES = null;
 const LOG_PREFIX_COLOR = `%c[${MODULE_CODE}] |`;
 const LOG_STYLES = {
@@ -21156,44 +21157,199 @@ const log = {
 };
 function create_default_slot$a(ctx) {
   let main;
-  let footer;
-  let div0;
-  let div2;
+  let div7;
   let div1;
+  let div3;
+  let div2;
+  let p0;
+  let hr0;
+  let p1;
+  let a0;
+  let p2;
+  let i0;
+  let t3_value = localize("Welcome.Issues") + "";
+  let t3;
+  let t4;
   let a1;
+  let p3;
+  let i1;
+  let t7_value = localize("Welcome.Support") + "";
+  let t7;
+  let t8;
+  let a2;
+  let t10;
+  let a3;
+  let p4;
+  let i2;
+  let t12_value = localize("Welcome.JoinDiscord") + "";
+  let t12;
+  let t13;
+  let a4;
+  let hr1;
+  let div6;
+  let div4;
+  let input;
+  let div5;
+  let span;
+  let footer;
+  let div8;
+  let div10;
+  let div9;
+  let a6;
+  let mounted;
+  let dispose;
   return {
     c() {
       main = element("main");
-      main.innerHTML = `<p>Welcome</p>`;
-      footer = element("footer");
-      div0 = element("div");
-      div0.innerHTML = `<a href="https://www.aardvark.games" class="svelte-FOU-142wv8w"><img class="white" src="/modules/${MODULE_ID}/assets/aardvark-logo.webp" alt="Aardvark Game Studios Logo" height="50" width="50" style="fill: white; border: none; width: auto;"/></a>`;
-      div2 = element("div");
+      div7 = element("div");
       div1 = element("div");
-      div1.textContent = `${localize("Title")} ${localize("Welcome.CreatedBy")} `;
+      div1.innerHTML = `<div class="flex2"><img src="/modules/${MODULE_ID}/assets/shop-studio-be7c41ff.webp" alt="Shop Studio" style="border: none; "/></div>`;
+      div3 = element("div");
+      div2 = element("div");
+      p0 = element("p");
+      p0.textContent = `${localize("Welcome.Thanks")}`;
+      hr0 = element("hr");
+      p1 = element("p");
+      p1.textContent = `${localize("Welcome.Introduction")}`;
+      a0 = element("a");
+      a0.textContent = `${localize("Welcome.UsageTitle")}`;
+      p2 = element("p");
+      i0 = element("i");
+      t3 = text(t3_value);
+      t4 = space();
       a1 = element("a");
-      a1.textContent = "Aardvark Game Studios";
-      attr(main, "class", "svelte-FOU-142wv8w");
-      attr(div0, "class", "logo");
-      attr(a1, "href", "https://www.aardvark.games");
-      attr(a1, "class", "svelte-FOU-142wv8w");
-      attr(div2, "class", "left");
-      attr(footer, "class", "svelte-FOU-142wv8w");
+      a1.textContent = `${localize("Welcome.IssuesLinkText")} `;
+      p3 = element("p");
+      i1 = element("i");
+      t7 = text(t7_value);
+      t8 = space();
+      a2 = element("a");
+      a2.textContent = `${localize("Welcome.SponsorLinkText")}`;
+      t10 = text(" or ");
+      a3 = element("a");
+      a3.textContent = "PayPal";
+      p4 = element("p");
+      i2 = element("i");
+      t12 = text(t12_value);
+      t13 = space();
+      a4 = element("a");
+      a4.textContent = `${localize("Welcome.DiscordLinkText")} `;
+      hr1 = element("hr");
+      div6 = element("div");
+      div4 = element("div");
+      input = element("input");
+      div5 = element("div");
+      span = element("span");
+      span.textContent = `${localize("Setting.DontShowWelcome.Name")}`;
+      footer = element("footer");
+      div8 = element("div");
+      div8.innerHTML = `<a href="https://www.aardvark.games" class="svelte-FOU-58ze0s"><img class="white" src="/modules/${MODULE_ID}/assets/aardvark-logo.webp" alt="Aardvark Game Studios Logo" height="50" width="50" style="fill: white; border: none; width: auto;"/></a>`;
+      div10 = element("div");
+      div9 = element("div");
+      div9.textContent = `${localize("Welcome.CreatedBy")} `;
+      a6 = element("a");
+      a6.textContent = "Aardvark Game Studios";
+      attr(div1, "class", "flexrow justify-flexrow-vertical center svelte-FOU-58ze0s");
+      attr(p0, "class", "thanks center mr-md svelte-FOU-58ze0s");
+      attr(div2, "class", "flex3");
+      attr(div3, "class", "flexrow justify-flexrow-vertical");
+      attr(a0, "href", "https://github.com/geoidesic/foundryvtt-shop-studio?tab=readme-ov-file#usage-instructions");
+      attr(i0, "class", "fa-solid fa-bug mr-sm svelte-FOU-58ze0s");
+      attr(a1, "href", "https://github.com/geoidesic/foundryvtt-shop-studio/issues");
+      attr(p2, "class", "lighter");
+      attr(i1, "class", "fa-solid fa-heart mr-sm svelte-FOU-58ze0s");
+      set_style(i1, "color", "#660000");
+      attr(a2, "href", "https://github.com/sponsors/geoidesic");
+      attr(a3, "href", "https://paypal.me/geoidesic");
+      attr(i2, "class", "fa-solid fa-star mr-sm svelte-FOU-58ze0s");
+      set_style(i2, "color", "#996600");
+      attr(a4, "href", "https://discord.gg/fTwVqqxsJ6");
+      attr(input, "type", "checkbox");
+      attr(input, "label", localize("Setting.DontShowWelcome.Name"));
+      attr(div4, "class", "flex0");
+      attr(div5, "class", "flex dont-show svelte-FOU-58ze0s");
+      attr(div6, "class", "flexrow justify-flexrow-vertical gap-10");
+      attr(div6, "data-tooltip", localize("Setting.DontShowWelcome.Hint"));
+      attr(div7, "class", "inset bg-dark svelte-FOU-58ze0s");
+      attr(main, "class", "svelte-FOU-58ze0s");
+      attr(div8, "class", "logo");
+      attr(a6, "href", "https://www.aardvark.games");
+      attr(a6, "class", "svelte-FOU-58ze0s");
+      attr(div10, "class", "left");
+      attr(footer, "class", "svelte-FOU-58ze0s");
     },
     m(target, anchor) {
       insert(target, main, anchor);
+      append(main, div7);
+      append(div7, div1);
+      append(div7, div3);
+      append(div3, div2);
+      append(div2, p0);
+      append(div7, hr0);
+      append(div7, p1);
+      append(div7, a0);
+      append(div7, p2);
+      append(p2, i0);
+      append(p2, t3);
+      append(p2, t4);
+      append(p2, a1);
+      append(div7, p3);
+      append(p3, i1);
+      append(p3, t7);
+      append(p3, t8);
+      append(p3, a2);
+      append(p3, t10);
+      append(p3, a3);
+      append(div7, p4);
+      append(p4, i2);
+      append(p4, t12);
+      append(p4, t13);
+      append(p4, a4);
+      append(div7, hr1);
+      append(div7, div6);
+      append(div6, div4);
+      append(div4, input);
+      input.checked = /*dontShowWelcome*/
+      ctx[1];
+      append(div6, div5);
+      append(div5, span);
       insert(target, footer, anchor);
-      append(footer, div0);
-      append(footer, div2);
-      append(div2, div1);
-      append(div2, a1);
+      append(footer, div8);
+      append(footer, div10);
+      append(div10, div9);
+      append(div10, a6);
+      if (!mounted) {
+        dispose = [
+          listen(
+            input,
+            "change",
+            /*handleChange*/
+            ctx[2]
+          ),
+          listen(
+            input,
+            "change",
+            /*input_change_handler*/
+            ctx[5]
+          )
+        ];
+        mounted = true;
+      }
     },
-    p: noop,
+    p(ctx2, dirty) {
+      if (dirty & /*dontShowWelcome*/
+      2) {
+        input.checked = /*dontShowWelcome*/
+        ctx2[1];
+      }
+    },
     d(detaching) {
       if (detaching) {
         detach(main);
         detach(footer);
       }
+      mounted = false;
+      run_all(dispose);
     }
   };
 }
@@ -21202,7 +21358,7 @@ function create_fragment$o(ctx) {
   let updating_elementRoot;
   let current;
   function applicationshell_elementRoot_binding(value) {
-    ctx[3](value);
+    ctx[6](value);
   }
   let applicationshell_props = {
     $$slots: { default: [create_default_slot$a] },
@@ -21227,8 +21383,8 @@ function create_fragment$o(ctx) {
     },
     p(ctx2, [dirty]) {
       const applicationshell_changes = {};
-      if (dirty & /*$$scope*/
-      128) {
+      if (dirty & /*$$scope, dontShowWelcome*/
+      258) {
         applicationshell_changes.$$scope = { dirty, ctx: ctx2 };
       }
       if (!updating_elementRoot && dirty & /*elementRoot*/
@@ -21255,34 +21411,50 @@ function create_fragment$o(ctx) {
   };
 }
 function instance$o($$self, $$props, $$invalidate) {
+  let dontShowWelcome2;
   let { elementRoot = void 0 } = $$props;
   let { version: version2 = void 0 } = $$props;
   const application = getContext("#external").application;
+  const handleChange = (event2) => {
+    game.settings.set(MODULE_ID, "dontShowWelcome", event2.target.checked);
+  };
   let draggable2 = application.reactive.draggable;
   draggable2 = true;
   onMount(async () => {
   });
+  function input_change_handler() {
+    dontShowWelcome2 = this.checked;
+    $$invalidate(1, dontShowWelcome2);
+  }
   function applicationshell_elementRoot_binding(value) {
     elementRoot = value;
     $$invalidate(0, elementRoot);
   }
   $$self.$$set = ($$props2) => {
     if ("elementRoot" in $$props2) $$invalidate(0, elementRoot = $$props2.elementRoot);
-    if ("version" in $$props2) $$invalidate(1, version2 = $$props2.version);
+    if ("version" in $$props2) $$invalidate(3, version2 = $$props2.version);
   };
   $$self.$$.update = () => {
     if ($$self.$$.dirty & /*draggable*/
-    4) {
+    16) {
       application.reactive.draggable = draggable2;
     }
   };
-  game.settings.get(MODULE_ID, "dontShowWelcome");
-  return [elementRoot, version2, draggable2, applicationshell_elementRoot_binding];
+  $$invalidate(1, dontShowWelcome2 = game.settings.get(MODULE_ID, "dontShowWelcome"));
+  return [
+    elementRoot,
+    dontShowWelcome2,
+    handleChange,
+    version2,
+    draggable2,
+    input_change_handler,
+    applicationshell_elementRoot_binding
+  ];
 }
 class WelcomeAppShell extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$o, create_fragment$o, safe_not_equal, { elementRoot: 0, version: 1 });
+    init(this, options, instance$o, create_fragment$o, safe_not_equal, { elementRoot: 0, version: 3 });
   }
   get elementRoot() {
     return this.$$.ctx[0];
@@ -21292,14 +21464,14 @@ class WelcomeAppShell extends SvelteComponent {
     flush();
   }
   get version() {
-    return this.$$.ctx[1];
+    return this.$$.ctx[3];
   }
   set version(version2) {
     this.$$set({ version: version2 });
     flush();
   }
 }
-const version = "0.0.9";
+const version = "0.0.10";
 class WelcomeApplication extends SvelteApp {
   /**
    * Default Application options
@@ -21313,8 +21485,8 @@ class WelcomeApplication extends SvelteApp {
       classes: [MODULE_ID, MODULE_CODE],
       resizable: true,
       minimizable: true,
-      width: 220,
-      height: 400,
+      width: 320,
+      height: 620,
       headerIcon: "modules/foundryvtt-shop-studio/assets/shop-studio-logo-dragon-be7c41ff.webp",
       title: game.i18n.localize(`${MODULE_TITLE} v${version}`),
       svelte: {
@@ -25822,21 +25994,21 @@ function rippleFocus({ background = "rgba(255, 255, 255, 0.7)", duration = 300, 
     };
   };
 }
-function create_if_block_3$2(ctx) {
+function create_if_block_3$3(ctx) {
   let if_block_anchor;
   function select_block_type(ctx2, dirty) {
     if (
       /*iconType*/
       ctx2[8] === "font"
-    ) return create_if_block_4$2;
+    ) return create_if_block_4$3;
     if (
       /*iconType*/
       ctx2[8] === "img"
-    ) return create_if_block_5;
+    ) return create_if_block_5$1;
     if (
       /*iconType*/
       ctx2[8] === "svg"
-    ) return create_if_block_6;
+    ) return create_if_block_6$1;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type && current_block_type(ctx);
@@ -25871,7 +26043,7 @@ function create_if_block_3$2(ctx) {
     }
   };
 }
-function create_if_block_6(ctx) {
+function create_if_block_6$1(ctx) {
   let svg;
   let inlineSvg_action;
   let mounted;
@@ -25907,7 +26079,7 @@ function create_if_block_6(ctx) {
     }
   };
 }
-function create_if_block_5(ctx) {
+function create_if_block_5$1(ctx) {
   let img;
   let img_src_value;
   return {
@@ -25935,7 +26107,7 @@ function create_if_block_5(ctx) {
     }
   };
 }
-function create_if_block_4$2(ctx) {
+function create_if_block_4$3(ctx) {
   let i;
   let i_class_value;
   return {
@@ -25961,7 +26133,7 @@ function create_if_block_4$2(ctx) {
     }
   };
 }
-function create_if_block_2$3(ctx) {
+function create_if_block_2$4(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -26169,9 +26341,9 @@ function create_fragment$h(ctx) {
   let dispose;
   let if_block0 = (
     /*icon*/
-    ctx[1] && create_if_block_3$2(ctx)
+    ctx[1] && create_if_block_3$3(ctx)
   );
-  const if_block_creators = [create_if_block$7, create_if_block_1$5, create_if_block_2$3];
+  const if_block_creators = [create_if_block$7, create_if_block_1$5, create_if_block_2$4];
   const if_blocks = [];
   function select_block_type_1(ctx2, dirty) {
     if (dirty & /*label*/
@@ -26294,7 +26466,7 @@ function create_fragment$h(ctx) {
         if (if_block0) {
           if_block0.p(ctx2, dirty);
         } else {
-          if_block0 = create_if_block_3$2(ctx2);
+          if_block0 = create_if_block_3$3(ctx2);
           if_block0.c();
           if_block0.m(span0, t);
         }
@@ -26659,7 +26831,7 @@ function create_if_block$6(ctx) {
   let if_block;
   let t;
   let current;
-  const if_block_creators = [create_if_block_1$4, create_if_block_2$2];
+  const if_block_creators = [create_if_block_1$4, create_if_block_2$3];
   const if_blocks = [];
   function select_block_type_1(ctx2, dirty) {
     if (dirty & /*label*/
@@ -26781,7 +26953,7 @@ function create_if_block$6(ctx) {
     }
   };
 }
-function create_if_block_2$2(ctx) {
+function create_if_block_2$3(ctx) {
   let switch_instance;
   let switch_instance_anchor;
   let current;
@@ -30136,6 +30308,12 @@ function getItemTypeLabel(type) {
 function getAllItemCompendia$1() {
   return game.packs?.filter((pack) => pack.documentName === "Item") ?? [];
 }
+function getItemSourcePacks() {
+  const configured = safeGetSetting(MODULE_ID, ITEM_SOURCES_SETTING, DEFAULT_ITEM_SOURCES);
+  const collections = Array.isArray(configured) ? configured : configured?.items;
+  if (!Array.isArray(collections)) return [];
+  return collections.map((collection) => game.packs?.get(collection)).filter((pack) => pack?.documentName === "Item");
+}
 function getConfiguredListableItemTypes() {
   const configured = safeGetSetting(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING, DEFAULT_LISTABLE_ITEM_TYPES);
   const available = getAvailableItemTypes();
@@ -30252,12 +30430,12 @@ function get_each_context$5(ctx, list, i) {
   child_ctx[34] = i;
   return child_ctx;
 }
-function get_each_context_1$3(ctx, list, i) {
+function get_each_context_1$4(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[35] = list[i];
   return child_ctx;
 }
-function create_each_block_1$3(ctx) {
+function create_each_block_1$4(ctx) {
   let option;
   let t_value = (
     /*opt*/
@@ -30544,7 +30722,7 @@ function create_fragment$8(ctx) {
   );
   let each_blocks_1 = [];
   for (let i = 0; i < each_value_1.length; i += 1) {
-    each_blocks_1[i] = create_each_block_1$3(get_each_context_1$3(ctx, each_value_1, i));
+    each_blocks_1[i] = create_each_block_1$4(get_each_context_1$4(ctx, each_value_1, i));
   }
   let each_value = ensure_array_like(
     /*items*/
@@ -30594,7 +30772,7 @@ function create_fragment$8(ctx) {
       attr(div2, "class", "flexcol flex1 label-container");
       attr(select, "class", "short");
       attr(div3, "class", "flex3 right");
-      attr(div4, "class", "flexrow pt-sm pr-sm pl-sm");
+      attr(div4, "class", "flexrow pt-sm pr-sm pl-sm justify-flexrow-vertical gap-10");
       attr(h1, "class", "gold");
       attr(div5, "class", "inv-col-icon svelte-FOU-efukso");
       attr(div6, "class", "inv-col-name svelte-FOU-efukso");
@@ -30671,11 +30849,11 @@ function create_fragment$8(ctx) {
         );
         let i;
         for (i = 0; i < each_value_1.length; i += 1) {
-          const child_ctx = get_each_context_1$3(ctx2, each_value_1, i);
+          const child_ctx = get_each_context_1$4(ctx2, each_value_1, i);
           if (each_blocks_1[i]) {
             each_blocks_1[i].p(child_ctx, dirty);
           } else {
-            each_blocks_1[i] = create_each_block_1$3(child_ctx);
+            each_blocks_1[i] = create_each_block_1$4(child_ctx);
             each_blocks_1[i].c();
             each_blocks_1[i].m(select, null);
           }
@@ -30868,7 +31046,10 @@ function instance$8($$self, $$props, $$invalidate) {
   async function removeAllItems() {
     const okToDelete = confirm(localize("Types.Actor.Inventory.confirmDeleteAll"));
     if (okToDelete) {
-      await $Actor.deleteAllItems("equipment");
+      const itemIds = getActorItems().map((item) => item.id);
+      if (itemIds.length > 0) {
+        await $Actor.deleteEmbeddedDocuments("Item", itemIds);
+      }
     }
   }
   function onTypeFilterChange(e) {
@@ -31092,7 +31273,9 @@ const DEFAULT_SHOP_CONFIGURATION = Object.freeze({
   atrophyPercent: 5,
   associatedActors: [],
   rollTables: [],
-  rollTableRolls: []
+  rollTableRolls: [],
+  provisionMode: "rolltable",
+  compendiumProvision: []
 });
 function getShopIdentity(actor) {
   return actor?.getFlag?.(MODULE_ID, SHOP_FLAG_KEYS.identity) ?? actor?.getFlag?.(SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS.identity) ?? {};
@@ -31859,7 +32042,7 @@ function get_each_context$4(ctx, list, i) {
   child_ctx[37] = i;
   return child_ctx;
 }
-function get_each_context_1$2(ctx, list, i) {
+function get_each_context_1$3(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[38] = list[i];
   return child_ctx;
@@ -31888,7 +32071,7 @@ function create_else_block_2(ctx) {
     }
   };
 }
-function create_if_block_4$1(ctx) {
+function create_if_block_4$2(ctx) {
   let img;
   let img_src_value;
   let img_alt_value;
@@ -31938,13 +32121,13 @@ function create_if_block_4$1(ctx) {
     }
   };
 }
-function create_if_block_2$1(ctx) {
+function create_if_block_2$2(ctx) {
   let div;
   function select_block_type_1(ctx2, dirty) {
     if (
       /*actorOptions*/
       ctx2[2].length === 0
-    ) return create_if_block_3$1;
+    ) return create_if_block_3$2;
     return create_else_block_1;
   }
   let current_block_type = select_block_type_1(ctx);
@@ -31987,7 +32170,7 @@ function create_else_block_1(ctx) {
   );
   let each_blocks = [];
   for (let i = 0; i < each_value_1.length; i += 1) {
-    each_blocks[i] = create_each_block_1$2(get_each_context_1$2(ctx, each_value_1, i));
+    each_blocks[i] = create_each_block_1$3(get_each_context_1$3(ctx, each_value_1, i));
   }
   return {
     c() {
@@ -32013,11 +32196,11 @@ function create_else_block_1(ctx) {
         );
         let i;
         for (i = 0; i < each_value_1.length; i += 1) {
-          const child_ctx = get_each_context_1$2(ctx2, each_value_1, i);
+          const child_ctx = get_each_context_1$3(ctx2, each_value_1, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
           } else {
-            each_blocks[i] = create_each_block_1$2(child_ctx);
+            each_blocks[i] = create_each_block_1$3(child_ctx);
             each_blocks[i].c();
             each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
           }
@@ -32036,7 +32219,7 @@ function create_else_block_1(ctx) {
     }
   };
 }
-function create_if_block_3$1(ctx) {
+function create_if_block_3$2(ctx) {
   let div;
   return {
     c() {
@@ -32055,7 +32238,7 @@ function create_if_block_3$1(ctx) {
     }
   };
 }
-function create_each_block_1$2(ctx) {
+function create_each_block_1$3(ctx) {
   let button;
   let img;
   let img_src_value;
@@ -32593,14 +32776,14 @@ function create_fragment$7(ctx) {
     if (
       /*selectedActor*/
       ctx2[3]
-    ) return create_if_block_4$1;
+    ) return create_if_block_4$2;
     return create_else_block_2;
   }
   let current_block_type = select_block_type(ctx);
   let if_block0 = current_block_type(ctx);
   let if_block1 = (
     /*dropdownOpen*/
-    ctx[4] && create_if_block_2$1(ctx)
+    ctx[4] && create_if_block_2$2(ctx)
   );
   function select_block_type_2(ctx2, dirty) {
     if (
@@ -32693,7 +32876,7 @@ function create_fragment$7(ctx) {
         if (if_block1) {
           if_block1.p(ctx2, dirty);
         } else {
-          if_block1 = create_if_block_2$1(ctx2);
+          if_block1 = create_if_block_2$2(ctx2);
           if_block1.c();
           if_block1.m(div0, null);
         }
@@ -33112,387 +33295,23 @@ const shopConfig = writable({
   atrophyPercent: 5,
   associatedActors: [],
   rollTables: [],
-  rollTableRolls: []
+  rollTableRolls: [],
+  provisionMode: "rolltable",
+  compendiumProvision: []
 });
 function get_each_context$3(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[18] = list[i];
-  child_ctx[20] = i;
+  child_ctx[32] = list[i];
   return child_ctx;
 }
-function create_if_block_1$1(ctx) {
-  let ul;
-  let each_value = ensure_array_like(
-    /*rollTables*/
-    ctx[1]
-  );
-  let each_blocks = [];
-  for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block$3(get_each_context$3(ctx, each_value, i));
-  }
-  return {
-    c() {
-      ul = element("ul");
-      for (let i = 0; i < each_blocks.length; i += 1) {
-        each_blocks[i].c();
-      }
-      attr(ul, "class", "rolltable-bucket__list svelte-FOU-ug9k9m");
-    },
-    m(target, anchor) {
-      insert(target, ul, anchor);
-      for (let i = 0; i < each_blocks.length; i += 1) {
-        if (each_blocks[i]) {
-          each_blocks[i].m(ul, null);
-        }
-      }
-    },
-    p(ctx2, dirty) {
-      if (dirty & /*sharedProps, handleRemoveRollTableClick, handleRollCountStepClick, rollTableRolls, handleRollCountInput, handleOpenRollTableClick, formatRollTableName, rollTables, formatRollTableImage*/
-      7815) {
-        each_value = ensure_array_like(
-          /*rollTables*/
-          ctx2[1]
-        );
-        let i;
-        for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context$3(ctx2, each_value, i);
-          if (each_blocks[i]) {
-            each_blocks[i].p(child_ctx, dirty);
-          } else {
-            each_blocks[i] = create_each_block$3(child_ctx);
-            each_blocks[i].c();
-            each_blocks[i].m(ul, null);
-          }
-        }
-        for (; i < each_blocks.length; i += 1) {
-          each_blocks[i].d(1);
-        }
-        each_blocks.length = each_value.length;
-      }
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(ul);
-      }
-      destroy_each(each_blocks, detaching);
-    }
-  };
+function get_each_context_1$2(ctx, list, i) {
+  const child_ctx = ctx.slice();
+  child_ctx[35] = list[i];
+  child_ctx[37] = i;
+  return child_ctx;
 }
-function create_each_block$3(ctx) {
-  let li;
-  let button0;
-  let img;
-  let img_src_value;
-  let img_alt_value;
-  let span;
-  let t_value = (
-    /*formatRollTableName*/
-    ctx[7](
-      /*rtUuid*/
-      ctx[18]
-    ) + ""
-  );
-  let t;
-  let div;
-  let button1;
-  let i0;
-  let button1_data_tooltip_value;
-  let input;
-  let input_value_value;
-  let input_aria_label_value;
-  let button2;
-  let i1;
-  let button2_data_tooltip_value;
-  let button3;
-  let i2;
-  let button3_data_tooltip_value;
-  let mounted;
-  let dispose;
-  return {
-    c() {
-      li = element("li");
-      button0 = element("button");
-      img = element("img");
-      span = element("span");
-      t = text(t_value);
-      div = element("div");
-      button1 = element("button");
-      i0 = element("i");
-      input = element("input");
-      button2 = element("button");
-      i1 = element("i");
-      button3 = element("button");
-      i2 = element("i");
-      attr(img, "class", "rolltable-bucket__img svelte-FOU-ug9k9m");
-      if (!src_url_equal(img.src, img_src_value = formatRollTableImage(
-        /*rtUuid*/
-        ctx[18]
-      ))) attr(img, "src", img_src_value);
-      attr(img, "alt", img_alt_value = /*formatRollTableName*/
-      ctx[7](
-        /*rtUuid*/
-        ctx[18]
-      ));
-      attr(span, "class", "rolltable-bucket__name svelte-FOU-ug9k9m");
-      attr(button0, "class", "rolltable-bucket__open svelte-FOU-ug9k9m");
-      attr(button0, "type", "button");
-      attr(
-        button0,
-        "data-index",
-        /*index*/
-        ctx[20]
-      );
-      attr(i0, "class", "fa fa-minus");
-      attr(button1, "class", "rolltable-bucket__step svelte-FOU-ug9k9m");
-      attr(button1, "type", "button");
-      attr(
-        button1,
-        "data-index",
-        /*index*/
-        ctx[20]
-      );
-      attr(button1, "data-delta", "-1");
-      attr(button1, "data-tooltip", button1_data_tooltip_value = /*sharedProps*/
-      ctx[0].localize("Decrease"));
-      attr(input, "class", "rolltable-bucket__count svelte-FOU-ug9k9m");
-      attr(input, "type", "number");
-      attr(input, "min", "1");
-      attr(input, "step", "1");
-      attr(
-        input,
-        "data-index",
-        /*index*/
-        ctx[20]
-      );
-      input.value = input_value_value = /*rollTableRolls*/
-      ctx[2][
-        /*index*/
-        ctx[20]
-      ] ?? 1;
-      attr(input, "aria-label", input_aria_label_value = /*sharedProps*/
-      ctx[0].localize("RollCount"));
-      attr(i1, "class", "fa fa-plus");
-      attr(button2, "class", "rolltable-bucket__step svelte-FOU-ug9k9m");
-      attr(button2, "type", "button");
-      attr(
-        button2,
-        "data-index",
-        /*index*/
-        ctx[20]
-      );
-      attr(button2, "data-delta", "1");
-      attr(button2, "data-tooltip", button2_data_tooltip_value = /*sharedProps*/
-      ctx[0].localize("Increase"));
-      attr(div, "class", "rolltable-bucket__rolls svelte-FOU-ug9k9m");
-      attr(i2, "class", "fa fa-trash");
-      attr(button3, "class", "rolltable-bucket__remove svelte-FOU-ug9k9m");
-      attr(button3, "type", "button");
-      attr(
-        button3,
-        "data-index",
-        /*index*/
-        ctx[20]
-      );
-      attr(button3, "data-tooltip", button3_data_tooltip_value = /*sharedProps*/
-      ctx[0].localize("Types.Actor.ActionButtons.Delete"));
-      attr(li, "class", "rolltable-bucket__entry svelte-FOU-ug9k9m");
-    },
-    m(target, anchor) {
-      insert(target, li, anchor);
-      append(li, button0);
-      append(button0, img);
-      append(button0, span);
-      append(span, t);
-      append(li, div);
-      append(div, button1);
-      append(button1, i0);
-      append(div, input);
-      append(div, button2);
-      append(button2, i1);
-      append(li, button3);
-      append(button3, i2);
-      if (!mounted) {
-        dispose = [
-          listen(
-            button0,
-            "click",
-            /*handleOpenRollTableClick*/
-            ctx[12]
-          ),
-          listen(
-            button1,
-            "click",
-            /*handleRollCountStepClick*/
-            ctx[10]
-          ),
-          listen(
-            input,
-            "input",
-            /*handleRollCountInput*/
-            ctx[9]
-          ),
-          listen(
-            button2,
-            "click",
-            /*handleRollCountStepClick*/
-            ctx[10]
-          ),
-          listen(
-            button3,
-            "click",
-            /*handleRemoveRollTableClick*/
-            ctx[11]
-          )
-        ];
-        mounted = true;
-      }
-    },
-    p(ctx2, dirty) {
-      if (dirty & /*rollTables*/
-      2 && !src_url_equal(img.src, img_src_value = formatRollTableImage(
-        /*rtUuid*/
-        ctx2[18]
-      ))) {
-        attr(img, "src", img_src_value);
-      }
-      if (dirty & /*rollTables*/
-      2 && img_alt_value !== (img_alt_value = /*formatRollTableName*/
-      ctx2[7](
-        /*rtUuid*/
-        ctx2[18]
-      ))) {
-        attr(img, "alt", img_alt_value);
-      }
-      if (dirty & /*rollTables*/
-      2 && t_value !== (t_value = /*formatRollTableName*/
-      ctx2[7](
-        /*rtUuid*/
-        ctx2[18]
-      ) + "")) set_data(t, t_value);
-      if (dirty & /*sharedProps*/
-      1 && button1_data_tooltip_value !== (button1_data_tooltip_value = /*sharedProps*/
-      ctx2[0].localize("Decrease"))) {
-        attr(button1, "data-tooltip", button1_data_tooltip_value);
-      }
-      if (dirty & /*rollTableRolls*/
-      4 && input_value_value !== (input_value_value = /*rollTableRolls*/
-      ctx2[2][
-        /*index*/
-        ctx2[20]
-      ] ?? 1) && input.value !== input_value_value) {
-        input.value = input_value_value;
-      }
-      if (dirty & /*sharedProps*/
-      1 && input_aria_label_value !== (input_aria_label_value = /*sharedProps*/
-      ctx2[0].localize("RollCount"))) {
-        attr(input, "aria-label", input_aria_label_value);
-      }
-      if (dirty & /*sharedProps*/
-      1 && button2_data_tooltip_value !== (button2_data_tooltip_value = /*sharedProps*/
-      ctx2[0].localize("Increase"))) {
-        attr(button2, "data-tooltip", button2_data_tooltip_value);
-      }
-      if (dirty & /*sharedProps*/
-      1 && button3_data_tooltip_value !== (button3_data_tooltip_value = /*sharedProps*/
-      ctx2[0].localize("Types.Actor.ActionButtons.Delete"))) {
-        attr(button3, "data-tooltip", button3_data_tooltip_value);
-      }
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(li);
-      }
-      mounted = false;
-      run_all(dispose);
-    }
-  };
-}
-function create_if_block$3(ctx) {
-  let p;
-  return {
-    c() {
-      p = element("p");
-      p.textContent = "No roll tables configured. Drag some here to enable provisioning.";
-      attr(p, "class", "rolltable-bucket__empty svelte-FOU-ug9k9m");
-    },
-    m(target, anchor) {
-      insert(target, p, anchor);
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(p);
-      }
-    }
-  };
-}
-function create_default_slot$2(ctx) {
-  let if_block0_anchor;
-  let if_block1_anchor;
-  let if_block0 = (
-    /*rollTables*/
-    ctx[1].length > 0 && create_if_block_1$1(ctx)
-  );
-  let if_block1 = (
-    /*rollTables*/
-    ctx[1].length === 0 && create_if_block$3()
-  );
-  return {
-    c() {
-      if (if_block0) if_block0.c();
-      if_block0_anchor = empty();
-      if (if_block1) if_block1.c();
-      if_block1_anchor = empty();
-    },
-    m(target, anchor) {
-      if (if_block0) if_block0.m(target, anchor);
-      insert(target, if_block0_anchor, anchor);
-      if (if_block1) if_block1.m(target, anchor);
-      insert(target, if_block1_anchor, anchor);
-    },
-    p(ctx2, dirty) {
-      if (
-        /*rollTables*/
-        ctx2[1].length > 0
-      ) {
-        if (if_block0) {
-          if_block0.p(ctx2, dirty);
-        } else {
-          if_block0 = create_if_block_1$1(ctx2);
-          if_block0.c();
-          if_block0.m(if_block0_anchor.parentNode, if_block0_anchor);
-        }
-      } else if (if_block0) {
-        if_block0.d(1);
-        if_block0 = null;
-      }
-      if (
-        /*rollTables*/
-        ctx2[1].length === 0
-      ) {
-        if (if_block1) ;
-        else {
-          if_block1 = create_if_block$3();
-          if_block1.c();
-          if_block1.m(if_block1_anchor.parentNode, if_block1_anchor);
-        }
-      } else if (if_block1) {
-        if_block1.d(1);
-        if_block1 = null;
-      }
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(if_block0_anchor);
-        detach(if_block1_anchor);
-      }
-      if (if_block0) if_block0.d(detaching);
-      if (if_block1) if_block1.d(detaching);
-    }
-  };
-}
-function create_fragment$6(ctx) {
-  let div7;
-  let div6;
+function create_if_block_7(ctx) {
+  let div4;
   let label0;
   let div0;
   let span0;
@@ -33531,51 +33350,11 @@ function create_fragment$6(ctx) {
   let input1;
   let div3;
   let p1;
-  let div4;
-  let h2;
-  let t12_value = (
-    /*sharedProps*/
-    ctx[0].localize("RollTables") + ""
-  );
-  let t12;
-  let t13;
-  let t14_value = (
-    /*rollTables*/
-    ctx[1].length + ""
-  );
-  let t14;
-  let t15;
-  let dropzone;
-  let div5;
-  let button0;
-  let t16_value = (
-    /*sharedProps*/
-    ctx[0].localize("ProvisionStore") + ""
-  );
-  let t16;
-  let button1;
-  let current;
   let mounted;
   let dispose;
-  dropzone = new DropZone({
-    props: {
-      placeholder: (
-        /*sharedProps*/
-        ctx[0].localize("DragRollTablesHere")
-      ),
-      acceptType: "RollTable",
-      onDrop: (
-        /*handleRollTableDrop*/
-        ctx[8]
-      ),
-      $$slots: { default: [create_default_slot$2] },
-      $$scope: { ctx }
-    }
-  });
   return {
     c() {
-      div7 = element("div");
-      div6 = element("div");
+      div4 = element("div");
       label0 = element("label");
       div0 = element("div");
       span0 = element("span");
@@ -33600,18 +33379,6 @@ function create_fragment$6(ctx) {
       div3.innerHTML = `<span>50%</span><span>200%</span>`;
       p1 = element("p");
       p1.textContent = "Affects prices paid when buying from actors.";
-      div4 = element("div");
-      h2 = element("h2");
-      t12 = text(t12_value);
-      t13 = text(" (");
-      t14 = text(t14_value);
-      t15 = text(")");
-      create_component(dropzone.$$.fragment);
-      div5 = element("div");
-      button0 = element("button");
-      t16 = text(t16_value);
-      button1 = element("button");
-      button1.textContent = "Save Settings";
       attr(div0, "class", "setting-label");
       attr(input0, "type", "range");
       attr(input0, "min", "50");
@@ -33628,20 +33395,11 @@ function create_fragment$6(ctx) {
       attr(div3, "class", "setting-range");
       attr(p1, "class", "setting-help");
       attr(label1, "class", "setting-control");
-      attr(h2, "class", "svelte-FOU-ug9k9m");
-      attr(div4, "class", "rolltables-section");
-      attr(button0, "class", "provision-btn");
-      attr(button0, "type", "button");
-      attr(button1, "class", "save-btn");
-      attr(button1, "type", "button");
-      attr(div5, "class", "actions");
-      attr(div6, "class", "settings-form ma-lg");
-      attr(div7, "class", "settings-tab");
+      attr(div4, "class", "settings-collapsible__body svelte-FOU-ghot7b");
     },
     m(target, anchor) {
-      insert(target, div7, anchor);
-      append(div7, div6);
-      append(div6, label0);
+      insert(target, div4, anchor);
+      append(div4, label0);
       append(label0, div0);
       append(div0, span0);
       append(span0, t0);
@@ -33656,7 +33414,7 @@ function create_fragment$6(ctx) {
       );
       append(label0, div1);
       append(label0, p0);
-      append(div6, label1);
+      append(div4, label1);
       append(label1, div2);
       append(div2, span3);
       append(span3, t6);
@@ -33671,55 +33429,1194 @@ function create_fragment$6(ctx) {
       );
       append(label1, div3);
       append(label1, p1);
-      append(div6, div4);
-      append(div4, h2);
-      append(h2, t12);
-      append(h2, t13);
-      append(h2, t14);
-      append(h2, t15);
-      mount_component(dropzone, div4, null);
-      append(div6, div5);
-      append(div5, button0);
-      append(button0, t16);
-      append(div5, button1);
-      current = true;
       if (!mounted) {
         dispose = [
           listen(
             input0,
             "change",
             /*input0_change_input_handler*/
-            ctx[13]
+            ctx[24]
           ),
           listen(
             input0,
             "input",
             /*input0_change_input_handler*/
-            ctx[13]
+            ctx[24]
           ),
           listen(
             input0,
             "input",
             /*onSaleFactorInput*/
-            ctx[5]
+            ctx[9]
           ),
           listen(
             input1,
             "change",
             /*input1_change_input_handler*/
-            ctx[14]
+            ctx[25]
           ),
           listen(
             input1,
             "input",
             /*input1_change_input_handler*/
-            ctx[14]
+            ctx[25]
           ),
           listen(
             input1,
             "input",
             /*onBuyFactorInput*/
-            ctx[6]
+            ctx[10]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*sharedProps*/
+      1 && t0_value !== (t0_value = /*sharedProps*/
+      ctx2[0].localize("SalePriceFactor") + "")) set_data(t0, t0_value);
+      if (dirty[0] & /*$config*/
+      8 && t1_value !== (t1_value = formatFactor(
+        /*$config*/
+        ctx2[3].salePriceFactor,
+        100
+      ) + "")) set_data(t1, t1_value);
+      if (dirty[0] & /*$config*/
+      8) {
+        set_input_value(
+          input0,
+          /*$config*/
+          ctx2[3].salePriceFactor
+        );
+      }
+      if (dirty[0] & /*sharedProps*/
+      1 && t6_value !== (t6_value = /*sharedProps*/
+      ctx2[0].localize("BuyPriceFactor") + "")) set_data(t6, t6_value);
+      if (dirty[0] & /*$config*/
+      8 && t7_value !== (t7_value = formatFactor(
+        /*$config*/
+        ctx2[3].buyPriceFactor,
+        50
+      ) + "")) set_data(t7, t7_value);
+      if (dirty[0] & /*$config*/
+      8) {
+        set_input_value(
+          input1,
+          /*$config*/
+          ctx2[3].buyPriceFactor
+        );
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div4);
+      }
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_if_block$3(ctx) {
+  let div1;
+  let div0;
+  let button;
+  let i;
+  let span;
+  let t_value = (
+    /*provisionMode*/
+    (ctx[4] === "compendium" ? (
+      /*sharedProps*/
+      ctx[0].localize("ProvisionByCompendium")
+    ) : (
+      /*sharedProps*/
+      ctx[0].localize("ProvisionByRollTable")
+    )) + ""
+  );
+  let t;
+  let button_data_tooltip_value;
+  let if_block0_anchor;
+  let current;
+  let mounted;
+  let dispose;
+  let if_block0 = (
+    /*provisionMode*/
+    ctx[4] === "rolltable" && create_if_block_4$1(ctx)
+  );
+  let if_block1 = (
+    /*provisionMode*/
+    ctx[4] === "compendium" && create_if_block_1$1(ctx)
+  );
+  return {
+    c() {
+      div1 = element("div");
+      div0 = element("div");
+      button = element("button");
+      i = element("i");
+      span = element("span");
+      t = text(t_value);
+      if (if_block0) if_block0.c();
+      if_block0_anchor = empty();
+      if (if_block1) if_block1.c();
+      attr(i, "class", "fas svelte-FOU-ghot7b");
+      toggle_class(
+        i,
+        "fa-toggle-on",
+        /*provisionMode*/
+        ctx[4] === "compendium"
+      );
+      toggle_class(
+        i,
+        "fa-toggle-off",
+        /*provisionMode*/
+        ctx[4] !== "compendium"
+      );
+      attr(span, "class", "provision-mode-toggle__label svelte-FOU-ghot7b");
+      attr(button, "class", "provision-mode-toggle__btn svelte-FOU-ghot7b");
+      attr(button, "type", "button");
+      attr(button, "data-tooltip", button_data_tooltip_value = /*sharedProps*/
+      ctx[0].localize("ProvisionModeTooltip"));
+      toggle_class(
+        button,
+        "active",
+        /*provisionMode*/
+        ctx[4] === "compendium"
+      );
+      attr(div0, "class", "provision-mode-toggle svelte-FOU-ghot7b");
+      attr(div1, "class", "settings-collapsible__body svelte-FOU-ghot7b");
+    },
+    m(target, anchor) {
+      insert(target, div1, anchor);
+      append(div1, div0);
+      append(div0, button);
+      append(button, i);
+      append(button, span);
+      append(span, t);
+      if (if_block0) if_block0.m(div1, null);
+      append(div1, if_block0_anchor);
+      if (if_block1) if_block1.m(div1, null);
+      current = true;
+      if (!mounted) {
+        dispose = listen(
+          button,
+          "click",
+          /*toggleProvisionMode*/
+          ctx[17]
+        );
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (!current || dirty[0] & /*provisionMode*/
+      16) {
+        toggle_class(
+          i,
+          "fa-toggle-on",
+          /*provisionMode*/
+          ctx2[4] === "compendium"
+        );
+      }
+      if (!current || dirty[0] & /*provisionMode*/
+      16) {
+        toggle_class(
+          i,
+          "fa-toggle-off",
+          /*provisionMode*/
+          ctx2[4] !== "compendium"
+        );
+      }
+      if ((!current || dirty[0] & /*provisionMode, sharedProps*/
+      17) && t_value !== (t_value = /*provisionMode*/
+      (ctx2[4] === "compendium" ? (
+        /*sharedProps*/
+        ctx2[0].localize("ProvisionByCompendium")
+      ) : (
+        /*sharedProps*/
+        ctx2[0].localize("ProvisionByRollTable")
+      )) + "")) set_data(t, t_value);
+      if (!current || dirty[0] & /*sharedProps*/
+      1 && button_data_tooltip_value !== (button_data_tooltip_value = /*sharedProps*/
+      ctx2[0].localize("ProvisionModeTooltip"))) {
+        attr(button, "data-tooltip", button_data_tooltip_value);
+      }
+      if (!current || dirty[0] & /*provisionMode*/
+      16) {
+        toggle_class(
+          button,
+          "active",
+          /*provisionMode*/
+          ctx2[4] === "compendium"
+        );
+      }
+      if (
+        /*provisionMode*/
+        ctx2[4] === "rolltable"
+      ) {
+        if (if_block0) {
+          if_block0.p(ctx2, dirty);
+          if (dirty[0] & /*provisionMode*/
+          16) {
+            transition_in(if_block0, 1);
+          }
+        } else {
+          if_block0 = create_if_block_4$1(ctx2);
+          if_block0.c();
+          transition_in(if_block0, 1);
+          if_block0.m(div1, if_block0_anchor);
+        }
+      } else if (if_block0) {
+        group_outros();
+        transition_out(if_block0, 1, 1, () => {
+          if_block0 = null;
+        });
+        check_outros();
+      }
+      if (
+        /*provisionMode*/
+        ctx2[4] === "compendium"
+      ) {
+        if (if_block1) {
+          if_block1.p(ctx2, dirty);
+        } else {
+          if_block1 = create_if_block_1$1(ctx2);
+          if_block1.c();
+          if_block1.m(div1, null);
+        }
+      } else if (if_block1) {
+        if_block1.d(1);
+        if_block1 = null;
+      }
+    },
+    i(local) {
+      if (current) return;
+      transition_in(if_block0);
+      current = true;
+    },
+    o(local) {
+      transition_out(if_block0);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div1);
+      }
+      if (if_block0) if_block0.d();
+      if (if_block1) if_block1.d();
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function create_if_block_4$1(ctx) {
+  let div;
+  let h3;
+  let t0_value = (
+    /*sharedProps*/
+    ctx[0].localize("RollTables") + ""
+  );
+  let t0;
+  let t1;
+  let t2_value = (
+    /*rollTables*/
+    ctx[1].length + ""
+  );
+  let t2;
+  let t3;
+  let dropzone;
+  let current;
+  dropzone = new DropZone({
+    props: {
+      placeholder: (
+        /*sharedProps*/
+        ctx[0].localize("DragRollTablesHere")
+      ),
+      acceptType: "RollTable",
+      onDrop: (
+        /*handleRollTableDrop*/
+        ctx[12]
+      ),
+      $$slots: { default: [create_default_slot$2] },
+      $$scope: { ctx }
+    }
+  });
+  return {
+    c() {
+      div = element("div");
+      h3 = element("h3");
+      t0 = text(t0_value);
+      t1 = text(" (");
+      t2 = text(t2_value);
+      t3 = text(")");
+      create_component(dropzone.$$.fragment);
+      attr(h3, "class", "svelte-FOU-ghot7b");
+      attr(div, "class", "rolltables-section svelte-FOU-ghot7b");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      append(div, h3);
+      append(h3, t0);
+      append(h3, t1);
+      append(h3, t2);
+      append(h3, t3);
+      mount_component(dropzone, div, null);
+      current = true;
+    },
+    p(ctx2, dirty) {
+      if ((!current || dirty[0] & /*sharedProps*/
+      1) && t0_value !== (t0_value = /*sharedProps*/
+      ctx2[0].localize("RollTables") + "")) set_data(t0, t0_value);
+      if ((!current || dirty[0] & /*rollTables*/
+      2) && t2_value !== (t2_value = /*rollTables*/
+      ctx2[1].length + "")) set_data(t2, t2_value);
+      const dropzone_changes = {};
+      if (dirty[0] & /*sharedProps*/
+      1) dropzone_changes.placeholder = /*sharedProps*/
+      ctx2[0].localize("DragRollTablesHere");
+      if (dirty[0] & /*rollTables, sharedProps, rollTableRolls*/
+      7 | dirty[1] & /*$$scope*/
+      128) {
+        dropzone_changes.$$scope = { dirty, ctx: ctx2 };
+      }
+      dropzone.$set(dropzone_changes);
+    },
+    i(local) {
+      if (current) return;
+      transition_in(dropzone.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(dropzone.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      destroy_component(dropzone);
+    }
+  };
+}
+function create_if_block_6(ctx) {
+  let ul;
+  let each_value_1 = ensure_array_like(
+    /*rollTables*/
+    ctx[1]
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value_1.length; i += 1) {
+    each_blocks[i] = create_each_block_1$2(get_each_context_1$2(ctx, each_value_1, i));
+  }
+  return {
+    c() {
+      ul = element("ul");
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      attr(ul, "class", "rolltable-bucket__list svelte-FOU-ghot7b");
+    },
+    m(target, anchor) {
+      insert(target, ul, anchor);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(ul, null);
+        }
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*sharedProps, handleRemoveRollTableClick, handleRollCountStepClick, rollTableRolls, handleRollCountInput, handleOpenRollTableClick, formatRollTableName, rollTables*/
+      124935) {
+        each_value_1 = ensure_array_like(
+          /*rollTables*/
+          ctx2[1]
+        );
+        let i;
+        for (i = 0; i < each_value_1.length; i += 1) {
+          const child_ctx = get_each_context_1$2(ctx2, each_value_1, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block_1$2(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(ul, null);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value_1.length;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(ul);
+      }
+      destroy_each(each_blocks, detaching);
+    }
+  };
+}
+function create_each_block_1$2(ctx) {
+  let li;
+  let button0;
+  let img;
+  let img_src_value;
+  let img_alt_value;
+  let span;
+  let t_value = (
+    /*formatRollTableName*/
+    ctx[11](
+      /*rtUuid*/
+      ctx[35]
+    ) + ""
+  );
+  let t;
+  let div;
+  let button1;
+  let i0;
+  let button1_data_tooltip_value;
+  let input;
+  let input_value_value;
+  let input_aria_label_value;
+  let button2;
+  let i1;
+  let button2_data_tooltip_value;
+  let button3;
+  let i2;
+  let button3_data_tooltip_value;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      li = element("li");
+      button0 = element("button");
+      img = element("img");
+      span = element("span");
+      t = text(t_value);
+      div = element("div");
+      button1 = element("button");
+      i0 = element("i");
+      input = element("input");
+      button2 = element("button");
+      i1 = element("i");
+      button3 = element("button");
+      i2 = element("i");
+      attr(img, "class", "rolltable-bucket__img svelte-FOU-ghot7b");
+      if (!src_url_equal(img.src, img_src_value = formatRollTableImage(
+        /*rtUuid*/
+        ctx[35]
+      ))) attr(img, "src", img_src_value);
+      attr(img, "alt", img_alt_value = /*formatRollTableName*/
+      ctx[11](
+        /*rtUuid*/
+        ctx[35]
+      ));
+      attr(span, "class", "rolltable-bucket__name svelte-FOU-ghot7b");
+      attr(button0, "class", "rolltable-bucket__open svelte-FOU-ghot7b");
+      attr(button0, "type", "button");
+      attr(
+        button0,
+        "data-index",
+        /*index*/
+        ctx[37]
+      );
+      attr(i0, "class", "fa fa-minus");
+      attr(button1, "class", "rolltable-bucket__step svelte-FOU-ghot7b");
+      attr(button1, "type", "button");
+      attr(
+        button1,
+        "data-index",
+        /*index*/
+        ctx[37]
+      );
+      attr(button1, "data-delta", "-1");
+      attr(button1, "data-tooltip", button1_data_tooltip_value = /*sharedProps*/
+      ctx[0].localize("Decrease"));
+      attr(input, "class", "rolltable-bucket__count svelte-FOU-ghot7b");
+      attr(input, "type", "number");
+      attr(input, "min", "1");
+      attr(input, "step", "1");
+      attr(
+        input,
+        "data-index",
+        /*index*/
+        ctx[37]
+      );
+      input.value = input_value_value = /*rollTableRolls*/
+      ctx[2][
+        /*index*/
+        ctx[37]
+      ] ?? 1;
+      attr(input, "aria-label", input_aria_label_value = /*sharedProps*/
+      ctx[0].localize("RollCount"));
+      attr(i1, "class", "fa fa-plus");
+      attr(button2, "class", "rolltable-bucket__step svelte-FOU-ghot7b");
+      attr(button2, "type", "button");
+      attr(
+        button2,
+        "data-index",
+        /*index*/
+        ctx[37]
+      );
+      attr(button2, "data-delta", "1");
+      attr(button2, "data-tooltip", button2_data_tooltip_value = /*sharedProps*/
+      ctx[0].localize("Increase"));
+      attr(div, "class", "rolltable-bucket__rolls svelte-FOU-ghot7b");
+      attr(i2, "class", "fa fa-trash");
+      attr(button3, "class", "rolltable-bucket__remove svelte-FOU-ghot7b");
+      attr(button3, "type", "button");
+      attr(
+        button3,
+        "data-index",
+        /*index*/
+        ctx[37]
+      );
+      attr(button3, "data-tooltip", button3_data_tooltip_value = /*sharedProps*/
+      ctx[0].localize("Types.Actor.ActionButtons.Delete"));
+      attr(li, "class", "rolltable-bucket__entry svelte-FOU-ghot7b");
+    },
+    m(target, anchor) {
+      insert(target, li, anchor);
+      append(li, button0);
+      append(button0, img);
+      append(button0, span);
+      append(span, t);
+      append(li, div);
+      append(div, button1);
+      append(button1, i0);
+      append(div, input);
+      append(div, button2);
+      append(button2, i1);
+      append(li, button3);
+      append(button3, i2);
+      if (!mounted) {
+        dispose = [
+          listen(
+            button0,
+            "click",
+            /*handleOpenRollTableClick*/
+            ctx[16]
+          ),
+          listen(
+            button1,
+            "click",
+            /*handleRollCountStepClick*/
+            ctx[14]
+          ),
+          listen(
+            input,
+            "input",
+            /*handleRollCountInput*/
+            ctx[13]
+          ),
+          listen(
+            button2,
+            "click",
+            /*handleRollCountStepClick*/
+            ctx[14]
+          ),
+          listen(
+            button3,
+            "click",
+            /*handleRemoveRollTableClick*/
+            ctx[15]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*rollTables*/
+      2 && !src_url_equal(img.src, img_src_value = formatRollTableImage(
+        /*rtUuid*/
+        ctx2[35]
+      ))) {
+        attr(img, "src", img_src_value);
+      }
+      if (dirty[0] & /*rollTables*/
+      2 && img_alt_value !== (img_alt_value = /*formatRollTableName*/
+      ctx2[11](
+        /*rtUuid*/
+        ctx2[35]
+      ))) {
+        attr(img, "alt", img_alt_value);
+      }
+      if (dirty[0] & /*rollTables*/
+      2 && t_value !== (t_value = /*formatRollTableName*/
+      ctx2[11](
+        /*rtUuid*/
+        ctx2[35]
+      ) + "")) set_data(t, t_value);
+      if (dirty[0] & /*sharedProps*/
+      1 && button1_data_tooltip_value !== (button1_data_tooltip_value = /*sharedProps*/
+      ctx2[0].localize("Decrease"))) {
+        attr(button1, "data-tooltip", button1_data_tooltip_value);
+      }
+      if (dirty[0] & /*rollTableRolls*/
+      4 && input_value_value !== (input_value_value = /*rollTableRolls*/
+      ctx2[2][
+        /*index*/
+        ctx2[37]
+      ] ?? 1) && input.value !== input_value_value) {
+        input.value = input_value_value;
+      }
+      if (dirty[0] & /*sharedProps*/
+      1 && input_aria_label_value !== (input_aria_label_value = /*sharedProps*/
+      ctx2[0].localize("RollCount"))) {
+        attr(input, "aria-label", input_aria_label_value);
+      }
+      if (dirty[0] & /*sharedProps*/
+      1 && button2_data_tooltip_value !== (button2_data_tooltip_value = /*sharedProps*/
+      ctx2[0].localize("Increase"))) {
+        attr(button2, "data-tooltip", button2_data_tooltip_value);
+      }
+      if (dirty[0] & /*sharedProps*/
+      1 && button3_data_tooltip_value !== (button3_data_tooltip_value = /*sharedProps*/
+      ctx2[0].localize("Types.Actor.ActionButtons.Delete"))) {
+        attr(button3, "data-tooltip", button3_data_tooltip_value);
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(li);
+      }
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_if_block_5(ctx) {
+  let p;
+  return {
+    c() {
+      p = element("p");
+      p.textContent = "No roll tables configured. Drag some here to enable provisioning.";
+      attr(p, "class", "rolltable-bucket__empty svelte-FOU-ghot7b");
+    },
+    m(target, anchor) {
+      insert(target, p, anchor);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(p);
+      }
+    }
+  };
+}
+function create_default_slot$2(ctx) {
+  let if_block0_anchor;
+  let if_block1_anchor;
+  let if_block0 = (
+    /*rollTables*/
+    ctx[1].length > 0 && create_if_block_6(ctx)
+  );
+  let if_block1 = (
+    /*rollTables*/
+    ctx[1].length === 0 && create_if_block_5()
+  );
+  return {
+    c() {
+      if (if_block0) if_block0.c();
+      if_block0_anchor = empty();
+      if (if_block1) if_block1.c();
+      if_block1_anchor = empty();
+    },
+    m(target, anchor) {
+      if (if_block0) if_block0.m(target, anchor);
+      insert(target, if_block0_anchor, anchor);
+      if (if_block1) if_block1.m(target, anchor);
+      insert(target, if_block1_anchor, anchor);
+    },
+    p(ctx2, dirty) {
+      if (
+        /*rollTables*/
+        ctx2[1].length > 0
+      ) {
+        if (if_block0) {
+          if_block0.p(ctx2, dirty);
+        } else {
+          if_block0 = create_if_block_6(ctx2);
+          if_block0.c();
+          if_block0.m(if_block0_anchor.parentNode, if_block0_anchor);
+        }
+      } else if (if_block0) {
+        if_block0.d(1);
+        if_block0 = null;
+      }
+      if (
+        /*rollTables*/
+        ctx2[1].length === 0
+      ) {
+        if (if_block1) ;
+        else {
+          if_block1 = create_if_block_5();
+          if_block1.c();
+          if_block1.m(if_block1_anchor.parentNode, if_block1_anchor);
+        }
+      } else if (if_block1) {
+        if_block1.d(1);
+        if_block1 = null;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(if_block0_anchor);
+        detach(if_block1_anchor);
+      }
+      if (if_block0) if_block0.d(detaching);
+      if (if_block1) if_block1.d(detaching);
+    }
+  };
+}
+function create_if_block_1$1(ctx) {
+  let div;
+  let p;
+  let t_value = (
+    /*sharedProps*/
+    ctx[0].localize("CompendiumProvisionHint") + ""
+  );
+  let t;
+  let if_block0_anchor;
+  let if_block0 = (
+    /*compendiumRows*/
+    ctx[7].length > 0 && create_if_block_3$1(ctx)
+  );
+  let if_block1 = (
+    /*compendiumRows*/
+    ctx[7].length === 0 && create_if_block_2$1(ctx)
+  );
+  return {
+    c() {
+      div = element("div");
+      p = element("p");
+      t = text(t_value);
+      if (if_block0) if_block0.c();
+      if_block0_anchor = empty();
+      if (if_block1) if_block1.c();
+      attr(p, "class", "compendium-provision-hint svelte-FOU-ghot7b");
+      attr(div, "class", "compendium-provision-section svelte-FOU-ghot7b");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      append(div, p);
+      append(p, t);
+      if (if_block0) if_block0.m(div, null);
+      append(div, if_block0_anchor);
+      if (if_block1) if_block1.m(div, null);
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*sharedProps*/
+      1 && t_value !== (t_value = /*sharedProps*/
+      ctx2[0].localize("CompendiumProvisionHint") + "")) set_data(t, t_value);
+      if (
+        /*compendiumRows*/
+        ctx2[7].length > 0
+      ) {
+        if (if_block0) {
+          if_block0.p(ctx2, dirty);
+        } else {
+          if_block0 = create_if_block_3$1(ctx2);
+          if_block0.c();
+          if_block0.m(div, if_block0_anchor);
+        }
+      } else if (if_block0) {
+        if_block0.d(1);
+        if_block0 = null;
+      }
+      if (
+        /*compendiumRows*/
+        ctx2[7].length === 0
+      ) {
+        if (if_block1) {
+          if_block1.p(ctx2, dirty);
+        } else {
+          if_block1 = create_if_block_2$1(ctx2);
+          if_block1.c();
+          if_block1.m(div, null);
+        }
+      } else if (if_block1) {
+        if_block1.d(1);
+        if_block1 = null;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      if (if_block0) if_block0.d();
+      if (if_block1) if_block1.d();
+    }
+  };
+}
+function create_if_block_3$1(ctx) {
+  let ul;
+  let each_value = ensure_array_like(
+    /*compendiumRows*/
+    ctx[7]
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value.length; i += 1) {
+    each_blocks[i] = create_each_block$3(get_each_context$3(ctx, each_value, i));
+  }
+  return {
+    c() {
+      ul = element("ul");
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      attr(ul, "class", "compendium-provision__list svelte-FOU-ghot7b");
+    },
+    m(target, anchor) {
+      insert(target, ul, anchor);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(ul, null);
+        }
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*compendiumRows, sharedProps, handleCompendiumQuantityStep, handleCompendiumQuantityInput*/
+      786561) {
+        each_value = ensure_array_like(
+          /*compendiumRows*/
+          ctx2[7]
+        );
+        let i;
+        for (i = 0; i < each_value.length; i += 1) {
+          const child_ctx = get_each_context$3(ctx2, each_value, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block$3(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(ul, null);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value.length;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(ul);
+      }
+      destroy_each(each_blocks, detaching);
+    }
+  };
+}
+function create_each_block$3(ctx) {
+  let li;
+  let span;
+  let t_value = (
+    /*row*/
+    ctx[32].label + ""
+  );
+  let t;
+  let div;
+  let button0;
+  let i0;
+  let button0_data_type_value;
+  let button0_data_tooltip_value;
+  let input;
+  let input_data_type_value;
+  let input_value_value;
+  let input_aria_label_value;
+  let button1;
+  let i1;
+  let button1_data_type_value;
+  let button1_data_tooltip_value;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      li = element("li");
+      span = element("span");
+      t = text(t_value);
+      div = element("div");
+      button0 = element("button");
+      i0 = element("i");
+      input = element("input");
+      button1 = element("button");
+      i1 = element("i");
+      attr(span, "class", "compendium-provision__name svelte-FOU-ghot7b");
+      attr(i0, "class", "fa fa-minus");
+      attr(button0, "class", "compendium-provision__step svelte-FOU-ghot7b");
+      attr(button0, "type", "button");
+      attr(button0, "data-type", button0_data_type_value = /*row*/
+      ctx[32].type);
+      attr(button0, "data-delta", "-1");
+      attr(button0, "data-tooltip", button0_data_tooltip_value = /*sharedProps*/
+      ctx[0].localize("Decrease"));
+      attr(input, "class", "compendium-provision__count svelte-FOU-ghot7b");
+      attr(input, "type", "number");
+      attr(input, "min", "0");
+      attr(input, "step", "1");
+      attr(input, "data-type", input_data_type_value = /*row*/
+      ctx[32].type);
+      input.value = input_value_value = /*row*/
+      ctx[32].quantity;
+      attr(input, "aria-label", input_aria_label_value = /*sharedProps*/
+      ctx[0].localize("Quantity"));
+      attr(i1, "class", "fa fa-plus");
+      attr(button1, "class", "compendium-provision__step svelte-FOU-ghot7b");
+      attr(button1, "type", "button");
+      attr(button1, "data-type", button1_data_type_value = /*row*/
+      ctx[32].type);
+      attr(button1, "data-delta", "1");
+      attr(button1, "data-tooltip", button1_data_tooltip_value = /*sharedProps*/
+      ctx[0].localize("Increase"));
+      attr(div, "class", "compendium-provision__rolls svelte-FOU-ghot7b");
+      attr(li, "class", "compendium-provision__entry svelte-FOU-ghot7b");
+    },
+    m(target, anchor) {
+      insert(target, li, anchor);
+      append(li, span);
+      append(span, t);
+      append(li, div);
+      append(div, button0);
+      append(button0, i0);
+      append(div, input);
+      append(div, button1);
+      append(button1, i1);
+      if (!mounted) {
+        dispose = [
+          listen(
+            button0,
+            "click",
+            /*handleCompendiumQuantityStep*/
+            ctx[19]
+          ),
+          listen(
+            input,
+            "input",
+            /*handleCompendiumQuantityInput*/
+            ctx[18]
+          ),
+          listen(
+            button1,
+            "click",
+            /*handleCompendiumQuantityStep*/
+            ctx[19]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*compendiumRows*/
+      128 && t_value !== (t_value = /*row*/
+      ctx2[32].label + "")) set_data(t, t_value);
+      if (dirty[0] & /*compendiumRows*/
+      128 && button0_data_type_value !== (button0_data_type_value = /*row*/
+      ctx2[32].type)) {
+        attr(button0, "data-type", button0_data_type_value);
+      }
+      if (dirty[0] & /*sharedProps*/
+      1 && button0_data_tooltip_value !== (button0_data_tooltip_value = /*sharedProps*/
+      ctx2[0].localize("Decrease"))) {
+        attr(button0, "data-tooltip", button0_data_tooltip_value);
+      }
+      if (dirty[0] & /*compendiumRows*/
+      128 && input_data_type_value !== (input_data_type_value = /*row*/
+      ctx2[32].type)) {
+        attr(input, "data-type", input_data_type_value);
+      }
+      if (dirty[0] & /*compendiumRows*/
+      128 && input_value_value !== (input_value_value = /*row*/
+      ctx2[32].quantity) && input.value !== input_value_value) {
+        input.value = input_value_value;
+      }
+      if (dirty[0] & /*sharedProps*/
+      1 && input_aria_label_value !== (input_aria_label_value = /*sharedProps*/
+      ctx2[0].localize("Quantity"))) {
+        attr(input, "aria-label", input_aria_label_value);
+      }
+      if (dirty[0] & /*compendiumRows*/
+      128 && button1_data_type_value !== (button1_data_type_value = /*row*/
+      ctx2[32].type)) {
+        attr(button1, "data-type", button1_data_type_value);
+      }
+      if (dirty[0] & /*sharedProps*/
+      1 && button1_data_tooltip_value !== (button1_data_tooltip_value = /*sharedProps*/
+      ctx2[0].localize("Increase"))) {
+        attr(button1, "data-tooltip", button1_data_tooltip_value);
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(li);
+      }
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_if_block_2$1(ctx) {
+  let p;
+  let t_value = (
+    /*sharedProps*/
+    ctx[0].localize("NoListableTypes") + ""
+  );
+  let t;
+  return {
+    c() {
+      p = element("p");
+      t = text(t_value);
+      attr(p, "class", "compendium-provision__empty svelte-FOU-ghot7b");
+    },
+    m(target, anchor) {
+      insert(target, p, anchor);
+      append(p, t);
+    },
+    p(ctx2, dirty) {
+      if (dirty[0] & /*sharedProps*/
+      1 && t_value !== (t_value = /*sharedProps*/
+      ctx2[0].localize("NoListableTypes") + "")) set_data(t, t_value);
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(p);
+      }
+    }
+  };
+}
+function create_fragment$6(ctx) {
+  let div4;
+  let div3;
+  let section0;
+  let div0;
+  let i0;
+  let h20;
+  let t0_value = (
+    /*sharedProps*/
+    ctx[0].localize("Pricing") + ""
+  );
+  let t0;
+  let section1;
+  let div1;
+  let i1;
+  let h21;
+  let t1_value = (
+    /*sharedProps*/
+    ctx[0].localize("Provisioning") + ""
+  );
+  let t1;
+  let div2;
+  let button0;
+  let t2_value = (
+    /*sharedProps*/
+    ctx[0].localize("ProvisionStore") + ""
+  );
+  let t2;
+  let button1;
+  let current;
+  let mounted;
+  let dispose;
+  let if_block0 = (
+    /*pricingOpen*/
+    ctx[5] && create_if_block_7(ctx)
+  );
+  let if_block1 = (
+    /*provisioningOpen*/
+    ctx[6] && create_if_block$3(ctx)
+  );
+  return {
+    c() {
+      div4 = element("div");
+      div3 = element("div");
+      section0 = element("section");
+      div0 = element("div");
+      i0 = element("i");
+      h20 = element("h2");
+      t0 = text(t0_value);
+      if (if_block0) if_block0.c();
+      section1 = element("section");
+      div1 = element("div");
+      i1 = element("i");
+      h21 = element("h2");
+      t1 = text(t1_value);
+      if (if_block1) if_block1.c();
+      div2 = element("div");
+      button0 = element("button");
+      t2 = text(t2_value);
+      button1 = element("button");
+      button1.textContent = "Save Settings";
+      attr(i0, "class", "fas fa-chevron-down settings-collapsible__chevron svelte-FOU-ghot7b");
+      toggle_class(
+        i0,
+        "settings-collapsible__chevron--open",
+        /*pricingOpen*/
+        ctx[5]
+      );
+      attr(h20, "class", "svelte-FOU-ghot7b");
+      attr(div0, "class", "settings-collapsible__summary no-drag svelte-FOU-ghot7b");
+      attr(div0, "role", "button");
+      attr(div0, "tabindex", "0");
+      attr(section0, "class", "settings-collapsible svelte-FOU-ghot7b");
+      attr(i1, "class", "fas fa-chevron-down settings-collapsible__chevron svelte-FOU-ghot7b");
+      toggle_class(
+        i1,
+        "settings-collapsible__chevron--open",
+        /*provisioningOpen*/
+        ctx[6]
+      );
+      attr(h21, "class", "svelte-FOU-ghot7b");
+      attr(div1, "class", "settings-collapsible__summary no-drag svelte-FOU-ghot7b");
+      attr(div1, "role", "button");
+      attr(div1, "tabindex", "0");
+      attr(section1, "class", "settings-collapsible svelte-FOU-ghot7b");
+      attr(button0, "class", "provision-btn");
+      attr(button0, "type", "button");
+      attr(button1, "class", "save-btn");
+      attr(button1, "type", "button");
+      attr(div2, "class", "actions");
+      attr(div3, "class", "settings-form ma-lg");
+      attr(div4, "class", "settings-tab");
+    },
+    m(target, anchor) {
+      insert(target, div4, anchor);
+      append(div4, div3);
+      append(div3, section0);
+      append(section0, div0);
+      append(div0, i0);
+      append(div0, h20);
+      append(h20, t0);
+      if (if_block0) if_block0.m(section0, null);
+      append(div3, section1);
+      append(section1, div1);
+      append(div1, i1);
+      append(div1, h21);
+      append(h21, t1);
+      if (if_block1) if_block1.m(section1, null);
+      append(div3, div2);
+      append(div2, button0);
+      append(button0, t2);
+      append(div2, button1);
+      current = true;
+      if (!mounted) {
+        dispose = [
+          listen(
+            div0,
+            "click",
+            /*click_handler*/
+            ctx[22]
+          ),
+          listen(
+            div0,
+            "keydown",
+            /*keydown_handler*/
+            ctx[23]
+          ),
+          listen(
+            div1,
+            "click",
+            /*click_handler_1*/
+            ctx[26]
+          ),
+          listen(
+            div1,
+            "keydown",
+            /*keydown_handler_1*/
+            ctx[27]
           ),
           listen(button0, "click", function() {
             if (is_function(
@@ -33737,75 +34634,89 @@ function create_fragment$6(ctx) {
         mounted = true;
       }
     },
-    p(new_ctx, [dirty]) {
+    p(new_ctx, dirty) {
       ctx = new_ctx;
-      if ((!current || dirty & /*sharedProps*/
+      if (!current || dirty[0] & /*pricingOpen*/
+      32) {
+        toggle_class(
+          i0,
+          "settings-collapsible__chevron--open",
+          /*pricingOpen*/
+          ctx[5]
+        );
+      }
+      if ((!current || dirty[0] & /*sharedProps*/
       1) && t0_value !== (t0_value = /*sharedProps*/
-      ctx[0].localize("SalePriceFactor") + "")) set_data(t0, t0_value);
-      if ((!current || dirty & /*$config*/
-      8) && t1_value !== (t1_value = formatFactor(
-        /*$config*/
-        ctx[3].salePriceFactor,
-        100
-      ) + "")) set_data(t1, t1_value);
-      if (dirty & /*$config*/
-      8) {
-        set_input_value(
-          input0,
-          /*$config*/
-          ctx[3].salePriceFactor
+      ctx[0].localize("Pricing") + "")) set_data(t0, t0_value);
+      if (
+        /*pricingOpen*/
+        ctx[5]
+      ) {
+        if (if_block0) {
+          if_block0.p(ctx, dirty);
+        } else {
+          if_block0 = create_if_block_7(ctx);
+          if_block0.c();
+          if_block0.m(section0, null);
+        }
+      } else if (if_block0) {
+        if_block0.d(1);
+        if_block0 = null;
+      }
+      if (!current || dirty[0] & /*provisioningOpen*/
+      64) {
+        toggle_class(
+          i1,
+          "settings-collapsible__chevron--open",
+          /*provisioningOpen*/
+          ctx[6]
         );
       }
-      if ((!current || dirty & /*sharedProps*/
-      1) && t6_value !== (t6_value = /*sharedProps*/
-      ctx[0].localize("BuyPriceFactor") + "")) set_data(t6, t6_value);
-      if ((!current || dirty & /*$config*/
-      8) && t7_value !== (t7_value = formatFactor(
-        /*$config*/
-        ctx[3].buyPriceFactor,
-        50
-      ) + "")) set_data(t7, t7_value);
-      if (dirty & /*$config*/
-      8) {
-        set_input_value(
-          input1,
-          /*$config*/
-          ctx[3].buyPriceFactor
-        );
+      if ((!current || dirty[0] & /*sharedProps*/
+      1) && t1_value !== (t1_value = /*sharedProps*/
+      ctx[0].localize("Provisioning") + "")) set_data(t1, t1_value);
+      if (
+        /*provisioningOpen*/
+        ctx[6]
+      ) {
+        if (if_block1) {
+          if_block1.p(ctx, dirty);
+          if (dirty[0] & /*provisioningOpen*/
+          64) {
+            transition_in(if_block1, 1);
+          }
+        } else {
+          if_block1 = create_if_block$3(ctx);
+          if_block1.c();
+          transition_in(if_block1, 1);
+          if_block1.m(section1, null);
+        }
+      } else if (if_block1) {
+        group_outros();
+        transition_out(if_block1, 1, 1, () => {
+          if_block1 = null;
+        });
+        check_outros();
       }
-      if ((!current || dirty & /*sharedProps*/
-      1) && t12_value !== (t12_value = /*sharedProps*/
-      ctx[0].localize("RollTables") + "")) set_data(t12, t12_value);
-      if ((!current || dirty & /*rollTables*/
-      2) && t14_value !== (t14_value = /*rollTables*/
-      ctx[1].length + "")) set_data(t14, t14_value);
-      const dropzone_changes = {};
-      if (dirty & /*sharedProps*/
-      1) dropzone_changes.placeholder = /*sharedProps*/
-      ctx[0].localize("DragRollTablesHere");
-      if (dirty & /*$$scope, rollTables, sharedProps, rollTableRolls*/
-      2097159) {
-        dropzone_changes.$$scope = { dirty, ctx };
-      }
-      dropzone.$set(dropzone_changes);
-      if ((!current || dirty & /*sharedProps*/
-      1) && t16_value !== (t16_value = /*sharedProps*/
-      ctx[0].localize("ProvisionStore") + "")) set_data(t16, t16_value);
+      if ((!current || dirty[0] & /*sharedProps*/
+      1) && t2_value !== (t2_value = /*sharedProps*/
+      ctx[0].localize("ProvisionStore") + "")) set_data(t2, t2_value);
     },
     i(local) {
       if (current) return;
-      transition_in(dropzone.$$.fragment, local);
+      transition_in(if_block1);
       current = true;
     },
     o(local) {
-      transition_out(dropzone.$$.fragment, local);
+      transition_out(if_block1);
       current = false;
     },
     d(detaching) {
       if (detaching) {
-        detach(div7);
+        detach(div4);
       }
-      destroy_component(dropzone);
+      if (if_block0) if_block0.d();
+      if (if_block1) if_block1.d();
       mounted = false;
       run_all(dispose);
     }
@@ -33865,12 +34776,18 @@ function openRollTable(entry) {
   table?.sheet?.render(true);
 }
 function instance$6($$self, $$props, $$invalidate) {
+  let listableTypes;
+  let compendiumRows;
   let $config;
   let { sharedProps = {} } = $$props;
   const config = getContext("shopConfig") || shopConfig;
   component_subscribe($$self, config, (value) => $$invalidate(3, $config = value));
   let rollTables = [];
   let rollTableRolls = [];
+  let provisionMode = "rolltable";
+  let compendiumProvision = [];
+  let pricingOpen = true;
+  let provisioningOpen = true;
   function onSaleFactorInput(event2) {
     config.update((current) => ({
       ...current,
@@ -33946,6 +34863,31 @@ function instance$6($$self, $$props, $$invalidate) {
   function handleOpenRollTableClick(event2) {
     openRollTable(rollTables[Number(event2.currentTarget.dataset.index)]);
   }
+  function toggleProvisionMode() {
+    const next = provisionMode === "compendium" ? "rolltable" : "compendium";
+    config.update((current) => ({ ...current, provisionMode: next }));
+    sharedProps.onProvisionModeChange?.(next);
+    sharedProps.silentSaveSettings?.();
+  }
+  async function setCompendiumQuantity(type, value) {
+    const quantity = Math.max(0, Number.parseInt(value, 10) || 0);
+    const next = compendiumProvision.filter((entry) => entry.type !== type);
+    if (quantity > 0) next.push({ type, quantity });
+    config.update((current) => ({ ...current, compendiumProvision: next }));
+    sharedProps.onCompendiumProvisionChange?.(next);
+    await sharedProps.silentSaveSettings?.();
+  }
+  function handleCompendiumQuantityInput(event2) {
+    setCompendiumQuantity(event2.currentTarget.dataset.type, event2.currentTarget.value);
+  }
+  function handleCompendiumQuantityStep(event2) {
+    const type = event2.currentTarget.dataset.type;
+    const delta = Number(event2.currentTarget.dataset.delta);
+    const current = compendiumRows.find((row) => row.type === type)?.quantity ?? 0;
+    setCompendiumQuantity(type, current + delta);
+  }
+  const click_handler = () => $$invalidate(5, pricingOpen = !pricingOpen);
+  const keydown_handler = (e) => (e.key === "Enter" || e.key === " ") && $$invalidate(5, pricingOpen = !pricingOpen);
   function input0_change_input_handler() {
     $config.salePriceFactor = to_number(this.value);
     config.set($config);
@@ -33954,28 +34896,54 @@ function instance$6($$self, $$props, $$invalidate) {
     $config.buyPriceFactor = to_number(this.value);
     config.set($config);
   }
+  const click_handler_1 = () => $$invalidate(6, provisioningOpen = !provisioningOpen);
+  const keydown_handler_1 = (e) => (e.key === "Enter" || e.key === " ") && $$invalidate(6, provisioningOpen = !provisioningOpen);
   $$self.$$set = ($$props2) => {
     if ("sharedProps" in $$props2) $$invalidate(0, sharedProps = $$props2.sharedProps);
   };
   $$self.$$.update = () => {
-    if ($$self.$$.dirty & /*$config*/
+    if ($$self.$$.dirty[0] & /*$config*/
     8) {
       $$invalidate(1, rollTables = Array.isArray($config.rollTables) ? $config.rollTables : []);
     }
-    if ($$self.$$.dirty & /*rollTables, $config*/
+    if ($$self.$$.dirty[0] & /*rollTables, $config*/
     10) {
       $$invalidate(2, rollTableRolls = normalizeRollTableRolls$1(rollTables, $config.rollTableRolls));
     }
-    if ($$self.$$.dirty & /*rollTables, rollTableRolls, $config*/
+    if ($$self.$$.dirty[0] & /*rollTables, rollTableRolls, $config*/
     14) {
       syncRollTableRolls(rollTables, rollTableRolls, $config.rollTableRolls);
     }
+    if ($$self.$$.dirty[0] & /*$config*/
+    8) {
+      $$invalidate(4, provisionMode = $config.provisionMode ?? "rolltable");
+    }
+    if ($$self.$$.dirty[0] & /*$config*/
+    8) {
+      $$invalidate(20, compendiumProvision = Array.isArray($config.compendiumProvision) ? $config.compendiumProvision : []);
+    }
+    if ($$self.$$.dirty[0] & /*listableTypes, compendiumProvision*/
+    3145728) {
+      $$invalidate(7, compendiumRows = listableTypes.map((type) => {
+        const existing = compendiumProvision.find((entry) => entry.type === type.type);
+        return {
+          type: type.type,
+          label: type.label,
+          quantity: existing ? Number(existing.quantity ?? 0) : 0
+        };
+      }));
+    }
   };
+  $$invalidate(21, listableTypes = getConfiguredListableItemTypes());
   return [
     sharedProps,
     rollTables,
     rollTableRolls,
     $config,
+    provisionMode,
+    pricingOpen,
+    provisioningOpen,
+    compendiumRows,
     config,
     onSaleFactorInput,
     onBuyFactorInput,
@@ -33985,14 +34953,23 @@ function instance$6($$self, $$props, $$invalidate) {
     handleRollCountStepClick,
     handleRemoveRollTableClick,
     handleOpenRollTableClick,
+    toggleProvisionMode,
+    handleCompendiumQuantityInput,
+    handleCompendiumQuantityStep,
+    compendiumProvision,
+    listableTypes,
+    click_handler,
+    keydown_handler,
     input0_change_input_handler,
-    input1_change_input_handler
+    input1_change_input_handler,
+    click_handler_1,
+    keydown_handler_1
   ];
 }
 class SettingsTab extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$6, create_fragment$6, safe_not_equal, { sharedProps: 0 });
+    init(this, options, instance$6, create_fragment$6, safe_not_equal, { sharedProps: 0 }, null, [-1, -1]);
   }
 }
 function create_fragment$5(ctx) {
@@ -34287,7 +35264,9 @@ function instance$5($$self, $$props, $$invalidate) {
       atrophyPercent: parseFloat($shopConfig.atrophyPercent),
       associatedActors: $shopConfig.associatedActors,
       rollTables: $shopConfig.rollTables,
-      rollTableRolls: normalizeRollTableRolls($shopConfig.rollTables, $shopConfig.rollTableRolls)
+      rollTableRolls: normalizeRollTableRolls($shopConfig.rollTables, $shopConfig.rollTableRolls),
+      provisionMode: $shopConfig.provisionMode,
+      compendiumProvision: $shopConfig.compendiumProvision
     };
     await setShopConfiguration(actor, nextConfig);
     shopConfig.set(nextConfig);
@@ -34304,7 +35283,9 @@ function instance$5($$self, $$props, $$invalidate) {
       atrophyPercent: parseFloat($shopConfig.atrophyPercent),
       associatedActors: $shopConfig.associatedActors,
       rollTables: $shopConfig.rollTables,
-      rollTableRolls: normalizeRollTableRolls($shopConfig.rollTables, $shopConfig.rollTableRolls)
+      rollTableRolls: normalizeRollTableRolls($shopConfig.rollTables, $shopConfig.rollTableRolls),
+      provisionMode: $shopConfig.provisionMode,
+      compendiumProvision: $shopConfig.compendiumProvision
     };
     await setShopConfiguration(actor, nextConfig);
     shopConfig.set(nextConfig);
@@ -34312,6 +35293,10 @@ function instance$5($$self, $$props, $$invalidate) {
   async function provisionStore() {
     if (!actor?.isOwner) {
       ui.notifications.warn(localize("NoPermission"));
+      return;
+    }
+    if (($shopConfig.provisionMode ?? "rolltable") === "compendium") {
+      await provisionStoreFromCompendium();
       return;
     }
     const configuredTables = Array.isArray($shopConfig.rollTables) ? $shopConfig.rollTables : [];
@@ -34328,6 +35313,65 @@ function instance$5($$self, $$props, $$invalidate) {
     }
     const addedCount = await upsertProvisionItems(items);
     ui.notifications.info(game.i18n.format(`${MODULE_ID}.ProvisionComplete`, { count: addedCount }) || `Added ${addedCount} items to inventory.`);
+  }
+  async function provisionStoreFromCompendium() {
+    const provision = Array.isArray($shopConfig.compendiumProvision) ? $shopConfig.compendiumProvision : [];
+    const activeEntries = provision.filter((entry) => entry && entry.type && entry.quantity > 0);
+    if (!activeEntries.length) {
+      ui.notifications.warn(localize("NoCompendiumProvisionConfigured") || "No compendium item types configured for provisioning.");
+      return;
+    }
+    const totalQuantity = activeEntries.reduce((sum, entry) => sum + Number(entry.quantity ?? 0), 0);
+    if (totalQuantity <= 0) {
+      ui.notifications.warn(localize("NoCompendiumProvisionConfigured") || "No compendium item types configured for provisioning.");
+      return;
+    }
+    ui.notifications.info(localize("ProvisioningStore") || "Provisioning store...");
+    const items = await compendiumProvisionItems(activeEntries, totalQuantity);
+    if (!items.length) {
+      ui.notifications.warn(localize("ProvisionNoItems") || "No item results were drawn.");
+      return;
+    }
+    const addedCount = await upsertProvisionItems(items);
+    ui.notifications.info(game.i18n.format(`${MODULE_ID}.ProvisionComplete`, { count: addedCount }) || `Added ${addedCount} items to inventory.`);
+  }
+  async function compendiumProvisionItems(entries, totalQuantity) {
+    const packs = getItemSourcePacks();
+    if (!packs.length) {
+      ui.notifications.warn(localize("NoItemSourcesConfigured") || "No item sources configured. Set them in module settings.");
+      return [];
+    }
+    const typeToQuantity = /* @__PURE__ */ new Map();
+    for (const entry of entries) {
+      typeToQuantity.set(entry.type, (typeToQuantity.get(entry.type) ?? 0) + Number(entry.quantity ?? 0));
+    }
+    const pool = [];
+    for (const pack of packs) {
+      let index;
+      try {
+        index = await pack.getIndex({ fields: ["type", "name", "img"] });
+      } catch (err) {
+        console.error("Compendium index error:", err);
+        continue;
+      }
+      for (const entry of index.values()) {
+        if (typeToQuantity.has(entry.type) && isItemTypeListable(entry.type)) {
+          pool.push({ pack, entry });
+        }
+      }
+    }
+    if (!pool.length) {
+      return [];
+    }
+    const items = [];
+    for (let drawn = 0; drawn < totalQuantity; drawn += 1) {
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      const document2 = await pick.pack.getDocument(pick.entry._id);
+      if (document2?.documentName === "Item") {
+        items.push(document2);
+      }
+    }
+    return items;
   }
   async function rollProvisionItems(configuredTables, configuredRolls) {
     const rollPlans = [];
@@ -34504,7 +35548,9 @@ function instance$5($$self, $$props, $$invalidate) {
           atrophyPercent: config2.atrophyPercent ?? 5,
           associatedActors: config2.associatedActors ?? [],
           rollTables: config2.rollTables ?? [],
-          rollTableRolls: normalizeRollTableRolls(config2.rollTables ?? [], config2.rollTableRolls ?? [])
+          rollTableRolls: normalizeRollTableRolls(config2.rollTables ?? [], config2.rollTableRolls ?? []),
+          provisionMode: config2.provisionMode ?? "rolltable",
+          compendiumProvision: config2.compendiumProvision ?? []
         });
         $$invalidate(13, initializedActorId = actor.id);
       }
@@ -34555,8 +35601,8 @@ function instance$5($$self, $$props, $$invalidate) {
         });
       }
     }
-    if ($$self.$$.dirty[0] & /*actor, isEditing, associatedActors, filterText, selectedActorId, salePriceFactor, buyPriceFactor, priceVariance, variancePeriod, atrophyPercent, rollTables*/
-    106480) {
+    if ($$self.$$.dirty[0] & /*actor, isEditing, associatedActors, filterText, selectedActorId, salePriceFactor, buyPriceFactor, priceVariance, variancePeriod, atrophyPercent, rollTables, $shopConfig*/
+    630768) {
       $$invalidate(2, tabProps = {
         actor,
         isEditing,
@@ -34606,7 +35652,15 @@ function instance$5($$self, $$props, $$invalidate) {
         openItemSheet,
         provisionStore,
         saveSettings,
-        silentSaveSettings
+        silentSaveSettings,
+        provisionMode: $shopConfig.provisionMode,
+        compendiumProvision: $shopConfig.compendiumProvision,
+        onProvisionModeChange: (mode) => {
+          shopConfig.update((current) => ({ ...current, provisionMode: mode }));
+        },
+        onCompendiumProvisionChange: (next) => {
+          shopConfig.update((current) => ({ ...current, compendiumProvision: next }));
+        }
       });
     }
   };
@@ -34862,31 +35916,28 @@ function create_fragment$4(ctx) {
   let div0;
   let img;
   let img_src_value;
-  let button;
   let div4;
   let div1;
   let h20;
-  let t1_value = (
+  let t0_value = (
     /*sharedProps*/
     ctx[0].localize("Name") + ""
   );
-  let t1;
+  let t0;
   let p;
-  let t2_value = (
+  let t1_value = (
     /*sharedProps*/
     (ctx[0].actor?.name || "") + ""
   );
-  let t2;
+  let t1;
   let div3;
   let h21;
-  let t3_value = (
+  let t2_value = (
     /*sharedProps*/
     ctx[0].localize("Description") + ""
   );
-  let t3;
+  let t2;
   let div2;
-  let mounted;
-  let dispose;
   let if_block = (
     /*sharedProps*/
     ctx[0].associatedActors && /*sharedProps*/
@@ -34898,25 +35949,21 @@ function create_fragment$4(ctx) {
       div5 = element("div");
       div0 = element("div");
       img = element("img");
-      button = element("button");
-      button.textContent = "Socket Test";
       if (if_block) if_block.c();
       div4 = element("div");
       div1 = element("div");
       h20 = element("h2");
-      t1 = text(t1_value);
+      t0 = text(t0_value);
       p = element("p");
-      t2 = text(t2_value);
+      t1 = text(t1_value);
       div3 = element("div");
       h21 = element("h2");
-      t3 = text(t3_value);
+      t2 = text(t2_value);
       div2 = element("div");
       attr(img, "class", "profile-img svelte-FOU-e6blig");
       if (!src_url_equal(img.src, img_src_value = /*sharedProps*/
       ctx[0].actor?.img || "icons/svg/mystery-man.svg")) attr(img, "src", img_src_value);
       attr(img, "alt", "Shop Profile");
-      attr(button, "class", "socket-test-btn");
-      attr(button, "type", "button");
       attr(div0, "class", "flex1 flexcol gap-10");
       attr(p, "class", "shop-name svelte-FOU-e6blig");
       attr(div1, "class", "name-section");
@@ -34931,24 +35978,19 @@ function create_fragment$4(ctx) {
       append(div6, div5);
       append(div5, div0);
       append(div0, img);
-      append(div0, button);
       if (if_block) if_block.m(div0, null);
       append(div5, div4);
       append(div4, div1);
       append(div1, h20);
-      append(h20, t1);
+      append(h20, t0);
       append(div1, p);
-      append(p, t2);
+      append(p, t1);
       append(div4, div3);
       append(div3, h21);
-      append(h21, t3);
+      append(h21, t2);
       append(div3, div2);
       div2.innerHTML = /*enrichedDescription*/
       ctx[1];
-      if (!mounted) {
-        dispose = listen(button, "click", onSocketTestClick);
-        mounted = true;
-      }
     },
     p(ctx2, [dirty]) {
       if (dirty & /*sharedProps*/
@@ -34973,14 +36015,14 @@ function create_fragment$4(ctx) {
         if_block = null;
       }
       if (dirty & /*sharedProps*/
+      1 && t0_value !== (t0_value = /*sharedProps*/
+      ctx2[0].localize("Name") + "")) set_data(t0, t0_value);
+      if (dirty & /*sharedProps*/
       1 && t1_value !== (t1_value = /*sharedProps*/
-      ctx2[0].localize("Name") + "")) set_data(t1, t1_value);
+      (ctx2[0].actor?.name || "") + "")) set_data(t1, t1_value);
       if (dirty & /*sharedProps*/
       1 && t2_value !== (t2_value = /*sharedProps*/
-      (ctx2[0].actor?.name || "") + "")) set_data(t2, t2_value);
-      if (dirty & /*sharedProps*/
-      1 && t3_value !== (t3_value = /*sharedProps*/
-      ctx2[0].localize("Description") + "")) set_data(t3, t3_value);
+      ctx2[0].localize("Description") + "")) set_data(t2, t2_value);
       if (dirty & /*enrichedDescription*/
       2) div2.innerHTML = /*enrichedDescription*/
       ctx2[1];
@@ -34992,17 +36034,12 @@ function create_fragment$4(ctx) {
         detach(div6);
       }
       if (if_block) if_block.d();
-      mounted = false;
-      dispose();
     }
   };
 }
 function openActorSheet(actorId) {
   const actor = fromUuidSync(`Actor.${actorId}`);
   actor?.sheet?.render(true);
-}
-function onSocketTestClick() {
-  game.socket.emit("module.foundryvtt-shop-studio", { type: "ACTION", payload: "Foo" });
 }
 function instance$4($$self, $$props, $$invalidate) {
   let $doc;
@@ -35356,7 +36393,7 @@ function create_fragment$3(ctx) {
       attr(div2, "class", "flexcol flex1 label-container");
       attr(select, "class", "short");
       attr(div3, "class", "flex3 right");
-      attr(div4, "class", "flexrow pt-sm pr-sm pl-sm");
+      attr(div4, "class", "flexrow pt-sm pr-sm pl-sm justify-flexrow-vertical gap-10");
       attr(h1, "class", "gold");
       attr(div5, "class", "inv-col-icon svelte-FOU-syf4k7");
       attr(div6, "class", "inv-col-name svelte-FOU-syf4k7");
