@@ -139,9 +139,10 @@
 <TJSApplicationShell bind:elementRoot>
   <main class="item-sources-settings">
     <header class="gss-sources-toolbar no-drag">
-      <label class="gss-search-box">
+      <label class="gss-search-box no-drag">
         <i class="fas fa-search"></i>
         <input
+          class="no-drag"
           type="search"
           placeholder="{localize('ItemSources.SearchPlaceholder')}"
           value="{searchText}"
@@ -149,8 +150,8 @@
         />
       </label>
 
-      <label class="gss-toggle-control">
-        <input type="checkbox" bind:checked="{showOnlySelected}" />
+      <label class="gss-toggle-control no-drag">
+        <input class="no-drag" type="checkbox" bind:checked="{showOnlySelected}" />
         <span>{localize('ItemSources.ShowSelectedOnly')}</span>
       </label>
     </header>
@@ -161,14 +162,14 @@
           <span>{localize('ItemSources.ItemCompendia')}</span>
           <small>{selectedSources.length} / {sourceRows.length}</small>
         </summary>
-        <div class="gss-source-actions">
-          <button type="button" on:click="{handleSelectVisibleSources}">
+        <div class="gss-source-actions no-drag">
+          <button type="button" class="no-drag" on:click="{handleSelectVisibleSources}">
             {localize('ItemSources.SelectVisible')}
           </button>
-          <button type="button" on:click="{handleClearVisibleSources}">
+          <button type="button" class="no-drag" on:click="{handleClearVisibleSources}">
             {localize('ItemSources.ClearVisible')}
           </button>
-          <button type="button" on:click="{handleResetSources}">
+          <button type="button" class="no-drag" on:click="{handleResetSources}">
             {localize('ItemSources.AutoAssign')}
           </button>
         </div>
@@ -179,15 +180,15 @@
             <p class="gss-empty-state">{localize('ItemSources.NoMatchesFilter')}</p>
           {/if}
           {#each visibleSourceRows as row}
-            <div class="flexrow justify-vertical gap-1">
+            <label class="gss-source-row">
               <input
+                class="no-drag"
                 type="checkbox"
-                class="flex0"
                 bind:checked="{row.checked}"
                 on:change="{(e) => handleSourceChange(row.collection, e.currentTarget.checked)}"
               />
-              <div class="flex3">{row.label}</div>
-            </div>
+              <span>{row.label}</span>
+            </label>
           {/each}
         </div>
       </details>
@@ -197,14 +198,14 @@
           <span>{localize('ItemSources.ListableItemTypes')}</span>
           <small>{selectedTypes.length} / {allItemTypes.length}</small>
         </summary>
-        <div class="gss-source-actions">
-          <button type="button" on:click="{handleSelectAllTypes}">
+        <div class="gss-source-actions no-drag">
+          <button type="button" class="no-drag" on:click="{handleSelectAllTypes}">
             {localize('ItemSources.SelectAllTypes')}
           </button>
-          <button type="button" on:click="{handleClearAllTypes}">
+          <button type="button" class="no-drag" on:click="{handleClearAllTypes}">
             {localize('ItemSources.ClearAllTypes')}
           </button>
-          <button type="button" on:click="{handleResetTypes}">
+          <button type="button" class="no-drag" on:click="{handleResetTypes}">
             {localize('ItemSources.ResetTypes')}
           </button>
         </div>
@@ -213,25 +214,25 @@
             <p class="gss-empty-state">{localize('ItemSources.NoItemTypes')}</p>
           {/if}
           {#each typeRows as row}
-            <div class="flexrow justify-vertical gap-1">
+            <label class="gss-source-row">
               <input
-                class="flex0"
+                class="no-drag"
                 type="checkbox"
                 bind:checked="{row.checked}"
                 on:change="{(e) => handleTypeChange(row.type, e.currentTarget.checked)}"
               />
-              <div class="flex3">{row.label}</div>
-            </div>
+              <span>{row.label}</span>
+            </label>
           {/each}
         </div>
       </details>
     </section>
 
-    <footer class="gss-sources-footer">
-      <button type="button" on:click="{handleCancel}">
+    <footer class="gss-sources-footer no-drag">
+      <button type="button" class="no-drag" on:click="{handleCancel}">
         {localize('ItemSources.Cancel')}
       </button>
-      <button type="button" class="gss-save-button" on:click="{handleSave}">
+      <button type="button" class="gss-save-button no-drag" on:click="{handleSave}">
         {localize('ItemSources.Save')}
       </button>
     </footer>
@@ -322,7 +323,7 @@
 
   .gss-source-row
     display: flex
-    align-items: center
+    align-items: flex-start
     gap: 6px
     cursor: pointer
     padding: 2px 4px
@@ -337,7 +338,9 @@
       flex: 0 0 auto
       width: 14px
       height: 14px
+      margin-top: 0.15rem
       vertical-align: middle
+      cursor: pointer
 
     span
       flex: 1 1 auto
@@ -365,6 +368,10 @@
     padding: 0.75rem
     border-top: 1px solid var(--gas-tab-inactive-border)
     background: var(--gas-panel-1-background)
+    pointer-events: none
+
+    button
+      pointer-events: auto
 
   .gss-save-button
     min-width: 8rem
