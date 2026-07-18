@@ -4,6 +4,7 @@ import '~/src/styles/init.sass'; // Import any styles as this includes them in t
 import WelcomeApplication from '~/src/components/pages/WelcomeApplication.js';
 import ShopActorSheet from '~/src/sheets/ShopActorSheet';
 import { getShopActorType, registerShopActor, SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE } from '~/src/actors/ShopActor';
+import { SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS, SHOP_IDENTITY_KIND, DEFAULT_SHOP_CONFIGURATION } from '~/src/constants/shopConstants';
 import { MODULE_ID } from '~/src/helpers/constants';
 import { log, safeGetSetting } from '~/src/helpers/utility';
 import { registerSettings } from '~/src/settings';
@@ -22,16 +23,57 @@ Hooks.once("init", (app, html, data) => {
   registerSocket();
   registerShopActor();
 
+  // Register preCreateDocument hook (runs after type validation)
+  Hooks.on("preCreateDocument", (data, options, user) => {
+    const isShopType = data.type === `${MODULE_ID}.shop` || 
+                      (data.flags?.[SHOP_FLAG_SCOPE]?.[SHOP_FLAG_KEYS.identity]?.kind === SHOP_IDENTITY_KIND);
+    
+    if (isShopType) {
+      data.type = SHOP_ACTOR_TYPE; // 'npc'
+      
+      // Ensure all required flags are set
+      data.flags = data.flags ?? {};
+      data.flags.core = data.flags.core ?? {};
+      data.flags.core.sheetClass = `${MODULE_ID}.ShopActorSheet`;
+      
+      data.flags[SHOP_FLAG_SCOPE] = data.flags[SHOP_FLAG_SCOPE] ?? {};
+      data.flags[SHOP_FLAG_SCOPE][SHOP_FLAG_KEYS.identity] = {
+        isShop: true,
+        kind: SHOP_IDENTITY_KIND
+      };
+      
+      // Ensure default configuration exists
+      if (!data.flags[SHOP_FLAG_SCOPE][SHOP_FLAG_KEYS.configuration]) {
+        data.flags[SHOP_FLAG_SCOPE][SHOP_FLAG_KEYS.configuration] = DEFAULT_SHOP_CONFIGURATION;
+      }
+      
+      // Set default shop image
+      data.img = 'icons/environment/settlement/warehouse-crates.webp';
+    }
+  });
+
   CONFIG.Actor.typeLabels ??= {};
   if (!CONFIG.Actor.typeLabels[LEGACY_SHOP_ACTOR_TYPE]) {
     CONFIG.Actor.typeLabels[LEGACY_SHOP_ACTOR_TYPE] = 'Shop (Legacy)';
   }
 
-  foundry.documents.collections.Actors.registerSheet(MODULE_ID, ShopActorSheet, {
-    types: [...new Set([getShopActorType(), SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE])],
-    makeDefault: false,
-    label: 'Shop Studio'
-  });
+  // Register the Actor Sheet. The API differs between Foundry versions:
+  // - V12: Actors.registerSheet(scope, sheetClass, { types, makeDefault, label })
+  // - V13+: foundry.documents.collections.Actors.registerSheet(scope, sheetClass, { types, makeDefault, label })
+  const sheetTypes = [...new Set([getShopActorType(), SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE])];
+  if (game.version >= 13) {
+    foundry.documents.collections.Actors.registerSheet(MODULE_ID, ShopActorSheet, {
+      types: sheetTypes,
+      makeDefault: false,
+      label: 'Shop Studio'
+    });
+  } else {
+    Actors.registerSheet(MODULE_ID, ShopActorSheet, {
+      types: sheetTypes,
+      makeDefault: false,
+      label: 'Shop Studio'
+    });
+  }
 
   if(game.version > 13) {
     // V12 -> 13 SHIM
@@ -52,6 +94,7 @@ Hooks.once("ready", (app, html, data) => {
   if (!safeGetSetting(MODULE_ID, 'dontShowWelcome', false)) {
     new WelcomeApplication().render(true, { focus: true });
   }
+  registerSettings(app); // ✅ Now in ready phase
 });
 
 // Settings config UI grouping
