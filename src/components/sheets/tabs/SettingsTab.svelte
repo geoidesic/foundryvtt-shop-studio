@@ -2,6 +2,7 @@
   import { getContext } from 'svelte';
   import DropZone from '~/src/components/molecules/DropZone.svelte';
   import { shopConfig } from '~/src/stores/shopConfig.js';
+  import { getConfiguredListableItemTypes } from '~/src/helpers/itemSources';
 
   export let sharedProps = {};
 
@@ -10,10 +11,30 @@
 
   let rollTables = [];
   let rollTableRolls = [];
+  let provisionMode = 'rolltable';
+  let compendiumProvision = [];
 
   $: rollTables = Array.isArray($config.rollTables) ? $config.rollTables : [];
   $: rollTableRolls = normalizeRollTableRolls(rollTables, $config.rollTableRolls);
   $: syncRollTableRolls(rollTables, rollTableRolls, $config.rollTableRolls);
+  $: provisionMode = $config.provisionMode ?? 'rolltable';
+  $: compendiumProvision = Array.isArray($config.compendiumProvision) ? $config.compendiumProvision : [];
+
+  // Collapsible state
+  let pricingOpen = true;
+  let provisioningOpen = true;
+
+  $: listableTypes = getConfiguredListableItemTypes();
+
+  // Ensure every listable type has a compendium provision entry (default quantity 0).
+  $: compendiumRows = listableTypes.map((type) => {
+    const existing = compendiumProvision.find((entry) => entry.type === type.type);
+    return {
+      type: type.type,
+      label: type.label,
+      quantity: existing ? Number(existing.quantity ?? 0) : 0,
+    };
+  });
 
   function formatFactor(value, fallback) {
     const factor = Number(value ?? fallback);
@@ -169,73 +190,114 @@
   function handleOpenRollTableClick(event) {
     openRollTable(rollTables[Number(event.currentTarget.dataset.index)]);
   }
+
+  function toggleProvisionMode() {
+    const next = provisionMode === 'compendium' ? 'rolltable' : 'compendium';
+    config.update((current) => ({ ...current, provisionMode: next }));
+    sharedProps.onProvisionModeChange?.(next);
+    sharedProps.silentSaveSettings?.();
+  }
+
+  function setCompendiumQuantity(type, value) {
+    const quantity = Math.max(0, Number.parseInt(value, 10) || 0);
+    const next = compendiumProvision.filter((entry) => entry.type !== type);
+    if (quantity > 0) next.push({ type, quantity });
+    config.update((current) => ({ ...current, compendiumProvision: next }));
+    sharedProps.onCompendiumProvisionChange?.(next);
+  }
+
+  function handleCompendiumQuantityInput(event) {
+    setCompendiumQuantity(event.currentTarget.dataset.type, event.currentTarget.value);
+  }
+
+  function handleCompendiumQuantityStep(event) {
+    const type = event.currentTarget.dataset.type;
+    const delta = Number(event.currentTarget.dataset.delta);
+    const current = compendiumRows.find((row) => row.type === type)?.quantity ?? 0;
+    setCompendiumQuantity(type, current + delta);
+  }
 </script>
 
 <template lang="pug">
   div.settings-tab
     div.settings-form.ma-lg
-      label.setting-control
-        div.setting-label
-          span {sharedProps.localize("SalePriceFactor")}
-          strong {formatFactor($config.salePriceFactor, 100)}%
-        input(type="range" bind:value!="{ $config.salePriceFactor }" min="50" max="200" step="1" on:input!="{onSaleFactorInput}")
-        div.setting-range
-          span 50%
-          span 200%
-        p.setting-help Affects prices charged to buyers.
-      label.setting-control
-        div.setting-label
-          span {sharedProps.localize("BuyPriceFactor")}
-          strong {formatFactor($config.buyPriceFactor, 50)}%
-        input(type="range" bind:value!="{ $config.buyPriceFactor }" min="50" max="200" step="1" on:input!="{onBuyFactorInput}")
-        div.setting-range
-          span 50%
-          span 200%
-        p.setting-help Affects prices paid when buying from actors.
-      //- label
-      //-   div.setting-label
-      //-     span {sharedProps.localize("PriceVariance")}
-      //-     strong {sharedProps.priceVariance}%
-      //-   input(type="range" value="{sharedProps.priceVariance}" min="0" max="50" step="1" on:input!="{(e) => sharedProps.onPriceVarianceChange?.(e.target.value)}")
-      //-   div.setting-range
-      //-     span 0%
-      //-     span 50%
-      //-   p.setting-help (random element per item)
-      //- label
-      //-   div.setting-label
-      //-     span {sharedProps.localize("Atrophy")}
-      //-     strong {sharedProps.atrophyPercent}%
-      //-   input(type="range" value="{sharedProps.atrophyPercent}" min="0" max="30" step="1" on:input!="{(e) => sharedProps.onAtrophyPercentChange?.(e.target.value)}")
-      //-   div.setting-range
-      //-     span 0%
-      //-     span 30%
-      //-   p.setting-help (chance to remove old stock on provision)
-      //- label
-      //-   | {sharedProps.localize("VariancePeriod")}
-      //-   select(value="{sharedProps.variancePeriod}" on:change!="{(e) => sharedProps.onVariancePeriodChange?.(e.target.value)}")
-      //-     option(value="daily") {sharedProps.localize("Daily")}
-      //-     option(value="weekly") {sharedProps.localize("Weekly")}
-      //-     option(value="monthly") {sharedProps.localize("Monthly")}
-      div.rolltables-section
-        h2 {sharedProps.localize("RollTables")} ({rollTables.length})
-        DropZone(placeholder="{sharedProps.localize('DragRollTablesHere')}" acceptType="RollTable" onDrop="{handleRollTableDrop}")
-          +if("rollTables.length > 0")
-            ul.rolltable-bucket__list
-              +each("rollTables as rtUuid, index")
-                li.rolltable-bucket__entry
-                  button.rolltable-bucket__open(type="button" data-index="{index}" on:click!="{handleOpenRollTableClick}")
-                    img.rolltable-bucket__img(src="{formatRollTableImage(rtUuid)}" alt="{formatRollTableName(rtUuid)}")
-                    span.rolltable-bucket__name {formatRollTableName(rtUuid)}
-                  div.rolltable-bucket__rolls
-                    button.rolltable-bucket__step(type="button" data-index="{index}" data-delta="-1" data-tooltip="{sharedProps.localize('Decrease')}" on:click!="{handleRollCountStepClick}")
-                      i.fa.fa-minus
-                    input.rolltable-bucket__count(type="number" min="1" step="1" data-index="{index}" value="{rollTableRolls[index] ?? 1}" aria-label="{sharedProps.localize('RollCount')}" on:input!="{handleRollCountInput}")
-                    button.rolltable-bucket__step(type="button" data-index="{index}" data-delta="1" data-tooltip="{sharedProps.localize('Increase')}" on:click!="{handleRollCountStepClick}")
-                      i.fa.fa-plus
-                  button.rolltable-bucket__remove(type="button" data-index="{index}" data-tooltip="{sharedProps.localize('Types.Actor.ActionButtons.Delete')}" on:click!="{handleRemoveRollTableClick}")
-                    i.fa.fa-trash
-          +if("rollTables.length === 0")
-            p.rolltable-bucket__empty No roll tables configured. Drag some here to enable provisioning.
+      //- Pricing collapsible
+      section.settings-collapsible
+        div.settings-collapsible__summary.no-drag(on:click!="{() => pricingOpen = !pricingOpen}" role="button" tabindex="0" on:keydown!="{e => (e.key === 'Enter' || e.key === ' ') && (pricingOpen = !pricingOpen)}")
+          i.fas.fa-chevron-down.settings-collapsible__chevron(class:settings-collapsible__chevron--open!="{pricingOpen}")
+          h2 {sharedProps.localize("Pricing")}
+        +if("pricingOpen")
+          div.settings-collapsible__body
+            label.setting-control
+              div.setting-label
+                span {sharedProps.localize("SalePriceFactor")}
+                strong {formatFactor($config.salePriceFactor, 100)}%
+              input(type="range" bind:value!="{ $config.salePriceFactor }" min="50" max="200" step="1" on:input!="{onSaleFactorInput}")
+              div.setting-range
+                span 50%
+                span 200%
+              p.setting-help Affects prices charged to buyers.
+            label.setting-control
+              div.setting-label
+                span {sharedProps.localize("BuyPriceFactor")}
+                strong {formatFactor($config.buyPriceFactor, 50)}%
+              input(type="range" bind:value!="{ $config.buyPriceFactor }" min="50" max="200" step="1" on:input!="{onBuyFactorInput}")
+              div.setting-range
+                span 50%
+                span 200%
+              p.setting-help Affects prices paid when buying from actors.
+
+      //- Provisioning collapsible
+      section.settings-collapsible
+        div.settings-collapsible__summary.no-drag(on:click!="{() => provisioningOpen = !provisioningOpen}" role="button" tabindex="0" on:keydown!="{e => (e.key === 'Enter' || e.key === ' ') && (provisioningOpen = !provisioningOpen)}")
+          i.fas.fa-chevron-down.settings-collapsible__chevron(class:settings-collapsible__chevron--open!="{provisioningOpen}")
+          h2 {sharedProps.localize("Provisioning")}
+        +if("provisioningOpen")
+          div.settings-collapsible__body
+            div.provision-mode-toggle
+              button.provision-mode-toggle__btn(type="button" class:active!="{provisionMode === 'compendium'}" on:click!="{toggleProvisionMode}" data-tooltip!="{sharedProps.localize('ProvisionModeTooltip')}")
+                i.fas(class:fa-toggle-on!="{provisionMode === 'compendium'}" class:fa-toggle-off!="{provisionMode !== 'compendium'}")
+                span.provision-mode-toggle__label {provisionMode === 'compendium' ? sharedProps.localize('ProvisionByCompendium') : sharedProps.localize('ProvisionByRollTable')}
+
+            +if("provisionMode === 'rolltable'")
+              div.rolltables-section
+                h3 {sharedProps.localize("RollTables")} ({rollTables.length})
+                DropZone(placeholder="{sharedProps.localize('DragRollTablesHere')}" acceptType="RollTable" onDrop="{handleRollTableDrop}")
+                  +if("rollTables.length > 0")
+                    ul.rolltable-bucket__list
+                      +each("rollTables as rtUuid, index")
+                        li.rolltable-bucket__entry
+                          button.rolltable-bucket__open(type="button" data-index="{index}" on:click!="{handleOpenRollTableClick}")
+                            img.rolltable-bucket__img(src="{formatRollTableImage(rtUuid)}" alt="{formatRollTableName(rtUuid)}")
+                            span.rolltable-bucket__name {formatRollTableName(rtUuid)}
+                          div.rolltable-bucket__rolls
+                            button.rolltable-bucket__step(type="button" data-index="{index}" data-delta="-1" data-tooltip="{sharedProps.localize('Decrease')}" on:click!="{handleRollCountStepClick}")
+                              i.fa.fa-minus
+                            input.rolltable-bucket__count(type="number" min="1" step="1" data-index="{index}" value="{rollTableRolls[index] ?? 1}" aria-label="{sharedProps.localize('RollCount')}" on:input!="{handleRollCountInput}")
+                            button.rolltable-bucket__step(type="button" data-index="{index}" data-delta="1" data-tooltip="{sharedProps.localize('Increase')}" on:click!="{handleRollCountStepClick}")
+                              i.fa.fa-plus
+                          button.rolltable-bucket__remove(type="button" data-index="{index}" data-tooltip="{sharedProps.localize('Types.Actor.ActionButtons.Delete')}" on:click!="{handleRemoveRollTableClick}")
+                            i.fa.fa-trash
+                  +if("rollTables.length === 0")
+                    p.rolltable-bucket__empty No roll tables configured. Drag some here to enable provisioning.
+
+            +if("provisionMode === 'compendium'")
+              div.compendium-provision-section
+                p.compendium-provision-hint {sharedProps.localize("CompendiumProvisionHint")}
+                +if("compendiumRows.length > 0")
+                  ul.compendium-provision__list
+                    +each("compendiumRows as row")
+                      li.compendium-provision__entry
+                        span.compendium-provision__name {row.label}
+                        div.compendium-provision__rolls
+                          button.compendium-provision__step(type="button" data-type="{row.type}" data-delta="-1" data-tooltip="{sharedProps.localize('Decrease')}" on:click!="{handleCompendiumQuantityStep}")
+                            i.fa.fa-minus
+                          input.compendium-provision__count(type="number" min="0" step="1" data-type="{row.type}" value="{row.quantity}" aria-label="{sharedProps.localize('Quantity')}" on:input!="{handleCompendiumQuantityInput}")
+                          button.compendium-provision__step(type="button" data-type="{row.type}" data-delta="1" data-tooltip="{sharedProps.localize('Increase')}" on:click!="{handleCompendiumQuantityStep}")
+                            i.fa.fa-plus
+                +if("compendiumRows.length === 0")
+                  p.compendium-provision__empty {sharedProps.localize("NoListableTypes")}
+
       div.actions
         button.provision-btn(type="button" on:click!="{sharedProps.provisionStore}")
           | {sharedProps.localize("ProvisionStore")}
@@ -274,18 +336,160 @@
   :global(.settings-tab input[type="range"])
     padding: 0
 
-  :global(.rolltables-section)
+  .settings-collapsible
+    border: 1px solid var(--gas-tab-inactive-border)
+    border-radius: var(--border-radius)
+    background: color-mix(in srgb, var(--gas-li-background) 40%, transparent)
+    overflow: hidden
+
+  .settings-collapsible__summary
+    display: flex
+    align-items: center
+    gap: 0.5rem
+    padding: 0.6rem 0.75rem
+    cursor: pointer
+    user-select: none
+
+    &:focus-visible
+      outline: 1px solid var(--gas-tab-active-color)
+      outline-offset: -1px
+
+    h2
+      margin: 0
+      font-size: 1.05rem
+
+  .settings-collapsible__chevron
+    flex: 0 0 auto
+    transition: transform 0.15s ease
+    transform: rotate(-90deg)
+
+    &.settings-collapsible__chevron--open
+      transform: rotate(0deg)
+
+  .settings-collapsible__body
+    display: flex
+    flex-direction: column
+    gap: 1rem
+    padding: 0 0.75rem 0.85rem
+
+  .provision-mode-toggle
+    display: flex
+    flex-wrap: wrap
+    gap: 1rem
+    padding: 0.5rem 0
+    border-bottom: 1px solid var(--gas-tab-inactive-border)
+
+  .provision-mode-toggle__btn
+    display: inline-flex
+    align-items: center
+    gap: 0.5rem
+    padding: 0.3rem 0.6rem
+    border: 1px solid var(--gas-tab-inactive-border)
+    border-radius: var(--border-radius)
+    background: color-mix(in srgb, var(--gas-li-background) 40%, transparent)
+    color: var(--gas-color-text)
+    cursor: pointer
+    font-size: 0.9rem
+
+    i
+      font-size: 1.1rem
+
+    &.active
+      color: var(--gas-tab-active-color)
+      border-color: var(--gas-tab-active-color)
+
+      i
+        color: var(--gas-tab-active-color)
+
+    &:hover
+      border-color: var(--gas-tab-active-color)
+
+  .provision-mode-toggle__label
+    white-space: nowrap
+
+  .rolltables-section
     display: flex
     flex-direction: column
     gap: 0.5rem
 
-    h2
+    h3
       margin: 0
 
     :global(.drag-drop-area)
       display: flex
       flex-direction: column
       gap: 0.5rem
+
+  .compendium-provision-section
+    display: flex
+    flex-direction: column
+    gap: 0.5rem
+
+  .compendium-provision-hint
+    margin: 0
+    opacity: 0.8
+    font-size: 0.9em
+
+  .compendium-provision__list
+    list-style: none
+    margin: 0
+    padding: 0
+    display: flex
+    flex-direction: column
+    gap: 0.25rem
+
+  .compendium-provision__entry
+    display: flex
+    align-items: center
+    gap: 0.4rem
+    min-height: 32px
+
+  .compendium-provision__name
+    flex: 1
+    min-width: 0
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+
+  .compendium-provision__rolls
+    flex: 0 0 auto
+    display: inline-grid
+    grid-template-columns: 22px 42px 22px
+    align-items: center
+    gap: 2px
+    margin-left: 0.5rem
+
+  .compendium-provision__step
+    width: 22px
+    height: 22px
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    padding: 0
+    border: 0
+    border-radius: 3px
+    background: color-mix(in srgb, var(--gas-color-text) 10%, transparent)
+    color: var(--gas-color-text)
+    cursor: pointer
+    font-size: 0.65rem
+
+    &:hover
+      background: color-mix(in srgb, var(--gas-tab-active-indicator) 20%, transparent)
+      color: var(--gas-tab-active-color)
+
+  .compendium-provision__count
+    width: 42px
+    height: 22px
+    min-width: 0
+    padding: 0 0.25rem
+    text-align: center
+    font-size: 0.8rem
+
+  .compendium-provision__empty
+    margin: 0
+    color: color-mix(in srgb, var(--gas-color-text) 50%, transparent)
+    font-style: italic
+    font-size: 0.9em
 
   .rolltable-bucket__list
     list-style: none

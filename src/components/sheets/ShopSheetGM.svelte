@@ -12,7 +12,7 @@ import { MODULE_ID } from '~/src/helpers/constants';
 import { shopTelemetry } from '~/src/helpers/telemetry.js';
 import { registerShopTargetActor, registerShopTargetEntries } from '~/src/helpers/shopTargets.js';
 import { getShopConfiguration, isShopEditing, setShopConfiguration } from '~/src/helpers/shopIdentity.js';
-import { isItemTypeListable } from '~/src/helpers/itemSources.js';
+import { isItemTypeListable, getItemSourcePacks } from '~/src/helpers/itemSources.js';
 import { shopConfig } from '~/src/stores/shopConfig.js';
 
 export let documentStore;
@@ -54,7 +54,9 @@ const application = getContext('#external').application;
       atrophyPercent: config.atrophyPercent ?? 5,
       associatedActors: config.associatedActors ?? [],
       rollTables: config.rollTables ?? [],
-      rollTableRolls: normalizeRollTableRolls(config.rollTables ?? [], config.rollTableRolls ?? [])
+      rollTableRolls: normalizeRollTableRolls(config.rollTables ?? [], config.rollTableRolls ?? []),
+      provisionMode: config.provisionMode ?? 'rolltable',
+      compendiumProvision: config.compendiumProvision ?? []
     });
     initializedActorId = actor.id;
   }
@@ -141,6 +143,14 @@ const application = getContext('#external').application;
     provisionStore,
     saveSettings,
     silentSaveSettings,
+    provisionMode: $shopConfig.provisionMode,
+    compendiumProvision: $shopConfig.compendiumProvision,
+    onProvisionModeChange: (mode) => {
+      shopConfig.update((current) => ({ ...current, provisionMode: mode }));
+    },
+    onCompendiumProvisionChange: (next) => {
+      shopConfig.update((current) => ({ ...current, compendiumProvision: next }));
+    },
   };
 
   async function selectTargetActor(id, targetEntry = null) {
@@ -184,6 +194,8 @@ const application = getContext('#external').application;
       associatedActors: $shopConfig.associatedActors,
       rollTables: $shopConfig.rollTables,
       rollTableRolls: normalizeRollTableRolls($shopConfig.rollTables, $shopConfig.rollTableRolls),
+      provisionMode: $shopConfig.provisionMode,
+      compendiumProvision: $shopConfig.compendiumProvision,
     };
     await setShopConfiguration(actor, nextConfig);
     shopConfig.set(nextConfig);
@@ -202,6 +214,8 @@ const application = getContext('#external').application;
       associatedActors: $shopConfig.associatedActors,
       rollTables: $shopConfig.rollTables,
       rollTableRolls: normalizeRollTableRolls($shopConfig.rollTables, $shopConfig.rollTableRolls),
+      provisionMode: $shopConfig.provisionMode,
+      compendiumProvision: $shopConfig.compendiumProvision,
     };
     await setShopConfiguration(actor, nextConfig);
     shopConfig.set(nextConfig);
@@ -210,6 +224,11 @@ const application = getContext('#external').application;
   async function provisionStore() {
     if (!actor?.isOwner) {
       ui.notifications.warn(localize('NoPermission'));
+      return;
+    }
+
+    if (($shopConfig.provisionMode ?? 'rolltable') === 'compendium') {
+      await provisionStoreFromCompendium();
       return;
     }
 
@@ -233,6 +252,79 @@ const application = getContext('#external').application;
       game.i18n.format(`${MODULE_ID}.ProvisionComplete`, { count: addedCount })
         || `Added ${addedCount} items to inventory.`
     );
+  }
+
+  async function provisionStoreFromCompendium() {
+    const provision = Array.isArray($shopConfig.compendiumProvision) ? $shopConfig.compendiumProvision : [];
+    const activeEntries = provision.filter((entry) => entry && entry.type && entry.quantity > 0);
+    if (!activeEntries.length) {
+      ui.notifications.warn(localize('NoCompendiumProvisionConfigured') || 'No compendium item types configured for provisioning.');
+      return;
+    }
+
+    const totalQuantity = activeEntries.reduce((sum, entry) => sum + Number(entry.quantity ?? 0), 0);
+    if (totalQuantity <= 0) {
+      ui.notifications.warn(localize('NoCompendiumProvisionConfigured') || 'No compendium item types configured for provisioning.');
+      return;
+    }
+
+    ui.notifications.info(localize('ProvisioningStore') || 'Provisioning store...');
+
+    const items = await compendiumProvisionItems(activeEntries, totalQuantity);
+    if (!items.length) {
+      ui.notifications.warn(localize('ProvisionNoItems') || 'No item results were drawn.');
+      return;
+    }
+
+    const addedCount = await upsertProvisionItems(items);
+    ui.notifications.info(
+      game.i18n.format(`${MODULE_ID}.ProvisionComplete`, { count: addedCount })
+        || `Added ${addedCount} items to inventory.`
+    );
+  }
+
+  async function compendiumProvisionItems(entries, totalQuantity) {
+    const packs = getItemSourcePacks();
+    if (!packs.length) {
+      ui.notifications.warn(localize('NoItemSourcesConfigured') || 'No item sources configured. Set them in module settings.');
+      return [];
+    }
+
+    const typeToQuantity = new Map();
+    for (const entry of entries) {
+      typeToQuantity.set(entry.type, (typeToQuantity.get(entry.type) ?? 0) + Number(entry.quantity ?? 0));
+    }
+
+    const pool = [];
+    for (const pack of packs) {
+      let index;
+      try {
+        index = await pack.getIndex({ fields: ['type', 'name', 'img'] });
+      } catch (err) {
+        console.error('Compendium index error:', err);
+        continue;
+      }
+      for (const entry of Array.from(index.entries())) {
+        if (typeToQuantity.has(entry.type) && isItemTypeListable(entry.type)) {
+          pool.push({ pack, entry });
+        }
+      }
+    }
+
+    if (!pool.length) {
+      return [];
+    }
+
+    const items = [];
+    for (let drawn = 0; drawn < totalQuantity; drawn += 1) {
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      const document = await pick.pack.getDocument(pick.entry._id);
+      if (document?.documentName === 'Item') {
+        items.push(document);
+      }
+    }
+
+    return items;
   }
 
   function normalizeRollTableRolls(tables = [], rolls = []) {

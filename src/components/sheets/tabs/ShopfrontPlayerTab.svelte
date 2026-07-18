@@ -36,7 +36,7 @@ function openActorSheet(actorId) {
           src="{sharedProps.actor?.img || 'icons/svg/mystery-man.svg'}"
           alt="Shop Profile"
         )
-        button.socket-test-btn(type="button" on:click!="{onSocketTestClick}") Socket Test
+        //- button.socket-test-btn(type="button" on:click!="{onSocketTestClick}") Socket Test
         +if("sharedProps.associatedActors && sharedProps.associatedActors.length > 0")
           .associated-actors-section
             h2 {sharedProps.localize("AssociatedActors")}

@@ -8,5 +8,7 @@ export const shopConfig = writable({
   atrophyPercent: 5,
   associatedActors: [],
   rollTables: [],
-  rollTableRolls: []
+  rollTableRolls: [],
+  provisionMode: 'rolltable',
+  compendiumProvision: []
 });

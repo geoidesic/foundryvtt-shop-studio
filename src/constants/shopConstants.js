@@ -20,5 +20,7 @@ export const DEFAULT_SHOP_CONFIGURATION = Object.freeze({
   atrophyPercent: 5,
   associatedActors: [],
   rollTables: [],
-  rollTableRolls: []
+  rollTableRolls: [],
+  provisionMode: 'rolltable',
+  compendiumProvision: []
 });
