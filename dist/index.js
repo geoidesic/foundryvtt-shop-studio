@@ -21299,7 +21299,7 @@ class WelcomeAppShell extends SvelteComponent {
     flush();
   }
 }
-const version = "0.0.7";
+const version = "0.0.8";
 class WelcomeApplication extends SvelteApp {
   /**
    * Default Application options
@@ -38015,15 +38015,42 @@ Hooks.once("init", (app, html, data) => {
   CONFIG.debug.hooks = true;
   registerSocket();
   registerShopActor();
+  Hooks.on("preCreateDocument", (data2, options, user) => {
+    const isShopType = data2.type === `${MODULE_ID}.shop` || data2.flags?.[SHOP_FLAG_SCOPE]?.[SHOP_FLAG_KEYS.identity]?.kind === SHOP_IDENTITY_KIND;
+    if (isShopType) {
+      data2.type = SHOP_ACTOR_TYPE;
+      data2.flags = data2.flags ?? {};
+      data2.flags.core = data2.flags.core ?? {};
+      data2.flags.core.sheetClass = `${MODULE_ID}.ShopActorSheet`;
+      data2.flags[SHOP_FLAG_SCOPE] = data2.flags[SHOP_FLAG_SCOPE] ?? {};
+      data2.flags[SHOP_FLAG_SCOPE][SHOP_FLAG_KEYS.identity] = {
+        isShop: true,
+        kind: SHOP_IDENTITY_KIND
+      };
+      if (!data2.flags[SHOP_FLAG_SCOPE][SHOP_FLAG_KEYS.configuration]) {
+        data2.flags[SHOP_FLAG_SCOPE][SHOP_FLAG_KEYS.configuration] = DEFAULT_SHOP_CONFIGURATION;
+      }
+      data2.img = "icons/environment/settlement/warehouse-crates.webp";
+    }
+  });
   CONFIG.Actor.typeLabels ??= {};
   if (!CONFIG.Actor.typeLabels[LEGACY_SHOP_ACTOR_TYPE]) {
     CONFIG.Actor.typeLabels[LEGACY_SHOP_ACTOR_TYPE] = "Shop (Legacy)";
   }
-  foundry.documents.collections.Actors.registerSheet(MODULE_ID, ShopActorSheet, {
-    types: [.../* @__PURE__ */ new Set([getShopActorType(), SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE])],
-    makeDefault: false,
-    label: "Shop Studio"
-  });
+  const sheetTypes = [.../* @__PURE__ */ new Set([getShopActorType(), SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE])];
+  if (game.version >= 13) {
+    foundry.documents.collections.Actors.registerSheet(MODULE_ID, ShopActorSheet, {
+      types: sheetTypes,
+      makeDefault: false,
+      label: "Shop Studio"
+    });
+  } else {
+    Actors.registerSheet(MODULE_ID, ShopActorSheet, {
+      types: sheetTypes,
+      makeDefault: false,
+      label: "Shop Studio"
+    });
+  }
   if (game.version > 13) {
     window.MIN_WINDOW_WIDTH = 200;
     window.MIN_WINDOW_HEIGHT = 50;
@@ -38039,6 +38066,7 @@ Hooks.once("ready", (app, html, data) => {
   if (!safeGetSetting(MODULE_ID, "dontShowWelcome", false)) {
     new WelcomeApplication().render(true, { focus: true });
   }
+  registerSettings();
 });
 Hooks.on("renderSettingsConfig", (app, html, context) => {
   if (game.user.isGM) {
