@@ -304,7 +304,7 @@ const application = getContext('#external').application;
         console.error('Compendium index error:', err);
         continue;
       }
-      for (const entry of Array.from(index.entries())) {
+      for (const entry of index.values()) {
         if (typeToQuantity.has(entry.type) && isItemTypeListable(entry.type)) {
           pool.push({ pack, entry });
         }

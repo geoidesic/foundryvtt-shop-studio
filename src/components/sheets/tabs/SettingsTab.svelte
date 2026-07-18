@@ -198,12 +198,13 @@
     sharedProps.silentSaveSettings?.();
   }
 
-  function setCompendiumQuantity(type, value) {
+  async function setCompendiumQuantity(type, value) {
     const quantity = Math.max(0, Number.parseInt(value, 10) || 0);
     const next = compendiumProvision.filter((entry) => entry.type !== type);
     if (quantity > 0) next.push({ type, quantity });
     config.update((current) => ({ ...current, compendiumProvision: next }));
     sharedProps.onCompendiumProvisionChange?.(next);
+    await sharedProps.silentSaveSettings?.();
   }
 
   function handleCompendiumQuantityInput(event) {
