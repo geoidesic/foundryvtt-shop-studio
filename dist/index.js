@@ -193,20 +193,20 @@ function space() {
 function empty() {
   return text("");
 }
-function listen(node, event, handler, options) {
-  node.addEventListener(event, handler, options);
-  return () => node.removeEventListener(event, handler, options);
+function listen(node, event2, handler, options) {
+  node.addEventListener(event2, handler, options);
+  return () => node.removeEventListener(event2, handler, options);
 }
 function prevent_default(fn) {
-  return function(event) {
-    event.preventDefault();
-    return fn.call(this, event);
+  return function(event2) {
+    event2.preventDefault();
+    return fn.call(this, event2);
   };
 }
 function stop_propagation(fn) {
-  return function(event) {
-    event.stopPropagation();
-    return fn.call(this, event);
+  return function(event2) {
+    event2.stopPropagation();
+    return fn.call(this, event2);
   };
 }
 function attr(node, attribute, value) {
@@ -354,16 +354,16 @@ function createEventDispatcher() {
   return (type, detail, { cancelable = false } = {}) => {
     const callbacks = component.$$.callbacks[type];
     if (callbacks) {
-      const event = custom_event(
+      const event2 = custom_event(
         /** @type {string} */
         type,
         detail,
         { cancelable }
       );
       callbacks.slice().forEach((fn) => {
-        fn.call(component, event);
+        fn.call(component, event2);
       });
-      return !event.defaultPrevented;
+      return !event2.defaultPrevented;
     }
     return true;
   };
@@ -375,10 +375,10 @@ function setContext(key, context) {
 function getContext(key) {
   return get_current_component().$$.context.get(key);
 }
-function bubble(component, event) {
-  const callbacks = component.$$.callbacks[event.type];
+function bubble(component, event2) {
+  const callbacks = component.$$.callbacks[event2.type];
   if (callbacks) {
-    callbacks.slice().forEach((fn) => fn.call(this, event));
+    callbacks.slice().forEach((fn) => fn.call(this, event2));
   }
 }
 const dirty_components = [];
@@ -5044,7 +5044,7 @@ class A11yHelper {
    * @privateRemarks
    * TODO: Evaluate / test against touch input devices.
    */
-  static getFocusSource({ event, x, y, focusEl, debug = false }) {
+  static getFocusSource({ event: event2, x, y, focusEl, debug = false }) {
     if (focusEl !== void 0 && !this.isFocusSource(focusEl)) {
       throw new TypeError(
         `A11yHelper.getFocusSource error: 'focusEl' is not a HTMLElement, SVGElement, or string.`
@@ -5054,7 +5054,7 @@ class A11yHelper {
       throw new TypeError(`A11yHelper.getFocusSource error: 'debug' is not a boolean.`);
     }
     const debugEnabled = typeof debug === "boolean" ? this.debug || debug : this.debug;
-    if (event === void 0) {
+    if (event2 === void 0) {
       if (typeof x !== "number") {
         throw new TypeError(`A11yHelper.getFocusSource error: 'event' not defined and 'x' is not a number.`);
       }
@@ -5072,7 +5072,7 @@ class A11yHelper {
       }
       return result2;
     }
-    if (event !== void 0 && !CrossWindow.isUserInputEvent(event)) {
+    if (event2 !== void 0 && !CrossWindow.isUserInputEvent(event2)) {
       throw new TypeError(
         `A11yHelper.getFocusSource error: 'event' is not a KeyboardEvent, MouseEvent, or PointerEvent.`
       );
@@ -5084,14 +5084,14 @@ class A11yHelper {
       throw new TypeError(`A11yHelper.getFocusSource error: 'y' is not a number.`);
     }
     let targetEl;
-    if (event) {
-      if (A11yHelper.isFocusable(event.target)) {
-        targetEl = event.target;
+    if (event2) {
+      if (A11yHelper.isFocusable(event2.target)) {
+        targetEl = event2.target;
         if (debugEnabled) {
           console.debug(`A11yHelper.getFocusSource debug: 'targetEl' set to event.target: `, targetEl);
         }
-      } else if (A11yHelper.isFocusable(event.currentTarget)) {
-        targetEl = event.currentTarget;
+      } else if (A11yHelper.isFocusable(event2.currentTarget)) {
+        targetEl = event2.currentTarget;
         if (debugEnabled) {
           console.debug(`A11yHelper.getFocusSource debug: 'targetEl' set to event.currentTarget: `, targetEl);
         }
@@ -5100,8 +5100,8 @@ class A11yHelper {
           console.debug(
             `A11yHelper.getFocusSource debug: 'event.target' / 'event.currentTarget' are not focusable.`
           );
-          console.debug(`A11yHelper.getFocusSource debug: 'event.target': `, event.target);
-          console.debug(`A11yHelper.getFocusSource debug: 'event.currentTarget': `, event.currentTarget);
+          console.debug(`A11yHelper.getFocusSource debug: 'event.target': `, event2.target);
+          console.debug(`A11yHelper.getFocusSource debug: 'event.currentTarget': `, event2.currentTarget);
         }
       }
       if (targetEl) {
@@ -5111,9 +5111,9 @@ class A11yHelper {
       }
     }
     const result = { debug };
-    if (CrossWindow.isPointerEvent(event)) {
-      if (event?.button !== 2 && event.type === "contextmenu") {
-        const rectTarget = targetEl ?? event.target;
+    if (CrossWindow.isPointerEvent(event2)) {
+      if (event2?.button !== 2 && event2.type === "contextmenu") {
+        const rectTarget = targetEl ?? event2.target;
         const rect = rectTarget.getBoundingClientRect();
         result.source = "keyboard";
         result.x = x ?? rect.left + rect.width / 2;
@@ -5124,15 +5124,15 @@ class A11yHelper {
         }
       } else {
         result.source = "pointer";
-        result.x = x ?? event.pageX;
-        result.y = y ?? event.pageY;
+        result.x = x ?? event2.pageX;
+        result.y = y ?? event2.pageY;
         result.focusEl = targetEl ? [targetEl] : [];
         if (focusEl) {
           result.focusEl.push(focusEl);
         }
       }
     } else {
-      const rectTarget = targetEl ?? event?.target;
+      const rectTarget = targetEl ?? event2?.target;
       if (rectTarget) {
         const rect = rectTarget.getBoundingClientRect();
         result.source = "keyboard";
@@ -8750,24 +8750,24 @@ function draggable(node, { position, enabled = true, button = 0, storeDragging =
   if (enabled) {
     activateListeners();
   }
-  function onDragPointerDown(event) {
-    if (event.button !== button || !event.isPrimary) {
+  function onDragPointerDown(event2) {
+    if (event2.button !== button || !event2.isPrimary) {
       return;
     }
     if (!actualPosition.enabled) {
       return;
     }
-    if (ignoreTargetClassList !== void 0 && A11yHelper.isFocusTarget(event.target)) {
+    if (ignoreTargetClassList !== void 0 && A11yHelper.isFocusTarget(event2.target)) {
       for (const targetClass of ignoreTargetClassList) {
-        if (event.target.classList.contains(targetClass)) {
+        if (event2.target.classList.contains(targetClass)) {
           return;
         }
       }
     }
-    if (hasTargetClassList !== void 0 && A11yHelper.isFocusTarget(event.target)) {
+    if (hasTargetClassList !== void 0 && A11yHelper.isFocusTarget(event2.target)) {
       let foundTarget = false;
       for (const targetClass of hasTargetClassList) {
-        if (event.target.classList.contains(targetClass)) {
+        if (event2.target.classList.contains(targetClass)) {
           foundTarget = true;
           break;
         }
@@ -8776,29 +8776,29 @@ function draggable(node, { position, enabled = true, button = 0, storeDragging =
         return;
       }
     }
-    event.preventDefault();
+    event2.preventDefault();
     dragging = false;
     initialPosition = actualPosition.get();
-    initialDragPoint = { x: event.clientX, y: event.clientY };
+    initialDragPoint = { x: event2.clientX, y: event2.clientY };
     node.addEventListener(...handlers.dragMove);
     node.addEventListener(...handlers.dragUp);
-    node.setPointerCapture(event.pointerId);
+    node.setPointerCapture(event2.pointerId);
   }
-  function onDragPointerChange(event) {
-    if ((event.buttons & 1) === 0) {
-      onDragPointerUp(event);
+  function onDragPointerChange(event2) {
+    if ((event2.buttons & 1) === 0) {
+      onDragPointerUp(event2);
       return;
     }
-    if (event.button !== -1 || !event.isPrimary) {
+    if (event2.button !== -1 || !event2.isPrimary) {
       return;
     }
-    event.preventDefault();
+    event2.preventDefault();
     if (!dragging && typeof storeDragging?.set === "function") {
       dragging = true;
       storeDragging.set(true);
     }
-    const newLeft = initialPosition?.left + (event.clientX - initialDragPoint.x);
-    const newTop = initialPosition?.top + (event.clientY - initialDragPoint.y);
+    const newLeft = initialPosition?.left + (event2.clientX - initialDragPoint.x);
+    const newTop = initialPosition?.top + (event2.clientY - initialDragPoint.y);
     if (tween) {
       quickTo(newTop, newLeft);
     } else {
@@ -8807,8 +8807,8 @@ function draggable(node, { position, enabled = true, button = 0, storeDragging =
       actualPosition.set(positionData);
     }
   }
-  function onDragPointerUp(event) {
-    event.preventDefault();
+  function onDragPointerUp(event2) {
+    event2.preventDefault();
     dragging = false;
     if (typeof storeDragging?.set === "function") {
       storeDragging.set(false);
@@ -17214,7 +17214,7 @@ function create_if_block$f(ctx) {
     if (
       /*iconType*/
       ctx2[3] === "svg"
-    ) return create_if_block_3$2;
+    ) return create_if_block_3$3;
   }
   let current_block_type = select_block_type(ctx);
   let if_block = current_block_type && current_block_type(ctx);
@@ -17249,7 +17249,7 @@ function create_if_block$f(ctx) {
     }
   };
 }
-function create_if_block_3$2(ctx) {
+function create_if_block_3$3(ctx) {
   let svg;
   let inlineSvg_action;
   let mounted;
@@ -17496,34 +17496,34 @@ function instance$u($$self, $$props, $$invalidate) {
   let { storeHeaderButtonNoLabel = void 0 } = $$props;
   $$subscribe_storeHeaderButtonNoLabel();
   let iconType;
-  function onClick(event) {
+  function onClick(event2) {
     const invoke = button?.onPress ?? button?.onclick;
     if (typeof invoke === "function") {
-      invoke({ button, event });
+      invoke({ button, event: event2 });
       $$invalidate(0, button);
     }
   }
-  function onContextMenu(event) {
+  function onContextMenu(event2) {
     if (button?.onContextMenu === "function") {
-      button.onContextMenu({ button, event });
+      button.onContextMenu({ button, event: event2 });
       $$invalidate(0, button);
     }
   }
-  function onKeydown(event) {
-    if (event.code === keyCode) {
-      event.preventDefault();
-      event.stopPropagation();
+  function onKeydown(event2) {
+    if (event2.code === keyCode) {
+      event2.preventDefault();
+      event2.stopPropagation();
     }
   }
-  function onKeyup(event) {
-    if (event.code === keyCode) {
+  function onKeyup(event2) {
+    if (event2.code === keyCode) {
       const invoke = button.onPress ?? button.onclick;
       if (typeof invoke === "function") {
-        invoke({ button, event });
+        invoke({ button, event: event2 });
         $$invalidate(0, button);
       }
-      event.preventDefault();
-      event.stopPropagation();
+      event2.preventDefault();
+      event2.stopPropagation();
     }
   }
   $$self.$$set = ($$props2) => {
@@ -18244,9 +18244,9 @@ function instance$t($$self, $$props, $$invalidate) {
   let buttonsRight;
   let mediaType = void 0;
   function minimizable(node, booleanStore) {
-    const callback = (event) => {
-      if (event.target.classList.contains("window-title") || event.target.classList.contains("window-header") || event.target.classList.contains("keep-minimized")) {
-        application._onToggleMinimize(event);
+    const callback = (event2) => {
+      if (event2.target.classList.contains("window-title") || event2.target.classList.contains("window-header") || event2.target.classList.contains("keep-minimized")) {
+        application._onToggleMinimize(event2);
       }
     };
     function activateListeners() {
@@ -18269,7 +18269,7 @@ function instance$t($$self, $$props, $$invalidate) {
       destroy: () => removeListeners()
     };
   }
-  function onPointerdown(event) {
+  function onPointerdown(event2) {
     const rootEl = $elementRoot;
     application.position.animate.cancel();
     if ($focusAuto && A11yHelper.isFocusTarget(rootEl) && rootEl?.isConnected) {
@@ -18279,7 +18279,7 @@ function instance$t($$self, $$props, $$invalidate) {
         if (focusOutside) {
           rootEl.focus();
         } else {
-          event.preventDefault();
+          event2.preventDefault();
         }
       } else {
         rootEl.focus();
@@ -18564,8 +18564,8 @@ function instance$s($$self, $$props, $$invalidate) {
     } else {
       node.style.display = "none";
     }
-    function onResizePointerDown(event) {
-      event.preventDefault();
+    function onResizePointerDown(event2) {
+      event2.preventDefault();
       resizing = false;
       position = application.position.get();
       if (position.height === "auto") {
@@ -18574,33 +18574,33 @@ function instance$s($$self, $$props, $$invalidate) {
       if (position.width === "auto") {
         position.width = $storeElementRoot.clientWidth;
       }
-      pScreenDownX = event.clientX;
-      pScreenDownY = event.clientY;
+      pScreenDownX = event2.clientX;
+      pScreenDownY = event2.clientY;
       node.addEventListener(...handlers.resizeMove);
       node.addEventListener(...handlers.resizeUp);
-      node.setPointerCapture(event.pointerId);
+      node.setPointerCapture(event2.pointerId);
     }
-    function onResizePointerMove(event) {
-      event.preventDefault();
+    function onResizePointerMove(event2) {
+      event2.preventDefault();
       if (!resizing && typeof storeResizing2?.set === "function") {
         resizing = true;
         storeResizing2.set(true);
       }
-      const pDeltaLocal = ResizeHandleTransform.computeDelta(application.position.transform.mat4, pScreenDownX, pScreenDownY, event.clientX, event.clientY);
+      const pDeltaLocal = ResizeHandleTransform.computeDelta(application.position.transform.mat4, pScreenDownX, pScreenDownY, event2.clientX, event2.clientY);
       application.position.set({
         width: position.width + pDeltaLocal[0],
         height: position.height + pDeltaLocal[1]
       });
     }
-    function onResizePointerUp(event) {
+    function onResizePointerUp(event2) {
       resizing = false;
       if (typeof storeResizing2?.set === "function") {
         storeResizing2.set(false);
       }
-      event.preventDefault();
+      event2.preventDefault();
       node.removeEventListener(...handlers.resizeMove);
       node.removeEventListener(...handlers.resizeUp);
-      application?._onResize?.(event);
+      application?._onResize?.(event2);
     }
     return {
       update: ({ active: active3 }) => {
@@ -19451,11 +19451,11 @@ function instance$q($$self, $$props, $$invalidate) {
     }
   });
   let cqEnabled = false;
-  function onClosePopup(event) {
+  function onClosePopup(event2) {
     if (!$focusAuto) {
       return;
     }
-    const targetEl = event?.detail?.target;
+    const targetEl = event2?.detail?.target;
     if (!A11yHelper.isFocusTarget(targetEl)) {
       return;
     }
@@ -19475,13 +19475,13 @@ function instance$q($$self, $$props, $$invalidate) {
       }
     }
   }
-  function onKeydown(event) {
+  function onKeydown(event2) {
     const FVTTKeyboardManager = foundry.helpers.interaction.KeyboardManager;
-    if ((event.target === elementRoot || event.target === elementContent) && FVTTKeyboardManager && FVTTKeyboardManager?._getMatchingActions?.(FVTTKeyboardManager?.getKeyboardEventContext?.(event))?.length) {
-      event.target?.blur();
+    if ((event2.target === elementRoot || event2.target === elementContent) && FVTTKeyboardManager && FVTTKeyboardManager?._getMatchingActions?.(FVTTKeyboardManager?.getKeyboardEventContext?.(event2))?.length) {
+      event2.target?.blur();
       return;
     }
-    if (focusWrapEnabled && event.shiftKey && event.code === "Tab") {
+    if (focusWrapEnabled && event2.shiftKey && event2.code === "Tab") {
       const allFocusable = A11yHelper.getFocusableElements(elementRoot, s_IGNORE_CLASSES);
       const firstFocusEl = allFocusable.length > 0 ? allFocusable[0] : void 0;
       const lastFocusEl = allFocusable.length > 0 ? allFocusable[allFocusable.length - 1] : void 0;
@@ -19490,8 +19490,8 @@ function instance$q($$self, $$props, $$invalidate) {
         if (A11yHelper.isFocusTarget(lastFocusEl) && firstFocusEl !== lastFocusEl) {
           lastFocusEl.focus();
         }
-        event.preventDefault();
-        event.stopPropagation();
+        event2.preventDefault();
+        event2.stopPropagation();
       }
     }
     application.bringToTop.call(application);
@@ -19499,8 +19499,8 @@ function instance$q($$self, $$props, $$invalidate) {
   function onPointerdownAppCapture() {
     application.bringToTop.call(application);
   }
-  function onPointerdownContent(event) {
-    const focusable = A11yHelper.isFocusable(event.target);
+  function onPointerdownContent(event2) {
+    const focusable = A11yHelper.isFocusable(event2.target);
     if (!focusable && $focusAuto) {
       if ($focusKeep) {
         const activeWindow = application.reactive.activeWindow;
@@ -19508,7 +19508,7 @@ function instance$q($$self, $$props, $$invalidate) {
         if (focusOutside) {
           elementContent.focus();
         } else {
-          event.preventDefault();
+          event2.preventDefault();
         }
       } else {
         elementContent.focus();
@@ -20603,11 +20603,11 @@ function instance$p($$self, $$props, $$invalidate) {
     }
   });
   let cqEnabled = false;
-  function onClosePopup(event) {
+  function onClosePopup(event2) {
     if (!$focusAuto) {
       return;
     }
-    const targetEl = event?.detail?.target;
+    const targetEl = event2?.detail?.target;
     if (!A11yHelper.isFocusTarget(targetEl)) {
       return;
     }
@@ -20627,13 +20627,13 @@ function instance$p($$self, $$props, $$invalidate) {
       }
     }
   }
-  function onKeydown(event) {
+  function onKeydown(event2) {
     const FVTTKeyboardManager = foundry.helpers.interaction.KeyboardManager;
-    if ((event.target === elementRoot || event.target === elementContent) && FVTTKeyboardManager && FVTTKeyboardManager?._getMatchingActions?.(FVTTKeyboardManager?.getKeyboardEventContext?.(event))?.length) {
-      event.target?.blur();
+    if ((event2.target === elementRoot || event2.target === elementContent) && FVTTKeyboardManager && FVTTKeyboardManager?._getMatchingActions?.(FVTTKeyboardManager?.getKeyboardEventContext?.(event2))?.length) {
+      event2.target?.blur();
       return;
     }
-    if (focusWrapEnabled && event.shiftKey && event.code === "Tab") {
+    if (focusWrapEnabled && event2.shiftKey && event2.code === "Tab") {
       const allFocusable = A11yHelper.getFocusableElements(elementRoot, s_IGNORE_CLASSES);
       const firstFocusEl = allFocusable.length > 0 ? allFocusable[0] : void 0;
       const lastFocusEl = allFocusable.length > 0 ? allFocusable[allFocusable.length - 1] : void 0;
@@ -20642,8 +20642,8 @@ function instance$p($$self, $$props, $$invalidate) {
         if (A11yHelper.isFocusTarget(lastFocusEl) && firstFocusEl !== lastFocusEl) {
           lastFocusEl.focus();
         }
-        event.preventDefault();
-        event.stopPropagation();
+        event2.preventDefault();
+        event2.stopPropagation();
       }
     }
     application.bringToTop.call(application);
@@ -20651,8 +20651,8 @@ function instance$p($$self, $$props, $$invalidate) {
   function onPointerdownAppCapture() {
     application.bringToTop.call(application);
   }
-  function onPointerdownContent(event) {
-    const focusable = A11yHelper.isFocusable(event.target);
+  function onPointerdownContent(event2) {
+    const focusable = A11yHelper.isFocusable(event2.target);
     if (!focusable && $focusAuto) {
       if ($focusKeep) {
         const activeWindow = application.reactive.activeWindow;
@@ -20660,7 +20660,7 @@ function instance$p($$self, $$props, $$invalidate) {
         if (focusOutside) {
           elementContent.focus();
         } else {
-          event.preventDefault();
+          event2.preventDefault();
         }
       } else {
         elementContent.focus();
@@ -21299,7 +21299,7 @@ class WelcomeAppShell extends SvelteComponent {
     flush();
   }
 }
-const version = "0.0.8";
+const version = "0.0.9";
 class WelcomeApplication extends SvelteApp {
   /**
    * Default Application options
@@ -21310,7 +21310,7 @@ class WelcomeApplication extends SvelteApp {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       id: `${MODULE_ID}-welcome`,
-      classes: [MODULE_CODE],
+      classes: [MODULE_ID, MODULE_CODE],
       resizable: true,
       minimizable: true,
       width: 220,
@@ -24268,27 +24268,27 @@ function instance$m($$self, $$props, $$invalidate) {
     $$invalidate(15, content = "");
     $$invalidate(1, enrichedContent = "");
   }
-  function onKeydown(event) {
+  function onKeydown(event2) {
     if (editorActive) {
-      if (event.code === "Escape" || event.code === "KeyS" && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        event.stopPropagation();
+      if (event2.code === "Escape" || event2.code === "KeyS" && (event2.ctrlKey || event2.metaKey)) {
+        event2.preventDefault();
+        event2.stopPropagation();
       }
     } else {
-      if (event.code === keyCode) {
-        event.preventDefault();
-        event.stopPropagation();
+      if (event2.code === keyCode) {
+        event2.preventDefault();
+        event2.stopPropagation();
       }
     }
   }
-  function onKeyup(event) {
-    if (event.code === keyCode) {
+  function onKeyup(event2) {
+    if (event2.code === keyCode) {
       if (!editorActive) {
         keyFocused = true;
         initEditor();
       }
-      event.preventDefault();
-      event.stopPropagation();
+      event2.preventDefault();
+      event2.stopPropagation();
     }
   }
   function saveEditor({ remove = true } = {}) {
@@ -25231,9 +25231,9 @@ function create_fragment$j(ctx) {
 function entryKey(entry) {
   return entry.uuid || entry.id;
 }
-function handleDragOver$1(event) {
-  event.preventDefault();
-  event.dataTransfer.dropEffect = "copy";
+function handleDragOver$1(event2) {
+  event2.preventDefault();
+  event2.dataTransfer.dropEffect = "copy";
 }
 async function openSheet(entry) {
   const actor = entry.uuid ? fromUuidSync(entry.uuid) : game.actors.get(entry.id);
@@ -25370,15 +25370,15 @@ function instance$j($$self, $$props, $$invalidate) {
     });
     ui.notifications.info(`${localize("AssociatedActors")}: ${entry.name}`);
   }
-  async function handleDropEvent(event) {
-    event.preventDefault();
-    event.stopPropagation();
+  async function handleDropEvent(event2) {
+    event2.preventDefault();
+    event2.stopPropagation();
     const textEditor = foundry.applications?.ux?.TextEditor?.implementation ?? TextEditor;
-    const data = textEditor.getDragEventData(event);
+    const data = textEditor.getDragEventData(event2);
     telemetry("native-drop-event", {
       data,
-      rawText: event.dataTransfer.getData("text/plain"),
-      types: Array.from(event.dataTransfer?.types ?? [])
+      rawText: event2.dataTransfer.getData("text/plain"),
+      types: Array.from(event2.dataTransfer?.types ?? [])
     });
     await handleDrop(data);
   }
@@ -25637,8 +25637,8 @@ function create_fragment$i(ctx) {
     }
   };
 }
-function handleEditorSave(event) {
-  console.log("ShopfrontTab: editor:save", event.detail);
+function handleEditorSave(event2) {
+  console.log("ShopfrontTab: editor:save", event2.detail);
 }
 function handleEditorStart() {
   console.log("ShopfrontTab: editor:start");
@@ -25674,7 +25674,7 @@ function rippleFocus({ background = "rgba(255, 255, 255, 0.7)", duration = 300, 
     let clientX = -1;
     let clientY = -1;
     const activeSpans = [];
-    function blurRipple(event, force = false) {
+    function blurRipple(event2, force = false) {
       if (!enabled) {
         return;
       }
@@ -25719,11 +25719,11 @@ function rippleFocus({ background = "rgba(255, 255, 255, 0.7)", duration = 300, 
       activeWindow?.removeEventListener?.("blur", blurRippleForced);
       activeWindow = void 0;
     }
-    function blurRippleForced(event) {
+    function blurRippleForced(event2) {
       if (CrossWindow.isActiveElement(targetEl)) {
         windowBlurActiveFocus = true;
       }
-      blurRipple(event, true);
+      blurRipple(event2, true);
     }
     async function focusRipple() {
       if (windowBlurActiveFocus) {
@@ -25822,13 +25822,13 @@ function rippleFocus({ background = "rgba(255, 255, 255, 0.7)", duration = 300, 
     };
   };
 }
-function create_if_block_3$1(ctx) {
+function create_if_block_3$2(ctx) {
   let if_block_anchor;
   function select_block_type(ctx2, dirty) {
     if (
       /*iconType*/
       ctx2[8] === "font"
-    ) return create_if_block_4$1;
+    ) return create_if_block_4$2;
     if (
       /*iconType*/
       ctx2[8] === "img"
@@ -25935,7 +25935,7 @@ function create_if_block_5(ctx) {
     }
   };
 }
-function create_if_block_4$1(ctx) {
+function create_if_block_4$2(ctx) {
   let i;
   let i_class_value;
   return {
@@ -26169,7 +26169,7 @@ function create_fragment$h(ctx) {
   let dispose;
   let if_block0 = (
     /*icon*/
-    ctx[1] && create_if_block_3$1(ctx)
+    ctx[1] && create_if_block_3$2(ctx)
   );
   const if_block_creators = [create_if_block$7, create_if_block_1$5, create_if_block_2$3];
   const if_blocks = [];
@@ -26294,7 +26294,7 @@ function create_fragment$h(ctx) {
         if (if_block0) {
           if_block0.p(ctx2, dirty);
         } else {
-          if_block0 = create_if_block_3$1(ctx2);
+          if_block0 = create_if_block_3$2(ctx2);
           if_block0.c();
           if_block0.m(span0, t);
         }
@@ -26400,63 +26400,63 @@ function instance$h($$self, $$props, $$invalidate) {
   const s_EFX_DEFAULT = () => void 0;
   let efxEl;
   let iconType;
-  function onClick(event) {
-    if (event.detail === 0) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
+  function onClick(event2) {
+    if (event2.detail === 0) {
+      event2.preventDefault();
+      event2.stopImmediatePropagation();
       return;
     }
     if (typeof onPress === "function") {
-      onPress({ event });
+      onPress({ event: event2 });
     }
-    dispatch2("press", { event });
+    dispatch2("press", { event: event2 });
     if (!clickPropagate) {
-      event.preventDefault();
-      event.stopPropagation();
+      event2.preventDefault();
+      event2.stopPropagation();
     }
   }
-  function onContextMenuPress(event) {
+  function onContextMenuPress(event2) {
     if (typeof onContextMenu === "function") {
       if (efxEl) {
         efxEl.dispatchEvent(new MouseEvent("contextmenu"));
       }
-      onContextMenu({ event });
+      onContextMenu({ event: event2 });
     }
     if (!clickPropagate) {
-      event.preventDefault();
-      event.stopPropagation();
+      event2.preventDefault();
+      event2.stopPropagation();
     }
   }
-  function onKeydown(event) {
-    if (event.code === keyCode) {
-      event.preventDefault();
-      event.stopPropagation();
+  function onKeydown(event2) {
+    if (event2.code === keyCode) {
+      event2.preventDefault();
+      event2.stopPropagation();
     }
-    if (event.code === "Enter" || event.code === "Space") {
-      event.preventDefault();
+    if (event2.code === "Enter" || event2.code === "Space") {
+      event2.preventDefault();
     }
   }
-  function onKeyup(event) {
-    if (event.code === keyCode) {
+  function onKeyup(event2) {
+    if (event2.code === keyCode) {
       if (efxEl) {
-        efxEl.dispatchEvent(new KeyboardEvent(event.type, { key: event.key, code: event.code }));
+        efxEl.dispatchEvent(new KeyboardEvent(event2.type, { key: event2.key, code: event2.code }));
       }
       if (typeof onPress === "function") {
-        onPress({ event });
+        onPress({ event: event2 });
       }
-      dispatch2("press", { event });
-      event.preventDefault();
-      event.stopPropagation();
+      dispatch2("press", { event: event2 });
+      event2.preventDefault();
+      event2.stopPropagation();
     }
   }
-  function click_handler(event) {
-    bubble.call(this, $$self, event);
+  function click_handler(event2) {
+    bubble.call(this, $$self, event2);
   }
-  function contextmenu_handler(event) {
-    bubble.call(this, $$self, event);
+  function contextmenu_handler(event2) {
+    bubble.call(this, $$self, event2);
   }
-  function press_handler(event) {
-    bubble.call(this, $$self, event);
+  function press_handler(event2) {
+    bubble.call(this, $$self, event2);
   }
   function span1_binding($$value) {
     binding_callbacks[$$value ? "unshift" : "push"](() => {
@@ -27205,11 +27205,11 @@ function instance$f($$self, $$props, $$invalidate) {
   $$subscribe_store();
   let { styles = void 0 } = $$props;
   let { efx = void 0 } = $$props;
-  function pointerdown_handler(event) {
-    bubble.call(this, $$self, event);
+  function pointerdown_handler(event2) {
+    bubble.call(this, $$self, event2);
   }
-  function pointerdown_handler_1(event) {
-    bubble.call(this, $$self, event);
+  function pointerdown_handler_1(event2) {
+    bubble.call(this, $$self, event2);
   }
   function input_1_change_handler() {
     $store = this.checked;
@@ -27552,28 +27552,28 @@ function instance$e($$self, $$props, $$invalidate) {
       initialValue = inputEl.value === "" ? null : globalThis.parseFloat(inputEl.value);
     }
   }
-  function onKeyDown(event) {
-    if (localOptions.blurOnEnterKey && event.code === "Enter") {
-      event.preventDefault();
-      event.stopPropagation();
+  function onKeyDown(event2) {
+    if (localOptions.blurOnEnterKey && event2.code === "Enter") {
+      event2.preventDefault();
+      event2.stopPropagation();
       initialValue = void 0;
       inputEl.blur();
       return;
     }
-    if (event.code === "Escape") {
+    if (event2.code === "Escape") {
       if (localOptions.cancelOnEscKey && (initialValue === null || typeof initialValue === "number")) {
         store.set(initialValue);
       }
       if (localOptions.blurOnEscKey) {
-        event.preventDefault();
-        event.stopPropagation();
+        event2.preventDefault();
+        event2.stopPropagation();
         initialValue = void 0;
         inputEl.blur();
       }
     }
   }
-  function pointerdown_handler(event) {
-    bubble.call(this, $$self, event);
+  function pointerdown_handler(event2) {
+    bubble.call(this, $$self, event2);
   }
   function input_1_binding($$value) {
     binding_callbacks[$$value ? "unshift" : "push"](() => {
@@ -27955,34 +27955,34 @@ function instance$d($$self, $$props, $$invalidate) {
     }
     initialValue = localOptions.cancelOnEscKey ? globalThis.parseFloat(inputEl.value) : void 0;
   }
-  function onKeydown(event) {
-    if (localOptions.blurOnEnterKey && event.code === "Enter") {
-      event.preventDefault();
-      event.stopPropagation();
+  function onKeydown(event2) {
+    if (localOptions.blurOnEnterKey && event2.code === "Enter") {
+      event2.preventDefault();
+      event2.stopPropagation();
       initialValue = void 0;
       inputEl.blur();
       return;
     }
-    if (event.code === "Escape") {
+    if (event2.code === "Escape") {
       if (localOptions.cancelOnEscKey && typeof initialValue === "number") {
         store.set(initialValue);
       }
       if (localOptions.blurOnEscKey) {
-        event.preventDefault();
-        event.stopPropagation();
+        event2.preventDefault();
+        event2.stopPropagation();
         initialValue = void 0;
         inputEl.blur();
       }
     }
   }
-  function onPointerdown(event) {
-    if (localOptions.cancelOnEscKey && inputEl !== CrossWindow.getActiveElement(event)) {
+  function onPointerdown(event2) {
+    if (localOptions.cancelOnEscKey && inputEl !== CrossWindow.getActiveElement(event2)) {
       initialValue = globalThis.parseFloat(inputEl.value);
       initialPointerdownTime = performance.now();
     }
   }
-  function pointerdown_handler(event) {
-    bubble.call(this, $$self, event);
+  function pointerdown_handler(event2) {
+    bubble.call(this, $$self, event2);
   }
   function input_1_binding($$value) {
     binding_callbacks[$$value ? "unshift" : "push"](() => {
@@ -28658,15 +28658,15 @@ function instance$b($$self, $$props, $$invalidate) {
   function onFocusin() {
     initialValue = localOptions.cancelOnEscKey ? inputEl.value : void 0;
   }
-  function onKeydown(event) {
-    if (localOptions.blurOnEnterKey && event.code === "Enter") {
-      event.preventDefault();
-      event.stopPropagation();
+  function onKeydown(event2) {
+    if (localOptions.blurOnEnterKey && event2.code === "Enter") {
+      event2.preventDefault();
+      event2.stopPropagation();
       initialValue = void 0;
       inputEl.blur();
       return;
     }
-    if (event.code === "Escape") {
+    if (event2.code === "Escape") {
       if (localOptions.cancelOnEscKey && typeof initialValue === "string") {
         store.set(initialValue);
       } else if (localOptions.clearOnEscKey) {
@@ -28674,15 +28674,15 @@ function instance$b($$self, $$props, $$invalidate) {
         initialValue = "";
       }
       if (localOptions.blurOnEscKey) {
-        event.preventDefault();
-        event.stopPropagation();
+        event2.preventDefault();
+        event2.stopPropagation();
         initialValue = void 0;
         inputEl.blur();
       }
     }
   }
-  function pointerdown_handler(event) {
-    bubble.call(this, $$self, event);
+  function pointerdown_handler(event2) {
+    bubble.call(this, $$self, event2);
   }
   function input_1_binding($$value) {
     binding_callbacks[$$value ? "unshift" : "push"](() => {
@@ -29097,14 +29097,14 @@ function instance$a($$self, $$props, $$invalidate) {
       store.set(selected);
     }
   });
-  function change_handler(event) {
-    bubble.call(this, $$self, event);
+  function change_handler(event2) {
+    bubble.call(this, $$self, event2);
   }
-  function pointerdown_handler(event) {
-    bubble.call(this, $$self, event);
+  function pointerdown_handler(event2) {
+    bubble.call(this, $$self, event2);
   }
-  function change_handler_1(event) {
-    bubble.call(this, $$self, event);
+  function change_handler_1(event2) {
+    bubble.call(this, $$self, event2);
   }
   function select_1_change_handler() {
     $store = select_value(this);
@@ -29542,14 +29542,14 @@ function instance$9($$self, $$props, $$invalidate) {
   let { type = void 0 } = $$props;
   let component;
   let passedProps = {};
-  function click_handler(event) {
-    bubble.call(this, $$self, event);
+  function click_handler(event2) {
+    bubble.call(this, $$self, event2);
   }
-  function press_handler(event) {
-    bubble.call(this, $$self, event);
+  function press_handler(event2) {
+    bubble.call(this, $$self, event2);
   }
-  function contextmenu_handler(event) {
-    bubble.call(this, $$self, event);
+  function contextmenu_handler(event2) {
+    bubble.call(this, $$self, event2);
   }
   $$self.$$set = ($$new_props) => {
     $$invalidate(7, $$props = assign(assign({}, $$props), exclude_internal_props($$new_props)));
@@ -30107,6 +30107,7 @@ async function deductActorCurrency(actor, price) {
 }
 const ITEM_SOURCES_SETTING = "itemSources";
 const LISTABLE_ITEM_TYPES_SETTING = "listableItemTypes";
+const SHOW_SELECTED_ONLY_SETTING = "itemSourcesShowSelectedOnly";
 function getAvailableItemTypes() {
   const configured = CONFIG?.Item?.typeLabels ?? {};
   const documentTypes = Array.isArray(game?.documentTypes?.Item) ? game.documentTypes.Item : [];
@@ -30152,20 +30153,20 @@ function autoAssignItemSources() {
   return getAllItemCompendia$1().map((pack) => pack.collection);
 }
 const TELEMETRY_PREFIX = "[Shop Studio]";
-function shopTelemetry(scope, event, details = {}) {
+function shopTelemetry(scope, event2, details = {}) {
   const payload = {
     scope,
-    event,
+    event: event2,
     userId: globalThis.game?.user?.id,
     isGM: globalThis.game?.user?.isGM,
     ...details
   };
   const logger = globalThis.window?.GAS?.log;
   if (logger?.p) {
-    logger.p(`${TELEMETRY_PREFIX} ${scope} | ${event}`, payload);
+    logger.p(`${TELEMETRY_PREFIX} ${scope} | ${event2}`, payload);
     return;
   }
-  console.debug(`${TELEMETRY_PREFIX} ${scope} | ${event}`, payload);
+  console.debug(`${TELEMETRY_PREFIX} ${scope} | ${event2}`, payload);
 }
 function itemQuantitySnapshot(items) {
   const source = typeof items?.values === "function" ? items.values() : items;
@@ -31887,7 +31888,7 @@ function create_else_block_2(ctx) {
     }
   };
 }
-function create_if_block_4(ctx) {
+function create_if_block_4$1(ctx) {
   let img;
   let img_src_value;
   let img_alt_value;
@@ -31943,7 +31944,7 @@ function create_if_block_2$1(ctx) {
     if (
       /*actorOptions*/
       ctx2[2].length === 0
-    ) return create_if_block_3;
+    ) return create_if_block_3$1;
     return create_else_block_1;
   }
   let current_block_type = select_block_type_1(ctx);
@@ -32035,7 +32036,7 @@ function create_else_block_1(ctx) {
     }
   };
 }
-function create_if_block_3(ctx) {
+function create_if_block_3$1(ctx) {
   let div;
   return {
     c() {
@@ -32592,7 +32593,7 @@ function create_fragment$7(ctx) {
     if (
       /*selectedActor*/
       ctx2[3]
-    ) return create_if_block_4;
+    ) return create_if_block_4$1;
     return create_else_block_2;
   }
   let current_block_type = select_block_type(ctx);
@@ -33870,16 +33871,16 @@ function instance$6($$self, $$props, $$invalidate) {
   component_subscribe($$self, config, (value) => $$invalidate(3, $config = value));
   let rollTables = [];
   let rollTableRolls = [];
-  function onSaleFactorInput(event) {
+  function onSaleFactorInput(event2) {
     config.update((current) => ({
       ...current,
-      salePriceFactor: Number(event.target.value)
+      salePriceFactor: Number(event2.target.value)
     }));
   }
-  function onBuyFactorInput(event) {
+  function onBuyFactorInput(event2) {
     config.update((current) => ({
       ...current,
-      buyPriceFactor: Number(event.target.value)
+      buyPriceFactor: Number(event2.target.value)
     }));
   }
   function syncRollTableRolls(tables, normalizedRolls, currentRolls) {
@@ -33931,19 +33932,19 @@ function instance$6($$self, $$props, $$invalidate) {
       rollTableRolls: normalizeRollTableRolls$1(rollTables, nextRolls)
     }));
   }
-  function handleRollCountInput(event) {
-    setRollTableRollCount(Number(event.currentTarget.dataset.index), event.currentTarget.value);
+  function handleRollCountInput(event2) {
+    setRollTableRollCount(Number(event2.currentTarget.dataset.index), event2.currentTarget.value);
   }
-  function handleRollCountStepClick(event) {
-    const index = Number(event.currentTarget.dataset.index);
-    const delta = Number(event.currentTarget.dataset.delta);
+  function handleRollCountStepClick(event2) {
+    const index = Number(event2.currentTarget.dataset.index);
+    const delta = Number(event2.currentTarget.dataset.delta);
     setRollTableRollCount(index, (rollTableRolls[index] ?? 1) + delta);
   }
-  function handleRemoveRollTableClick(event) {
-    removeRollTable(Number(event.currentTarget.dataset.index));
+  function handleRemoveRollTableClick(event2) {
+    removeRollTable(Number(event2.currentTarget.dataset.index));
   }
-  function handleOpenRollTableClick(event) {
-    openRollTable(rollTables[Number(event.currentTarget.dataset.index)]);
+  function handleOpenRollTableClick(event2) {
+    openRollTable(rollTables[Number(event2.currentTarget.dataset.index)]);
   }
   function input0_change_input_handler() {
     $config.salePriceFactor = to_number(this.value);
@@ -34028,8 +34029,8 @@ function create_fragment$5(ctx) {
       section = element("section");
       main = element("main");
       create_component(tabs_1.$$.fragment);
-      attr(main, "class", "shop-sheet__body svelte-FOU-16wefko");
-      attr(section, "class", "shop-sheet svelte-FOU-16wefko");
+      attr(main, "class", "shop-sheet__body svelte-FOU-bsc0p4");
+      attr(section, "class", "shop-sheet svelte-FOU-bsc0p4");
     },
     m(target, anchor) {
       insert(target, section, anchor);
@@ -36500,9 +36501,9 @@ class ShopActorSheet extends SvelteDocumentSheet {
    * @param {Event} event - The triggering event
    * @returns {Promise<void>}
    */
-  async _onToggleEdit(event) {
-    if (event?.event) {
-      event.event.preventDefault();
+  async _onToggleEdit(event2) {
+    if (event2?.event) {
+      event2.event.preventDefault();
     }
     const actor = this.reactive.document;
     const current = isShopEditing(actor);
@@ -36518,11 +36519,11 @@ class ShopActorSheet extends SvelteDocumentSheet {
   _canDragDrop(selector) {
     return this.reactive.document?.isOwner || game.user?.isGM;
   }
-  _onDragOver(event) {
+  _onDragOver(event2) {
   }
-  _onDragStart(event) {
-    const li = event.currentTarget;
-    if (event.target.classList.contains("content-link")) return;
+  _onDragStart(event2) {
+    const li = event2.currentTarget;
+    if (event2.target.classList.contains("content-link")) return;
     const actor = this.reactive.document;
     let dragData;
     if (li.dataset.itemId) {
@@ -36534,13 +36535,13 @@ class ShopActorSheet extends SvelteDocumentSheet {
       dragData = effect?.toDragData();
     }
     if (!dragData) return;
-    event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+    event2.dataTransfer.setData("text/plain", JSON.stringify(dragData));
   }
   /**
    * Handles dropping content onto the sheet — routes to typed handlers.
    */
-  async _onDrop(event) {
-    const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+  async _onDrop(event2) {
+    const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event2);
     const actor = this.reactive.document;
     if (!actor || actor.documentName !== "Actor") return;
     if (!isShopEditing(actor)) {
@@ -36552,11 +36553,11 @@ class ShopActorSheet extends SvelteDocumentSheet {
     window.GAS.log.g("ITEM TYPE", data.type);
     switch (data.type) {
       case "Item":
-        return this._onDropItem(event, data);
+        return this._onDropItem(event2, data);
       case "Actor":
-        return this._onDropActor(event, data);
+        return this._onDropActor(event2, data);
       case "ActiveEffect":
-        return this._onDropActiveEffect(event, data);
+        return this._onDropActiveEffect(event2, data);
       default:
         return;
     }
@@ -36566,8 +36567,8 @@ class ShopActorSheet extends SvelteDocumentSheet {
    * Validates the item type against module settings and creates embedded items
    * via Foundry's API so all hooks fire and TJSDocument reactivity works.
    */
-  async _onDropItem(event, data) {
-    window.GAS.log.g("DROP ITEM", event, data);
+  async _onDropItem(event2, data) {
+    window.GAS.log.g("DROP ITEM", event2, data);
     const actor = this.reactive.document;
     if (!actor?.isOwner) {
       ui.notifications.warn(localize("NoPermission"));
@@ -36595,16 +36596,16 @@ class ShopActorSheet extends SvelteDocumentSheet {
     window.GAS.log.g("ITEM TO OBJECT, BEFORE CREATION", itemData);
     if (actor.uuid === item.parent?.uuid) {
       window.GAS.log.g("SORTING WITHIN ACTOR");
-      return this._onSortItem(event, itemData);
+      return this._onSortItem(event2, itemData);
     }
     return this._onDropItemCreate(itemData);
   }
   /** Handles actor-on-actor drops (no-op for shops) */
-  async _onDropActor(event, data) {
+  async _onDropActor(event2, data) {
     return false;
   }
   /** Handles active-effect drops */
-  async _onDropActiveEffect(event, data) {
+  async _onDropActiveEffect(event2, data) {
     const actor = this.reactive.document;
     const effect = await ActiveEffect.implementation.fromDropData(data);
     if (!actor?.isOwner || !effect || actor.uuid === effect.parent?.uuid) {
@@ -36689,25 +36690,157 @@ function registerShopActor() {
 }
 function get_each_context(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[32] = list[i];
-  child_ctx[33] = list;
-  child_ctx[34] = i;
+  child_ctx[34] = list[i];
   return child_ctx;
 }
 function get_each_context_1(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[32] = list[i];
-  child_ctx[35] = list;
-  child_ctx[36] = i;
+  child_ctx[34] = list[i];
   return child_ctx;
 }
 function create_if_block_2(ctx) {
+  let div0;
+  let button0;
+  let button1;
+  let button2;
+  let div1;
+  let if_block_anchor;
+  let mounted;
+  let dispose;
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*sourceRows*/
+      ctx2[5].length === 0
+    ) return create_if_block_3;
+    if (
+      /*visibleSourceRows*/
+      ctx2[8].length === 0
+    ) return create_if_block_4;
+  }
+  let current_block_type = select_block_type(ctx);
+  let if_block = current_block_type && current_block_type(ctx);
+  let each_value_1 = ensure_array_like(
+    /*visibleSourceRows*/
+    ctx[8]
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value_1.length; i += 1) {
+    each_blocks[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
+  }
+  return {
+    c() {
+      div0 = element("div");
+      button0 = element("button");
+      button0.textContent = `${localize("ItemSources.SelectVisible")}`;
+      button1 = element("button");
+      button1.textContent = `${localize("ItemSources.ClearVisible")}`;
+      button2 = element("button");
+      button2.textContent = `${localize("ItemSources.AutoAssign")}`;
+      div1 = element("div");
+      if (if_block) if_block.c();
+      if_block_anchor = empty();
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      attr(button0, "class", "no-drag svelte-FOU-16qethw");
+      attr(button0, "type", "button");
+      attr(button1, "class", "no-drag svelte-FOU-16qethw");
+      attr(button1, "type", "button");
+      attr(button2, "class", "no-drag svelte-FOU-16qethw");
+      attr(button2, "type", "button");
+      attr(div0, "class", "gss-source-actions no-drag svelte-FOU-16qethw");
+      attr(div1, "class", "gss-source-list svelte-FOU-16qethw");
+    },
+    m(target, anchor) {
+      insert(target, div0, anchor);
+      append(div0, button0);
+      append(div0, button1);
+      append(div0, button2);
+      insert(target, div1, anchor);
+      if (if_block) if_block.m(div1, null);
+      append(div1, if_block_anchor);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(div1, null);
+        }
+      }
+      if (!mounted) {
+        dispose = [
+          listen(
+            button0,
+            "click",
+            /*handleSelectVisibleSources*/
+            ctx[17]
+          ),
+          listen(
+            button1,
+            "click",
+            /*handleClearVisibleSources*/
+            ctx[18]
+          ),
+          listen(
+            button2,
+            "click",
+            /*handleResetSources*/
+            ctx[19]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (current_block_type !== (current_block_type = select_block_type(ctx2))) {
+        if (if_block) if_block.d(1);
+        if_block = current_block_type && current_block_type(ctx2);
+        if (if_block) {
+          if_block.c();
+          if_block.m(div1, if_block_anchor);
+        }
+      }
+      if (dirty[0] & /*visibleSourceRows, handleSourceInput*/
+      33024) {
+        each_value_1 = ensure_array_like(
+          /*visibleSourceRows*/
+          ctx2[8]
+        );
+        let i;
+        for (i = 0; i < each_value_1.length; i += 1) {
+          const child_ctx = get_each_context_1(ctx2, each_value_1, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block_1(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(div1, null);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value_1.length;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(div0);
+        detach(div1);
+      }
+      if (if_block) {
+        if_block.d();
+      }
+      destroy_each(each_blocks, detaching);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_if_block_4(ctx) {
   let p;
   return {
     c() {
       p = element("p");
       p.textContent = `${localize("ItemSources.NoMatchesFilter")}`;
-      attr(p, "class", "gss-empty-state svelte-FOU-1qo6q3d");
+      attr(p, "class", "gss-empty-state svelte-FOU-16qethw");
     },
     m(target, anchor) {
       insert(target, p, anchor);
@@ -36719,13 +36852,13 @@ function create_if_block_2(ctx) {
     }
   };
 }
-function create_if_block_1(ctx) {
+function create_if_block_3(ctx) {
   let p;
   return {
     c() {
       p = element("p");
       p.textContent = `${localize("ItemSources.NoItemCompendia")}`;
-      attr(p, "class", "gss-empty-state svelte-FOU-1qo6q3d");
+      attr(p, "class", "gss-empty-state svelte-FOU-16qethw");
     },
     m(target, anchor) {
       insert(target, p, anchor);
@@ -36738,94 +36871,225 @@ function create_if_block_1(ctx) {
   };
 }
 function create_each_block_1(ctx) {
-  let div1;
-  let input;
-  let t0;
+  let label;
   let div0;
-  let t1_value = (
+  let input;
+  let input_checked_value;
+  let input_data_collection_value;
+  let div1;
+  let span;
+  let t_value = (
     /*row*/
-    ctx[32].label + ""
+    ctx[34].label + ""
   );
-  let t1;
-  let t2;
+  let t;
   let mounted;
   let dispose;
-  function input_change_handler() {
-    ctx[23].call(
-      input,
-      /*each_value_1*/
-      ctx[35],
-      /*row_index_1*/
-      ctx[36]
-    );
-  }
-  function change_handler(...args) {
-    return (
-      /*change_handler*/
-      ctx[24](
-        /*row*/
-        ctx[32],
-        ...args
-      )
-    );
-  }
   return {
     c() {
-      div1 = element("div");
-      input = element("input");
-      t0 = space();
+      label = element("label");
       div0 = element("div");
-      t1 = text(t1_value);
-      t2 = space();
+      input = element("input");
+      div1 = element("div");
+      span = element("span");
+      t = text(t_value);
+      attr(input, "class", "no-drag svelte-FOU-16qethw");
       attr(input, "type", "checkbox");
-      attr(input, "class", "flex0");
-      attr(div0, "class", "flex3");
-      attr(div1, "class", "flexrow justify-vertical gap-1");
+      input.checked = input_checked_value = /*row*/
+      ctx[34].checked;
+      attr(input, "data-collection", input_data_collection_value = /*row*/
+      ctx[34].collection);
+      attr(div0, "class", "flex0");
+      attr(span, "class", "ml-xs svelte-FOU-16qethw");
+      attr(div1, "class", "flex1");
+      attr(label, "class", "gss-source-row no-drag flexrow svelte-FOU-16qethw");
     },
     m(target, anchor) {
-      insert(target, div1, anchor);
-      append(div1, input);
-      input.checked = /*row*/
-      ctx[32].checked;
-      append(div1, t0);
-      append(div1, div0);
-      append(div0, t1);
-      append(div1, t2);
+      insert(target, label, anchor);
+      append(label, div0);
+      append(div0, input);
+      append(label, div1);
+      append(div1, span);
+      append(span, t);
       if (!mounted) {
-        dispose = [
-          listen(input, "change", input_change_handler),
-          listen(input, "change", change_handler)
-        ];
+        dispose = listen(
+          input,
+          "change",
+          /*handleSourceInput*/
+          ctx[15]
+        );
         mounted = true;
       }
     },
-    p(new_ctx, dirty) {
-      ctx = new_ctx;
+    p(ctx2, dirty) {
       if (dirty[0] & /*visibleSourceRows*/
-      64) {
-        input.checked = /*row*/
-        ctx[32].checked;
+      256 && input_checked_value !== (input_checked_value = /*row*/
+      ctx2[34].checked)) {
+        input.checked = input_checked_value;
       }
       if (dirty[0] & /*visibleSourceRows*/
-      64 && t1_value !== (t1_value = /*row*/
-      ctx[32].label + "")) set_data(t1, t1_value);
+      256 && input_data_collection_value !== (input_data_collection_value = /*row*/
+      ctx2[34].collection)) {
+        attr(input, "data-collection", input_data_collection_value);
+      }
+      if (dirty[0] & /*visibleSourceRows*/
+      256 && t_value !== (t_value = /*row*/
+      ctx2[34].label + "")) set_data(t, t_value);
     },
     d(detaching) {
       if (detaching) {
-        detach(div1);
+        detach(label);
       }
       mounted = false;
-      run_all(dispose);
+      dispose();
     }
   };
 }
 function create_if_block(ctx) {
   let p;
+  let div0;
+  let button0;
+  let button1;
+  let button2;
+  let div1;
+  let if_block_anchor;
+  let mounted;
+  let dispose;
+  let if_block = (
+    /*typeRows*/
+    ctx[9].length === 0 && create_if_block_1()
+  );
+  let each_value = ensure_array_like(
+    /*typeRows*/
+    ctx[9]
+  );
+  let each_blocks = [];
+  for (let i = 0; i < each_value.length; i += 1) {
+    each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
+  }
+  return {
+    c() {
+      p = element("p");
+      p.textContent = `${localize("ItemSources.ListableItemTypesDescription")}`;
+      div0 = element("div");
+      button0 = element("button");
+      button0.textContent = `${localize("ItemSources.SelectAllTypes")}`;
+      button1 = element("button");
+      button1.textContent = `${localize("ItemSources.ClearAllTypes")}`;
+      button2 = element("button");
+      button2.textContent = `${localize("ItemSources.ResetTypes")}`;
+      div1 = element("div");
+      if (if_block) if_block.c();
+      if_block_anchor = empty();
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        each_blocks[i].c();
+      }
+      attr(p, "class", "gss-section-description svelte-FOU-16qethw");
+      attr(button0, "class", "no-drag svelte-FOU-16qethw");
+      attr(button0, "type", "button");
+      attr(button1, "class", "no-drag svelte-FOU-16qethw");
+      attr(button1, "type", "button");
+      attr(button2, "class", "no-drag svelte-FOU-16qethw");
+      attr(button2, "type", "button");
+      attr(div0, "class", "gss-source-actions no-drag svelte-FOU-16qethw");
+      attr(div1, "class", "gss-source-list svelte-FOU-16qethw");
+    },
+    m(target, anchor) {
+      insert(target, p, anchor);
+      insert(target, div0, anchor);
+      append(div0, button0);
+      append(div0, button1);
+      append(div0, button2);
+      insert(target, div1, anchor);
+      if (if_block) if_block.m(div1, null);
+      append(div1, if_block_anchor);
+      for (let i = 0; i < each_blocks.length; i += 1) {
+        if (each_blocks[i]) {
+          each_blocks[i].m(div1, null);
+        }
+      }
+      if (!mounted) {
+        dispose = [
+          listen(
+            button0,
+            "click",
+            /*handleSelectAllTypes*/
+            ctx[21]
+          ),
+          listen(
+            button1,
+            "click",
+            /*handleClearAllTypes*/
+            ctx[22]
+          ),
+          listen(
+            button2,
+            "click",
+            /*handleResetTypes*/
+            ctx[20]
+          )
+        ];
+        mounted = true;
+      }
+    },
+    p(ctx2, dirty) {
+      if (
+        /*typeRows*/
+        ctx2[9].length === 0
+      ) {
+        if (if_block) ;
+        else {
+          if_block = create_if_block_1();
+          if_block.c();
+          if_block.m(div1, if_block_anchor);
+        }
+      } else if (if_block) {
+        if_block.d(1);
+        if_block = null;
+      }
+      if (dirty[0] & /*typeRows, handleTypeInput*/
+      66048) {
+        each_value = ensure_array_like(
+          /*typeRows*/
+          ctx2[9]
+        );
+        let i;
+        for (i = 0; i < each_value.length; i += 1) {
+          const child_ctx = get_each_context(ctx2, each_value, i);
+          if (each_blocks[i]) {
+            each_blocks[i].p(child_ctx, dirty);
+          } else {
+            each_blocks[i] = create_each_block(child_ctx);
+            each_blocks[i].c();
+            each_blocks[i].m(div1, null);
+          }
+        }
+        for (; i < each_blocks.length; i += 1) {
+          each_blocks[i].d(1);
+        }
+        each_blocks.length = each_value.length;
+      }
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(p);
+        detach(div0);
+        detach(div1);
+      }
+      if (if_block) if_block.d();
+      destroy_each(each_blocks, detaching);
+      mounted = false;
+      run_all(dispose);
+    }
+  };
+}
+function create_if_block_1(ctx) {
+  let p;
   return {
     c() {
       p = element("p");
       p.textContent = `${localize("ItemSources.NoItemTypes")}`;
-      attr(p, "class", "gss-empty-state svelte-FOU-1qo6q3d");
+      attr(p, "class", "gss-empty-state svelte-FOU-16qethw");
     },
     m(target, anchor) {
       insert(target, p, anchor);
@@ -36838,436 +37102,311 @@ function create_if_block(ctx) {
   };
 }
 function create_each_block(ctx) {
-  let div1;
-  let input;
-  let t0;
+  let label;
   let div0;
-  let t1_value = (
+  let input;
+  let input_checked_value;
+  let input_data_type_value;
+  let div1;
+  let span;
+  let t_value = (
     /*row*/
-    ctx[32].label + ""
+    ctx[34].label + ""
   );
-  let t1;
-  let t2;
+  let t;
   let mounted;
   let dispose;
-  function input_change_handler_1() {
-    ctx[25].call(
-      input,
-      /*each_value*/
-      ctx[33],
-      /*row_index*/
-      ctx[34]
-    );
-  }
-  function change_handler_1(...args) {
-    return (
-      /*change_handler_1*/
-      ctx[26](
-        /*row*/
-        ctx[32],
-        ...args
-      )
-    );
-  }
   return {
     c() {
-      div1 = element("div");
-      input = element("input");
-      t0 = space();
+      label = element("label");
       div0 = element("div");
-      t1 = text(t1_value);
-      t2 = space();
-      attr(input, "class", "flex0");
+      input = element("input");
+      div1 = element("div");
+      span = element("span");
+      t = text(t_value);
+      attr(input, "class", "no-drag mr-sm svelte-FOU-16qethw");
       attr(input, "type", "checkbox");
-      attr(div0, "class", "flex3");
-      attr(div1, "class", "flexrow justify-vertical gap-1");
+      input.checked = input_checked_value = /*row*/
+      ctx[34].checked;
+      attr(input, "data-type", input_data_type_value = /*row*/
+      ctx[34].type);
+      attr(div0, "class", "flex0");
+      attr(span, "class", "svelte-FOU-16qethw");
+      attr(div1, "class", "flex1 ml-xs");
+      attr(label, "class", "gss-source-row no-drag flexrow svelte-FOU-16qethw");
     },
     m(target, anchor) {
-      insert(target, div1, anchor);
-      append(div1, input);
-      input.checked = /*row*/
-      ctx[32].checked;
-      append(div1, t0);
-      append(div1, div0);
-      append(div0, t1);
-      append(div1, t2);
+      insert(target, label, anchor);
+      append(label, div0);
+      append(div0, input);
+      append(label, div1);
+      append(div1, span);
+      append(span, t);
       if (!mounted) {
-        dispose = [
-          listen(input, "change", input_change_handler_1),
-          listen(input, "change", change_handler_1)
-        ];
+        dispose = listen(
+          input,
+          "change",
+          /*handleTypeInput*/
+          ctx[16]
+        );
         mounted = true;
       }
     },
-    p(new_ctx, dirty) {
-      ctx = new_ctx;
+    p(ctx2, dirty) {
       if (dirty[0] & /*typeRows*/
-      128) {
-        input.checked = /*row*/
-        ctx[32].checked;
+      512 && input_checked_value !== (input_checked_value = /*row*/
+      ctx2[34].checked)) {
+        input.checked = input_checked_value;
       }
       if (dirty[0] & /*typeRows*/
-      128 && t1_value !== (t1_value = /*row*/
-      ctx[32].label + "")) set_data(t1, t1_value);
+      512 && input_data_type_value !== (input_data_type_value = /*row*/
+      ctx2[34].type)) {
+        attr(input, "data-type", input_data_type_value);
+      }
+      if (dirty[0] & /*typeRows*/
+      512 && t_value !== (t_value = /*row*/
+      ctx2[34].label + "")) set_data(t, t_value);
     },
     d(detaching) {
       if (detaching) {
-        detach(div1);
+        detach(label);
       }
       mounted = false;
-      run_all(dispose);
+      dispose();
     }
   };
 }
 function create_default_slot(ctx) {
   let main;
-  let header;
+  let div4;
+  let div0;
   let label0;
-  let i;
-  let t0;
+  let i0;
   let input0;
-  let t1;
+  let div3;
   let label1;
+  let div1;
   let input1;
-  let t2;
+  let div2;
   let span0;
-  let t4;
   let section;
-  let details0;
-  let summary0;
+  let div6;
+  let div5;
+  let i1;
   let span1;
-  let t6;
   let small0;
-  let t7_value = (
+  let t2_value = (
     /*selectedSources*/
     ctx[3].length + ""
   );
-  let t7;
-  let t8;
-  let t9_value = (
+  let t2;
+  let t3;
+  let t4_value = (
     /*sourceRows*/
     ctx[5].length + ""
   );
-  let t9;
-  let t10;
-  let div0;
-  let button0;
-  let t12;
-  let button1;
-  let t14;
-  let button2;
-  let t16;
-  let div1;
-  let t17;
-  let t18;
-  let details1;
-  let summary1;
+  let t4;
+  let div8;
+  let div7;
+  let i2;
   let span2;
-  let t20;
   let small1;
-  let t21_value = (
+  let t6_value = (
     /*selectedTypes*/
     ctx[4].length + ""
   );
-  let t21;
-  let t22;
-  let t23_value = (
+  let t6;
+  let t7;
+  let t8_value = (
     /*allItemTypes*/
-    ctx[8].length + ""
+    ctx[12].length + ""
   );
-  let t23;
-  let t24;
-  let div2;
-  let button3;
-  let t26;
-  let button4;
-  let t28;
-  let button5;
-  let t30;
-  let div3;
-  let t31;
-  let t32;
+  let t8;
   let footer;
-  let button6;
-  let t34;
-  let button7;
+  let button0;
+  let button1;
   let mounted;
   let dispose;
-  function select_block_type(ctx2, dirty) {
-    if (
-      /*sourceRows*/
-      ctx2[5].length === 0
-    ) return create_if_block_1;
-    if (
-      /*visibleSourceRows*/
-      ctx2[6].length === 0
-    ) return create_if_block_2;
-  }
-  let current_block_type = select_block_type(ctx);
-  let if_block0 = current_block_type && current_block_type(ctx);
-  let each_value_1 = ensure_array_like(
-    /*visibleSourceRows*/
-    ctx[6]
+  let if_block0 = (
+    /*sourcesOpen*/
+    ctx[6] && create_if_block_2(ctx)
   );
-  let each_blocks_1 = [];
-  for (let i2 = 0; i2 < each_value_1.length; i2 += 1) {
-    each_blocks_1[i2] = create_each_block_1(get_each_context_1(ctx, each_value_1, i2));
-  }
   let if_block1 = (
-    /*typeRows*/
-    ctx[7].length === 0 && create_if_block()
+    /*typesOpen*/
+    ctx[7] && create_if_block(ctx)
   );
-  let each_value = ensure_array_like(
-    /*typeRows*/
-    ctx[7]
-  );
-  let each_blocks = [];
-  for (let i2 = 0; i2 < each_value.length; i2 += 1) {
-    each_blocks[i2] = create_each_block(get_each_context(ctx, each_value, i2));
-  }
   return {
     c() {
       main = element("main");
-      header = element("header");
+      div4 = element("div");
+      div0 = element("div");
       label0 = element("label");
-      i = element("i");
-      t0 = space();
+      i0 = element("i");
       input0 = element("input");
-      t1 = space();
+      div3 = element("div");
       label1 = element("label");
+      div1 = element("div");
       input1 = element("input");
-      t2 = space();
+      div2 = element("div");
       span0 = element("span");
       span0.textContent = `${localize("ItemSources.ShowSelectedOnly")}`;
-      t4 = space();
       section = element("section");
-      details0 = element("details");
-      summary0 = element("summary");
+      div6 = element("div");
+      div5 = element("div");
+      i1 = element("i");
       span1 = element("span");
       span1.textContent = `${localize("ItemSources.ItemCompendia")}`;
-      t6 = space();
       small0 = element("small");
-      t7 = text(t7_value);
-      t8 = text(" / ");
-      t9 = text(t9_value);
-      t10 = space();
-      div0 = element("div");
-      button0 = element("button");
-      button0.textContent = `${localize("ItemSources.SelectVisible")}`;
-      t12 = space();
-      button1 = element("button");
-      button1.textContent = `${localize("ItemSources.ClearVisible")}`;
-      t14 = space();
-      button2 = element("button");
-      button2.textContent = `${localize("ItemSources.AutoAssign")}`;
-      t16 = space();
-      div1 = element("div");
+      t2 = text(t2_value);
+      t3 = text(" / ");
+      t4 = text(t4_value);
       if (if_block0) if_block0.c();
-      t17 = space();
-      for (let i2 = 0; i2 < each_blocks_1.length; i2 += 1) {
-        each_blocks_1[i2].c();
-      }
-      t18 = space();
-      details1 = element("details");
-      summary1 = element("summary");
+      div8 = element("div");
+      div7 = element("div");
+      i2 = element("i");
       span2 = element("span");
       span2.textContent = `${localize("ItemSources.ListableItemTypes")}`;
-      t20 = space();
       small1 = element("small");
-      t21 = text(t21_value);
-      t22 = text(" / ");
-      t23 = text(t23_value);
-      t24 = space();
-      div2 = element("div");
-      button3 = element("button");
-      button3.textContent = `${localize("ItemSources.SelectAllTypes")}`;
-      t26 = space();
-      button4 = element("button");
-      button4.textContent = `${localize("ItemSources.ClearAllTypes")}`;
-      t28 = space();
-      button5 = element("button");
-      button5.textContent = `${localize("ItemSources.ResetTypes")}`;
-      t30 = space();
-      div3 = element("div");
+      t6 = text(t6_value);
+      t7 = text(" / ");
+      t8 = text(t8_value);
       if (if_block1) if_block1.c();
-      t31 = space();
-      for (let i2 = 0; i2 < each_blocks.length; i2 += 1) {
-        each_blocks[i2].c();
-      }
-      t32 = space();
       footer = element("footer");
-      button6 = element("button");
-      button6.textContent = `${localize("ItemSources.Cancel")}`;
-      t34 = space();
-      button7 = element("button");
-      button7.textContent = `${localize("ItemSources.Save")}`;
-      attr(i, "class", "fas fa-search svelte-FOU-1qo6q3d");
+      button0 = element("button");
+      button0.textContent = `${localize("ItemSources.Cancel")}`;
+      button1 = element("button");
+      button1.textContent = `${localize("ItemSources.Save")}`;
+      attr(i0, "class", "fas fa-search svelte-FOU-16qethw");
+      attr(input0, "class", "no-drag svelte-FOU-16qethw");
       attr(input0, "type", "search");
       attr(input0, "placeholder", localize("ItemSources.SearchPlaceholder"));
       input0.value = /*searchText*/
       ctx[1];
-      attr(input0, "class", "svelte-FOU-1qo6q3d");
-      attr(label0, "class", "gss-search-box svelte-FOU-1qo6q3d");
+      attr(label0, "class", "gss-search-box no-drag svelte-FOU-16qethw");
+      attr(div0, "class", "flex3");
+      attr(input1, "class", "no-drag svelte-FOU-16qethw");
       attr(input1, "type", "checkbox");
-      attr(input1, "class", "svelte-FOU-1qo6q3d");
-      attr(label1, "class", "gss-toggle-control svelte-FOU-1qo6q3d");
-      attr(header, "class", "gss-sources-toolbar no-drag svelte-FOU-1qo6q3d");
-      attr(small0, "class", "svelte-FOU-1qo6q3d");
-      attr(summary0, "class", "gss-source-summary svelte-FOU-1qo6q3d");
+      input1.checked = /*showOnlySelected*/
+      ctx[2];
+      attr(div1, "class", "flex0");
+      attr(div2, "class", "flex1");
+      attr(label1, "class", "gss-toggle-control no-drag flexrow no-wrap svelte-FOU-16qethw");
+      attr(div3, "class", "flex1");
+      attr(div4, "class", "no-drag flexrow gap-10 pa-sm justify-flexrow-vertical");
+      attr(i1, "class", "gss-chevron svelte-FOU-16qethw");
+      toggle_class(
+        i1,
+        "gss-chevron--open",
+        /*sourcesOpen*/
+        ctx[6]
+      );
+      attr(small0, "class", "svelte-FOU-16qethw");
+      attr(div5, "class", "gss-source-summary gss-source-summary--button no-drag svelte-FOU-16qethw");
+      attr(div5, "role", "button");
+      attr(div5, "tabindex", "0");
+      attr(div6, "class", "gss-source-section svelte-FOU-16qethw");
+      attr(i2, "class", "gss-chevron svelte-FOU-16qethw");
+      toggle_class(
+        i2,
+        "gss-chevron--open",
+        /*typesOpen*/
+        ctx[7]
+      );
+      attr(small1, "class", "svelte-FOU-16qethw");
+      attr(div7, "class", "gss-source-summary gss-source-summary--button no-drag svelte-FOU-16qethw");
+      attr(div7, "role", "button");
+      attr(div7, "tabindex", "0");
+      attr(div8, "class", "gss-source-section svelte-FOU-16qethw");
+      attr(section, "class", "gss-sources-content svelte-FOU-16qethw");
+      attr(button0, "class", "no-drag svelte-FOU-16qethw");
       attr(button0, "type", "button");
+      attr(button1, "class", "gss-save-button no-drag svelte-FOU-16qethw");
       attr(button1, "type", "button");
-      attr(button2, "type", "button");
-      attr(div0, "class", "gss-source-actions svelte-FOU-1qo6q3d");
-      attr(div1, "class", "gss-source-list svelte-FOU-1qo6q3d");
-      attr(details0, "class", "gss-source-section svelte-FOU-1qo6q3d");
-      details0.open = true;
-      attr(small1, "class", "svelte-FOU-1qo6q3d");
-      attr(summary1, "class", "gss-source-summary svelte-FOU-1qo6q3d");
-      attr(button3, "type", "button");
-      attr(button4, "type", "button");
-      attr(button5, "type", "button");
-      attr(div2, "class", "gss-source-actions svelte-FOU-1qo6q3d");
-      attr(div3, "class", "gss-source-list svelte-FOU-1qo6q3d");
-      attr(details1, "class", "gss-source-section svelte-FOU-1qo6q3d");
-      details1.open = true;
-      attr(section, "class", "gss-sources-content svelte-FOU-1qo6q3d");
-      attr(button6, "type", "button");
-      attr(button7, "type", "button");
-      attr(button7, "class", "gss-save-button svelte-FOU-1qo6q3d");
-      attr(footer, "class", "gss-sources-footer svelte-FOU-1qo6q3d");
-      attr(main, "class", "item-sources-settings svelte-FOU-1qo6q3d");
+      attr(footer, "class", "gss-sources-footer no-drag svelte-FOU-16qethw");
+      attr(main, "class", "item-sources-settings svelte-FOU-16qethw");
     },
     m(target, anchor) {
       insert(target, main, anchor);
-      append(main, header);
-      append(header, label0);
-      append(label0, i);
-      append(label0, t0);
+      append(main, div4);
+      append(div4, div0);
+      append(div0, label0);
+      append(label0, i0);
       append(label0, input0);
-      append(header, t1);
-      append(header, label1);
-      append(label1, input1);
-      input1.checked = /*showOnlySelected*/
-      ctx[2];
-      append(label1, t2);
-      append(label1, span0);
-      append(main, t4);
+      append(div4, div3);
+      append(div3, label1);
+      append(label1, div1);
+      append(div1, input1);
+      append(label1, div2);
+      append(div2, span0);
       append(main, section);
-      append(section, details0);
-      append(details0, summary0);
-      append(summary0, span1);
-      append(summary0, t6);
-      append(summary0, small0);
-      append(small0, t7);
-      append(small0, t8);
-      append(small0, t9);
-      append(details0, t10);
-      append(details0, div0);
-      append(div0, button0);
-      append(div0, t12);
-      append(div0, button1);
-      append(div0, t14);
-      append(div0, button2);
-      append(details0, t16);
-      append(details0, div1);
-      if (if_block0) if_block0.m(div1, null);
-      append(div1, t17);
-      for (let i2 = 0; i2 < each_blocks_1.length; i2 += 1) {
-        if (each_blocks_1[i2]) {
-          each_blocks_1[i2].m(div1, null);
-        }
-      }
-      append(section, t18);
-      append(section, details1);
-      append(details1, summary1);
-      append(summary1, span2);
-      append(summary1, t20);
-      append(summary1, small1);
-      append(small1, t21);
-      append(small1, t22);
-      append(small1, t23);
-      append(details1, t24);
-      append(details1, div2);
-      append(div2, button3);
-      append(div2, t26);
-      append(div2, button4);
-      append(div2, t28);
-      append(div2, button5);
-      append(details1, t30);
-      append(details1, div3);
-      if (if_block1) if_block1.m(div3, null);
-      append(div3, t31);
-      for (let i2 = 0; i2 < each_blocks.length; i2 += 1) {
-        if (each_blocks[i2]) {
-          each_blocks[i2].m(div3, null);
-        }
-      }
-      append(main, t32);
+      append(section, div6);
+      append(div6, div5);
+      append(div5, i1);
+      append(div5, span1);
+      append(div5, small0);
+      append(small0, t2);
+      append(small0, t3);
+      append(small0, t4);
+      if (if_block0) if_block0.m(div6, null);
+      append(section, div8);
+      append(div8, div7);
+      append(div7, i2);
+      append(div7, span2);
+      append(div7, small1);
+      append(small1, t6);
+      append(small1, t7);
+      append(small1, t8);
+      if (if_block1) if_block1.m(div8, null);
       append(main, footer);
-      append(footer, button6);
-      append(footer, t34);
-      append(footer, button7);
+      append(footer, button0);
+      append(footer, button1);
       if (!mounted) {
         dispose = [
           listen(
             input0,
             "input",
             /*handleSearchInput*/
-            ctx[9]
+            ctx[13]
           ),
           listen(
             input1,
             "change",
-            /*input1_change_handler*/
-            ctx[22]
+            /*handleShowSelectedOnlyChange*/
+            ctx[14]
           ),
+          listen(
+            div5,
+            "click",
+            /*toggleSources*/
+            ctx[10]
+          ),
+          listen(div5, "keydown", handleSummaryKeydown(
+            event,
+            /*toggleSources*/
+            ctx[10]
+          )),
+          listen(
+            div7,
+            "click",
+            /*toggleTypes*/
+            ctx[11]
+          ),
+          listen(div7, "keydown", handleSummaryKeydown(
+            event,
+            /*toggleTypes*/
+            ctx[11]
+          )),
           listen(
             button0,
             "click",
-            /*handleSelectVisibleSources*/
-            ctx[12]
+            /*handleCancel*/
+            ctx[24]
           ),
           listen(
             button1,
             "click",
-            /*handleClearVisibleSources*/
-            ctx[13]
-          ),
-          listen(
-            button2,
-            "click",
-            /*handleResetSources*/
-            ctx[14]
-          ),
-          listen(
-            button3,
-            "click",
-            /*handleSelectAllTypes*/
-            ctx[16]
-          ),
-          listen(
-            button4,
-            "click",
-            /*handleClearAllTypes*/
-            ctx[17]
-          ),
-          listen(
-            button5,
-            "click",
-            /*handleResetTypes*/
-            ctx[15]
-          ),
-          listen(
-            button6,
-            "click",
-            /*handleCancel*/
-            ctx[19]
-          ),
-          listen(
-            button7,
-            "click",
             /*handleSave*/
-            ctx[18]
+            ctx[23]
           )
         ];
         mounted = true;
@@ -37285,92 +37424,70 @@ function create_default_slot(ctx) {
         input1.checked = /*showOnlySelected*/
         ctx2[2];
       }
-      if (dirty[0] & /*selectedSources*/
-      8 && t7_value !== (t7_value = /*selectedSources*/
-      ctx2[3].length + "")) set_data(t7, t7_value);
-      if (dirty[0] & /*sourceRows*/
-      32 && t9_value !== (t9_value = /*sourceRows*/
-      ctx2[5].length + "")) set_data(t9, t9_value);
-      if (current_block_type !== (current_block_type = select_block_type(ctx2))) {
-        if (if_block0) if_block0.d(1);
-        if_block0 = current_block_type && current_block_type(ctx2);
-        if (if_block0) {
-          if_block0.c();
-          if_block0.m(div1, t17);
-        }
-      }
-      if (dirty[0] & /*visibleSourceRows, handleSourceChange*/
-      1088) {
-        each_value_1 = ensure_array_like(
-          /*visibleSourceRows*/
+      if (dirty[0] & /*sourcesOpen*/
+      64) {
+        toggle_class(
+          i1,
+          "gss-chevron--open",
+          /*sourcesOpen*/
           ctx2[6]
         );
-        let i2;
-        for (i2 = 0; i2 < each_value_1.length; i2 += 1) {
-          const child_ctx = get_each_context_1(ctx2, each_value_1, i2);
-          if (each_blocks_1[i2]) {
-            each_blocks_1[i2].p(child_ctx, dirty);
-          } else {
-            each_blocks_1[i2] = create_each_block_1(child_ctx);
-            each_blocks_1[i2].c();
-            each_blocks_1[i2].m(div1, null);
-          }
+      }
+      if (dirty[0] & /*selectedSources*/
+      8 && t2_value !== (t2_value = /*selectedSources*/
+      ctx2[3].length + "")) set_data(t2, t2_value);
+      if (dirty[0] & /*sourceRows*/
+      32 && t4_value !== (t4_value = /*sourceRows*/
+      ctx2[5].length + "")) set_data(t4, t4_value);
+      if (
+        /*sourcesOpen*/
+        ctx2[6]
+      ) {
+        if (if_block0) {
+          if_block0.p(ctx2, dirty);
+        } else {
+          if_block0 = create_if_block_2(ctx2);
+          if_block0.c();
+          if_block0.m(div6, null);
         }
-        for (; i2 < each_blocks_1.length; i2 += 1) {
-          each_blocks_1[i2].d(1);
-        }
-        each_blocks_1.length = each_value_1.length;
+      } else if (if_block0) {
+        if_block0.d(1);
+        if_block0 = null;
+      }
+      if (dirty[0] & /*typesOpen*/
+      128) {
+        toggle_class(
+          i2,
+          "gss-chevron--open",
+          /*typesOpen*/
+          ctx2[7]
+        );
       }
       if (dirty[0] & /*selectedTypes*/
-      16 && t21_value !== (t21_value = /*selectedTypes*/
-      ctx2[4].length + "")) set_data(t21, t21_value);
+      16 && t6_value !== (t6_value = /*selectedTypes*/
+      ctx2[4].length + "")) set_data(t6, t6_value);
       if (
-        /*typeRows*/
-        ctx2[7].length === 0
+        /*typesOpen*/
+        ctx2[7]
       ) {
-        if (if_block1) ;
-        else {
-          if_block1 = create_if_block();
+        if (if_block1) {
+          if_block1.p(ctx2, dirty);
+        } else {
+          if_block1 = create_if_block(ctx2);
           if_block1.c();
-          if_block1.m(div3, t31);
+          if_block1.m(div8, null);
         }
       } else if (if_block1) {
         if_block1.d(1);
         if_block1 = null;
-      }
-      if (dirty[0] & /*typeRows, handleTypeChange*/
-      2176) {
-        each_value = ensure_array_like(
-          /*typeRows*/
-          ctx2[7]
-        );
-        let i2;
-        for (i2 = 0; i2 < each_value.length; i2 += 1) {
-          const child_ctx = get_each_context(ctx2, each_value, i2);
-          if (each_blocks[i2]) {
-            each_blocks[i2].p(child_ctx, dirty);
-          } else {
-            each_blocks[i2] = create_each_block(child_ctx);
-            each_blocks[i2].c();
-            each_blocks[i2].m(div3, null);
-          }
-        }
-        for (; i2 < each_blocks.length; i2 += 1) {
-          each_blocks[i2].d(1);
-        }
-        each_blocks.length = each_value.length;
       }
     },
     d(detaching) {
       if (detaching) {
         detach(main);
       }
-      if (if_block0) {
-        if_block0.d();
-      }
-      destroy_each(each_blocks_1, detaching);
+      if (if_block0) if_block0.d();
       if (if_block1) if_block1.d();
-      destroy_each(each_blocks, detaching);
       mounted = false;
       run_all(dispose);
     }
@@ -37406,9 +37523,9 @@ function create_fragment(ctx) {
     },
     p(ctx2, dirty) {
       const tjsapplicationshell_changes = {};
-      if (dirty[0] & /*typeRows, selectedTypes, visibleSourceRows, sourceRows, selectedSources, showOnlySelected, searchText*/
-      254 | dirty[1] & /*$$scope*/
-      64) {
+      if (dirty[0] & /*typeRows, typesOpen, selectedTypes, visibleSourceRows, sourceRows, sourcesOpen, selectedSources, showOnlySelected, searchText*/
+      1022 | dirty[1] & /*$$scope*/
+      256) {
         tjsapplicationshell_changes.$$scope = { dirty, ctx: ctx2 };
       }
       if (!updating_elementRoot && dirty[0] & /*elementRoot*/
@@ -37434,6 +37551,12 @@ function create_fragment(ctx) {
     }
   };
 }
+function handleSummaryKeydown(event2, toggle) {
+  if (event2.key === "Enter" || event2.key === " ") {
+    event2.preventDefault();
+    toggle();
+  }
+}
 function getAllItemCompendia() {
   return game.packs?.filter((pack) => pack.documentName === "Item") ?? [];
 }
@@ -37456,15 +37579,26 @@ function instance($$self, $$props, $$invalidate) {
   const { application } = getContext("#external");
   application.reactive.draggable = true;
   let searchText = "";
-  let showOnlySelected = false;
+  let showOnlySelected = game.settings.get(MODULE_ID, SHOW_SELECTED_ONLY_SETTING) === true;
+  let sourcesOpen = true;
+  let typesOpen = true;
+  function toggleSources() {
+    $$invalidate(6, sourcesOpen = !sourcesOpen);
+  }
+  function toggleTypes() {
+    $$invalidate(7, typesOpen = !typesOpen);
+  }
   const savedSources = game.settings.get(MODULE_ID, ITEM_SOURCES_SETTING);
   let selectedSources = Array.isArray(savedSources) ? savedSources : savedSources && Array.isArray(savedSources.items) ? savedSources.items : [];
   const initialAllTypes = getAvailableItemTypes();
   let allItemTypes = initialAllTypes;
   const savedTypes = game.settings.get(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING);
   let selectedTypes = savedTypes === null || savedTypes === void 0 ? initialAllTypes.map((t) => t.type) : Array.isArray(savedTypes) ? savedTypes : [];
-  function handleSearchInput(event) {
-    $$invalidate(1, searchText = (event.currentTarget?.value ?? "").toLowerCase().trim());
+  function handleSearchInput(event2) {
+    $$invalidate(1, searchText = (event2.currentTarget?.value ?? "").toLowerCase().trim());
+  }
+  function handleShowSelectedOnlyChange(event2) {
+    $$invalidate(2, showOnlySelected = event2.currentTarget.checked === true);
   }
   function handleSourceChange(collection, checked) {
     if (checked) {
@@ -37473,12 +37607,18 @@ function instance($$self, $$props, $$invalidate) {
       $$invalidate(3, selectedSources = selectedSources.filter((source) => source !== collection));
     }
   }
+  function handleSourceInput(event2) {
+    handleSourceChange(event2.currentTarget.dataset.collection, event2.currentTarget.checked);
+  }
   function handleTypeChange(type, checked) {
     if (checked) {
       if (!selectedTypes.includes(type)) $$invalidate(4, selectedTypes = [...selectedTypes, type]);
     } else {
       $$invalidate(4, selectedTypes = selectedTypes.filter((entry) => entry !== type));
     }
+  }
+  function handleTypeInput(event2) {
+    handleTypeChange(event2.currentTarget.dataset.type, event2.currentTarget.checked);
   }
   function handleSelectVisibleSources() {
     const visibleCollections = new Set(visibleSourceRows.map((row) => row.collection));
@@ -37508,20 +37648,6 @@ function instance($$self, $$props, $$invalidate) {
   function handleCancel() {
     application.close();
   }
-  function input1_change_handler() {
-    showOnlySelected = this.checked;
-    $$invalidate(2, showOnlySelected), $$invalidate(3, selectedSources);
-  }
-  function input_change_handler(each_value_1, row_index_1) {
-    each_value_1[row_index_1].checked = this.checked;
-    $$invalidate(6, visibleSourceRows), $$invalidate(5, sourceRows), $$invalidate(1, searchText), $$invalidate(2, showOnlySelected), $$invalidate(3, selectedSources), $$invalidate(21, selectedSourceSet);
-  }
-  const change_handler = (row, e) => handleSourceChange(row.collection, e.currentTarget.checked);
-  function input_change_handler_1(each_value, row_index) {
-    each_value[row_index].checked = this.checked;
-    $$invalidate(7, typeRows), $$invalidate(8, allItemTypes), $$invalidate(20, selectedTypeSet), $$invalidate(2, showOnlySelected), $$invalidate(4, selectedTypes), $$invalidate(3, selectedSources);
-  }
-  const change_handler_1 = (row, e) => handleTypeChange(row.type, e.currentTarget.checked);
   function tjsapplicationshell_elementRoot_binding(value) {
     elementRoot = value;
     $$invalidate(0, elementRoot);
@@ -37536,17 +37662,23 @@ function instance($$self, $$props, $$invalidate) {
         $$invalidate(2, showOnlySelected = false);
       }
     }
+    if ($$self.$$.dirty[0] & /*showOnlySelected*/
+    4) {
+      if (showOnlySelected !== void 0) {
+        game.settings.set(MODULE_ID, SHOW_SELECTED_ONLY_SETTING, showOnlySelected === true);
+      }
+    }
     if ($$self.$$.dirty[0] & /*selectedSources*/
     8) {
-      $$invalidate(21, selectedSourceSet = new Set(selectedSources));
+      $$invalidate(26, selectedSourceSet = new Set(selectedSources));
     }
     if ($$self.$$.dirty[0] & /*selectedSourceSet*/
-    2097152) {
+    67108864) {
       $$invalidate(5, sourceRows = buildSourceRows(selectedSourceSet));
     }
     if ($$self.$$.dirty[0] & /*sourceRows, searchText, showOnlySelected, selectedSources*/
     46) {
-      $$invalidate(6, visibleSourceRows = sourceRows.filter((row) => {
+      $$invalidate(8, visibleSourceRows = sourceRows.filter((row) => {
         if (searchText && !row.searchable.includes(searchText)) return false;
         if (showOnlySelected && selectedSources.length > 0 && !row.checked) return false;
         return true;
@@ -37554,11 +37686,11 @@ function instance($$self, $$props, $$invalidate) {
     }
     if ($$self.$$.dirty[0] & /*selectedTypes*/
     16) {
-      $$invalidate(20, selectedTypeSet = new Set(selectedTypes));
+      $$invalidate(25, selectedTypeSet = new Set(selectedTypes));
     }
     if ($$self.$$.dirty[0] & /*selectedTypeSet, showOnlySelected*/
-    1048580) {
-      $$invalidate(7, typeRows = allItemTypes.map((type) => ({
+    33554436) {
+      $$invalidate(9, typeRows = allItemTypes.map((type) => ({
         ...type,
         checked: selectedTypeSet.has(type.type)
       })).filter((row) => !showOnlySelected || row.checked));
@@ -37571,12 +37703,17 @@ function instance($$self, $$props, $$invalidate) {
     selectedSources,
     selectedTypes,
     sourceRows,
+    sourcesOpen,
+    typesOpen,
     visibleSourceRows,
     typeRows,
+    toggleSources,
+    toggleTypes,
     allItemTypes,
     handleSearchInput,
-    handleSourceChange,
-    handleTypeChange,
+    handleShowSelectedOnlyChange,
+    handleSourceInput,
+    handleTypeInput,
     handleSelectVisibleSources,
     handleClearVisibleSources,
     handleResetSources,
@@ -37587,11 +37724,6 @@ function instance($$self, $$props, $$invalidate) {
     handleCancel,
     selectedTypeSet,
     selectedSourceSet,
-    input1_change_handler,
-    input_change_handler,
-    change_handler,
-    input_change_handler_1,
-    change_handler_1,
     tjsapplicationshell_elementRoot_binding
   ];
 }
@@ -37615,6 +37747,7 @@ class ItemSourcesApp extends SvelteApp {
     return foundry.utils.mergeObject(super.defaultOptions, {
       title: "Shop Studio - Item Sources",
       id: "foundryvtt-shop-studio-item-sources-settings",
+      classes: [MODULE_ID, MODULE_CODE],
       resizable: true,
       minimizable: true,
       draggable: true,
@@ -37680,6 +37813,14 @@ function registerItemSourcesSettings() {
     config: false,
     default: null,
     type: Array
+  });
+  game.settings.register(MODULE_ID, "itemSourcesShowSelectedOnly", {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.ShowSelectedOnlyName`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.ShowSelectedOnlyHint`),
+    scope: "world",
+    config: false,
+    default: false,
+    type: Boolean
   });
   game.settings.registerMenu(MODULE_ID, "itemSources", {
     name: game.i18n.localize(`${MODULE_ID}.Setting.ItemSources.Name`),
@@ -37857,8 +37998,8 @@ function renderShopTypeInCreateActorApplication(app, html) {
   addShopTypeToRadioList(form);
   addShopTypeToSelect(form);
   if (form.dataset.gssShopTypeBound === "true") return;
-  form.addEventListener("click", (event) => {
-    const button = event.target?.closest?.("button");
+  form.addEventListener("click", (event2) => {
+    const button = event2.target?.closest?.("button");
     if (!button || button.type === "button") return;
     applyShopDialogSelection(form);
   }, true);
