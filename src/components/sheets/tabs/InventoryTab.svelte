@@ -151,7 +151,10 @@
   async function removeAllItems() {
     const okToDelete = confirm(localize("Types.Actor.Inventory.confirmDeleteAll"));
     if (okToDelete) {
-      await $Actor.deleteAllItems('equipment');
+      const itemIds = getActorItems().map((item) => item.id);
+      if (itemIds.length > 0) {
+        await $Actor.deleteEmbeddedDocuments('Item', itemIds);
+      }
     }
   }
 
