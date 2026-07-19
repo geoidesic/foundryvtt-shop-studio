@@ -38,7 +38,7 @@
       basketActorIds: Object.keys(actor?.flags?.[MODULE_ID]?.basket ?? {}),
       associatedActors: config.associatedActors ?? [],
     });
-    if (actor && selectedActorId) {
+    if (actor && selectedActorId && actor.isOwner) {
       registerShopTargetActor(actor, selectedActorId, { source: 'player-restored-selection' });
     }
   }
@@ -88,14 +88,14 @@
     if (shopId) {
       await game.user.setFlag(MODULE_ID, `selectedActor.${shopId}`, id ?? '');
     }
-    if (actor && targetEntry) {
+    if (actor && targetEntry && actor.isOwner) {
       await registerShopTargetEntries(actor, [{
         ...targetEntry,
         source: 'player-selection',
         userId: game.user?.id,
         timestamp: Date.now(),
       }]);
-    } else if (actor && id) {
+    } else if (actor && id && actor.isOwner) {
       await registerShopTargetActor(actor, id, { source: 'player-selection' });
     }
   }

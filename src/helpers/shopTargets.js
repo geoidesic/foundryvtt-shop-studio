@@ -74,6 +74,7 @@ function mergeTargetEntries(currentEntries, nextEntries) {
 
 export async function registerShopTargetEntries(shop, entries) {
   if (!shop?.setFlag || !Array.isArray(entries) || entries.length === 0) return [];
+  if (!shop.isOwner) return getShopTargetEntries(shop);
   const currentEntries = getShopTargetEntries(shop);
   const nextEntries = mergeTargetEntries(currentEntries, entries);
   await shop.setFlag(MODULE_ID, SHOP_TARGETS_FLAG, nextEntries);
