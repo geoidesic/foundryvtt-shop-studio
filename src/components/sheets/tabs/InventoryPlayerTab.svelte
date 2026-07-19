@@ -4,7 +4,8 @@
   import { TJSDocument } from "#runtime/svelte/store/fvtt/document";
 
   import { TJSInput } from "#standard/component/form";
-  import { createFilterQuery } from "~/src/filters/itemFilterQuery";
+  import { createFilterQuery, createSortQuery } from "~/src/filters/itemFilterQuery";
+  import { getComparablePriceValue } from "~/src/helpers/currency.js";
   import { localize } from "~/src/helpers/utility";
   import { MODULE_ID } from "~/src/helpers/constants";
   import { applyPriceFactor, formatPrice as formatCurrencyPrice, makeBasketPrice } from "~/src/helpers/currency.js";
@@ -26,6 +27,11 @@
   $: socketStockRevision = socketShopState?.revision ?? 0;
   const typeSearch = createFilterQuery("type");
   const nameSearch = createFilterQuery("name");
+  const sortQuery = createSortQuery({
+    defaultKey: "name",
+    defaultDirection: "asc",
+    resolvers: { price: (item) => getComparablePriceValue(item?.system?.price) },
+  });
 
   const input = {
     store: nameSearch,
@@ -89,8 +95,29 @@
   function getInventoryItems() {
     return getActorItems()
       .filter((item) => typeSearch(item) && nameSearch(item))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort(sortQuery);
   }
+
+  function onSortClick(e) {
+    const key = e.currentTarget.dataset.key;
+    shopTelemetry('InventoryPlayerTab', 'sort header clicked', {
+      key,
+      previousSortKey: sortKey,
+      previousSortDir: sortDir,
+    });
+    sortQuery.toggle(key);
+    sortKey = sortQuery.getKey();
+    sortDir = sortQuery.getDirection();
+    shopTelemetry('InventoryPlayerTab', 'sort header applied', {
+      key,
+      nextSortKey: sortKey,
+      nextSortDir: sortDir,
+      itemCount: items.length,
+    });
+  }
+
+  let sortKey = sortQuery.getKey();
+  let sortDir = sortQuery.getDirection();
 
   function getDisplayQuantity(item) {
     const socketStock = socketShopState?.stockByItemId?.get(item?.id);
@@ -226,6 +253,8 @@
     $wildcard;
     $nameSearch;
     $typeSearch;
+    sortKey;
+    sortDir;
     socketStockRevision;
     items = getInventoryItems();
     shopTelemetry('InventoryPlayerTab', 'items reassigned', {
@@ -257,8 +286,12 @@
         .inv-table
           .inv-header
             .inv-col-icon
-            .inv-col-name {localize('Name')}
-            .inv-col-price {localize('Price')}
+            .inv-col-name.sortable(data-key="name" on:click!="{onSortClick}" class:active="{sortKey === 'name'}")
+              span {localize('Name')}
+              i.fa.sort-indicator(class!="{sortKey === 'name' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
+            .inv-col-price.sortable(data-key="price" on:click!="{onSortClick}" class:active="{sortKey === 'price'}")
+              span {localize('Price')}
+              i.fa.sort-indicator(class!="{sortKey === 'price' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
             .inv-col-qty {localize('Quantity')}
             .inv-col-actions
           +each("items as item, index")
@@ -307,6 +340,26 @@
   color: var(--dnd5e-color-gold, #b59e54)
   font-weight: bold
   font-size: 0.85rem
+
+  .sortable
+    display: flex
+    align-items: center
+    gap: 4px
+    cursor: pointer
+    user-select: none
+
+    &:hover
+      color: #fff
+
+    &.active
+      color: #fff
+
+    .sort-indicator
+      font-size: 0.75rem
+      opacity: 0.6
+
+      &.fa-sort
+        opacity: 0.3
 
 .inv-row
   display: grid

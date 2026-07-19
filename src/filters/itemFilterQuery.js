@@ -144,3 +144,118 @@ export function createFilterQuery(properties, { caseSensitive = false, store } =
 
   return filterQuery;
 }
+
+/**
+ * Creates a sort comparator that is also a writable Svelte store holding the active
+ * sort state (`{ key, direction }`). The comparator resolves values via dotpath so it
+ * can sort by nested fields like `system.quantity` as well as top-level fields like `name`.
+ * Numeric values are compared numerically; everything else falls back to a locale-aware
+ * string comparison. Direction may be `'asc'` or `'desc'`.
+ *
+ * @param {object} [opts] - Optional parameters
+ * @param {string} [opts.defaultKey='name'] - The property key to sort by initially
+ * @param {('asc'|'desc')} [opts.defaultDirection='asc'] - The initial sort direction
+ * @param {import('svelte/store').Writable<{key: string, direction: string}>} [opts.store] - An existing writable store to bind to
+ * @return {function} The sort comparator function with store capabilities
+ */
+/**
+ * Creates a sort comparator for item lists with a toggleable key/direction.
+ *
+ * The returned function is a standard `Array.prototype.sort` comparator and also exposes
+ * `toggle(key)`, `setSort(key, direction)`, `getKey()`, and `getDirection()` so callers can
+ * drive the active sort state from plain reactive variables (no Svelte store required).
+ *
+ * Values are resolved via dotpath (e.g. `system.quantity`) or via a custom resolver function
+ * supplied in `opts.resolvers` (useful for derived values such as price). Numeric values are
+ * compared numerically; everything else uses a locale-aware string comparison. Direction may be
+ * `'asc'` or `'desc'`.
+ *
+ * @param {object} [opts] - Optional parameters
+ * @param {string} [opts.defaultKey='name'] - The property key to sort by initially
+ * @param {('asc'|'desc')} [opts.defaultDirection='asc'] - The initial sort direction
+ * @param {object} [opts.resolvers={}] - Map of key -> (data) => comparable value
+ * @return {function} The sort comparator function with helper methods
+ */
+export function createSortQuery({ defaultKey = 'name', defaultDirection = 'asc', resolvers = {} } = {}) {
+  let key = defaultKey;
+  let direction = defaultDirection;
+
+  /**
+   * Resolve a value from an object via a custom resolver, dotpath, or direct key lookup.
+   * @param {object} data - The data object
+   * @param {string} k - The property key (may be a dotpath)
+   * @return {*} The resolved value
+   */
+  function resolveValue(data, k) {
+    if (resolvers[k]) return resolvers[k](data);
+    if (k.includes('.')) {
+      const steps = stepwiseResolveDotpath(data, k);
+      return steps[steps.length - 1].val;
+    }
+    return data?.[k];
+  }
+
+  /**
+   * Comparator that sorts two data objects by the active key/direction.
+   * @param {object} a - First data object
+   * @param {object} b - Second data object
+   * @return {number} Negative, zero, or positive
+   */
+  function sortQuery(a, b) {
+    const av = resolveValue(a, key);
+    const bv = resolveValue(b, key);
+
+    if (window.GAS?.log?.d) {
+      window.GAS.log.d('createSortQuery.compare', { key, direction, av, bv, aName: a?.name ?? a?.itemName, bName: b?.name ?? b?.itemName });
+    }
+
+    let result;
+    if (typeof av === 'number' && typeof bv === 'number') {
+      result = av - bv;
+    } else if (av == null && bv == null) {
+      result = 0;
+    } else if (av == null) {
+      result = -1;
+    } else if (bv == null) {
+      result = 1;
+    } else {
+      result = String(av).localeCompare(String(bv), game?.i18n?.lang ?? undefined, { numeric: true, sensitivity: 'base' });
+    }
+
+    return direction === 'desc' ? -result : result;
+  }
+
+  /**
+   * Toggle the sort: if the same key is clicked, flip the direction; otherwise switch key
+   * and reset to ascending.
+   * @param {string} newKey - The property key to sort by
+   * @return {void} Nothing
+   */
+  sortQuery.toggle = (newKey) => {
+    if (newKey === key) {
+      direction = direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      key = newKey;
+      direction = 'asc';
+    }
+  };
+
+  /**
+   * Explicitly set the sort key/direction.
+   * @param {string} newKey - The property key to sort by
+   * @param {('asc'|'desc')} [newDirection='asc'] - The sort direction
+   * @return {void} Nothing
+   */
+  sortQuery.setSort = (newKey, newDirection = 'asc') => {
+    key = newKey;
+    direction = newDirection === 'desc' ? 'desc' : 'asc';
+  };
+
+  /** @return {string} The active sort key */
+  sortQuery.getKey = () => key;
+
+  /** @return {string} The active sort direction ('asc' | 'desc') */
+  sortQuery.getDirection = () => direction;
+
+  return sortQuery;
+}

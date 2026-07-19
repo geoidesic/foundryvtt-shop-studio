@@ -4,7 +4,8 @@
   import { TJSDocument } from "#runtime/svelte/store/fvtt/document";
 
   import { TJSInput } from "#standard/component/form";
-  import { createFilterQuery } from "~/src/filters/itemFilterQuery";
+  import { createFilterQuery, createSortQuery } from "~/src/filters/itemFilterQuery";
+  import { getComparablePriceValue } from "~/src/helpers/currency.js";
   import { localize } from "~/src/helpers/utility";
   import { applyPriceFactor, formatPrice as formatCurrencyPrice } from "~/src/helpers/currency.js";
   import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
@@ -21,6 +22,11 @@
 
   const typeSearch = createFilterQuery("type");
   const nameSearch = createFilterQuery("name");
+  const sortQuery = createSortQuery({
+    defaultKey: "name",
+    defaultDirection: "asc",
+    resolvers: { price: (item) => getComparablePriceValue(item?.system?.price) },
+  });
   $: shopUuid = $Actor?.uuid ?? ($Actor?.id ? `Actor.${$Actor.id}` : null);
   $: socketShopState = shopUuid ? $shopSocketState.get(shopUuid) : null;
   $: socketStockRevision = socketShopState?.revision ?? 0;
@@ -172,8 +178,29 @@
   function getInventoryItems() {
     return getActorItems()
       .filter((item) => typeSearch(item) && nameSearch(item))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort(sortQuery);
   }
+
+  function onSortClick(e) {
+    const key = e.currentTarget.dataset.key;
+    shopTelemetry('InventoryTab', 'sort header clicked', {
+      key,
+      previousSortKey: sortKey,
+      previousSortDir: sortDir,
+    });
+    sortQuery.toggle(key);
+    sortKey = sortQuery.getKey();
+    sortDir = sortQuery.getDirection();
+    shopTelemetry('InventoryTab', 'sort header applied', {
+      key,
+      nextSortKey: sortKey,
+      nextSortDir: sortDir,
+      itemCount: items.length,
+    });
+  }
+
+  let sortKey = sortQuery.getKey();
+  let sortDir = sortQuery.getDirection();
 
   function getDisplayQuantity(item) {
     const stock = Number(item?.system?.quantity ?? 0);
@@ -208,6 +235,8 @@
     $wildcard;
     $nameSearch;
     $typeSearch;
+    sortKey;
+    sortDir;
     socketStockRevision;
     items = getInventoryItems();
     shopTelemetry('InventoryTab', 'items reassigned', {
@@ -240,8 +269,12 @@
         .inv-table
           .inv-header
             .inv-col-icon
-            .inv-col-name {localize('Name')}
-            .inv-col-price {localize('Price')}
+            .inv-col-name.sortable(data-key="name" on:click!="{onSortClick}" class:active="{sortKey === 'name'}")
+              span {localize('Name')}
+              i.fa.sort-indicator(class!="{sortKey === 'name' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
+            .inv-col-price.sortable(data-key="price" on:click!="{onSortClick}" class:active="{sortKey === 'price'}")
+              span {localize('Price')}
+              i.fa.sort-indicator(class!="{sortKey === 'price' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
             .inv-col-qty {localize('Quantity')}
             .inv-col-actions
           +each("items as item, index")
@@ -297,6 +330,26 @@
   color: var(--dnd5e-color-gold, #b59e54)
   font-weight: bold
   font-size: 0.85rem
+
+  .sortable
+    display: flex
+    align-items: center
+    gap: 4px
+    cursor: pointer
+    user-select: none
+
+    &:hover
+      color: #fff
+
+    &.active
+      color: #fff
+
+    .sort-indicator
+      font-size: 0.75rem
+      opacity: 0.6
+
+      &.fa-sort
+        opacity: 0.3
 
 .inv-row
   display: grid

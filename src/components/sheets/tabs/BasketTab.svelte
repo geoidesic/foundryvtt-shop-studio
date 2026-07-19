@@ -13,6 +13,8 @@
   import { requestBasketUpdate, requestPurchase } from "~/src/helpers/shopSocket.js";
   import { shopSocketState } from "~/src/stores/basketState.js";
   import { shopTelemetry } from "~/src/helpers/telemetry.js";
+  import { createSortQuery } from "~/src/filters/itemFilterQuery";
+  import { getComparablePriceValue } from "~/src/helpers/currency.js";
   import {
     getCurrentTokenTargetEntries,
     getShopTargetEntries,
@@ -58,6 +60,38 @@
   let unsubscribeDoc = () => {};
   let targetTokenHookId = null;
 
+  const sortQuery = createSortQuery({
+    defaultKey: "itemName",
+    defaultDirection: "asc",
+    resolvers: { price: (entry) => getComparablePriceValue(entry?.price) },
+  });
+
+  function onSortClick(e) {
+    const key = e.currentTarget.dataset.key;
+    shopTelemetry('BasketTab', 'sort header clicked', {
+      key,
+      previousSortKey: sortKey,
+      previousSortDir: sortDir,
+    });
+    sortQuery.toggle(key);
+    sortKey = sortQuery.getKey();
+    sortDir = sortQuery.getDirection();
+    shopTelemetry('BasketTab', 'sort header applied', {
+      key,
+      nextSortKey: sortKey,
+      nextSortDir: sortDir,
+      basketCount: basket.length,
+    });
+  }
+
+  let sortKey = sortQuery.getKey();
+  let sortDir = sortQuery.getDirection();
+
+  /** Return a sorted copy of the given basket entries using the active sort query. */
+  function sortBasket(entries) {
+    return [...entries].sort(sortQuery);
+  }
+
   function selectActor(id) {
     const targetEntry = actorOptions.find((option) => option.id === id);
     shopTelemetry('BasketTab', 'select actor', {
@@ -96,12 +130,14 @@
 
   /** Load basket from shop actor flags whenever doc or targetActorId changes. */
   $: {
+    sortKey;
+    sortDir;
     if ($doc && targetActorId) {
       const documentBasket = $doc?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? [];
       const hasSocketBasket = socketShopState?.basketsByActorId?.has(targetActorId) ?? false;
       const socketBasket = socketShopState?.basketsByActorId?.get(targetActorId) ?? [];
       const sourceBasket = hasSocketBasket ? socketBasket : documentBasket;
-      basket = sourceBasket.map((entry) => ({ ...entry }));
+      basket = sourceBasket.map((entry) => ({ ...entry })).sort(sortQuery);
       shopTelemetry('BasketTab', 'basket derived', {
         shopId: $doc?.id,
         shopUuid,
@@ -182,9 +218,9 @@
       removeFromBasket(index);
       return;
     }
-    basket = basket.map((entry, i) => (
+    basket = sortBasket(basket.map((entry, i) => (
       i === index ? { ...entry, quantity: newQty } : { ...entry }
-    ));
+    )));
     window.GAS.log.p('changeQuantity | updated basket length:', basket.length);
     persistBasket();
   }
@@ -216,7 +252,7 @@
       (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
       return;
     }
-    basket = (result.basket ?? nextBasket).map((entry) => ({ ...entry }));
+    basket = sortBasket(result.basket ?? nextBasket);
   }
 
   async function clearBasket() {
@@ -391,8 +427,12 @@
           .basket-table
             .basket-header
               .basket-col-icon
-              .basket-col-name {localize('Name')}
-              .basket-col-price {localize('Price')}
+              .basket-col-name.sortable(data-key="itemName" on:click!="{onSortClick}" class:active="{sortKey === 'itemName'}")
+                span {localize('Name')}
+                i.fa.sort-indicator(class!="{sortKey === 'itemName' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
+              .basket-col-price.sortable(data-key="price" on:click!="{onSortClick}" class:active="{sortKey === 'price'}")
+                span {localize('Price')}
+                i.fa.sort-indicator(class!="{sortKey === 'price' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
               .basket-col-qty {localize('Quantity')}
               .basket-col-total {localize('Total')}
               .basket-col-actions
@@ -579,6 +619,26 @@
   color: var(--dnd5e-color-gold, #b59e54)
   font-weight: bold
   font-size: 0.8rem
+
+  .sortable
+    display: flex
+    align-items: center
+    gap: 4px
+    cursor: pointer
+    user-select: none
+
+    &:hover
+      color: #fff
+
+    &.active
+      color: #fff
+
+    .sort-indicator
+      font-size: 0.75rem
+      opacity: 0.6
+
+      &.fa-sort
+        opacity: 0.3
 
 .basket-row
   display: grid
