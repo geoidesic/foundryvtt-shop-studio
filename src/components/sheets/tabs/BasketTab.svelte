@@ -416,18 +416,61 @@
     }
 
     let quantity = 1;
-    if (sharedProps.sellQuantityMode === 'prompt') {
-      const promptValue = await Dialog.prompt({
-        title: localize('SelectSellQuantity'),
-        content: `<p>${localize('SelectSellQuantity')}</p>`,
-        rejectClose: false,
-        callback: (html) => {
-          const input = html.querySelector('input');
-          return input ? Number(input.value) : 1;
-        },
-        options: { width: 320 },
+    if (sharedProps.sellQuantityMode === 'prompt' && maxQty > 1) {
+      const promptTitle = game.i18n.format('foundryvtt-shop-studio.SelectSellQuantity', { itemName: sourceItem.name });
+      quantity = await new Promise((resolve) => {
+        const content = `
+          <form class="gas-sell-qty-form" autocomplete="off">
+            <p>${promptTitle}</p>
+            <div class="gas-sell-qty-row">
+              <button type="button" class="gas-sell-qty-step" data-delta="-1" title="${localize('Decrease')}">
+                <i class="fa fa-minus"></i>
+              </button>
+              <input type="number" name="sell-qty" value="1" min="1" max="${maxQty}" step="1" />
+              <button type="button" class="gas-sell-qty-step" data-delta="1" title="${localize('Increase')}">
+                <i class="fa fa-plus"></i>
+              </button>
+              <button type="button" class="gas-sell-qty-all" data-all="1">${localize('All')}</button>
+            </div>
+          </form>
+        `;
+        const dialog = new Dialog({
+          title: promptTitle,
+          content,
+          buttons: {
+            confirm: {
+              label: localize('Confirm') || 'Confirm',
+              callback: (html) => {
+                const input = html instanceof HTMLElement ? html.querySelector('input[name="sell-qty"]') : html.find('input[name="sell-qty"]')[0];
+                resolve(input ? Number(input.value) : 1);
+              },
+            },
+            cancel: {
+              label: game.i18n.localize('Cancel'),
+              callback: () => resolve(null),
+            },
+          },
+          default: 'confirm',
+          close: () => resolve(null),
+          render: (html) => {
+            const root = html instanceof HTMLElement ? html : html[0];
+            const input = root.querySelector('input[name="sell-qty"]');
+            root.querySelectorAll('.gas-sell-qty-step').forEach((btn) => {
+              btn.addEventListener('click', () => {
+                const delta = Number(btn.dataset.delta) || 0;
+                const next = Math.min(maxQty, Math.max(1, (Number(input.value) || 1) + delta));
+                input.value = String(next);
+              });
+            });
+            const allBtn = root.querySelector('.gas-sell-qty-all');
+            if (allBtn) {
+              allBtn.addEventListener('click', () => { input.value = String(maxQty); });
+            }
+          },
+        }, { width: 320, classes: ['gas-dialog'] });
+        dialog.render(true);
       }).catch(() => null);
-      quantity = Number(promptValue ?? 1);
+      quantity = Number(quantity ?? 1);
     }
 
     quantity = Math.min(Math.max(1, quantity), maxQty);

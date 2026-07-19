@@ -314,7 +314,6 @@
                     .flex3
                       span.vendor-fund-label {getCurrencyLabel(denom)}
                       input.vendor-fund-input(type="number" min="0" step="1" data-denom!="{denom}" value!="{vendorFundsDraft[denom] ?? 0}" on:input!="{onVendorFundInput}")
-
                     .flex1
                       .flexcol
                         .flex1

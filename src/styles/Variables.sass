@@ -129,6 +129,68 @@
 .theme-dark .foundryvtt-shop-studio, .theme-dark #foundryvtt-shop-studio-welcome, .themed.theme-dark .foundryvtt-shop-studio, .themed.theme-dark #foundryvtt-shop-studio-welcome
   @include gas-dark-tokens(rgba(0, 0, 0, 0.9), true, true)
 
+// Standalone Shop Studio dialogs (e.g. the sell-quantity prompt) live outside the app
+// root, so they need the dark tokens applied directly when Foundry is in dark mode.
+.theme-dark .gas-dialog.window-app,
+.themed.theme-dark .gas-dialog.window-app
+  background: var(--gas-sheet-background, #1a1a1a)
+
+  > .window-content
+    background: var(--gas-sheet-background, #1a1a1a)
+    background-image: none
+    color: var(--gas-color-text)
+
+.theme-dark .gas-dialog.window-app .window-content,
+.themed.theme-dark .gas-dialog.window-app .window-content
+  @include gas-dark-tokens(rgba(0, 0, 0, 0.9), true, false)
+  color: var(--gas-color-text)
+
+  input,
+  input[type="number"],
+  input[type="text"],
+  input[type="search"],
+  select,
+  textarea
+    background-color: var(--gas-input-background)
+    color: var(--gas-color-text)
+    border-color: var(--gas-input-border)
+
+  .gas-sell-qty-form
+    display: flex
+    flex-direction: column
+    gap: 0.5rem
+    padding: 0.25rem 0
+
+    .gas-sell-qty-row
+      display: flex
+      align-items: center
+      justify-content: center
+      gap: 0.4rem
+
+    .gas-sell-qty-step,
+    .gas-sell-qty-all
+      display: inline-flex
+      align-items: center
+      justify-content: center
+      padding: 0.25rem 0.5rem
+      border: 1px solid var(--gas-input-border)
+      border-radius: var(--border-radius)
+      background: color-mix(in srgb, var(--gas-color-text) 10%, transparent)
+      color: var(--gas-color-text)
+      cursor: pointer
+      font-size: 0.85rem
+
+      &:hover
+        background: color-mix(in srgb, var(--gas-tab-active-indicator) 20%, transparent)
+        color: var(--gas-tab-active-color)
+
+    .gas-sell-qty-all
+      margin-left: 0.25rem
+
+    input[name="sell-qty"]
+      width: 80px
+      text-align: center
+
 .foundryvtt-shop-studio.theme-light, #foundryvtt-shop-studio-welcome.theme-light
   --gas-sheet-background: #cccccc
   --gas-tabs-list-background: #dbd9cd
