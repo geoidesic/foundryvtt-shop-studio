@@ -433,7 +433,9 @@
               .basket-col-price.sortable(data-key="price" on:click!="{onSortClick}" class:active="{sortKey === 'price'}")
                 span {localize('Price')}
                 i.fa.sort-indicator(class!="{sortKey === 'price' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
-              .basket-col-qty {localize('Quantity')}
+              .basket-col-qty.sortable(data-key="quantity" on:click!="{onSortClick}" class:active="{sortKey === 'quantity'}")
+                span {localize('Quantity')}
+                i.fa.sort-indicator(class!="{sortKey === 'quantity' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
               .basket-col-total {localize('Total')}
               .basket-col-actions
             +each("basket as entry, index")

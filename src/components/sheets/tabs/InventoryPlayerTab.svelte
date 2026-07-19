@@ -292,7 +292,9 @@
             .inv-col-price.sortable(data-key="price" on:click!="{onSortClick}" class:active="{sortKey === 'price'}")
               span {localize('Price')}
               i.fa.sort-indicator(class!="{sortKey === 'price' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
-            .inv-col-qty {localize('Quantity')}
+            .inv-col-qty.sortable(data-key="system.quantity" on:click!="{onSortClick}" class:active="{sortKey === 'system.quantity'}")
+              span {localize('Quantity')}
+              i.fa.sort-indicator(class!="{sortKey === 'system.quantity' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
             .inv-col-actions
           +each("items as item, index")
             .inv-row
