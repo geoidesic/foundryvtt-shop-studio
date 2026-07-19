@@ -3,6 +3,9 @@
   import DropZone from '~/src/components/molecules/DropZone.svelte';
   import { shopConfig } from '~/src/stores/shopConfig.js';
   import { getConfiguredListableItemTypes } from '~/src/helpers/itemSources';
+  import { getSystemCurrencies, getCurrencyLabel } from '~/src/helpers/currency.js';
+  import { getVendorFunds, setVendorFunds } from '~/src/helpers/shopIdentity.js';
+  import { MODULE_ID } from '~/src/helpers/constants.ts';
 
   export let sharedProps = {};
 
@@ -217,6 +220,54 @@
     const current = compendiumRows.find((row) => row.type === type)?.quantity ?? 0;
     setCompendiumQuantity(type, current + delta);
   }
+
+  // ── Vendor funds editor ──
+  let vendorFundsOpen = false;
+  let vendorFundsDraft = {};
+  let vendorFundsDirty = false;
+
+  $: currencyDenominations = Object.keys(getSystemCurrencies());
+
+  // Reactively mirror the shop's live vendor funds into the edit draft so credits
+  // from purchases (and other external changes) are reflected without a manual
+  // reload. Skipped while the GM has unsaved edits in progress.
+  $: vendorFundsLive = sharedProps.actor ? getVendorFunds(sharedProps.actor) : {};
+  $: if (sharedProps.actor && currencyDenominations.length > 0 && !vendorFundsDirty) {
+    const next = {};
+    for (const denom of currencyDenominations) {
+      next[denom] = Number(vendorFundsLive?.[denom] ?? 0);
+    }
+    if (JSON.stringify(next) !== JSON.stringify(vendorFundsDraft)) {
+      vendorFundsDraft = next;
+    }
+  }
+
+  async function saveVendorFunds() {
+    const actor = sharedProps.actor;
+    if (!actor) return;
+    const nextFunds = {};
+    for (const denom of currencyDenominations) {
+      const value = Math.max(0, Number(vendorFundsDraft[denom] ?? 0));
+      if (value > 0) nextFunds[denom] = value;
+    }
+    await setVendorFunds(actor, nextFunds);
+    await sharedProps.silentSaveSettings?.();
+    vendorFundsDirty = false;
+    ui.notifications.info(sharedProps.localize('VendorFunds') + ' saved');
+  }
+
+  function onVendorFundInput(event) {
+    const denom = event.currentTarget.dataset.denom;
+    vendorFundsDraft[denom] = Number(event.currentTarget.value ?? 0);
+    vendorFundsDirty = true;
+  }
+
+  function onVendorFundStep(event) {
+    const denom = event.currentTarget.dataset.denom;
+    const delta = Number(event.currentTarget.dataset.delta);
+    vendorFundsDraft[denom] = Math.max(0, (Number(vendorFundsDraft[denom] ?? 0)) + delta);
+    vendorFundsDirty = true;
+  }
 </script>
 
 <template lang="pug">
@@ -247,6 +298,32 @@
                 span 50%
                 span 200%
               p.setting-help Affects prices paid when buying from actors.
+
+      //- Vendor funds collapsible (peer of Pricing)
+      section.settings-collapsible
+        div.settings-collapsible__summary.no-drag(on:click!="{() => vendorFundsOpen = !vendorFundsOpen}" role="button" tabindex="0" on:keydown!="{e => (e.key === 'Enter' || e.key === ' ') && (vendorFundsOpen = !vendorFundsOpen)}")
+          i.fas.fa-chevron-down.settings-collapsible__chevron(class:settings-collapsible__chevron--open!="{vendorFundsOpen}")
+          h2 {sharedProps.localize("VendorFunds")}
+        +if("vendorFundsOpen")
+          div.settings-collapsible__body
+            p.setting-help {sharedProps.localize("VendorFundsHelp")}
+            div.flexrow.gap-4
+              +each("currencyDenominations as denom")
+                .flex1
+                  .flexrow
+                    .flex3
+                      span.vendor-fund-label {getCurrencyLabel(denom)}
+                      input.vendor-fund-input(type="number" min="0" step="1" data-denom!="{denom}" value!="{vendorFundsDraft[denom] ?? 0}" on:input!="{onVendorFundInput}")
+
+                    .flex1
+                      .flexcol
+                        .flex1
+                          button.stealth.qty-btn(type="button" data-denom!="{denom}" data-delta="1" on:click!="{onVendorFundStep}" data-tooltip="{sharedProps.localize('Increase')}")
+                            i.fa.fa-chevron-up
+                        .flex1
+                          button.stealth.qty-btn(type="button" data-denom!="{denom}" data-delta="-1" on:click!="{onVendorFundStep}" data-tooltip="{sharedProps.localize('Decrease')}")
+                            i.fa.fa-chevron-down
+            button.glossy-button.gold-light.hover-shine(type="button" on:click!="{saveVendorFunds}") {sharedProps.localize("Save") || 'Save'}
 
       //- Provisioning collapsible
       section.settings-collapsible
@@ -598,6 +675,60 @@
     color: color-mix(in srgb, var(--gas-color-text) 50%, transparent)
     font-style: italic
     font-size: 0.9em
+
+  // ── Vendor funds grid ──
+  .vendor-funds-grid
+    display: flex
+    flex-wrap: wrap
+    gap: 0.75rem
+    align-items: flex-end
+
+  .vendor-fund-cell
+    display: flex
+    flex-direction: column
+    align-items: center
+    gap: 0.25rem
+    min-width: 64px
+
+  .vendor-fund-label
+    font-size: 0.75rem
+    font-weight: 600
+    text-transform: uppercase
+    letter-spacing: 0.04em
+    opacity: 0.8
+
+  .vendor-fund-stepper
+    display: flex
+    flex-direction: column
+    align-items: center
+    gap: 1px
+
+  .vendor-fund-stepper .qty-btn
+    width: 22px
+    height: 16px
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    padding: 0
+    border: 0
+    border-radius: 3px
+    background: color-mix(in srgb, var(--gas-color-text) 10%, transparent)
+    color: var(--gas-color-text)
+    cursor: pointer
+    font-size: 0.6rem
+    line-height: 1
+
+    &:hover
+      background: color-mix(in srgb, var(--gas-tab-active-indicator) 20%, transparent)
+      color: var(--gas-tab-active-color)
+
+  .vendor-fund-input
+    width: 64px
+    height: 24px
+    min-width: 0
+    padding: 0 0.25rem
+    text-align: center
+    font-size: 0.85rem
 
   :global(.actions)
     justify-content: flex-start

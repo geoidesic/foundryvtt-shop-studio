@@ -491,3 +491,98 @@ export async function deductActorCurrency(actor, price) {
   await actor.update(payment.update);
   return payment;
 }
+
+/**
+ * Compute the price a shop pays when buying an item from an actor.
+ * Deterministic (no price variance) so player payouts are predictable.
+ * @param {object} item - The item document (uses item.system.price)
+ * @param {number} [buyPriceFactor=50] - Buy price factor percentage from shop config
+ * @return {object} Normalized price the shop will pay
+ */
+export function getBuyPrice(item, buyPriceFactor = 50) {
+  return applyPriceFactor(item?.system?.price, buyPriceFactor);
+}
+
+/**
+ * Credit currency to an actor (the inverse of deductActorCurrency).
+ * Supports the PF2e inventory.addCoins API and the generic system.currency purse.
+ * @param {object} actor - The actor to credit
+ * @param {object|number|string} price - A price in any shape accepted by normalizePrice
+ * @return {Promise<{success: boolean, errors: string[], total: *, coins?: object}>}
+ */
+export async function addActorCurrency(actor, price) {
+  const coins = getCoinMap(price);
+  if (!Object.keys(coins).length) {
+    return { success: true, errors: [], total: price, coins };
+  }
+
+  if (actor?.inventory?.addCoins && Number.isFinite(Number(actor?.inventory?.coins?.copperValue))) {
+    const success = await actor.inventory.addCoins(coins, { byValue: true });
+    return success ? { success: true, errors: [], total: price, coins } : {
+      success: false,
+      errors: [`${actor?.name ?? 'Actor'} could not receive ${formatPrice(price)}.`],
+      total: price,
+      coins,
+    };
+  }
+
+  const currency = getActorCurrency(actor);
+  if (!currency) {
+    return {
+      success: false,
+      errors: [`${actor?.name ?? 'Actor'} has no supported currency purse.`],
+      total: price,
+      coins,
+    };
+  }
+
+  const nextCurrency = foundry.utils.deepClone(currency);
+  for (const [denomination, amount] of Object.entries(coins)) {
+    nextCurrency[denomination] = roundCurrency((Number(nextCurrency[denomination] ?? 0)) + Number(amount));
+  }
+
+  await actor.update({ 'system.currency': nextCurrency });
+  return { success: true, errors: [], total: price, coins };
+}
+
+/**
+ * Add a price to a denomination-map fund (e.g. shop vendor funds).
+ * @param {object} funds - Denomination map (e.g. { gp: 100, sp: 50 })
+ * @param {object|number|string} price - A price in any shape accepted by normalizePrice
+ * @return {object} New denomination map
+ */
+export function addDenominationFunds(funds, price) {
+  const next = { ...(funds ?? {}) };
+  for (const [denomination, amount] of Object.entries(getCoinMap(price))) {
+    next[denomination] = roundCurrency((Number(next[denomination] ?? 0)) + Number(amount));
+  }
+  return next;
+}
+
+/**
+ * Subtract a price from a denomination-map fund. Returns success=false if it would go negative.
+ * @param {object} funds - Denomination map (e.g. { gp: 100, sp: 50 })
+ * @param {object|number|string} price - A price in any shape accepted by normalizePrice
+ * @return {{success: boolean, funds: object, remainder: number}}
+ */
+export function subtractDenominationFunds(funds, price) {
+  const coinMap = getCoinMap(price);
+  const baseConversion = getCurrencyConversion(getDefaultCurrency());
+  const toBase = (map) => Object.entries(map).reduce((sum, [denomination, amount]) => {
+    const conversion = getCurrencyConversion(denomination);
+    return sum + (conversion ? Number(amount) * (baseConversion / conversion) : Number(amount));
+  }, 0);
+
+  const available = toBase(funds ?? {});
+  const requested = toBase(coinMap);
+  if (requested > available + 0.000001) {
+    return { success: false, funds: { ...(funds ?? {}) }, remainder: requested - available };
+  }
+
+  const next = { ...(funds ?? {}) };
+  for (const [denomination, amount] of Object.entries(coinMap)) {
+    next[denomination] = roundCurrency((Number(next[denomination] ?? 0)) - Number(amount));
+    if (Math.abs(next[denomination]) < 0.000001) delete next[denomination];
+  }
+  return { success: true, funds: next, remainder: 0 };
+}

@@ -10,9 +10,12 @@
   import { MODULE_ID } from "~/src/helpers/constants";
   import { applyPriceFactor, formatPrice as formatCurrencyPrice, makeBasketPrice } from "~/src/helpers/currency.js";
   import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
-  import { requestBasketUpdate } from "~/src/helpers/shopSocket.js";
+  import { requestBasketUpdate, requestSell } from "~/src/helpers/shopSocket.js";
   import { shopSocketState } from "~/src/stores/basketState.js";
   import { itemQuantitySnapshot, shopTelemetry } from "~/src/helpers/telemetry.js";
+  import { getBuyPrice } from "~/src/helpers/currency.js";
+  import DropZone from "~/src/components/molecules/DropZone.svelte";
+  import { resolveShopTargetActor } from "~/src/helpers/shopTargets.js";
 
   const Actor = getContext("#doc");
   const doc = new TJSDocument($Actor);
@@ -206,6 +209,104 @@
     ui.notifications.info(`${item.name} added to basket`);
   }
 
+  /** Resolve a dropped item into a sell basket entry for the selected target actor. */
+  async function handleSellDrop(data) {
+    shopTelemetry('InventoryPlayerTab', 'sell drop received', {
+      shopId: $Actor?.id,
+      shopUuid: $Actor?.uuid,
+      targetActorId,
+      dataType: data?.type,
+      dataUuid: data?.uuid,
+    });
+
+    if (!targetActorId) {
+      ui.notifications.warn(localize('NoTargetActor'));
+      return;
+    }
+
+    if (data?.type !== 'Item' || !data?.uuid) {
+      return;
+    }
+
+    const sourceItem = await fromUuid(data.uuid);
+    if (!sourceItem) return;
+
+    const sourceActor = sourceItem.actor;
+    if (!sourceActor) {
+      ui.notifications.warn(localize('SellFromWrongActor'));
+      return;
+    }
+
+    if (sourceActor.id !== targetActorId) {
+      ui.notifications.warn(localize('SellFromWrongActor'));
+      return;
+    }
+
+    const maxQty = Number(sourceItem.system?.quantity ?? 0);
+    if (maxQty <= 0) {
+      ui.notifications.warn(localize('InsufficientStock'));
+      return;
+    }
+
+    let quantity = 1;
+    if (sharedProps.sellQuantityMode === 'prompt') {
+      const promptValue = await Dialog.prompt({
+        title: localize('SelectSellQuantity'),
+        content: `<p>${localize('SelectSellQuantity')}</p>`,
+        rejectClose: false,
+        callback: (html) => {
+          const input = html.querySelector('input');
+          return input ? Number(input.value) : 1;
+        },
+        options: { width: 320 },
+      }).catch(() => null);
+      quantity = Number(promptValue ?? 1);
+    }
+
+    quantity = Math.min(Math.max(1, quantity), maxQty);
+
+    const sellPrice = getBuyPrice(sourceItem, sharedProps.buyPriceFactor ?? 50);
+    if (!sellPrice || getComparablePriceValue(sellPrice) <= 0) {
+      ui.notifications.warn(localize('NoItemPrice'));
+      return;
+    }
+
+    const currentBasket = targetActorId ? ($Actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [];
+    const nextBasket = currentBasket.map((entry) => ({ ...entry }));
+
+    const existing = nextBasket.find((entry) => entry.itemId === sourceItem.id && entry.direction === 'sell');
+    if (existing) {
+      existing.quantity = Math.min(maxQty, (existing.quantity ?? 1) + quantity);
+    } else {
+      nextBasket.push({
+        itemId: sourceItem.id,
+        itemName: sourceItem.name,
+        img: sourceItem.img,
+        price: makeBasketPrice(sellPrice),
+        quantity,
+        direction: 'sell',
+        sourceActorId: targetActorId,
+      });
+    }
+
+    const result = await requestBasketUpdate({
+      shopId: $Actor.id,
+      shopUuid: $Actor.uuid,
+      targetActorId,
+      nextBasket,
+    });
+    shopTelemetry('InventoryPlayerTab', 'sell drop basket update result', {
+      shopId: $Actor?.id,
+      targetActorId,
+      result,
+    });
+    if (!result.success) {
+      (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
+      return;
+    }
+    ui.notifications.info(`${sourceItem.name} added to sell list`);
+  }
+
   onMount(() => {
     shopTelemetry('InventoryPlayerTab', 'mounted', {
       actorId: $Actor?.id,
@@ -309,6 +410,11 @@
               .inv-col-actions
                 button.stealth.basket-btn(disabled="{isOutOfStock(item)}" data-tooltip="Add to basket" data-index="{index}" on:click!="{onAddToBasketClick}")
                   i.fa.fa-shopping-basket
+            
+        .sell-zone
+          h2.gold {localize('SellZone')}
+          p.sell-zone__hint {localize('SellZoneHint')}
+          DropZone(placeholder="{localize('SellZone')}" acceptType="Item" onDrop!="{handleSellDrop}")
             
 </template>
 
@@ -430,4 +536,19 @@
   &:hover
     background: rgba(255, 255, 255, 0.15)
     color: #fff
+
+// ── Sell zone ──
+.sell-zone
+  margin-top: 1rem
+  padding-top: 0.75rem
+  border-top: 1px solid rgba(255, 255, 255, 0.08)
+
+  h2.gold
+    font-size: 1rem
+    margin: 0 0 0.25rem
+
+  .sell-zone__hint
+    margin: 0 0 0.5rem
+    font-size: 0.8rem
+    opacity: 0.6
 </style>

@@ -8,7 +8,8 @@ export const SHOP_FLAG_KEYS = Object.freeze({
   configuration: 'configuration',
   stock: 'stock',
   transactions: 'transactions',
-  identity: 'identity'
+  identity: 'identity',
+  vendorFunds: 'vendorFunds'
 });
 
 export const DEFAULT_SHOP_CONFIGURATION = Object.freeze({

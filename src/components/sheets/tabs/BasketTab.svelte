@@ -6,15 +6,17 @@
     formatPrice as formatCurrencyPrice,
     formatTotalPrice,
     getActorCurrencyPaymentUpdate,
-    multiplyPrice,
+    getBuyPrice,
+    getComparablePriceValue,
     makeBasketPrice,
+    multiplyPrice,
     sumPrices,
   } from "~/src/helpers/currency.js";
-  import { requestBasketUpdate, requestPurchase } from "~/src/helpers/shopSocket.js";
+  import { requestBasketUpdate, requestPurchase, requestSell } from "~/src/helpers/shopSocket.js";
   import { shopSocketState } from "~/src/stores/basketState.js";
   import { shopTelemetry } from "~/src/helpers/telemetry.js";
   import { createSortQuery } from "~/src/filters/itemFilterQuery";
-  import { getComparablePriceValue } from "~/src/helpers/currency.js";
+  import DropZone from "~/src/components/molecules/DropZone.svelte";
   import {
     getCurrentTokenTargetEntries,
     getShopTargetEntries,
@@ -325,6 +327,153 @@
     }
   }
 
+  async function onSellNow() {
+    window.GAS.log.p('onSellNow | attempting sell for shop:', $doc?.name, '| basket length:', basket.length, '| targetActorId:', targetActorId);
+
+    if (!targetActorId) {
+      ui.notifications.warn(localize('NoTargetActor'));
+      return;
+    }
+
+    const sellEntries = basket.filter((entry) => entry.direction === 'sell');
+    if (sellEntries.length === 0) {
+      window.GAS.log.p('onSellNow | no sell entries');
+      return;
+    }
+
+    const targetActor = resolveShopTargetActor($doc, targetActorId);
+    if (!targetActor || (!targetActor.isOwner && !game.user.isGM)) {
+      ui.notifications.warn(localize('NoTargetActor'));
+      return;
+    }
+
+    window.GAS.log.p('onSellNow | requesting sell via socket');
+    const result = await requestSell({
+      shopId: $doc.id,
+      shopUuid: $doc.uuid,
+      targetActorId,
+      basket: sellEntries.map((entry) => serializeSellEntry(entry)),
+    });
+
+    window.GAS.log.p('onSellNow | socket sell result:', result.success, '| errors:', result.errors?.length || 0);
+    if (result.errors?.length) {
+      result.errors.forEach(err => ui.notifications.warn(err));
+    } else {
+      window.GAS.log.p('onSellNow | sell successful, removing sell entries from local basket');
+      basket = basket.filter((entry) => entry.direction !== 'sell');
+      ui.notifications.info(localize('SellComplete'));
+    }
+  }
+
+  function serializeSellEntry(entry) {
+    return {
+      itemId: entry.itemId,
+      itemName: entry.itemName,
+      quantity: entry.quantity ?? 1,
+      price: makeBasketPrice(entry.price),
+      direction: 'sell',
+      sourceActorId: entry.sourceActorId ?? targetActorId,
+    };
+  }
+
+  /** Resolve a dropped item into a sell basket entry for the selected target actor. */
+  async function handleSellDrop(data) {
+    shopTelemetry('BasketTab', 'sell drop received', {
+      shopId: $doc?.id,
+      shopUuid,
+      targetActorId,
+      dataType: data?.type,
+      dataUuid: data?.uuid,
+    });
+
+    if (!targetActorId) {
+      ui.notifications.warn(localize('NoTargetActor'));
+      return;
+    }
+
+    if (data?.type !== 'Item' || !data?.uuid) {
+      return;
+    }
+
+    const sourceItem = await fromUuid(data.uuid);
+    if (!sourceItem) return;
+
+    const sourceActor = sourceItem.actor;
+    if (!sourceActor) {
+      ui.notifications.warn(localize('SellFromWrongActor'));
+      return;
+    }
+
+    if (sourceActor.id !== targetActorId) {
+      ui.notifications.warn(localize('SellFromWrongActor'));
+      return;
+    }
+
+    const maxQty = Number(sourceItem.system?.quantity ?? 0);
+    if (maxQty <= 0) {
+      ui.notifications.warn(localize('InsufficientStock'));
+      return;
+    }
+
+    let quantity = 1;
+    if (sharedProps.sellQuantityMode === 'prompt') {
+      const promptValue = await Dialog.prompt({
+        title: localize('SelectSellQuantity'),
+        content: `<p>${localize('SelectSellQuantity')}</p>`,
+        rejectClose: false,
+        callback: (html) => {
+          const input = html.querySelector('input');
+          return input ? Number(input.value) : 1;
+        },
+        options: { width: 320 },
+      }).catch(() => null);
+      quantity = Number(promptValue ?? 1);
+    }
+
+    quantity = Math.min(Math.max(1, quantity), maxQty);
+
+    const sellPrice = getBuyPrice(sourceItem, sharedProps.buyPriceFactor ?? 50);
+    if (!sellPrice || getComparablePriceValue(sellPrice) <= 0) {
+      ui.notifications.warn(localize('NoItemPrice'));
+      return;
+    }
+
+    const currentBasket = targetActorId ? ($doc?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? []) : [];
+    const nextBasket = currentBasket.map((entry) => ({ ...entry }));
+
+    const existing = nextBasket.find((entry) => entry.itemId === sourceItem.id && entry.direction === 'sell');
+    if (existing) {
+      existing.quantity = Math.min(maxQty, (existing.quantity ?? 1) + quantity);
+    } else {
+      nextBasket.push({
+        itemId: sourceItem.id,
+        itemName: sourceItem.name,
+        img: sourceItem.img,
+        price: makeBasketPrice(sellPrice),
+        quantity,
+        direction: 'sell',
+        sourceActorId: targetActorId,
+      });
+    }
+
+    const result = await requestBasketUpdate({
+      shopId: $doc.id,
+      shopUuid: $doc.uuid,
+      targetActorId,
+      nextBasket,
+    });
+    shopTelemetry('BasketTab', 'sell drop basket update result', {
+      shopId: $doc?.id,
+      targetActorId,
+      result,
+    });
+    if (!result.success) {
+      (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
+      return;
+    }
+    ui.notifications.info(`${sourceItem.name} added to sell list`);
+  }
+
   function formatPrice(price) {
     return formatCurrencyPrice(price);
   }
@@ -423,6 +572,10 @@
         .empty-basket
           i.fa.fa-shopping-basket.empty-icon
           p {localize('BasketEmpty') || 'Your basket is empty. Browse the inventory to add items.'}
+        .sell-zone
+          h2.gold {localize('SellZone')}
+          p.sell-zone__hint {localize('SellZoneHint')}
+          DropZone(placeholder="{localize('SellZone')}" acceptType="Item" onDrop!="{handleSellDrop}")
         +else()
           .basket-table
             .basket-header
@@ -439,11 +592,13 @@
               .basket-col-total {localize('Total')}
               .basket-col-actions
             +each("basket as entry, index")
-              .basket-row
+              .basket-row(class!="{entry.direction === 'sell' ? 'sell-row' : 'buy-row'}")
                 .basket-col-icon(data-tooltip="{localize('View')}" data-item-id="{entry.itemId}" on:click!="{onShowItemClick}" role="button")
                   img.icon(src="{entry.img || 'icons/svg/mystery-man.svg'}" alt="{entry.itemName}")
                 .basket-col-name(data-tooltip="{localize('View')}")
                   a.stealth.link(data-item-id="{entry.itemId}" on:click!="{onShowItemClick}" role="button") {entry.itemName}
+                  +if("entry.direction === 'sell'")
+                    span.sell-tag {localize('Sell')}
                 .basket-col-price
                   span.price-text {formatPrice(entry.price)}
                 .basket-col-qty
@@ -463,7 +618,13 @@
             .basket-total-value {formatTotal()}
             button.glossy-button.gold-light.hover-shine(on:click!="{clearBasket}") {localize('ClearBasket') || 'Clear Basket'}
             +if("targetActorId")
+              +if("basket.some(e => e.direction === 'sell')")
+                button.glossy-button.sell.hover-shine.sell-now-btn(on:click!="{onSellNow}") {localize('SellNow') || 'Sell Now'}
               button.glossy-button.primary.hover-shine.buy-now-btn(on:click!="{onBuyNow}") {localize('BuyNow') || 'Buy Now'}
+          .sell-zone
+            h2.gold {localize('SellZone')}
+            p.sell-zone__hint {localize('SellZoneHint')}
+            DropZone(placeholder="{localize('SellZone')}" acceptType="Item" onDrop!="{handleSellDrop}")
             
 </template>
 
@@ -716,6 +877,26 @@
   font-size: 0.85rem
   font-weight: 500
 
+// ── Sell row distinction ──
+.sell-row
+  background: color-mix(in srgb, var(--gas-tab-active-indicator, #b3341a) 8%, transparent)
+
+  &:hover
+    background: color-mix(in srgb, var(--gas-tab-active-indicator, #b3341a) 14%, transparent)
+
+.sell-tag
+  display: inline-block
+  margin-left: 0.4rem
+  padding: 0 0.35rem
+  font-size: 0.65rem
+  font-weight: bold
+  text-transform: uppercase
+  letter-spacing: 0.04em
+  color: #fff
+  background: var(--gas-tab-active-indicator, #b3341a)
+  border-radius: 3px
+  vertical-align: middle
+
 // ── Footer ──
 .basket-footer
   display: flex
@@ -747,4 +928,29 @@
 
   &:hover
     filter: brightness(1.2)
+
+.sell-now-btn
+  margin-left: 0.5rem
+  background: var(--gas-tab-active-indicator, #b3341a)
+  color: #fff
+  font-weight: bold
+  padding: 0.4rem 1rem
+
+  &:hover
+    filter: brightness(1.2)
+
+// ── Sell zone ──
+.sell-zone
+  margin-top: 1rem
+  padding-top: 0.75rem
+  border-top: 1px solid rgba(255, 255, 255, 0.08)
+
+  h2.gold
+    font-size: 1rem
+    margin: 0 0 0.25rem
+
+  .sell-zone__hint
+    margin: 0 0 0.5rem
+    font-size: 0.8rem
+    opacity: 0.6
 </style>

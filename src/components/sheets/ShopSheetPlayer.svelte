@@ -56,6 +56,8 @@
     items: actor?.items || [],
     targetActorId: selectedActorId,
     salePriceFactor: config.salePriceFactor ?? 100,
+    buyPriceFactor: config.buyPriceFactor ?? 50,
+    sellQuantityMode: game.settings.get(MODULE_ID, 'sellQuantityMode') ?? 'prompt',
     localize,
     clearFilter,
     onFilterChange: (value) => {

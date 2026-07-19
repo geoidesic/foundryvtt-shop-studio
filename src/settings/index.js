@@ -10,6 +10,7 @@ export function registerSettings(app) {
   debugHooksSetting();
   registerUISettings();
   registerItemSourcesSettings();
+  registerVendorFundsSettings();
   /** User settings */
   dontShowWelcome()
 
@@ -72,6 +73,43 @@ function dontShowWelcome() {
     config: true,
     default: false,
     type: Boolean,
+  });
+}
+
+function registerVendorFundsSettings() {
+  game.settings.register(MODULE_ID, 'defaultVendorFunds', {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.DefaultVendorFunds.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.DefaultVendorFunds.Hint`),
+    scope: 'world',
+    config: true,
+    default: 0,
+    type: Number,
+  });
+
+  game.settings.register(MODULE_ID, 'sellResolutionMode', {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.SellResolutionMode.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.SellResolutionMode.Hint`),
+    scope: 'world',
+    config: true,
+    default: 'gm',
+    type: String,
+    choices: {
+      gm: game.i18n.localize(`${MODULE_ID}.Setting.SellResolutionMode.GM`),
+      player: game.i18n.localize(`${MODULE_ID}.Setting.SellResolutionMode.Player`),
+    },
+  });
+
+  game.settings.register(MODULE_ID, 'sellQuantityMode', {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.SellQuantityMode.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.SellQuantityMode.Hint`),
+    scope: 'world',
+    config: true,
+    default: 'prompt',
+    type: String,
+    choices: {
+      prompt: game.i18n.localize(`${MODULE_ID}.Setting.SellQuantityMode.Prompt`),
+      default1: game.i18n.localize(`${MODULE_ID}.Setting.SellQuantityMode.Default1`),
+    },
   });
 }
 

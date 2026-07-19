@@ -3,14 +3,20 @@ import { TJSDocument } from '#runtime/svelte/store/fvtt/document';
 import { recordShopSocketResult } from '~/src/stores/basketState.js';
 import { itemQuantitySnapshot, shopTelemetry } from '~/src/helpers/telemetry.js';
 import { resolveShopTargetActor } from '~/src/helpers/shopTargets.js';
-import { appendShopTransactions } from '~/src/helpers/shopIdentity.js';
 import {
+  adjustVendorFunds,
+  appendShopTransactions,
+  getVendorFunds,
+} from '~/src/helpers/shopIdentity.js';
+import {
+  addActorCurrency,
   deductActorCurrency,
   formatPrice,
   getComparablePriceValue,
   makeBasketPrice,
   multiplyPrice,
   normalizePrice,
+  subtractDenominationFunds,
   sumPrices,
 } from '~/src/helpers/currency.js';
 
@@ -18,6 +24,7 @@ const SOCKET_NAME = `module.${MODULE_ID}`;
 const SOCKET_HANDLER_KEY = `__${MODULE_ID}_socketHandler`;
 const PENDING_BASKET_KEY = `__${MODULE_ID}_pendingBasketRequests`;
 const PENDING_PURCHASE_KEY = `__${MODULE_ID}_pendingPurchaseRequests`;
+const PENDING_SELL_KEY = `__${MODULE_ID}_pendingSellRequests`;
 const SHOP_DOCUMENT_STORES_KEY = `__${MODULE_ID}_shopDocumentStores`;
 const SHOP_DOCUMENT_HOOKS_KEY = `__${MODULE_ID}_shopDocumentHooksRegistered`;
 
@@ -216,6 +223,8 @@ function sanitizeBasket(entries) {
         price,
         priceValue: getComparablePriceValue(price),
         quantity: Math.max(0, Number(entry.quantity ?? 0)),
+        direction: entry.direction === 'sell' ? 'sell' : 'buy',
+        sourceActorId: entry.sourceActorId ?? null,
       };
     })
     .filter((entry) => entry.quantity > 0);
@@ -223,6 +232,20 @@ function sanitizeBasket(entries) {
 
 function indexBasket(entries) {
   return new Map((entries ?? []).map((entry) => [entry.itemId, entry]));
+}
+
+/** Negate a price (denomination map or scalar) for use as a vendor-funds debit. */
+function negatePrice(price) {
+  const normalized = normalizePrice(price);
+  const value = normalized.value;
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const negated = {};
+    for (const [denomination, amount] of Object.entries(value)) {
+      negated[denomination] = -Number(amount);
+    }
+    return { value: negated, per: 1 };
+  }
+  return { value: -Number(value), denomination: normalized.denomination };
 }
 
 async function applyBasket(shop, targetActorId, nextBasket) {
@@ -247,6 +270,36 @@ async function applyBasket(shop, targetActorId, nextBasket) {
     const nextQty = Number(desiredByItem.get(itemId)?.quantity ?? 0);
     const delta = nextQty - prevQty;
     if (delta <= 0) continue;
+
+    const desiredEntry = desiredByItem.get(itemId);
+    const isSell = desiredEntry?.direction === 'sell';
+
+    if (isSell) {
+      const sourceActor = resolveShopTargetActor(shop, desiredEntry.sourceActorId ?? targetActorId);
+      const sourceItem = sourceActor?.items?.get(itemId);
+      if (!sourceItem) {
+        shopTelemetry('shopSocket', 'applyBasket sell item missing', {
+          shopId: shop?.id,
+          targetActorId,
+          itemId,
+          sourceActorId: desiredEntry.sourceActorId,
+        });
+        return { success: false, errors: [`Item ${desiredEntry.itemName ?? itemId} not found on the selling actor`], basket: currentBasket };
+      }
+      const available = Number(sourceItem.system?.quantity ?? 0);
+      if (available < delta) {
+        shopTelemetry('shopSocket', 'applyBasket insufficient sell quantity', {
+          shopId: shop?.id,
+          targetActorId,
+          itemId,
+          itemName: sourceItem.name,
+          available,
+          delta,
+        });
+        return { success: false, errors: [`Insufficient quantity of ${sourceItem.name} to sell`], basket: currentBasket };
+      }
+      continue;
+    }
 
     const shopItem = shop.items.get(itemId);
     if (!shopItem) {
@@ -280,6 +333,29 @@ async function applyBasket(shop, targetActorId, nextBasket) {
     const delta = nextQty - prevQty;
     if (delta === 0) continue;
 
+    const desiredEntry = desiredByItem.get(itemId);
+    const isSell = desiredEntry?.direction === 'sell';
+
+    if (isSell) {
+      const sourceActor = resolveShopTargetActor(shop, desiredEntry.sourceActorId ?? targetActorId);
+      const sourceItem = sourceActor?.items?.get(itemId);
+      if (!sourceItem) continue;
+
+      const available = Number(sourceItem.system?.quantity ?? 0);
+      const quantity = available - delta;
+      shopTelemetry('shopSocket', 'applyBasket reserve sell quantity', {
+        shopId: shop?.id,
+        targetActorId,
+        itemId,
+        itemName: sourceItem.name,
+        previousQuantity: available,
+        delta,
+        nextQuantity: quantity,
+      });
+      itemUpdates.push({ _id: itemId, 'system.quantity': quantity, __sourceActorId: sourceActor.id });
+      continue;
+    }
+
     const shopItem = shop.items.get(itemId);
     if (!shopItem) continue;
 
@@ -299,19 +375,37 @@ async function applyBasket(shop, targetActorId, nextBasket) {
   }
 
   if (itemUpdates.length > 0) {
-    shopTelemetry('shopSocket', 'applyBasket updateEmbeddedDocuments start', {
-      shopId: shop?.id,
-      shopUuid: shop?.uuid,
-      targetActorId,
-      itemUpdates,
-    });
-    await shop.updateEmbeddedDocuments('Item', itemUpdates);
-    shopTelemetry('shopSocket', 'applyBasket updateEmbeddedDocuments complete', {
-      shopId: shop?.id,
-      shopUuid: shop?.uuid,
-      targetActorId,
-      stockAfterEmbeddedUpdate: itemQuantitySnapshot(shop?.items),
-    });
+    const sellUpdates = itemUpdates.filter((update) => update.__sourceActorId);
+    const buyUpdates = itemUpdates.filter((update) => !update.__sourceActorId);
+
+    if (buyUpdates.length > 0) {
+      shopTelemetry('shopSocket', 'applyBasket updateEmbeddedDocuments start', {
+        shopId: shop?.id,
+        shopUuid: shop?.uuid,
+        targetActorId,
+        itemUpdates: buyUpdates,
+      });
+      await shop.updateEmbeddedDocuments('Item', buyUpdates);
+      shopTelemetry('shopSocket', 'applyBasket updateEmbeddedDocuments complete', {
+        shopId: shop?.id,
+        shopUuid: shop?.uuid,
+        targetActorId,
+        stockAfterEmbeddedUpdate: itemQuantitySnapshot(shop?.items),
+      });
+    }
+
+    for (const update of sellUpdates) {
+      const sourceActor = resolveShopTargetActor(shop, update.__sourceActorId);
+      if (!sourceActor) continue;
+      const { __sourceActorId, ...cleanUpdate } = update;
+      shopTelemetry('shopSocket', 'applyBasket reserve sell updateEmbeddedDocuments', {
+        shopId: shop?.id,
+        targetActorId,
+        sourceActorId: update.__sourceActorId,
+        itemUpdates: cleanUpdate,
+      });
+      await sourceActor.updateEmbeddedDocuments('Item', [cleanUpdate]);
+    }
   }
 
   await shop.setFlag(MODULE_ID, `basket.${targetActorId}`, desiredBasket);
@@ -417,6 +511,7 @@ async function applyPurchase({ requestId, shopId, shopUuid: requestedShopUuid, t
           currency: normalizePrice(entry.price).denomination,
           buyerId: targetActorId,
           buyerName: targetActor.name,
+          direction: 'buy',
           timestamp: Date.now(),
           metadata: {
             price: makeBasketPrice(entry.price),
@@ -427,6 +522,11 @@ async function applyPurchase({ requestId, shopId, shopUuid: requestedShopUuid, t
     }
 
     if (transactions.length > 0) {
+      // Credit the shop's vendor funds for the purchase total.
+      const credit = await adjustVendorFunds(shop, purchaseTotal);
+      if (!credit.success) {
+        errors.push(...credit.errors);
+      }
       await appendShopTransactions(shop, transactions);
       await shop.setFlag(MODULE_ID, `basket.${targetActorId}`, []);
     }
@@ -456,6 +556,146 @@ async function applyPurchase({ requestId, shopId, shopUuid: requestedShopUuid, t
     targetActorId,
     basket: resultBasket,
     stockUpdates: [],
+    success: errors.length === 0,
+    errors,
+    targetActorName: targetActor?.name ?? '',
+    userId,
+  };
+}
+
+async function applySell({ requestId, shopId, shopUuid, targetActorId, basket, userId }) {
+  const errors = [];
+  const transactions = [];
+  let responseShopUuid = shopUuid;
+  let targetActor = null;
+
+  const shop = resolveShopDocument({ shopUuid, shopId });
+  if (!shop) {
+    errors.push('Shop not found');
+  } else {
+    responseShopUuid = getShopUuid(shop) ?? shopUuid;
+    targetActor = resolveShopTargetActor(shop, targetActorId);
+    if (!targetActor) {
+      errors.push('Target actor not found');
+    } else {
+      const sellTotal = sumPrices((basket ?? []).map((entry) => ({
+        price: entry.price,
+        quantity: entry.quantity ?? 1,
+      })));
+      const vendorFunds = getVendorFunds(shop);
+      const fundsCheck = subtractDenominationFunds(vendorFunds, sellTotal);
+      shopTelemetry('shopSocket', 'GM handling sellRequest', {
+        requestId,
+        shopId,
+        shopUuid,
+        targetActorId,
+        basket,
+        sellTotal,
+        vendorFunds,
+        canAfford: fundsCheck.success,
+        userId,
+      });
+
+      for (const entry of basket ?? []) {
+        const sourceActor = resolveShopTargetActor(shop, entry.sourceActorId ?? targetActorId);
+        if (!sourceActor) {
+          errors.push(`Source actor for ${entry.itemName} not found`);
+          continue;
+        }
+        const sourceItem = sourceActor.items.get(entry.itemId);
+        if (!sourceItem) {
+          errors.push(`Item ${entry.itemName} not found on source actor`);
+          continue;
+        }
+        const qty = Number(entry.quantity ?? 1);
+        const available = Number(sourceItem.system?.quantity ?? 0);
+        if (available < qty) {
+          errors.push(`Insufficient quantity of ${entry.itemName} to sell`);
+          continue;
+        }
+        if (qty <= 0) {
+          errors.push(`Invalid quantity for ${entry.itemName}`);
+        }
+      }
+
+      if (!fundsCheck.success) {
+        errors.push('Shop cannot afford this sale');
+      }
+
+      if (errors.length === 0) {
+        for (const entry of basket ?? []) {
+          const sourceActor = resolveShopTargetActor(shop, entry.sourceActorId ?? targetActorId);
+          const sourceItem = sourceActor.items.get(entry.itemId);
+          const qty = Number(entry.quantity ?? 1);
+          const available = Number(sourceItem.system?.quantity ?? 0);
+
+          if (available > qty) {
+            await sourceActor.updateEmbeddedDocuments('Item', [
+              { _id: entry.itemId, 'system.quantity': available - qty },
+            ]);
+          } else {
+            await sourceActor.deleteEmbeddedDocuments('Item', [entry.itemId]);
+          }
+
+          const itemData = sourceItem.toObject();
+          delete itemData._id;
+          itemData.system.quantity = qty;
+          await shop.createEmbeddedDocuments('Item', [itemData]);
+
+          transactions.push({
+            itemId: entry.itemId,
+            itemName: entry.itemName,
+            quantity: qty,
+            price: getComparablePriceValue(entry.price),
+            total: getComparablePriceValue(multiplyPrice(entry.price, qty)),
+            currency: normalizePrice(entry.price).denomination,
+            sellerId: targetActorId,
+            sellerName: targetActor.name,
+            direction: 'sell',
+            timestamp: Date.now(),
+            metadata: {
+              price: makeBasketPrice(entry.price),
+              total: multiplyPrice(entry.price, qty),
+            },
+          });
+        }
+      }
+
+      if (transactions.length > 0) {
+        const debitPrice = negatePrice(sellTotal);
+        const debit = await adjustVendorFunds(shop, debitPrice);
+        if (!debit.success) {
+          errors.push(...debit.errors);
+        }
+        const credit = await addActorCurrency(targetActor, sellTotal);
+        if (!credit.success) {
+          errors.push(...credit.errors);
+        }
+        await appendShopTransactions(shop, transactions);
+        await shop.setFlag(MODULE_ID, `basket.${targetActorId}`, []);
+      }
+    }
+  }
+
+  const resultBasket = errors.length === 0 ? [] : basket;
+  shopTelemetry('shopSocket', 'sellRequest complete', {
+    requestId,
+    shopId,
+    shopUuid,
+    targetActorId,
+    success: errors.length === 0,
+    errors,
+    resultBasket,
+  });
+
+  return {
+    kind: 'sellResult',
+    requestId,
+    shopId,
+    shopUuid: responseShopUuid,
+    shopUuids: getShopUuidAliases({ shopId, shopUuid: responseShopUuid }),
+    targetActorId,
+    basket: resultBasket,
     success: errors.length === 0,
     errors,
     targetActorName: targetActor?.name ?? '',
@@ -679,6 +919,44 @@ export function registerSocket() {
         return;
       }
 
+      if (payload.payload?.kind === 'sellRequest') {
+        if (!game.user.isGM) return;
+        const { requestId, userId } = payload.payload;
+        try {
+          const resultPayload = await applySell(payload.payload);
+          recordShopSocketResult(resultPayload);
+          refreshShopDocumentStores(resultPayload, {
+            action: 'shop-socket-gm-sell',
+            requestId,
+            userId,
+          });
+          if (resultPayload.resolvedShopUuid && resultPayload.resolvedShopUuid !== resultPayload.shopUuid) {
+            refreshShopDocumentStores(resultPayload.resolvedShopUuid, {
+              action: 'shop-socket-gm-sell-resolved-doc',
+              requestId,
+              userId,
+            });
+          }
+
+          emitToSocket({ type: 'ACTION', payload: resultPayload });
+        } catch (error) {
+          emitToSocket({
+            type: 'ACTION',
+            payload: {
+              kind: 'sellResult',
+              requestId: payload.payload.requestId,
+              shopId: payload.payload.shopId,
+              shopUuid: payload.payload.shopUuid,
+              success: false,
+              errors: [error?.message ?? 'Sell failed'],
+              targetActorName: '',
+              userId: payload.payload.userId,
+            },
+          });
+        }
+        return;
+      }
+
       if (payload.payload?.kind === 'basketUpdateResult') {
         const resultPayload = withLocalShopUuidAliases(payload.payload);
         recordShopSocketResult(resultPayload);
@@ -702,6 +980,18 @@ export function registerSocket() {
       if (pendingPurchase && payload.payload?.kind === 'purchaseResult') {
         getPendingRequests(PENDING_PURCHASE_KEY).delete(payload.payload.requestId);
         pendingPurchase(payload.payload);
+      }
+
+      if (payload.payload?.kind === 'sellResult') {
+        const resultPayload = withLocalShopUuidAliases(payload.payload);
+        recordShopSocketResult(resultPayload);
+        refreshShopDocumentStores(resultPayload);
+      }
+
+      const pendingSell = getPendingRequests(PENDING_SELL_KEY).get(payload.payload?.requestId);
+      if (pendingSell && payload.payload?.kind === 'sellResult') {
+        getPendingRequests(PENDING_SELL_KEY).delete(payload.payload.requestId);
+        pendingSell(payload.payload);
       }
     }
   };
@@ -821,6 +1111,66 @@ export async function requestPurchase({ shopId, shopUuid, targetActorId, basket 
       type: 'ACTION',
       payload: {
         kind: 'purchaseRequest',
+        requestId,
+        shopId,
+        shopUuid,
+        targetActorId,
+        basket,
+        userId: game.user.id,
+      },
+    });
+  });
+}
+
+export async function requestSell({ shopId, shopUuid, targetActorId, basket }) {
+  if (game.user.isGM) {
+    const requestId = foundry.utils.randomID();
+    shopTelemetry('shopSocket', 'GM handling sell locally', {
+      requestId,
+      shopId,
+      shopUuid,
+      targetActorId,
+      basket,
+    });
+    const resultPayload = await applySell({
+      requestId,
+      shopId,
+      shopUuid,
+      targetActorId,
+      basket,
+      userId: game.user.id,
+    });
+    recordShopSocketResult(resultPayload);
+    refreshShopDocumentStores(resultPayload, {
+      action: 'shop-socket-gm-sell-local',
+      requestId,
+      userId: game.user.id,
+    });
+    if (resultPayload.resolvedShopUuid && resultPayload.resolvedShopUuid !== resultPayload.shopUuid) {
+      refreshShopDocumentStores(resultPayload.resolvedShopUuid, {
+        action: 'shop-socket-gm-sell-local-resolved-doc',
+        requestId,
+        userId: game.user.id,
+      });
+    }
+    emitToSocket({ type: 'ACTION', payload: resultPayload });
+    return resultPayload;
+  }
+
+  return await new Promise((resolve) => {
+    const requestId = foundry.utils.randomID();
+    shopTelemetry('shopSocket', 'queue pending sell request', {
+      requestId,
+      shopId,
+      shopUuid,
+      targetActorId,
+      basket,
+    });
+    getPendingRequests(PENDING_SELL_KEY).set(requestId, resolve);
+    emitToSocket({
+      type: 'ACTION',
+      payload: {
+        kind: 'sellRequest',
         requestId,
         shopId,
         shopUuid,

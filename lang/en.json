@@ -39,6 +39,22 @@
         "Name": "Show Button in Sidebar",
         "Hint": "Show the Shop Studio button in the Actors sidebar directory"
       },
+      "DefaultVendorFunds": {
+        "Name": "Default Vendor Funds",
+        "Hint": "Gold-equivalent amount seeded into a new shop's vendor funds. Converted to the active system's default currency."
+      },
+      "SellResolutionMode": {
+        "Name": "Sell Resolution Mode",
+        "Hint": "Who authoritatively resolves player sales. GM-resolved validates price and funds on the GM client; player-resolved is trust-based.",
+        "GM": "GM resolves (recommended)",
+        "Player": "Player resolves (trust-based)"
+      },
+      "SellQuantityMode": {
+        "Name": "Sell Quantity Prompt",
+        "Hint": "When a player drags an item into the sell zone, prompt for quantity or add one and adjust in the basket.",
+        "Prompt": "Prompt for quantity",
+        "Default1": "Add one (adjust in basket)"
+      },
       "ItemSources": {
         "Name": "Item Sources",
         "Hint": "Configure which item compendia to use as sources for the shop",
@@ -133,6 +149,20 @@
     "NoTargetActor": "Please select a character first.",
     "InsufficientStock": "Not enough {itemName} in stock.",
     "PurchaseComplete": "Purchase complete! Items added to {actorName}'s inventory.",
+    "VendorFunds": "Vendor Funds",
+    "VendorFundsHelp": "Currency the shop has available to buy items from players. Sales debit this; purchases credit it.",
+    "SellZone": "Sell items here",
+    "SellZoneHint": "Drag items from your character sheet to sell them to this shop.",
+    "SellPrice": "Sell Price",
+    "Sell": "Sell",
+    "SellEntry": "Sell",
+    "SellNow": "Sell Now",
+    "SellComplete": "Sold {count} item(s) to {shopName}.",
+    "InsufficientVendorFunds": "The shop cannot afford to buy {itemName}.",
+    "SelectSellQuantity": "How many {itemName} do you want to sell?",
+    "NoItemPrice": "{itemName} has no price and cannot be sold.",
+    "SellFromWrongActor": "You can only sell items from the character you are shopping as.",
+    "SellResolutionModeGM": "Sales are resolved by the GM.",
     "UnknownActor": "Unknown Actor",
     "CouldNotResolveActor": "Could not resolve the dropped actor.",
     "Search": "Search",
