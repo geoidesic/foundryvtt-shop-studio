@@ -10,6 +10,7 @@ export function registerSettings(app) {
   debugHooksSetting();
   registerUISettings();
   registerItemSourcesSettings();
+  registerUsageTrackingSetting();
   /** User settings */
   dontShowWelcome()
 
@@ -86,6 +87,17 @@ function debugSetting() {
     }
   });
 }
+function registerUsageTrackingSetting() {
+  game.settings.register(MODULE_ID, 'usage-tracking', {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.UsageTracking.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.UsageTracking.Hint`),
+    scope: 'user',
+    config: true,
+    default: false,
+    type: Boolean,
+  });
+}
+
 function debugHooksSetting() {
   game.settings.register(MODULE_ID, 'debug.hooks', {
     name: game.i18n.localize(`${MODULE_ID}.Setting.DebugHooks.Name`),

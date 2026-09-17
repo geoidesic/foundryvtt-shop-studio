@@ -11,6 +11,9 @@ import { renderShopStudioSidebarButton, renderShopTypeInCreateActorApplication }
 import { onRenderTokenHUD } from '~/src/hud/shopHUD.js';
 import { registerSocket } from '~/src/helpers/shopSocket.js';
 
+// Import usage tracking
+import UsageTracker from '~/src/usage-tracking.js';
+
 window.GAS = window.GAS || {};
 
 Hooks.once("init", (app, html, data) => {
@@ -49,6 +52,13 @@ Hooks.once("ready", (app, html, data) => {
     window.GAS.log.w('GSS Module is not active');
     return;
   }
+  
+  // Initialize usage tracking (sends module_loaded event if consent granted)
+  if (window.GASUsageTracker && !window.GASUsageTracker._hasTrackedFirstEvent) {
+    window.GASUsageTracker.initialize();
+    window.GASUsageTracker._hasTrackedFirstEvent = true;
+  }
+  
   if (!safeGetSetting(MODULE_ID, 'dontShowWelcome', false)) {
     new WelcomeApplication().render(true, { focus: true });
   }

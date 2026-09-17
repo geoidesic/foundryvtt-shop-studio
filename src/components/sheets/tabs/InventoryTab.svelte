@@ -219,48 +219,47 @@
 </script>
 
 <template lang="pug">
-
-    .panel.overflow.containerx
-      .flexrow.pt-sm.pr-sm.pl-sm
-        .flexcol.flex1.label-container
-          label {localize('Search')}
-        .flex3.left
-          TJSInput({input})
-        .flexcol.flex1.label-container
-          label {localize('Type')}
-        .flex3.right
-          select.short(value="{typeFilterValue}" on:change!="{onTypeFilterChange}")
-            +each("typeFilterOptions as opt")
-              option(value="{opt.value}") {opt.label}
-      .padded
-        h1.gold {localize('Inventory')}
-        .inv-table
-          .inv-header
-            .inv-col-icon
-            .inv-col-name {localize('Name')}
-            .inv-col-price {localize('Price')}
-            .inv-col-qty {localize('Quantity')}
+  .panel.overflow.containerx
+    .flexrow.pt-sm.pr-sm.pl-sm
+      .flexcol.flex1.label-container
+        label {localize('Search')}
+      .flex3.left
+        TJSInput({input})
+      .flexcol.flex1.label-container
+        label {localize('Type')}
+      .flex3.right
+        select.short(value="{typeFilterValue}" on:change!="{onTypeFilterChange}")
+          +each("typeFilterOptions as opt")
+            option(value="{opt.value}") {opt.label}
+    .padded
+      h1.gold {localize('Inventory')}
+      .inv-table
+        .inv-header
+          .inv-col-icon
+          .inv-col-name {localize('Name')}
+          .inv-col-price {localize('Price')}
+          .inv-col-qty {localize('Quantity')}
+          .inv-col-actions
+        +each("items as item, index")
+          .inv-row
+            .inv-col-icon(data-tooltip="{localize('View')}" data-index="{index}" on:click!="{onShowItemClick}" role="button")
+              img.icon(src="{item.img}" alt="{item.name}")
+            .inv-col-name(data-tooltip="{localize('View')}")
+              a.stealth.link(data-index="{index}" on:click!="{onShowItemClick}" class!="{item.system.isMagic ? 'pulse' : ''}" role="button") {item.name}
+            .inv-col-price
+              span.price-text {formatPrice(item)}
+            .inv-col-qty
+              .qty-controls
+                button.stealth.qty-btn(data-tooltip="Decrease quantity" data-index="{index}" on:click!="{onRemoveQtyClick}")
+                  i.fa.fa-minus
+                span.qty-value {getDisplayQuantity(item)}
+                button.stealth.qty-btn(data-tooltip="Increase quantity" data-index="{index}" on:click!="{onAddQtyClick}")
+                  i.fa.fa-plus
             .inv-col-actions
-          +each("items as item, index")
-            .inv-row
-              .inv-col-icon(data-tooltip="{localize('View')}" data-index="{index}" on:click!="{onShowItemClick}" role="button")
-                img.icon(src="{item.img}" alt="{item.name}")
-              .inv-col-name(data-tooltip="{localize('View')}")
-                a.stealth.link(data-index="{index}" on:click!="{onShowItemClick}" class!="{item.system.isMagic ? 'pulse' : ''}" role="button") {item.name}
-              .inv-col-price
-                span.price-text {formatPrice(item)}
-              .inv-col-qty
-                .qty-controls
-                  button.stealth.qty-btn(data-tooltip="Decrease quantity" data-index="{index}" on:click!="{onRemoveQtyClick}")
-                    i.fa.fa-minus
-                  span.qty-value {getDisplayQuantity(item)}
-                  button.stealth.qty-btn(data-tooltip="Increase quantity" data-index="{index}" on:click!="{onAddQtyClick}")
-                    i.fa.fa-plus
-              .inv-col-actions
-                button.stealth.negative(data-tooltip="{localize('Types.Actor.ActionButtons.Delete')}" data-index="{index}" on:click!="{onDeleteClick}")
-                  i.fa.fa-trash
-            
-      button.mt-sm.glossy-button.gold-light.hover-shine(on:click!="{removeAllItems}") {localize("Instructions.RemoveAll")}
+              button.stealth.negative(data-tooltip="{localize('Types.Actor.ActionButtons.Delete')}" data-index="{index}" on:click!="{onDeleteClick}")
+                i.fa.fa-trash
+          
+    button.mt-sm.glossy-button.gold-light.hover-shine(on:click!="{removeAllItems}") {localize("Instructions.RemoveAll")}
             
 </template>
 
