@@ -1,5 +1,23 @@
 import { MODULE_ID } from '~/src/helpers/constants';
+import { safeGetSetting } from '~/src/helpers/utility';
 import ItemSourcesButton from './ItemSourcesButton';
+
+
+function getShopActorTypeChoices() {
+  const systemActorTypes = game?.system?.documentTypes?.Actor ?? {};
+  const choices = {
+    npc: game.i18n.localize(`${MODULE_ID}.Setting.ShopActorType.NPC`),
+  };
+
+  for (const [type, label] of Object.entries(systemActorTypes)) {
+    // Always keep npc as the first option and add others dynamically
+    if (type !== 'npc') {
+      choices[type] = label;
+    }
+  }
+
+  return choices;
+}
 
 
 export function registerSettings(app) {
@@ -84,6 +102,16 @@ function registerVendorFundsSettings() {
     config: true,
     default: 0,
     type: Number,
+  });
+
+  game.settings.register(MODULE_ID, 'shopActorType', {
+    name: game.i18n.localize(`${MODULE_ID}.Setting.ShopActorType.Name`),
+    hint: game.i18n.localize(`${MODULE_ID}.Setting.ShopActorType.Hint`),
+    scope: 'world',
+    config: true,
+    default: 'npc',
+    type: String,
+    choices: () => getShopActorTypeChoices(),
   });
 
   game.settings.register(MODULE_ID, 'sellResolutionMode', {

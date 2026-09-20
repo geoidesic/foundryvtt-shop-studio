@@ -1,7 +1,6 @@
 import { MODULE_ID } from '~/src/helpers/constants';
 import {
   LEGACY_SHOP_ACTOR_TYPE,
-  SHOP_ACTOR_TYPE,
   SHOP_IDENTITY_KIND,
   SHOP_FLAG_SCOPE,
   SHOP_FLAG_KEYS,
@@ -18,7 +17,6 @@ import {
 // Re-export constants for backward compatibility
 export {
   LEGACY_SHOP_ACTOR_TYPE,
-  SHOP_ACTOR_TYPE,
   SHOP_IDENTITY_KIND,
   SHOP_FLAG_SCOPE,
   SHOP_FLAG_KEYS,
@@ -26,15 +24,6 @@ export {
 };
 
 let RegisteredShopActor = null;
-
-export function getShopActorType() {
-  const systemActorTypes = game?.system?.documentTypes?.Actor;
-  const actorTypes = Array.isArray(systemActorTypes)
-    ? systemActorTypes
-    : Object.keys(systemActorTypes ?? CONFIG.Actor?.typeLabels ?? {});
-  if (actorTypes.includes(SHOP_ACTOR_TYPE)) return SHOP_ACTOR_TYPE;
-  return CONFIG.Actor?.defaultType ?? actorTypes[0] ?? SHOP_ACTOR_TYPE;
-}
 
 export function registerShopActor() {
   const BaseActorClass = CONFIG.Actor.documentClass;

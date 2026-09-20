@@ -3,8 +3,14 @@ import '~/src/styles/init.sass'; // Import any styles as this includes them in t
 
 import WelcomeApplication from '~/src/components/pages/WelcomeApplication.js';
 import ShopActorSheet from '~/src/sheets/ShopActorSheet';
-import { getShopActorType, registerShopActor, SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE } from '~/src/actors/ShopActor';
-import { SHOP_FLAG_SCOPE, SHOP_FLAG_KEYS, SHOP_IDENTITY_KIND, DEFAULT_SHOP_CONFIGURATION } from '~/src/constants/shopConstants';
+import { registerShopActor, LEGACY_SHOP_ACTOR_TYPE } from '~/src/actors/ShopActor';
+import {
+  SHOP_FLAG_SCOPE,
+  SHOP_FLAG_KEYS,
+  SHOP_IDENTITY_KIND,
+  DEFAULT_SHOP_CONFIGURATION,
+  getShopActorType as getSettingShopActorType
+} from '~/src/constants/shopConstants';
 import { MODULE_ID } from '~/src/helpers/constants';
 import { log, safeGetSetting } from '~/src/helpers/utility';
 import { registerSettings } from '~/src/settings';
@@ -29,7 +35,7 @@ Hooks.once("init", (app, html, data) => {
                       (data.flags?.[SHOP_FLAG_SCOPE]?.[SHOP_FLAG_KEYS.identity]?.kind === SHOP_IDENTITY_KIND);
     
     if (isShopType) {
-      data.type = SHOP_ACTOR_TYPE; // 'npc'
+      data.type = getSettingShopActorType();
       
       // Ensure all required flags are set
       data.flags = data.flags ?? {};
@@ -60,7 +66,7 @@ Hooks.once("init", (app, html, data) => {
   // Register the Actor Sheet. The API differs between Foundry versions:
   // - V12: Actors.registerSheet(scope, sheetClass, { types, makeDefault, label })
   // - V13+: foundry.documents.collections.Actors.registerSheet(scope, sheetClass, { types, makeDefault, label })
-  const sheetTypes = [...new Set([getShopActorType(), SHOP_ACTOR_TYPE, LEGACY_SHOP_ACTOR_TYPE])];
+  const sheetTypes = [...new Set([getSettingShopActorType(), LEGACY_SHOP_ACTOR_TYPE])];
   if (game.version >= 13) {
     foundry.documents.collections.Actors.registerSheet(MODULE_ID, ShopActorSheet, {
       types: sheetTypes,

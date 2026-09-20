@@ -55,6 +55,11 @@
         "Prompt": "Prompt for quantity",
         "Default1": "Add one (adjust in basket)"
       },
+      "ShopActorType": {
+        "Name": "Shop Actor Type",
+        "Hint": "The system actor type to use for creating shops. Defaults to NPC which is available in most systems.",
+        "NPC": "NPC"
+      },
       "ItemSources": {
         "Name": "Item Sources",
         "Hint": "Configure which item compendia to use as sources for the shop",

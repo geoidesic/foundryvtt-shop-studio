@@ -1,6 +1,6 @@
 import { MODULE_ID } from '~/src/helpers/constants';
 import { safeGetSetting } from '~/src/helpers/utility';
-import { getShopActorType } from '~/src/actors/ShopActor.js';
+import { getShopActorType } from '~/src/constants/shopConstants';
 import {
   SHOP_FLAG_KEYS,
   SHOP_FLAG_SCOPE,

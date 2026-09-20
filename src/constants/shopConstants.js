@@ -1,7 +1,6 @@
 import { MODULE_ID } from '~/src/helpers/constants.ts';
 
 export const LEGACY_SHOP_ACTOR_TYPE = 'shop';
-export const SHOP_ACTOR_TYPE = 'npc';
 export const SHOP_IDENTITY_KIND = MODULE_ID+'.shop';
 export const SHOP_FLAG_SCOPE = MODULE_ID;
 export const SHOP_FLAG_KEYS = Object.freeze({
@@ -25,3 +24,7 @@ export const DEFAULT_SHOP_CONFIGURATION = Object.freeze({
   provisionMode: 'rolltable',
   compendiumProvision: []
 });
+
+export function getShopActorType() {
+  return game.settings.get(MODULE_ID, 'shopActorType') ?? 'npc';
+}
