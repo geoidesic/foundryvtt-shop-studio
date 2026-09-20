@@ -30,6 +30,8 @@
         "Name": "Debug Hooks",
         "Hint": "Enable debug hooks"
       },
+      "ReloadRequiredTitle": "Reload Required",
+      "ReloadRequiredContent": "This setting requires a reload to take effect. Reload now?",
       "UI": {
         "Name": "UI Settings",
         "Hint": "Configure the user interface for Shop Studio",

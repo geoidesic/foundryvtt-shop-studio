@@ -1,10 +1,13 @@
 import { MODULE_ID } from '~/src/helpers/constants';
+import { ShopActorModel } from '~/src/models/actors/ShopActorModel';
 import {
   LEGACY_SHOP_ACTOR_TYPE,
+  SHOP_ACTOR_TYPE,
   SHOP_IDENTITY_KIND,
   SHOP_FLAG_SCOPE,
   SHOP_FLAG_KEYS,
-  DEFAULT_SHOP_CONFIGURATION
+  DEFAULT_SHOP_CONFIGURATION,
+  getShopActorType
 } from '~/src/constants/shopConstants';
 import {
   getShopConfiguration,
@@ -17,6 +20,7 @@ import {
 // Re-export constants for backward compatibility
 export {
   LEGACY_SHOP_ACTOR_TYPE,
+  SHOP_ACTOR_TYPE,
   SHOP_IDENTITY_KIND,
   SHOP_FLAG_SCOPE,
   SHOP_FLAG_KEYS,
@@ -86,6 +90,11 @@ export function registerShopActor() {
       return setShopIdentity(this);
     }
   }
+
+  // Keep the custom document class so every sheet receives a ShopActor
+  // document, while the selected system type receives the shop data model.
+  CONFIG.Actor.documentClass = ShopActor;
+  CONFIG.Actor.dataModels[getShopActorType()] = ShopActorModel;
 
   RegisteredShopActor = ShopActor;
 

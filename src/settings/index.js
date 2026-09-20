@@ -9,7 +9,11 @@ function getShopActorTypeChoices() {
     npc: game.i18n.localize(`${MODULE_ID}.Setting.ShopActorType.NPC`),
   };
 
-  for (const [type, label] of Object.entries(systemActorTypes)) {
+  const actorTypes = Array.isArray(systemActorTypes)
+    ? systemActorTypes.reduce((types, type) => ({ ...types, [type]: type }), {})
+    : systemActorTypes;
+
+  for (const [type, label] of Object.entries(actorTypes)) {
     // Always keep npc as the first option and add others dynamically
     if (type !== 'npc') {
       choices[type] = label;
@@ -17,6 +21,31 @@ function getShopActorTypeChoices() {
   }
 
   return choices;
+}
+
+function confirmReload() {
+  const title = game.i18n.localize(`${MODULE_ID}.Setting.ReloadRequiredTitle`);
+  const content = `<p>${game.i18n.localize(`${MODULE_ID}.Setting.ReloadRequiredContent`)}</p>`;
+  const DialogV2 = foundry.applications?.api?.DialogV2;
+
+  if (DialogV2?.confirm) {
+    DialogV2.confirm({
+      window: { title },
+      content,
+      rejectClose: false
+    }).then((confirmed) => {
+      if (confirmed) window.location.reload();
+    });
+    return;
+  }
+
+  Dialog.confirm({
+    title,
+    content,
+    yes: () => window.location.reload(),
+    no: () => {},
+    defaultYes: true
+  });
 }
 
 
@@ -111,7 +140,8 @@ function registerVendorFundsSettings() {
     config: true,
     default: 'npc',
     type: String,
-    choices: () => getShopActorTypeChoices(),
+    choices: getShopActorTypeChoices(),
+    onChange: confirmReload,
   });
 
   game.settings.register(MODULE_ID, 'sellResolutionMode', {
@@ -150,15 +180,7 @@ function debugSetting() {
     config: true,
     default: false,
     type: Boolean,
-    onChange: () => {
-      Dialog.confirm({
-        title: game.i18n.localize(`${MODULE_ID}.Setting.ReloadRequiredTitle`),
-        content: `<p>${game.i18n.localize(`${MODULE_ID}.Setting.ReloadRequiredContent`)}</p>`,
-        yes: () => window.location.reload(),
-        no: () => {},
-        defaultYes: true
-      });
-    }
+    onChange: confirmReload
   });
 }
 function debugHooksSetting() {
@@ -169,14 +191,6 @@ function debugHooksSetting() {
     config: true,
     default: false,
     type: Boolean,
-    onChange: () => {
-      Dialog.confirm({
-        title: game.i18n.localize(`${MODULE_ID}.Setting.ReloadRequiredTitle`),
-        content: `<p>${game.i18n.localize(`${MODULE_ID}.Setting.ReloadRequiredContent`)}</p>`,
-        yes: () => window.location.reload(),
-        no: () => {},
-        defaultYes: true
-      });
-    }
+    onChange: confirmReload
   });
 }

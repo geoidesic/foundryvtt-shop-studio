@@ -9,7 +9,7 @@ import {
   SHOP_FLAG_KEYS,
   SHOP_IDENTITY_KIND,
   DEFAULT_SHOP_CONFIGURATION,
-  getShopActorType as getSettingShopActorType
+  getShopActorType
 } from '~/src/constants/shopConstants';
 import { MODULE_ID } from '~/src/helpers/constants';
 import { log, safeGetSetting } from '~/src/helpers/utility';
@@ -27,6 +27,7 @@ Hooks.once("init", (app, html, data) => {
   CONFIG.debug.hooks = true;
 
   registerSocket();
+  registerSettings(app);
   registerShopActor();
 
   // Register preCreateDocument hook (runs after type validation)
@@ -35,7 +36,7 @@ Hooks.once("init", (app, html, data) => {
                       (data.flags?.[SHOP_FLAG_SCOPE]?.[SHOP_FLAG_KEYS.identity]?.kind === SHOP_IDENTITY_KIND);
     
     if (isShopType) {
-      data.type = getSettingShopActorType();
+      data.type = getShopActorType();
       
       // Ensure all required flags are set
       data.flags = data.flags ?? {};
@@ -66,7 +67,7 @@ Hooks.once("init", (app, html, data) => {
   // Register the Actor Sheet. The API differs between Foundry versions:
   // - V12: Actors.registerSheet(scope, sheetClass, { types, makeDefault, label })
   // - V13+: foundry.documents.collections.Actors.registerSheet(scope, sheetClass, { types, makeDefault, label })
-  const sheetTypes = [...new Set([getSettingShopActorType(), LEGACY_SHOP_ACTOR_TYPE])];
+  const sheetTypes = [...new Set([getShopActorType(), LEGACY_SHOP_ACTOR_TYPE])];
   if (game.version >= 13) {
     foundry.documents.collections.Actors.registerSheet(MODULE_ID, ShopActorSheet, {
       types: sheetTypes,
@@ -87,8 +88,6 @@ Hooks.once("init", (app, html, data) => {
     window.MIN_WINDOW_HEIGHT = 50;
   }
   
-  registerSettings(app);
-
 });
 
 Hooks.once("ready", (app, html, data) => {

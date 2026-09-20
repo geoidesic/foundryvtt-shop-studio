@@ -1,4 +1,4 @@
-import { SHOP_ACTOR_TYPE, SHOP_IDENTITY_KIND } from '~/src/constants/shopConstants';
+import { SHOP_IDENTITY_KIND } from '~/src/constants/shopConstants';
 
 const {
   ArrayField, BooleanField, DocumentUUIDField, HTMLField, NumberField, SchemaField, StringField
@@ -79,7 +79,7 @@ export class ShopActorModel extends BaseActorModel {
       ),
       identity: new SchemaField({
         isShop: new BooleanField({ required: true, initial: true }),
-        kind: new StringField({ required: true, initial: SHOP_ACTOR_TYPE }),
+        kind: new StringField({ required: true, initial: `${SHOP_IDENTITY_KIND}` }),
         isEditing: new BooleanField({ required: true, initial: false })
       })
     };
@@ -125,6 +125,6 @@ export class ShopActorModel extends BaseActorModel {
    * @returns {Promise<this>}
    */
   async setShopIdentity() {
-    return this.parent?.update({ system: { identity: { isShop: true, kind: SHOP_ACTOR_TYPE } } });
+    return this.parent?.update({ system: { identity: { isShop: true, kind: SHOP_IDENTITY_KIND } } });
   }
 }
