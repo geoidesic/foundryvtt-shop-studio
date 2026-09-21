@@ -23282,7 +23282,7 @@ function create_each_block$8(ctx) {
         /*activeTab*/
         ctx[0] === /*tab*/
         ctx[6].id ? "active" : ""
-      ) + " svelte-FOU-13pma25");
+      ) + " svelte-FOU-xn1ukt");
       attr(button, "type", "button");
     },
     m(target, anchor) {
@@ -23303,7 +23303,7 @@ function create_each_block$8(ctx) {
         /*activeTab*/
         ctx[0] === /*tab*/
         ctx[6].id ? "active" : ""
-      ) + " svelte-FOU-13pma25")) {
+      ) + " svelte-FOU-xn1ukt")) {
         attr(button, "class", button_class_value);
       }
     },
@@ -23417,10 +23417,10 @@ function create_fragment$n(ctx) {
       }
       div1 = element("div");
       if (if_block) if_block.c();
-      attr(div0, "class", "tabs-list svelte-FOU-13pma25");
-      attr(div1, "class", "tab-content svelte-FOU-13pma25");
+      attr(div0, "class", "tabs-list svelte-FOU-xn1ukt");
+      attr(div1, "class", "tab-content svelte-FOU-xn1ukt");
       attr(div2, "class", div2_class_value = "tabs " + /*$$restProps*/
-      ctx[4].class + " svelte-FOU-13pma25");
+      ctx[4].class + " svelte-FOU-xn1ukt");
     },
     m(target, anchor) {
       insert(target, div2, anchor);
@@ -23482,7 +23482,7 @@ function create_fragment$n(ctx) {
       }
       if (!current || dirty & /*$$restProps*/
       16 && div2_class_value !== (div2_class_value = "tabs " + /*$$restProps*/
-      ctx2[4].class + " svelte-FOU-13pma25")) {
+      ctx2[4].class + " svelte-FOU-xn1ukt")) {
         attr(div2, "class", div2_class_value);
       }
     },
@@ -36590,8 +36590,8 @@ function create_fragment$5(ctx) {
       section = element("section");
       main = element("main");
       create_component(tabs_1.$$.fragment);
-      attr(main, "class", "shop-sheet__body svelte-FOU-bsc0p4");
-      attr(section, "class", "shop-sheet svelte-FOU-bsc0p4");
+      attr(main, "class", "shop-sheet__body svelte-FOU-tiwmh1");
+      attr(section, "class", "shop-sheet svelte-FOU-tiwmh1");
     },
     m(target, anchor) {
       insert(target, section, anchor);
@@ -38664,8 +38664,8 @@ function create_fragment$2(ctx) {
       section = element("section");
       main = element("main");
       create_component(tabs_1.$$.fragment);
-      attr(main, "class", "shop-sheet-player__body svelte-FOU-jmv0bv");
-      attr(section, "class", "shop-sheet-player svelte-FOU-jmv0bv");
+      attr(main, "class", "shop-sheet-player__body svelte-FOU-cihy5a");
+      attr(section, "class", "shop-sheet-player svelte-FOU-cihy5a");
     },
     m(target, anchor) {
       insert(target, section, anchor);
@@ -39520,124 +39520,6 @@ class ShopActorSheet extends SvelteDocumentSheet {
     return actor.createEmbeddedDocuments("Item", data);
   }
 }
-const {
-  ArrayField,
-  BooleanField,
-  DocumentUUIDField,
-  HTMLField,
-  NumberField,
-  SchemaField,
-  StringField
-} = foundry.data.fields;
-const VARIANCE_PERIODS = Object.freeze(["daily", "weekly", "monthly"]);
-class BaseActorModel extends foundry.abstract.TypeDataModel {
-  static defineSchema() {
-    return {
-      description: new HTMLField({ required: false, blank: true, initial: "" })
-    };
-  }
-}
-class ShopActorModel extends BaseActorModel {
-  /**
-   * Defines the schema for shop actor system data.
-   * @returns {object} The schema definition object.
-   */
-  static defineSchema() {
-    return {
-      ...super.defineSchema(),
-      currency: new SchemaField({}),
-      configuration: new SchemaField({
-        salePriceFactor: new NumberField({ required: true, min: 0, initial: 100 }),
-        buyPriceFactor: new NumberField({ required: true, min: 0, initial: 100 }),
-        priceVariance: new NumberField({ required: false, min: 0, initial: 10 }),
-        variancePeriod: new StringField({
-          required: true,
-          choices: VARIANCE_PERIODS,
-          initial: "daily"
-        }),
-        atrophyPercent: new NumberField({ required: false, min: 0, initial: 5 }),
-        associatedActors: new ArrayField(
-          new StringField({ required: false, blank: true }),
-          { initial: () => [] }
-        ),
-        rollTables: new ArrayField(
-          new StringField({ required: false, blank: true }),
-          { initial: () => [] }
-        )
-      }),
-      stock: new ArrayField(
-        new SchemaField({
-          itemId: new StringField({ required: false, blank: true }),
-          itemName: new StringField({ required: false, blank: true }),
-          basePrice: new NumberField({ required: false, min: 0, initial: 0 }),
-          price: new NumberField({ required: false, min: 0, initial: 0 }),
-          quantity: new NumberField({ required: false, min: 0, initial: 0 }),
-          currency: new StringField({ required: false, blank: true }),
-          metadata: new SchemaField({})
-        }),
-        { initial: () => [] }
-      ),
-      transactions: new ArrayField(
-        new SchemaField({
-          itemId: new StringField({ required: false, blank: true }),
-          itemName: new StringField({ required: false, blank: true }),
-          quantity: new NumberField({ required: false, min: 0, initial: 0 }),
-          price: new NumberField({ required: false, min: 0, initial: 0 }),
-          total: new NumberField({ required: false, min: 0, initial: 0 }),
-          currency: new StringField({ required: false, blank: true }),
-          buyerId: new StringField({ required: false, blank: true }),
-          buyerName: new StringField({ required: false, blank: true }),
-          timestamp: new NumberField({ required: false, min: 0, initial: 0 }),
-          metadata: new SchemaField({})
-        }),
-        { initial: () => [] }
-      ),
-      identity: new SchemaField({
-        isShop: new BooleanField({ required: true, initial: true }),
-        kind: new StringField({ required: true, initial: `${SHOP_IDENTITY_KIND}` }),
-        isEditing: new BooleanField({ required: true, initial: false })
-      })
-    };
-  }
-  /**
-   * Retrieves shop configuration data from system data.
-   * @returns {Record<string, unknown>}
-   */
-  get shopConfiguration() {
-    return this.configuration ?? {};
-  }
-  /**
-   * Updates shop configuration data in system data.
-   * @param {Record<string, unknown>} update
-   * @returns {Promise<this>}
-   */
-  async updateShopConfiguration(update2) {
-    const merged = foundry.utils.mergeObject(this.shopConfiguration, update2 ?? {}, { inplace: false });
-    return this.parent?.update({ system: { configuration: merged } });
-  }
-  /**
-   * Returns the persisted stock snapshot from system data.
-   * @returns {Array<Record<string, unknown>>}
-   */
-  get stockSnapshot() {
-    return this.stock ?? [];
-  }
-  /**
-   * Persists a new stock snapshot in system data.
-   * @param {Array<Record<string, unknown>>} stock
-   * @returns {Promise<this>}
-   */
-  async setStockSnapshot(stock) {
-    return this.parent?.update({ system: { stock: stock ?? [] } });
-  }
-  /**
-   * Updates the shop identity fields.
-   * @returns {Promise<this>}
-   */
-  async setShopIdentity() {
-    return this.parent?.update({ system: { identity: { isShop: true, kind: SHOP_IDENTITY_KIND } } });
-  }
-}
 let RegisteredShopActor = null;
 function registerShopActor() {
   const BaseActorClass = CONFIG.Actor.documentClass;
@@ -39693,7 +39575,6 @@ function registerShopActor() {
     }
   }
   CONFIG.Actor.documentClass = ShopActor;
-  CONFIG.Actor.dataModels[getShopActorType()] = ShopActorModel;
   RegisteredShopActor = ShopActor;
   return ShopActor;
 }

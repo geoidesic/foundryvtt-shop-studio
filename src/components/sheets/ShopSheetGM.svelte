@@ -679,13 +679,18 @@ const application = getContext('#external').application;
     display: flex
     flex-direction: column
     gap: 0
-    min-height: 100%
+    flex: 1 1 auto
+    min-height: 0
+    height: 100%
     padding: 0
     color: var(--gas-color-text)
 
     &__body
-      flex: 1
+      display: flex
+      flex: 1 1 auto
+      flex-direction: column
       min-height: 0
+      height: 100%
 
     :global(.associated-actors-section),
     :global(.inventory-controls),

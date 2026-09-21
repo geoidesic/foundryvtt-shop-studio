@@ -81,3 +81,33 @@
       +else()
         ShopSheetPlayer({documentStore} bind:targetActorId)
 </template>
+
+<style lang="sass">
+  // ApplicationV2 and dnd5e v6 no longer provide the legacy sheet flex chain
+  // that the shop UI relied on. Keep this contract scoped to our application
+  // so it remains safe on older Foundry and dnd5e versions.
+  :global(.foundryvtt-shop-studio)
+    > :global(.window-content)
+      display: flex
+      flex-direction: column
+      min-height: 0
+      height: 100%
+      padding: 0
+      overflow: hidden
+
+    :global(.shop-sheet),
+    :global(.shop-sheet-player)
+      display: flex
+      flex: 1 1 auto
+      flex-direction: column
+      min-height: 0
+      height: 100%
+
+    :global(.shop-sheet__body),
+    :global(.shop-sheet-player__body)
+      display: flex
+      flex: 1 1 auto
+      flex-direction: column
+      min-height: 0
+      height: 100%
+</style>

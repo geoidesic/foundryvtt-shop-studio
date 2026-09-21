@@ -1,13 +1,11 @@
 import { MODULE_ID } from '~/src/helpers/constants';
-import { ShopActorModel } from '~/src/models/actors/ShopActorModel';
 import {
   LEGACY_SHOP_ACTOR_TYPE,
   SHOP_ACTOR_TYPE,
   SHOP_IDENTITY_KIND,
   SHOP_FLAG_SCOPE,
   SHOP_FLAG_KEYS,
-  DEFAULT_SHOP_CONFIGURATION,
-  getShopActorType
+  DEFAULT_SHOP_CONFIGURATION
 } from '~/src/constants/shopConstants';
 import {
   getShopConfiguration,
@@ -91,10 +89,10 @@ export function registerShopActor() {
     }
   }
 
-  // Keep the custom document class so every sheet receives a ShopActor
-  // document, while the selected system type receives the shop data model.
+  // Preserve the system's Actor data model. Shop Studio stores its own data in
+  // flags, so replacing a system model would remove system-specific methods
+  // such as DaggerHeart's system.getRollData().
   CONFIG.Actor.documentClass = ShopActor;
-  CONFIG.Actor.dataModels[getShopActorType()] = ShopActorModel;
 
   RegisteredShopActor = ShopActor;
 

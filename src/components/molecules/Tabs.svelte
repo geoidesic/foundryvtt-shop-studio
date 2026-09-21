@@ -31,6 +31,8 @@
 
     &.gas-tabs {
       border: none;
+      display: flex !important;
+      flex-direction: column !important;
     }
 
     .tabs-list {
@@ -39,9 +41,12 @@
       @include panel-1;
       list-style: none;
       width: 100%;
-      margin: 0.5rem 0 0 0;
-      height: 100%;
-      flex: 0;
+      margin: 0;
+      height: 2.5rem;
+      min-height: 3.5rem;
+      flex: 0 0 2.5rem;
+      align-items: stretch;
+      flex-direction: row !important;
 
       button {
         --gas-button-border-radius: 5px;
@@ -51,13 +56,13 @@
         position: relative;
         overflow: hidden;
         width: 100%;
-        height: 200%;
-        margin: -10px 2px;
+        height: auto;
+        min-height: 0;
+        margin: 0 2px;
         font-weight: normal;
         font-size: larger;
-        margin-bottom: -10px;
-        padding: 11px 0;
-        align-items: start;
+        padding: 0 0.75rem;
+        align-items: center;
         color: var(--gas-color-text, #000);
 
         &:not(:first-child) {
