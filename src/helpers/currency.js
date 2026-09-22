@@ -335,6 +335,37 @@ function deductCurrencyPart(currency, amount, denomination) {
     return { success: true, currency, remainder: 0 };
   }
 
+  // A payment such as 0.51 gp must be possible when the actor only has gp.
+  // The denomination-by-denomination algorithm below cannot make change from
+  // a higher-value coin when the requested denomination itself is fractional.
+  // Settle conversion-backed currencies in their smallest configured unit so
+  // a 4 gp purse can correctly pay 0.51 gp.
+  const currenciesWithConversions = getCurrencyEntriesWithConversions();
+  const smallestConversion = Math.min(...currenciesWithConversions.map(([, conversion]) => conversion));
+  if (Number.isFinite(smallestConversion) && smallestConversion > 0) {
+    const unitScale = 1 / smallestConversion;
+    const toUnits = (value) => Math.round(Number(value) * unitScale);
+    const availableUnits = currenciesWithConversions.reduce((sum, [heldDenomination]) => {
+      const conversion = getCurrencyConversion(heldDenomination);
+      return sum + toUnits(getCurrencyValue(currency, heldDenomination) * conversion);
+    }, 0);
+    const requestedUnits = toUnits(requestedAmount * baseConversion);
+
+    if (availableUnits >= requestedUnits) {
+      let remainingUnits = availableUnits - requestedUnits;
+      const nextCurrency = {};
+      for (const [heldDenomination, conversion] of currenciesWithConversions.sort(([, left], [, right]) => right - left)) {
+        const denominationUnits = toUnits(conversion);
+        const count = Math.floor(remainingUnits / denominationUnits);
+        if (count > 0) {
+          nextCurrency[heldDenomination] = count;
+          remainingUnits -= count * denominationUnits;
+        }
+      }
+      if (remainingUnits === 0) return { success: true, currency: nextCurrency, remainder: 0 };
+    }
+  }
+
   const currencies = getCurrencyEntriesWithConversions()
     .filter(([heldDenomination]) => heldDenomination !== denomination)
     .sort(([, left], [, right]) => right - left);
