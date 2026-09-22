@@ -14,10 +14,10 @@
 
   export let documentStore;
   export let targetActorId = null;
+  export let activeTab = 'shopfront';
 
   setContext('#doc', documentStore);
 
-  let activeTab = 'shopfront';
   let filterText = '';
   let selectedActorId = null;
   let _shopIdRestored = null;
@@ -57,6 +57,7 @@
     targetActorId: selectedActorId,
     salePriceFactor: config.salePriceFactor ?? 100,
     buyPriceFactor: config.buyPriceFactor ?? 50,
+    allowItemPriceOverrides: config.allowItemPriceOverrides ?? false,
     sellQuantityMode: game.settings.get(MODULE_ID, 'sellQuantityMode') ?? 'prompt',
     localize,
     clearFilter,

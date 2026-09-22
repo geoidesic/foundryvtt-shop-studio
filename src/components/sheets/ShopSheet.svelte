@@ -21,6 +21,7 @@
   let disconnectFoundryTheme = () => {};
   let unregisterShopDocumentStore = () => {};
   let registeredShopUuid = null;
+  let activeTab = 'shopfront';
 
   $: actor = $documentStore;
   $: isEditing = isShopEditing(actor);
@@ -77,9 +78,9 @@
 <template lang="pug">
   ApplicationShell(bind:elementRoot)
     +if("showGM")
-      ShopSheetGM({documentStore})
+      ShopSheetGM({documentStore} bind:activeTab)
       +else()
-        ShopSheetPlayer({documentStore} bind:targetActorId)
+        ShopSheetPlayer({documentStore} bind:targetActorId bind:activeTab)
 </template>
 
 <style lang="sass">
@@ -110,4 +111,9 @@
       flex-direction: column
       min-height: 0
       height: 100%
-</style>
+
+  // Enlarge the TJS window-resize-handle for easier grabbing
+  .window-resize-handle
+    width: 28px !important
+    height: 28px !important
+    cursor: nwse-resize !important

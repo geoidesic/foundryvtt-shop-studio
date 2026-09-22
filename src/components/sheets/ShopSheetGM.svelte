@@ -16,13 +16,13 @@ import { isItemTypeListable, getItemSourcePacks } from '~/src/helpers/itemSource
 import { shopConfig } from '~/src/stores/shopConfig.js';
 
 export let documentStore;
+export let activeTab = 'shopfront';
 
 const application = getContext('#external').application;
 
   setContext('#doc', documentStore);
   setContext('shopConfig', shopConfig);
 
-  let activeTab = 'shopfront';
   let filterText = '';
   let associatedActors = [];
   let rollTables = [];
@@ -32,6 +32,7 @@ const application = getContext('#external').application;
   let priceVariance = 10;
   let variancePeriod = 'daily';
   let atrophyPercent = 5;
+  let allowItemPriceOverrides = false;
   let selectedActorId = null;
   let initializedActorId = null;
   let restoredSelectionActorId = null;
@@ -43,7 +44,6 @@ const application = getContext('#external').application;
   $: config = getShopConfiguration(actor);
   $: isEditing = isShopEditing(actor);
 
-  // Initialize shopConfig store from actor flags when actor changes
   $: if (actor?.id && actor.id !== initializedActorId) {
     const config = getShopConfiguration(actor);
     shopConfig.set({
@@ -52,6 +52,7 @@ const application = getContext('#external').application;
       priceVariance: config.priceVariance ?? 10,
       variancePeriod: config.variancePeriod ?? 'daily',
       atrophyPercent: config.atrophyPercent ?? 5,
+      allowItemPriceOverrides: config.allowItemPriceOverrides ?? false,
       associatedActors: config.associatedActors ?? [],
       rollTables: config.rollTables ?? [],
       rollTableRolls: normalizeRollTableRolls(config.rollTables ?? [], config.rollTableRolls ?? []),
@@ -66,6 +67,7 @@ const application = getContext('#external').application;
   $: buyPriceFactor = $shopConfig.buyPriceFactor;
   $: priceVariance = $shopConfig.priceVariance;
   $: variancePeriod = $shopConfig.variancePeriod;
+  $: allowItemPriceOverrides = $shopConfig.allowItemPriceOverrides ?? false;
   $: atrophyPercent = $shopConfig.atrophyPercent;
   $: associatedActors = $shopConfig.associatedActors;
   $: rollTables = $shopConfig.rollTables;
@@ -102,6 +104,7 @@ const application = getContext('#external').application;
     priceVariance,
     variancePeriod,
     atrophyPercent,
+    allowItemPriceOverrides,
     onFilterChange: (value) => {
       filterText = value;
     },
@@ -119,6 +122,9 @@ const application = getContext('#external').application;
     },
     onAtrophyPercentChange: (value) => {
       atrophyPercent = Number(value);
+    },
+    onAllowItemPriceOverridesChange: (value) => {
+      allowItemPriceOverrides = Boolean(value);
     },
     onAssociatedActorsChange: (list) => {
       shopConfig.update((current) => ({
@@ -191,6 +197,7 @@ const application = getContext('#external').application;
       priceVariance: parseFloat($shopConfig.priceVariance),
       variancePeriod: $shopConfig.variancePeriod,
       atrophyPercent: parseFloat($shopConfig.atrophyPercent),
+      allowItemPriceOverrides: Boolean($shopConfig.allowItemPriceOverrides),
       associatedActors: $shopConfig.associatedActors,
       rollTables: $shopConfig.rollTables,
       rollTableRolls: normalizeRollTableRolls($shopConfig.rollTables, $shopConfig.rollTableRolls),
@@ -210,6 +217,7 @@ const application = getContext('#external').application;
       buyPriceFactor: parseFloat($shopConfig.buyPriceFactor),
       priceVariance: parseFloat($shopConfig.priceVariance),
       variancePeriod: $shopConfig.variancePeriod,
+      allowItemPriceOverrides: Boolean($shopConfig.allowItemPriceOverrides),
       atrophyPercent: parseFloat($shopConfig.atrophyPercent),
       associatedActors: $shopConfig.associatedActors,
       rollTables: $shopConfig.rollTables,
@@ -731,7 +739,7 @@ const application = getContext('#external').application;
       margin: 0 auto var(--size-sm)
       background: var(--gas-input-background)
 
-    :global(input),
+    :global(input:not([type="checkbox"])),
     :global(select)
       width: 100%
       color: var(--gas-color-text)
