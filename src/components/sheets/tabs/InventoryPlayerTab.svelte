@@ -394,6 +394,8 @@
           select.short(value="{typeFilterValue}" on:change!="{onTypeFilterChange}")
             +each("typeFilterOptions as opt")
               option(value="{opt.value}") {opt.label}
+      
+      //- @deprecated: drop on basket to sell, not inventory
       //- .padded
       //-   .flexrow.gap-10
       //-     .flex3

@@ -227,6 +227,7 @@ function sanitizeBasket(entries) {
         quantity: Math.max(0, Number(entry.quantity ?? 0)),
         direction: entry.direction === 'sell' ? 'sell' : 'buy',
         sourceActorId: entry.sourceActorId ?? null,
+        sourceItemData: entry.sourceItemData ?? null,
       };
     })
     .filter((entry) => entry.quantity > 0);
@@ -255,6 +256,12 @@ async function applyBasket(shop, targetActorId, nextBasket) {
   const desiredBasket = sanitizeBasket(nextBasket);
   const currentByItem = indexBasket(currentBasket);
   const desiredByItem = indexBasket(desiredBasket);
+  for (const [itemId, desiredEntry] of desiredByItem) {
+    const currentEntry = currentByItem.get(itemId);
+    if (desiredEntry.direction === 'sell' && !desiredEntry.sourceItemData && currentEntry?.sourceItemData) {
+      desiredEntry.sourceItemData = currentEntry.sourceItemData;
+    }
+  }
   const itemIds = new Set([...currentByItem.keys(), ...desiredByItem.keys()]);
   const stockUpdates = [];
 
@@ -274,7 +281,7 @@ async function applyBasket(shop, targetActorId, nextBasket) {
     if (delta <= 0) continue;
 
     const desiredEntry = desiredByItem.get(itemId);
-    const isSell = desiredEntry?.direction === 'sell';
+    const isSell = (desiredEntry ?? currentByItem.get(itemId))?.direction === 'sell';
 
     if (isSell) {
       const sourceActor = resolveShopTargetActor(shop, desiredEntry.sourceActorId ?? targetActorId);
@@ -289,6 +296,9 @@ async function applyBasket(shop, targetActorId, nextBasket) {
         return { success: false, errors: [`Item ${desiredEntry.itemName ?? itemId} not found on the selling actor`], basket: currentBasket };
       }
       const available = Number(sourceItem.system?.quantity ?? 1);
+      if (!desiredEntry.sourceItemData) {
+        desiredEntry.sourceItemData = sourceItem.toObject();
+      }
       if (available < delta) {
         shopTelemetry('shopSocket', 'applyBasket insufficient sell quantity', {
           shopId: shop?.id,
@@ -336,11 +346,20 @@ async function applyBasket(shop, targetActorId, nextBasket) {
     if (delta === 0) continue;
 
     const desiredEntry = desiredByItem.get(itemId);
-    const isSell = desiredEntry?.direction === 'sell';
+    const currentEntry = currentByItem.get(itemId);
+    const basketEntry = desiredEntry ?? currentEntry;
+    const isSell = basketEntry?.direction === 'sell';
 
     if (isSell) {
-      const sourceActor = resolveShopTargetActor(shop, desiredEntry.sourceActorId ?? targetActorId);
+      const sourceActor = resolveShopTargetActor(shop, basketEntry.sourceActorId ?? targetActorId);
       const sourceItem = sourceActor?.items?.get(itemId);
+      if (!sourceItem && delta < 0 && basketEntry.sourceItemData) {
+        const itemData = foundry.utils.deepClone(basketEntry.sourceItemData);
+        delete itemData._id;
+        itemData.system = { ...(itemData.system ?? {}), quantity: -delta };
+        itemUpdates.push({ __createSourceActorId: sourceActor?.id, __createItemData: itemData });
+        continue;
+      }
       if (!sourceItem) continue;
 
       const available = Number(sourceItem.system?.quantity ?? 1);
@@ -354,7 +373,11 @@ async function applyBasket(shop, targetActorId, nextBasket) {
         delta,
         nextQuantity: quantity,
       });
-      itemUpdates.push({ _id: itemId, 'system.quantity': quantity, __sourceActorId: sourceActor.id });
+      if (quantity <= 0) {
+        itemUpdates.push({ _id: itemId, __deleteSourceActorId: sourceActor.id });
+      } else {
+        itemUpdates.push({ _id: itemId, 'system.quantity': quantity, __sourceActorId: sourceActor.id });
+      }
       continue;
     }
 
@@ -377,8 +400,12 @@ async function applyBasket(shop, targetActorId, nextBasket) {
   }
 
   if (itemUpdates.length > 0) {
-    const sellUpdates = itemUpdates.filter((update) => update.__sourceActorId);
-    const buyUpdates = itemUpdates.filter((update) => !update.__sourceActorId);
+    const sellUpdates = itemUpdates.filter((update) => update.__sourceActorId || update.__deleteSourceActorId || update.__createSourceActorId);
+    const buyUpdates = itemUpdates.filter((update) => (
+      !update.__sourceActorId
+      && !update.__deleteSourceActorId
+      && !update.__createSourceActorId
+    ));
 
     if (buyUpdates.length > 0) {
       shopTelemetry('shopSocket', 'applyBasket updateEmbeddedDocuments start', {
@@ -397,8 +424,16 @@ async function applyBasket(shop, targetActorId, nextBasket) {
     }
 
     for (const update of sellUpdates) {
-      const sourceActor = resolveShopTargetActor(shop, update.__sourceActorId);
+      const sourceActor = resolveShopTargetActor(shop, update.__sourceActorId ?? update.__deleteSourceActorId ?? update.__createSourceActorId);
       if (!sourceActor) continue;
+      if (update.__createSourceActorId) {
+        await sourceActor.createEmbeddedDocuments('Item', [update.__createItemData]);
+        continue;
+      }
+      if (update.__deleteSourceActorId) {
+        await sourceActor.deleteEmbeddedDocuments('Item', [update._id]);
+        continue;
+      }
       const { __sourceActorId, ...cleanUpdate } = update;
       shopTelemetry('shopSocket', 'applyBasket reserve sell updateEmbeddedDocuments', {
         shopId: shop?.id,
