@@ -6,6 +6,7 @@ import { resolveShopTargetActor } from '~/src/helpers/shopTargets.js';
 import {
   adjustVendorFunds,
   appendShopTransactions,
+  getShopConfiguration,
   getVendorFunds,
 } from '~/src/helpers/shopIdentity.js';
 import {
@@ -13,6 +14,7 @@ import {
   deductActorCurrency,
   formatPrice,
   getComparablePriceValue,
+  getEffectiveItemPrice,
   makeBasketPrice,
   multiplyPrice,
   normalizePrice,
@@ -434,7 +436,16 @@ async function applyPurchase({ requestId, shopId, shopUuid: requestedShopUuid, t
     errors.push('Target actor not found');
   } else {
     const reservedBasket = indexBasket(sanitizeBasket(shop.getFlag(MODULE_ID, `basket.${targetActorId}`) ?? []));
-    const purchaseTotal = sumPrices((basket ?? []).map((entry) => ({
+    const shopConfig = getShopConfiguration(shop);
+    const allowOverrides = shopConfig.allowItemPriceOverrides ?? false;
+    const effectiveBasket = (basket ?? []).map((entry) => {
+      const shopItem = shop.items.get(entry.itemId);
+      const effectivePrice = shopItem
+        ? getEffectiveItemPrice(shop, shopItem, shopConfig.salePriceFactor ?? 100, allowOverrides)
+        : entry.price;
+      return { ...entry, price: effectivePrice };
+    });
+    const purchaseTotal = sumPrices(effectiveBasket.map((entry) => ({
       price: entry.price,
       quantity: entry.quantity ?? 1,
     })));
@@ -492,7 +503,7 @@ async function applyPurchase({ requestId, shopId, shopUuid: requestedShopUuid, t
     }
 
     if (errors.length === 0) {
-      for (const entry of basket ?? []) {
+      for (const entry of effectiveBasket ?? []) {
         const shopItem = shop.items.get(entry.itemId);
         const qty = Number(entry.quantity ?? 1);
 

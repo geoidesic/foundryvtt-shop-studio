@@ -1,3 +1,6 @@
+import { MODULE_ID } from '~/src/helpers/constants';
+import { SHOP_FLAG_KEYS } from '~/src/constants/shopConstants.js';
+
 function getConfigNamespaceCandidates() {
   const systemId = game?.system?.id ?? '';
   const compactId = systemId.replace(/[^A-Za-z0-9]/g, '');
@@ -501,6 +504,77 @@ export async function deductActorCurrency(actor, price) {
  */
 export function getBuyPrice(item, buyPriceFactor = 50) {
   return applyPriceFactor(item?.system?.price, buyPriceFactor);
+}
+
+/**
+ * Read the persisted per-item price overrides for a shop.
+ * Stored as a module flag map keyed by item id:
+ *   flags.foundryvtt-shop-studio.itemPrices = { [itemId]: { value, denomination?, per? } }
+ * @param {object} shop - The shop actor
+ * @return {object} Map of itemId -> normalized price
+ */
+export function getItemPriceOverrides(shop) {
+  const overrides = shop?.getFlag?.(MODULE_ID, SHOP_FLAG_KEYS.itemPrices);
+  return overrides && typeof overrides === 'object' && !Array.isArray(overrides) ? overrides : {};
+}
+
+/**
+ * Read the persisted price override for a single item, if any.
+ * @param {object} shop - The shop actor
+ * @param {string} itemId - The item id
+ * @return {object|null} Normalized price or null when no override exists
+ */
+export function getItemPriceOverride(shop, itemId) {
+  const override = getItemPriceOverrides(shop)?.[itemId];
+  return override ? normalizePrice(override) : null;
+}
+
+/**
+ * Persist a price override for a single item on the shop actor.
+ * @param {object} shop - The shop actor
+ * @param {string} itemId - The item id
+ * @param {object|number|string} price - A price in any shape accepted by normalizePrice
+ * @return {Promise<object>} The updated overrides map
+ */
+export async function setItemPriceOverride(shop, itemId, price) {
+  if (!shop || !itemId) return getItemPriceOverrides(shop);
+  const next = { ...getItemPriceOverrides(shop) };
+  next[itemId] = makeBasketPrice(price);
+  await shop.setFlag?.(MODULE_ID, SHOP_FLAG_KEYS.itemPrices, next);
+  return next;
+}
+
+/**
+ * Remove a persisted price override for a single item on the shop actor.
+ * @param {object} shop - The shop actor
+ * @param {string} itemId - The item id
+ * @return {Promise<object>} The updated overrides map
+ */
+export async function clearItemPriceOverride(shop, itemId) {
+  if (!shop || !itemId) return getItemPriceOverrides(shop);
+  const next = { ...getItemPriceOverrides(shop) };
+  delete next[itemId];
+  await shop.setFlag?.(MODULE_ID, SHOP_FLAG_KEYS.itemPrices, next);
+  return next;
+}
+
+/**
+ * Resolve the effective sale price for an item in a shop.
+ * When per-item price overrides are enabled and an override exists for the
+ * item, the override wins. Otherwise the item's own cost is used, scaled by
+ * the shop's sale price factor.
+ * @param {object} shop - The shop actor
+ * @param {object} item - The item document (uses item.system.price)
+ * @param {number} [salePriceFactor=100] - Sale price factor percentage from shop config
+ * @param {boolean} [allowOverrides=true] - Whether overrides are enabled for this shop
+ * @return {object} Normalized effective price
+ */
+export function getEffectiveItemPrice(shop, item, salePriceFactor = 100, allowOverrides = true) {
+  if (allowOverrides) {
+    const override = getItemPriceOverride(shop, item?.id);
+    if (override) return override;
+  }
+  return applyPriceFactor(item?.system?.price, salePriceFactor);
 }
 
 /**

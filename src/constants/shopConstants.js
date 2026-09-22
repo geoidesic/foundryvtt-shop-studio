@@ -11,7 +11,8 @@ export const SHOP_FLAG_KEYS = Object.freeze({
   stock: 'stock',
   transactions: 'transactions',
   identity: 'identity',
-  vendorFunds: 'vendorFunds'
+  vendorFunds: 'vendorFunds',
+  itemPrices: 'itemPrices'
 });
 
 export const DEFAULT_SHOP_CONFIGURATION = Object.freeze({
@@ -21,6 +22,7 @@ export const DEFAULT_SHOP_CONFIGURATION = Object.freeze({
   priceVariance: 10,
   variancePeriod: 'daily',
   atrophyPercent: 5,
+  allowItemPriceOverrides: false,
   associatedActors: [],
   rollTables: [],
   rollTableRolls: [],

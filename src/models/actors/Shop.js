@@ -29,6 +29,7 @@ export class ShopDataModel extends TypeDataModel {
           initial: 'daily'
         }),
         atrophyPercent: new NumberField({ required: false, min: 0, initial: 5 }),
+        allowItemPriceOverrides: new BooleanField({ required: true, initial: false }),
       }),
       associatedActors: new ArrayField(
         new StringField({ required: false, blank: true }),
