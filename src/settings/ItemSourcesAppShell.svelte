@@ -5,6 +5,7 @@
   import { TJSApplicationShell } from '@typhonjs-fvtt/runtime/svelte/component/application';
   import { MODULE_ID } from '~/src/helpers/constants';
   import { localize } from '~/src/helpers/utility';
+  import { confirmReload } from '~/src/settings';
   import {
     ITEM_SOURCES_SETTING,
     LISTABLE_ITEM_TYPES_SETTING,
@@ -164,7 +165,7 @@
   async function handleSave() {
     await game.settings.set(MODULE_ID, ITEM_SOURCES_SETTING, selectedSources);
     await game.settings.set(MODULE_ID, LISTABLE_ITEM_TYPES_SETTING, selectedTypes.length === allItemTypes.length ? null : selectedTypes);
-    application.close();
+    confirmReload();
   }
 
   function handleCancel() {

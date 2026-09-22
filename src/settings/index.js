@@ -23,7 +23,7 @@ function getShopActorTypeChoices() {
   return choices;
 }
 
-function confirmReload() {
+export function confirmReload() {
   const title = game.i18n.localize(`${MODULE_ID}.Setting.ReloadRequiredTitle`);
   const content = `<p>${game.i18n.localize(`${MODULE_ID}.Setting.ReloadRequiredContent`)}</p>`;
   const DialogV2 = foundry.applications?.api?.DialogV2;

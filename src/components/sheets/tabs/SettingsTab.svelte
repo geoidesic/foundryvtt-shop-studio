@@ -2,10 +2,9 @@
   import { getContext } from 'svelte';
   import DropZone from '~/src/components/molecules/DropZone.svelte';
   import { shopConfig } from '~/src/stores/shopConfig.js';
-  import { getConfiguredListableItemTypes } from '~/src/helpers/itemSources';
+  import { getConfiguredListableItemTypes, hasItemSourcesAssigned } from '~/src/helpers/itemSources';
   import { getSystemCurrencies, getCurrencyLabel } from '~/src/helpers/currency.js';
   import { getVendorFunds, setVendorFunds } from '~/src/helpers/shopIdentity.js';
-  import { MODULE_ID } from '~/src/helpers/constants.ts';
 
   export let sharedProps = {};
 
@@ -22,6 +21,7 @@
   $: syncRollTableRolls(rollTables, rollTableRolls, $config.rollTableRolls);
   $: provisionMode = $config.provisionMode ?? 'rolltable';
   $: compendiumProvision = Array.isArray($config.compendiumProvision) ? $config.compendiumProvision : [];
+  $: hasCompendiumSources = hasItemSourcesAssigned();
 
   // Collapsible state
   let pricingOpen = true;
@@ -50,6 +50,13 @@
 
   function onBuyFactorInput(event) {
     config.update((current) => ({ ...current, buyPriceFactor: Number(event.target.value) }));
+  }
+
+  function toggleItemPriceOverrides() {
+    config.update((current) => ({
+      ...current,
+      allowItemPriceOverrides: !current.allowItemPriceOverrides,
+    }));
   }
 
   function normalizeRollTableRolls(tables, rolls) {
@@ -195,6 +202,11 @@
   }
 
   function toggleProvisionMode() {
+    if (!hasCompendiumSources) {
+      ui.notifications.warn(sharedProps.localize('NoItemSourcesConfigured'));
+      return;
+    }
+
     const next = provisionMode === 'compendium' ? 'rolltable' : 'compendium';
     config.update((current) => ({ ...current, provisionMode: next }));
     sharedProps.onProvisionModeChange?.(next);
@@ -280,24 +292,33 @@
           h2 {sharedProps.localize("Pricing")}
         +if("pricingOpen")
           div.settings-collapsible__body
-            label.setting-control
-              div.setting-label
-                span {sharedProps.localize("SalePriceFactor")}
-                strong {formatFactor($config.salePriceFactor, 100)}%
-              input(type="range" bind:value!="{ $config.salePriceFactor }" min="50" max="200" step="1" on:input!="{onSaleFactorInput}")
-              div.setting-range
-                span 50%
-                span 200%
-              p.setting-help Affects prices charged to buyers.
-            label.setting-control
-              div.setting-label
-                span {sharedProps.localize("BuyPriceFactor")}
-                strong {formatFactor($config.buyPriceFactor, 50)}%
-              input(type="range" bind:value!="{ $config.buyPriceFactor }" min="50" max="200" step="1" on:input!="{onBuyFactorInput}")
-              div.setting-range
-                span 50%
-                span 200%
-              p.setting-help Affects prices paid when buying from actors.
+            div.form-group.settings-form-group
+              label(for="gas-sale-price-factor") {sharedProps.localize("SalePriceFactor")}
+              div.form-fields.settings-form-fields
+                input#gas-sale-price-factor(type="range" bind:value!="{ $config.salePriceFactor }" min="50" max="200" step="1" on:input!="{onSaleFactorInput}")
+                output.settings-value(for="gas-sale-price-factor") {formatFactor($config.salePriceFactor, 100)}%
+              p.notes.settings-notes Affects prices charged to buyers.
+            div.form-group.settings-form-group
+              label(for="gas-buy-price-factor") {sharedProps.localize("BuyPriceFactor")}
+              div.form-fields.settings-form-fields
+                input#gas-buy-price-factor(type="range" bind:value!="{ $config.buyPriceFactor }" min="50" max="200" step="1" on:input!="{onBuyFactorInput}")
+                output.settings-value(for="gas-buy-price-factor") {formatFactor($config.buyPriceFactor, 50)}%
+              p.notes.settings-notes Affects prices paid when buying from actors.
+            div.form-group.settings-form-group.settings-checkbox-group
+              label(for="gas-allow-item-price-overrides") {sharedProps.localize("AllowItemPriceOverrides")}
+              div.form-fields.settings-form-fields
+                button.settings-toggle(
+                  id="gas-allow-item-price-overrides"
+                  type="button"
+                  class:active!="{Boolean($config.allowItemPriceOverrides)}"
+                  aria-pressed!="{Boolean($config.allowItemPriceOverrides)}"
+                  aria-label!="{sharedProps.localize('AllowItemPriceOverrides')}"
+                  on:click!="{toggleItemPriceOverrides}"
+                )
+                  span.settings-toggle__track
+                    span.settings-toggle__thumb
+                  span.settings-toggle__state {Boolean($config.allowItemPriceOverrides) ? 'ON' : 'OFF'}
+              p.notes.settings-notes {sharedProps.localize("AllowItemPriceOverridesHelp")}
 
       //- Vendor funds collapsible (peer of Pricing)
       section.settings-collapsible
@@ -332,7 +353,7 @@
         +if("provisioningOpen")
           div.settings-collapsible__body
             div.provision-mode-toggle
-              button.provision-mode-toggle__btn(type="button" class:active!="{provisionMode === 'compendium'}" on:click!="{toggleProvisionMode}" data-tooltip!="{sharedProps.localize('ProvisionModeTooltip')}")
+              button.provision-mode-toggle__btn(type="button" class:active!="{provisionMode === 'compendium'}" disabled!="{!hasCompendiumSources && provisionMode !== 'compendium'}" aria-disabled!="{!hasCompendiumSources && provisionMode !== 'compendium'}" on:click!="{toggleProvisionMode}" data-tooltip!="{hasCompendiumSources ? sharedProps.localize('ProvisionModeTooltip') : sharedProps.localize('NoItemSourcesConfigured')}")
                 i.fas(class:fa-toggle-on!="{provisionMode === 'compendium'}" class:fa-toggle-off!="{provisionMode !== 'compendium'}")
                 span.provision-mode-toggle__label {provisionMode === 'compendium' ? sharedProps.localize('ProvisionByCompendium') : sharedProps.localize('ProvisionByRollTable')}
 
@@ -376,7 +397,11 @@
                   p.compendium-provision__empty {sharedProps.localize("NoListableTypes")}
 
       div.actions
-        button.provision-btn(type="button" on:click!="{sharedProps.provisionStore}")
+        +if("!hasCompendiumSources")
+          p.provision-source-warning(role="status")
+            i.fas.fa-triangle-exclamation
+            span {sharedProps.localize('NoItemSourcesConfigured')}
+        button.provision-btn(type="button" disabled!="{provisionMode === 'compendium' && !hasCompendiumSources}" on:click!="{sharedProps.provisionStore}")
           | {sharedProps.localize("ProvisionStore")}
         button.save-btn(type="button" on:click!="{sharedProps.saveSettings}")
           | Save Settings
@@ -392,26 +417,118 @@
     flex-direction: column
     gap: 1rem
 
-  :global(.setting-control)
-    display: flex
-    flex-direction: column
-    gap: 0.35rem
-
-  :global(.setting-label),
-  :global(.setting-range),
   :global(.actions)
     display: flex
     align-items: center
     justify-content: space-between
     gap: 0.75rem
 
-  :global(.setting-help)
-    margin: 0
-    opacity: 0.75
-    font-size: 0.85em
-
   :global(.settings-tab input[type="range"])
     padding: 0
+
+  // Foundry-style form rows for the shop-specific settings.
+  .settings-form-group
+    display: grid
+    grid-template-columns: minmax(10rem, 0.9fr) minmax(0, 2fr)
+    column-gap: 1rem
+    row-gap: 0.3rem
+    align-items: center
+
+    > label
+      margin: 0
+      font-weight: 600
+
+  .settings-form-fields
+    display: flex
+    align-items: center
+    gap: 0.75rem
+    min-width: 0
+
+    input[type="range"]
+      flex: 1 1 auto
+      min-width: 0
+
+  .settings-value
+    flex: 0 0 3.5rem
+    color: var(--gas-color-text)
+    text-align: right
+    font-weight: 600
+
+  .settings-notes
+    grid-column: 2
+    margin: 0
+    color: color-mix(in srgb, var(--gas-color-text) 72%, transparent)
+    font-size: 0.85em
+    line-height: 1.35
+
+  .settings-checkbox-group
+    align-items: start
+
+    .settings-form-fields
+      justify-content: flex-start
+
+  .settings-toggle
+    display: inline-flex
+    align-items: center
+    gap: 0.5rem
+    width: auto
+    min-width: 4.5rem
+    min-height: 2rem
+    padding: 0.25rem 0.45rem
+    border: 1px solid var(--gas-input-border, rgba(255, 255, 255, 0.35))
+    border-radius: 999px
+    background: color-mix(in srgb, var(--gas-color-text) 12%, transparent)
+    color: var(--gas-color-text)
+    cursor: pointer
+    transition: background 120ms ease, border-color 120ms ease, color 120ms ease
+
+    &:hover
+      border-color: var(--gas-tab-active-color, var(--dnd5e-color-gold, #b59e54))
+      background: color-mix(in srgb, var(--gas-tab-active-indicator, #b59e54) 22%, transparent)
+
+    &:focus-visible
+      outline: 2px solid var(--gas-tab-active-color, var(--dnd5e-color-gold, #b59e54))
+      outline-offset: 2px
+
+    &.active
+      border-color: var(--gas-tab-active-color, var(--dnd5e-color-gold, #b59e54))
+      background: color-mix(in srgb, var(--gas-tab-active-indicator, #b59e54) 32%, transparent)
+      color: var(--gas-tab-active-color, var(--dnd5e-color-gold, #b59e54))
+
+    &__track
+      display: inline-flex
+      align-items: center
+      width: 1.8rem
+      height: 1rem
+      padding: 2px
+      border-radius: 999px
+      background: rgba(0, 0, 0, 0.35)
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2)
+
+    &__thumb
+      width: 0.7rem
+      height: 0.7rem
+      border-radius: 50%
+      background: rgba(255, 255, 255, 0.65)
+      transition: transform 120ms ease, background 120ms ease
+
+    &.active &__thumb
+      transform: translateX(0.8rem)
+      background: var(--gas-tab-active-color, var(--dnd5e-color-gold, #b59e54))
+
+    &__state
+      min-width: 1.5rem
+      font-size: 0.7rem
+      font-weight: 700
+      letter-spacing: 0.04em
+      text-align: center
+
+  @media (max-width: 520px)
+    .settings-form-group
+      grid-template-columns: 1fr
+
+    .settings-notes
+      grid-column: 1
 
   .settings-collapsible
     border: 1px solid var(--gas-tab-inactive-border)
@@ -481,8 +598,35 @@
     &:hover
       border-color: var(--gas-tab-active-color)
 
+    &:disabled
+      cursor: not-allowed
+      opacity: 0.55
+
+      &:hover
+        border-color: var(--gas-tab-inactive-border)
+
   .provision-mode-toggle__label
     white-space: nowrap
+
+  .provision-source-warning
+    display: flex
+    align-items: flex-start
+    gap: 0.5rem
+    margin: 0
+    padding: 0.55rem 0.7rem
+    border: 1px solid color-mix(in srgb, var(--gas-color-negative) 55%, transparent)
+    border-radius: var(--border-radius)
+    background: color-mix(in srgb, var(--gas-color-negative) 10%, transparent)
+    color: var(--gas-color-text)
+    font-size: 0.9em
+
+    i
+      flex: 0 0 auto
+      color: var(--gas-color-negative)
+
+  .provision-btn:disabled
+    cursor: not-allowed
+    opacity: 0.55
 
   .rolltables-section
     display: flex
