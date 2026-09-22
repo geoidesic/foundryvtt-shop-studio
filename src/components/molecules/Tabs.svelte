@@ -14,8 +14,9 @@
           | {tab.label}
 
     .tab-content
-      +if("activeComponent")
-        svelte:component(this="{activeComponent}" sharedProps="{sharedProps}")
+      .pa-sm
+        +if("activeComponent")
+          svelte:component(this="{activeComponent}" sharedProps="{sharedProps}")
 </template>
 
 <style lang="scss">
@@ -112,7 +113,6 @@
   }
 
   .tab-content {
-    @include inset;
     @include flex-column;
     flex: 1;
     min-height: 0;

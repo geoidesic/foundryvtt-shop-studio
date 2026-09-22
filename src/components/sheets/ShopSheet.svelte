@@ -112,8 +112,34 @@
       min-height: 0
       height: 100%
 
-  // Enlarge the TJS window-resize-handle for easier grabbing
-  .window-resize-handle
-    width: 28px !important
-    height: 28px !important
+  // Enlarge the TJS window-resize-handle for easier grabbing. TJS 0.3.x
+  // positions the active element at the bottom-right corner with an 11px
+  // default hit area; explicitly define the whole grab zone here rather than
+  // only scaling the decorative resize icon.
+  :global(.window-resize-handle)
+    position: absolute !important
+    inset: auto 0 0 auto !important
+    width: 44px !important
+    height: 44px !important
+    z-index: 100 !important
     cursor: nwse-resize !important
+    pointer-events: auto !important
+    touch-action: none !important
+    background: transparent !important
+    border: 0 !important
+
+    &::after
+      // Font Awesome `fa-expand` is clearer than the legacy horizontal-arrows
+      // glyph used by the runtime's default resize handle.
+      content: '\f065'
+      position: absolute
+      right: 3px
+      bottom: 2px
+      color: #f0f0e0 !important
+      font-family: 'Font Awesome 6 Free', 'Font Awesome 6 Pro', FontAwesome
+      font-size: 24px
+      font-weight: 900
+      line-height: 1
+      pointer-events: none
+      text-shadow: 0 0 2px #000, 0 0 4px #000
+</style>
