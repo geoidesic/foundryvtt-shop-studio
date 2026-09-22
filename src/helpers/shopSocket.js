@@ -288,7 +288,7 @@ async function applyBasket(shop, targetActorId, nextBasket) {
         });
         return { success: false, errors: [`Item ${desiredEntry.itemName ?? itemId} not found on the selling actor`], basket: currentBasket };
       }
-      const available = Number(sourceItem.system?.quantity ?? 0);
+      const available = Number(sourceItem.system?.quantity ?? 1);
       if (available < delta) {
         shopTelemetry('shopSocket', 'applyBasket insufficient sell quantity', {
           shopId: shop?.id,
@@ -343,7 +343,7 @@ async function applyBasket(shop, targetActorId, nextBasket) {
       const sourceItem = sourceActor?.items?.get(itemId);
       if (!sourceItem) continue;
 
-      const available = Number(sourceItem.system?.quantity ?? 0);
+      const available = Number(sourceItem.system?.quantity ?? 1);
       const quantity = available - delta;
       shopTelemetry('shopSocket', 'applyBasket reserve sell quantity', {
         shopId: shop?.id,
@@ -445,7 +445,8 @@ async function applyPurchase({ requestId, shopId, shopUuid: requestedShopUuid, t
         : entry.price;
       return { ...entry, price: effectivePrice };
     });
-    const purchaseTotal = sumPrices(effectiveBasket.map((entry) => ({
+    const purchaseEntries = effectiveBasket.filter((entry) => entry.direction !== 'sell');
+    const purchaseTotal = sumPrices(purchaseEntries.map((entry) => ({
       price: entry.price,
       quantity: entry.quantity ?? 1,
     })));
@@ -464,6 +465,7 @@ async function applyPurchase({ requestId, shopId, shopUuid: requestedShopUuid, t
     });
 
     for (const entry of basket ?? []) {
+      if (entry.direction === 'sell') continue;
       const shopItem = shop.items.get(entry.itemId);
       if (!shopItem) {
         errors.push(`Item ${entry.itemName} not found in shop`);
@@ -503,7 +505,7 @@ async function applyPurchase({ requestId, shopId, shopUuid: requestedShopUuid, t
     }
 
     if (errors.length === 0) {
-      for (const entry of effectiveBasket ?? []) {
+      for (const entry of purchaseEntries) {
         const shopItem = shop.items.get(entry.itemId);
         const qty = Number(entry.quantity ?? 1);
 
@@ -619,7 +621,7 @@ async function applySell({ requestId, shopId, shopUuid, targetActorId, basket, u
           continue;
         }
         const qty = Number(entry.quantity ?? 1);
-        const available = Number(sourceItem.system?.quantity ?? 0);
+        const available = Number(sourceItem.system?.quantity ?? 1);
         if (available < qty) {
           errors.push(`Insufficient quantity of ${entry.itemName} to sell`);
           continue;
@@ -638,7 +640,7 @@ async function applySell({ requestId, shopId, shopUuid, targetActorId, basket, u
           const sourceActor = resolveShopTargetActor(shop, entry.sourceActorId ?? targetActorId);
           const sourceItem = sourceActor.items.get(entry.itemId);
           const qty = Number(entry.quantity ?? 1);
-          const available = Number(sourceItem.system?.quantity ?? 0);
+          const available = Number(sourceItem.system?.quantity ?? 1);
 
           if (available > qty) {
             await sourceActor.updateEmbeddedDocuments('Item', [

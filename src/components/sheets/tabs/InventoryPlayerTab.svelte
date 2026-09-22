@@ -137,6 +137,12 @@
     return Math.max(0, stock);
   }
 
+  // An Item without an explicit quantity represents one sellable item.
+  function getSellableQuantity(item) {
+    const rawQuantity = item?.system?.quantity;
+    return Number(rawQuantity ?? 1);
+  }
+
   function isOutOfStock(item) {
     return getDisplayQuantity(item) <= 0;
   }
@@ -243,7 +249,7 @@
       return;
     }
 
-    const maxQty = Number(sourceItem.system?.quantity ?? 0);
+    const maxQty = getSellableQuantity(sourceItem);
     if (maxQty <= 0) {
       ui.notifications.warn(localize('InsufficientStock'));
       return;
@@ -253,10 +259,15 @@
     if (sharedProps.sellQuantityMode === 'prompt') {
       const promptValue = await Dialog.prompt({
         title: localize('SelectSellQuantity'),
-        content: `<p>${localize('SelectSellQuantity')}</p>`,
+        content: `
+          <p>${localize('SelectSellQuantity')}</p>
+          <input type="number" name="sell-qty" value="1" min="1" max="${maxQty}" step="1" />
+        `,
         rejectClose: false,
         callback: (html) => {
-          const input = html.querySelector('input');
+          // Foundry v13/v14 may pass the dialog root as a jQuery wrapper.
+          const root = html instanceof HTMLElement ? html : html?.[0];
+          const input = root?.querySelector('input[name="sell-qty"]');
           return input ? Number(input.value) : 1;
         },
         options: { width: 320 },
@@ -383,11 +394,11 @@
           select.short(value="{typeFilterValue}" on:change!="{onTypeFilterChange}")
             +each("typeFilterOptions as opt")
               option(value="{opt.value}") {opt.label}
-      .padded
-        .flexrow.gap-10
-          .flex3
-            .sell-zone
-              DropZone(placeholder="{localize('SellZone')}" acceptType="Item" onDrop!="{handleSellDrop}")
+      //- .padded
+      //-   .flexrow.gap-10
+      //-     .flex3
+      //-       .sell-zone
+      //-         DropZone(placeholder="{localize('SellZone')}" acceptType="Item" onDrop!="{handleSellDrop}")
                 
     .inv-table.overflow.containerx
       .inv-header

@@ -292,7 +292,8 @@
       ui.notifications.warn(localize('NoTargetActor'));
       return;
     }
-    if (basket.length === 0) {
+    const buyEntries = basket.filter((entry) => entry.direction !== 'sell');
+    if (buyEntries.length === 0) {
       window.GAS.log.p('onBuyNow | basket is empty, nothing to purchase');
       return;
     }
@@ -303,7 +304,7 @@
       return;
     }
 
-    const payment = getActorCurrencyPaymentUpdate(targetActor, getBasketTotalPrice(basket));
+    const payment = getActorCurrencyPaymentUpdate(targetActor, getBasketTotalPrice(buyEntries));
     if (!payment.success) {
       payment.errors.forEach(err => ui.notifications.warn(err));
       return;
@@ -314,7 +315,7 @@
       shopId: $doc.id,
       shopUuid: $doc.uuid,
       targetActorId,
-      basket: basket.map((entry) => serializeBasketEntry(entry)),
+      basket: buyEntries.map((entry) => serializeBasketEntry(entry)),
     });
 
     window.GAS.log.p('onBuyNow | socket purchase result:', result.success, '| errors:', result.errors?.length || 0);
@@ -322,7 +323,7 @@
       result.errors.forEach(err => ui.notifications.warn(err));
     } else {
       window.GAS.log.p('onBuyNow | purchase successful, clearing local basket state');
-      basket = [];
+      basket = basket.filter((entry) => entry.direction === 'sell');
       ui.notifications.info(game.i18n.format('PurchaseComplete', { actorName: targetActor.name }));
     }
   }
@@ -404,7 +405,8 @@
       return;
     }
 
-    const maxQty = Number(sourceItem.system?.quantity ?? 0);
+    // An Item without an explicit quantity represents one sellable item.
+    const maxQty = Number(sourceItem.system?.quantity ?? 1);
     if (maxQty <= 0) {
       ui.notifications.warn(localize('InsufficientStock'));
       return;
