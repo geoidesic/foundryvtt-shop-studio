@@ -1,3 +1,11 @@
+# AI Agent Index
+
+For shared harness documentation, see:
+- **[AGENTS](./ai-harness/AGENTS.md)** - Index and navigation
+- **[FoundryVTT Coding Guide](./ai-harness/agents/AGENTS.md)** - Foundry-specific API and workflows
+
+---
+
 # Project rules
 Never edit dist. 
 Never run build. 
