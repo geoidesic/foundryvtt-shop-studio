@@ -234,6 +234,14 @@
   display: flex
   flex-direction: column
 
+// Keeps a row pinned to the top of its nearest scrolling parent.
+// The parent must provide the scroll container with overflow-y: auto/scroll.
+@mixin fixed-row($top: 0, $z-index: 20)
+  position: sticky
+  top: $top
+  z-index: $z-index
+  background: var(--gas-tabs-content-background, var(--gas-sheet-background, #fff))
+
 @mixin flex-group-center
   align-items: center
   justify-content: center

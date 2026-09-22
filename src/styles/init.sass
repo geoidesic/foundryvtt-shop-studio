@@ -239,6 +239,11 @@
   .relative
     position: relative
 
+  // Use on rows that should remain visible while their parent scrolls.
+  // The parent must be the scrolling element (overflow-y: auto/scroll).
+  .fix
+    @include fixed-row
+
   .flexrow
     align-items: flex-start
 

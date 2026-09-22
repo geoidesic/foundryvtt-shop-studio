@@ -376,7 +376,7 @@
     };
   }
 
-  /** Resolve a dropped item into a sell basket entry for the selected target actor. */
+  /** Resolve a dropped item from an actor's inventory into a sell basket entry. */
   async function handleSellDrop(data) {
     shopTelemetry('BasketTab', 'sell drop received', {
       shopId: $doc?.id,
@@ -386,6 +386,11 @@
       dataUuid: data?.uuid,
     });
 
+    if (!targetActorId) {
+      ui.notifications.warn(localize('NoTargetActor'));
+      return;
+    }
+
     if (data?.type !== 'Item' || !data?.uuid) {
       return;
     }
@@ -394,25 +399,7 @@
     if (!sourceItem) return;
 
     const sourceActor = sourceItem.actor;
-    if (!sourceActor) {
-      ui.notifications.warn(localize('SellFromWrongActor'));
-      return;
-    }
-
-    // Check if this is a player drop (UUID starts with "Actor")
-    const isPlayerDrop = data.uuid.startsWith('Actor.');
-
-    if (!targetActorId) {
-      if (isPlayerDrop) {
-        ui.notifications.warn(localize('NoTargetActor'));
-      } else {
-        // GM dropping from non-actor context (e.g., world items) while not in edit mode
-        ui.notifications.warn(localize('SwitchToEditMode') || 'Please switch to edit mode to edit the inventory');
-      }
-      return;
-    }
-
-    if (sourceActor.id !== targetActorId) {
+    if (!sourceActor || sourceActor.id !== targetActorId) {
       ui.notifications.warn(localize('SellFromWrongActor'));
       return;
     }
