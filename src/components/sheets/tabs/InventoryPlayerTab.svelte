@@ -8,7 +8,7 @@
   import { getComparablePriceValue } from "~/src/helpers/currency.js";
   import { localize } from "~/src/helpers/utility";
   import { MODULE_ID } from "~/src/helpers/constants";
-  import { applyPriceFactor, formatPrice as formatCurrencyPrice, makeBasketPrice } from "~/src/helpers/currency.js";
+  import { formatPrice as formatCurrencyPrice, getEffectiveItemPrice, makeBasketPrice } from "~/src/helpers/currency.js";
   import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
   import { requestBasketUpdate, requestSell } from "~/src/helpers/shopSocket.js";
   import { shopSocketState } from "~/src/stores/basketState.js";
@@ -146,7 +146,7 @@
   }
 
   function getSalePrice(item) {
-    return applyPriceFactor(item?.system?.price, sharedProps.salePriceFactor ?? 100);
+    return getEffectiveItemPrice($Actor, item, sharedProps.salePriceFactor ?? 100, sharedProps.allowItemPriceOverrides ?? false);
   }
 
   /** Add item to the player's basket (stored in a flag on the current user). */
@@ -209,7 +209,7 @@
     ui.notifications.info(`${item.name} added to basket`);
   }
 
-  /** Resolve a dropped item into a sell basket entry for the selected target actor. */
+  /** Resolve a dropped item from an actor's inventory into a sell basket entry. */
   async function handleSellDrop(data) {
     shopTelemetry('InventoryPlayerTab', 'sell drop received', {
       shopId: $Actor?.id,
@@ -219,12 +219,13 @@
       dataUuid: data?.uuid,
     });
 
-    if (!targetActorId) {
-      ui.notifications.warn(localize('NoTargetActor'));
+    // Only accept drops from Actor context (players selling from their inventory)
+    if (data?.type !== 'Item' || !data?.uuid || !data.uuid.startsWith('Actor.')) {
       return;
     }
 
-    if (data?.type !== 'Item' || !data?.uuid) {
+    if (!targetActorId) {
+      ui.notifications.warn(localize('NoTargetActor'));
       return;
     }
 
@@ -370,7 +371,7 @@
 
 <template lang="pug">
 
-    .panel.overflow.containerx
+    .panel.fix
       .flexrow.pt-sm.pr-sm.pl-sm.justify-flexrow-vertical.gap-10
         .flexcol.flex1.label-container
           label {localize('Search')}
@@ -383,38 +384,37 @@
             +each("typeFilterOptions as opt")
               option(value="{opt.value}") {opt.label}
       .padded
-        h1.gold {localize('Inventory')}
-        .inv-table
-          .inv-header
-            .inv-col-icon
-            .inv-col-name.sortable(data-key="name" on:click!="{onSortClick}" class:active="{sortKey === 'name'}")
-              span {localize('Name')}
-              i.fa.sort-indicator(class!="{sortKey === 'name' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
-            .inv-col-price.sortable(data-key="price" on:click!="{onSortClick}" class:active="{sortKey === 'price'}")
-              span {localize('Price')}
-              i.fa.sort-indicator(class!="{sortKey === 'price' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
-            .inv-col-qty.sortable(data-key="system.quantity" on:click!="{onSortClick}" class:active="{sortKey === 'system.quantity'}")
-              span {localize('Quantity')}
-              i.fa.sort-indicator(class!="{sortKey === 'system.quantity' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
-            .inv-col-actions
-          +each("items as item, index")
-            .inv-row
-              .inv-col-icon(data-tooltip="{localize('View')}" data-index="{index}" on:click!="{onShowItemClick}" role="button")
-                img.icon(src="{item.img}" alt="{item.name}")
-              .inv-col-name(data-tooltip="{localize('View')}")
-                a.stealth.link(data-index="{index}" on:click!="{onShowItemClick}" class!="{item.system.isMagic ? 'pulse' : ''}" role="button") {item.name}
-              .inv-col-price
-                span.price-text {formatPrice(item)}
-              .inv-col-qty
-                span.qty-value {getDisplayQuantity(item)}
-              .inv-col-actions
-                button.stealth.basket-btn(disabled="{isOutOfStock(item)}" data-tooltip="Add to basket" data-index="{index}" on:click!="{onAddToBasketClick}")
-                  i.fa.fa-shopping-basket
-            
-        .sell-zone
-          h2.gold {localize('SellZone')}
-          p.sell-zone__hint {localize('SellZoneHint')}
-          DropZone(placeholder="{localize('SellZone')}" acceptType="Item" onDrop!="{handleSellDrop}")
+        .flexrow.gap-10
+          .flex3
+            .sell-zone
+              DropZone(placeholder="{localize('SellZone')}" acceptType="Item" onDrop!="{handleSellDrop}")
+                
+    .inv-table.overflow.containerx
+      .inv-header
+        .inv-col-icon
+        .inv-col-name.sortable(data-key="name" on:click!="{onSortClick}" class:active="{sortKey === 'name'}")
+          span {localize('Name')}
+          i.fa.sort-indicator(class!="{sortKey === 'name' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
+        .inv-col-price.sortable(data-key="price" on:click!="{onSortClick}" class:active="{sortKey === 'price'}")
+          span {localize('Price')}
+          i.fa.sort-indicator(class!="{sortKey === 'price' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
+        .inv-col-qty.sortable(data-key="system.quantity" on:click!="{onSortClick}" class:active="{sortKey === 'system.quantity'}")
+          span {localize('Quantity')}
+          i.fa.sort-indicator(class!="{sortKey === 'system.quantity' ? (sortDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort'}")
+        .inv-col-actions
+      +each("items as item, index")
+        .inv-row
+          .inv-col-icon(data-tooltip="{localize('View')}" data-index="{index}" on:click!="{onShowItemClick}" role="button")
+            img.icon(src="{item.img}" alt="{item.name}")
+          .inv-col-name(data-tooltip="{localize('View')}")
+            a.stealth.link(data-index="{index}" on:click!="{onShowItemClick}" class!="{item.system.isMagic ? 'pulse' : ''}" role="button") {item.name}
+          .inv-col-price
+            span.price-text {formatPrice(item)}
+          .inv-col-qty
+            span.qty-value {getDisplayQuantity(item)}
+          .inv-col-actions
+            button.stealth.basket-btn(disabled="{isOutOfStock(item)}" data-tooltip="Add to basket" data-index="{index}" on:click!="{onAddToBasketClick}")
+              i.fa.fa-shopping-basket
             
 </template>
 
@@ -539,8 +539,6 @@
 
 // ── Sell zone ──
 .sell-zone
-  margin-top: 1rem
-  padding-top: 0.75rem
   border-top: 1px solid rgba(255, 255, 255, 0.08)
 
   h2.gold

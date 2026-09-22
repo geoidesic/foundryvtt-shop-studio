@@ -7,7 +7,15 @@
   import { createFilterQuery, createSortQuery } from "~/src/filters/itemFilterQuery";
   import { getComparablePriceValue } from "~/src/helpers/currency.js";
   import { localize } from "~/src/helpers/utility";
-  import { applyPriceFactor, formatPrice as formatCurrencyPrice } from "~/src/helpers/currency.js";
+  import {
+    applyPriceFactor,
+    clearItemPriceOverride,
+    formatPrice as formatCurrencyPrice,
+    getDefaultCurrency,
+    getEffectiveItemPrice,
+    getItemPriceOverride,
+    setItemPriceOverride,
+  } from "~/src/helpers/currency.js";
   import { getConfiguredListableItemTypes } from "~/src/helpers/itemSources";
   import ScrollingContainer from "~/src/helpers/svelte-components/ScrollingContainer.svelte";
   import { shopSocketState } from "~/src/stores/basketState.js";
@@ -216,13 +224,227 @@
   }
 
   function formatPrice(item) {
-    return formatCurrencyPrice(applyPriceFactor(item?.system?.price, sharedProps.salePriceFactor ?? 100));
+    return formatCurrencyPrice(getEffectiveItemPrice($Actor, item, sharedProps.salePriceFactor ?? 100, sharedProps.allowItemPriceOverrides ?? false));
+  }
+
+  function getItemOverride(item) {
+    return getItemPriceOverride($Actor, item?.id);
+  }
+
+  function hasItemOverride(item) {
+    return Boolean(getItemOverride(item));
+  }
+
+  function getItemBasePrice(item) {
+    return applyPriceFactor(item?.system?.price, sharedProps.salePriceFactor ?? 100);
+  }
+
+  function getItemOverrideDraft(item) {
+    const override = getItemOverride(item);
+    if (!override) return '';
+    if (override.value && typeof override.value === 'object' && !Array.isArray(override.value)) {
+      return Object.entries(override.value)
+        .map(([denomination, amount]) => `${amount} ${denomination}`)
+        .join(', ');
+    }
+    return String(override.value ?? '');
+  }
+
+  async function onPriceOverrideInput(e) {
+    const idx = parseInt(e.currentTarget.dataset.index);
+    const item = items[idx];
+    if (!item) return;
+    const raw = e.currentTarget.value.trim();
+    if (!raw) {
+      await clearItemPriceOverride($Actor, item.id);
+      shopTelemetry('InventoryTab', 'price override cleared (empty input)', {
+        actorId: $Actor?.id,
+        itemId: item?.id,
+        itemName: item?.name,
+      });
+      return;
+    }
+
+    const parsed = parsePriceInput(raw);
+    if (!parsed) {
+      ui.notifications.warn(localize('InvalidPriceInput') || 'Invalid price. Use a number or "amount denomination" pairs.');
+      return;
+    }
+
+    await setItemPriceOverride($Actor, item.id, parsed);
+    shopTelemetry('InventoryTab', 'price override set', {
+      actorId: $Actor?.id,
+      itemId: item?.id,
+      itemName: item?.name,
+      raw,
+      parsed,
+    });
+  }
+
+  async function onPriceOverrideReset(e) {
+    const idx = parseInt(e.currentTarget.dataset.index);
+    const item = items[idx];
+    if (!item) return;
+    await clearItemPriceOverride($Actor, item.id);
+    shopTelemetry('InventoryTab', 'price override reset', {
+      actorId: $Actor?.id,
+      itemId: item?.id,
+      itemName: item?.name,
+    });
+  }
+
+  function parsePriceInput(raw) {
+    const trimmed = String(raw ?? '').trim();
+    if (!trimmed) return null;
+
+    // "amount denomination" pairs, e.g. "2 gp, 5 sp" or "10"
+    const parts = trimmed.split(/[,;]+/).map((part) => part.trim()).filter(Boolean);
+    const denominationMap = {};
+    let scalar = null;
+
+    for (const part of parts) {
+      const match = part.match(/^([0-9]*\.?[0-9]+)\s*([A-Za-z]+)?$/);
+      if (!match) return null;
+      const amount = Number(match[1]);
+      const denomination = match[2];
+      if (denomination) {
+        denominationMap[denomination] = (denominationMap[denomination] ?? 0) + amount;
+      } else {
+        scalar = amount;
+      }
+    }
+
+    if (Object.keys(denominationMap).length > 0) {
+      return { value: denominationMap, per: 1 };
+    }
+    if (scalar !== null) {
+      return { value: scalar, denomination: getDefaultCurrency() };
+    }
+    return null;
   }
 
   onDestroy(() => {
     unsubscribeActor();
     unsubscribeWildcard();
   });
+
+  /** Handle drops of items from world/compendium to add stock to the shop. */
+  async function handleStockDrop(data) {
+    shopTelemetry('InventoryTab', 'stock drop received', {
+      shopId: $Actor?.id,
+      shopUuid: $Actor?.uuid,
+      dataType: data?.type,
+      dataUuid: data?.uuid,
+    });
+
+    // Only GMs can drop items to add stock
+    if (!game.user.isGM) {
+      ui.notifications.warn(localize('NotGM') || 'Only GMs can add stock to the shop.');
+      return;
+    }
+
+    // Accept drops from world (Item.) or compendium (Compendium.)
+    if (data?.type !== 'Item' || !data?.uuid) {
+      return;
+    }
+
+    if (!data.uuid.startsWith('Item.') && !data.uuid.startsWith('Compendium.')) {
+      return;
+    }
+
+    const sourceItem = await fromUuid(data.uuid);
+    if (!sourceItem) return;
+
+    const maxQty = Number(sourceItem.system?.quantity ?? 1);
+    if (maxQty <= 0) {
+      ui.notifications.warn(localize('InsufficientStock'));
+      return;
+    }
+
+    let quantity = 1;
+    if (sharedProps.sellQuantityMode === 'prompt' && maxQty > 1) {
+      const promptTitle = game.i18n.format('foundryvtt-shop-studio.SelectStockQuantity', { itemName: sourceItem.name });
+      quantity = await new Promise((resolve) => {
+        const content = `
+          <form class="gas-stock-qty-form" autocomplete="off">
+            <p>${promptTitle}</p>
+            <div class="gas-stock-qty-row">
+              <button type="button" class="gas-stock-qty-step" data-delta="-1" title="${localize('Decrease')}">
+                <i class="fa fa-minus"></i>
+              </button>
+              <input type="number" name="stock-qty" value="1" min="1" max="${maxQty}" step="1" />
+              <button type="button" class="gas-stock-qty-step" data-delta="1" title="${localize('Increase')}">
+                <i class="fa fa-plus"></i>
+              </button>
+              <button type="button" class="gas-stock-qty-all" data-all="1">${localize('All')}</button>
+            </div>
+          </form>
+        `;
+        const dialog = new Dialog({
+          title: promptTitle,
+          content,
+          buttons: {
+            confirm: {
+              label: localize('Confirm') || 'Confirm',
+              callback: (html) => {
+                const input = html instanceof HTMLElement ? html.querySelector('input[name="stock-qty"]') : html.find('input[name="stock-qty"]')[0];
+                resolve(input ? Number(input.value) : 1);
+              },
+            },
+            cancel: {
+              label: game.i18n.localize('Cancel'),
+              callback: () => resolve(null),
+            },
+          },
+          default: 'confirm',
+          close: () => resolve(null),
+          render: (html) => {
+            const root = html instanceof HTMLElement ? html : html[0];
+            const input = root.querySelector('input[name="stock-qty"]');
+            root.querySelectorAll('.gas-stock-qty-step').forEach((btn) => {
+              btn.addEventListener('click', () => {
+                const delta = Number(btn.dataset.delta) || 0;
+                const next = Math.min(maxQty, Math.max(1, (Number(input.value) || 1) + delta));
+                input.value = String(next);
+              });
+            });
+            const allBtn = root.querySelector('.gas-stock-qty-all');
+            if (allBtn) {
+              allBtn.addEventListener('click', () => { input.value = String(maxQty); });
+            }
+          },
+        }, { width: 320, classes: ['gas-dialog'] });
+        dialog.render(true);
+      }).catch(() => null);
+      quantity = Number(quantity ?? 1);
+    }
+
+    quantity = Math.min(Math.max(1, quantity), maxQty);
+
+    const stockPrice = getEffectiveItemPrice($Actor, sourceItem, sharedProps.salePriceFactor ?? 100);
+    if (!stockPrice || getComparablePriceValue(stockPrice) <= 0) {
+      ui.notifications.warn(localize('NoItemPrice'));
+      return;
+    }
+
+    const newItem = await $Actor.createEmbeddedDocuments('Item', [{
+      name: sourceItem.name,
+      type: sourceItem.type,
+      img: sourceItem.img,
+      system: {
+        quantity,
+        price: makeBasketPrice(stockPrice),
+      },
+    }]);
+
+    shopTelemetry('InventoryTab', 'stock drop complete', {
+      itemId: newItem[0]?.id,
+      itemName: sourceItem.name,
+      quantity,
+    });
+
+    ui.notifications.info(`${sourceItem.name} added to shop stock`);
+  }
 
   $: if (typeFilterValue === "all") {
     typeSearch.set("");
@@ -264,6 +486,11 @@
           select.short(value="{typeFilterValue}" on:change!="{onTypeFilterChange}")
             +each("typeFilterOptions as opt")
               option(value="{opt.value}") {opt.label}
+      +if("game.user.isGM && sharedProps.inEditMode")
+        .stock-drop-zone
+          h2.gold {localize('StockZone')}
+          p.stock-drop-zone__hint {localize('StockZoneHint')}
+          DropZone(placeholder="{localize('StockZone')}" acceptType="Item" onDrop!="{handleStockDrop}")
       .padded
         h1.gold {localize('Inventory')}
         .inv-table
@@ -286,7 +513,15 @@
               .inv-col-name(data-tooltip="{localize('View')}")
                 a.stealth.link(data-index="{index}" on:click!="{onShowItemClick}" class!="{item.system.isMagic ? 'pulse' : ''}" role="button") {item.name}
               .inv-col-price
-                span.price-text {formatPrice(item)}
+                +if("sharedProps.allowItemPriceOverrides")
+                  .price-override-row
+                    input.price-override-input(type="text" data-index="{index}" value!="{getItemOverrideDraft(item)}" placeholder!="{formatPrice(item)}" on:change!="{onPriceOverrideInput}")
+                    button.price-override-reset(type="button" data-index="{index}" data-tooltip="{localize('ResetPrice')}" on:click!="{onPriceOverrideReset}" disabled!="{!hasItemOverride(item)}")
+                      i.fa.fa-undo
+                +if("sharedProps.allowItemPriceOverrides && hasItemOverride(item)")
+                  span.price-override-base {localize('Base')}: {formatCurrencyPrice(getItemBasePrice(item))}
+                +if("!sharedProps.allowItemPriceOverrides || !hasItemOverride(item)")
+                  span.price-text {formatPrice(item)}
               .inv-col-qty
                 .qty-controls
                   button.stealth.qty-btn(data-tooltip="Decrease quantity" data-index="{index}" on:click!="{onRemoveQtyClick}")
@@ -312,6 +547,22 @@
   transition: padding 0.2s ease-in-out
   @container (min-width: 350px)
     padding: 1rem
+
+.stock-drop-zone
+  padding: 1rem
+  margin-bottom: 1rem
+  border: 2px dashed rgba(255, 255, 255, 0.3)
+  border-radius: var(--border-radius, 3px)
+  text-align: center
+  background: rgba(255, 255, 255, 0.05)
+
+  h2.gold
+    font-size: 1rem
+    margin: 0 0 0.5rem
+
+  .stock-drop-zone__hint
+    font-size: 0.85rem
+    opacity: 0.7
 
 .pulse
   +mixins.pulse
@@ -424,4 +675,50 @@
   text-align: center
   font-size: 0.85rem
   font-weight: 500
+
+// ── Price override row ──
+.price-override-row
+  display: flex
+  align-items: center
+  gap: 2px
+
+.price-override-input
+  width: 64px
+  min-width: 0
+  padding: 0 0.25rem
+  text-align: center
+  font-size: 0.8rem
+  background: var(--gas-input-background, rgba(0,0,0,0.35))
+  border: 1px solid var(--gas-input-border, rgba(255,255,255,0.2))
+  border-radius: var(--border-radius, 3px)
+  color: var(--gas-color-text)
+
+  &:focus
+    border-color: var(--dnd5e-color-gold, #b59e54)
+
+.price-override-reset
+  width: 20px
+  height: 20px
+  padding: 0
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  font-size: 0.65rem
+  border-radius: 3px
+  background: rgba(255, 255, 255, 0.1)
+  color: var(--gas-color-text)
+  cursor: pointer
+
+  &:hover:not(:disabled)
+    background: rgba(255, 255, 255, 0.25)
+
+  &:disabled
+    opacity: 0.35
+    cursor: default
+
+.price-override-base
+  display: block
+  font-size: 0.7rem
+  opacity: 0.6
+  white-space: nowrap
 </style>
