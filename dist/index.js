@@ -21471,7 +21471,7 @@ class WelcomeAppShell extends SvelteComponent {
     flush();
   }
 }
-const version = "0.1.0";
+const version = "0.1.1";
 class WelcomeApplication extends SvelteApp {
   /**
    * Default Application options
@@ -30225,6 +30225,30 @@ function deductCurrencyPart(currency, amount, denomination) {
     currency[denomination] = roundCurrency(available - requestedAmount);
     return { success: true, currency, remainder: 0 };
   }
+  const currenciesWithConversions = getCurrencyEntriesWithConversions();
+  const smallestConversion = Math.min(...currenciesWithConversions.map(([, conversion]) => conversion));
+  if (Number.isFinite(smallestConversion) && smallestConversion > 0) {
+    const unitScale = 1 / smallestConversion;
+    const toUnits = (value) => Math.round(Number(value) * unitScale);
+    const availableUnits = currenciesWithConversions.reduce((sum, [heldDenomination]) => {
+      const conversion = getCurrencyConversion(heldDenomination);
+      return sum + toUnits(getCurrencyValue(currency, heldDenomination) * conversion);
+    }, 0);
+    const requestedUnits = toUnits(requestedAmount * baseConversion);
+    if (availableUnits >= requestedUnits) {
+      let remainingUnits = availableUnits - requestedUnits;
+      const nextCurrency = {};
+      for (const [heldDenomination, conversion] of currenciesWithConversions.sort(([, left], [, right]) => right - left)) {
+        const denominationUnits = toUnits(conversion);
+        const count = Math.floor(remainingUnits / denominationUnits);
+        if (count > 0) {
+          nextCurrency[heldDenomination] = count;
+          remainingUnits -= count * denominationUnits;
+        }
+      }
+      if (remainingUnits === 0) return { success: true, currency: nextCurrency, remainder: 0 };
+    }
+  }
   const currencies = getCurrencyEntriesWithConversions().filter(([heldDenomination]) => heldDenomination !== denomination).sort(([, left], [, right]) => right - left);
   currencies.unshift([denomination, baseConversion]);
   let passes = currencies.length;
@@ -32371,7 +32395,8 @@ function sanitizeBasket(entries) {
       priceValue: getComparablePriceValue(price),
       quantity: Math.max(0, Number(entry.quantity ?? 0)),
       direction: entry.direction === "sell" ? "sell" : "buy",
-      sourceActorId: entry.sourceActorId ?? null
+      sourceActorId: entry.sourceActorId ?? null,
+      sourceItemData: entry.sourceItemData ?? null
     };
   }).filter((entry) => entry.quantity > 0);
 }
@@ -32395,6 +32420,12 @@ async function applyBasket(shop, targetActorId, nextBasket) {
   const desiredBasket = sanitizeBasket(nextBasket);
   const currentByItem = indexBasket(currentBasket);
   const desiredByItem = indexBasket(desiredBasket);
+  for (const [itemId, desiredEntry] of desiredByItem) {
+    const currentEntry = currentByItem.get(itemId);
+    if (desiredEntry.direction === "sell" && !desiredEntry.sourceItemData && currentEntry?.sourceItemData) {
+      desiredEntry.sourceItemData = currentEntry.sourceItemData;
+    }
+  }
   const itemIds = /* @__PURE__ */ new Set([...currentByItem.keys(), ...desiredByItem.keys()]);
   const stockUpdates = [];
   shopTelemetry("shopSocket", "applyBasket start", {
@@ -32411,7 +32442,7 @@ async function applyBasket(shop, targetActorId, nextBasket) {
     const delta = nextQty - prevQty;
     if (delta <= 0) continue;
     const desiredEntry = desiredByItem.get(itemId);
-    const isSell = desiredEntry?.direction === "sell";
+    const isSell = (desiredEntry ?? currentByItem.get(itemId))?.direction === "sell";
     if (isSell) {
       const sourceActor = resolveShopTargetActor(shop, desiredEntry.sourceActorId ?? targetActorId);
       const sourceItem = sourceActor?.items?.get(itemId);
@@ -32424,7 +32455,10 @@ async function applyBasket(shop, targetActorId, nextBasket) {
         });
         return { success: false, errors: [`Item ${desiredEntry.itemName ?? itemId} not found on the selling actor`], basket: currentBasket };
       }
-      const available2 = Number(sourceItem.system?.quantity ?? 0);
+      const available2 = Number(sourceItem.system?.quantity ?? 1);
+      if (!desiredEntry.sourceItemData) {
+        desiredEntry.sourceItemData = sourceItem.toObject();
+      }
       if (available2 < delta) {
         shopTelemetry("shopSocket", "applyBasket insufficient sell quantity", {
           shopId: shop?.id,
@@ -32468,12 +32502,21 @@ async function applyBasket(shop, targetActorId, nextBasket) {
     const delta = nextQty - prevQty;
     if (delta === 0) continue;
     const desiredEntry = desiredByItem.get(itemId);
-    const isSell = desiredEntry?.direction === "sell";
+    const currentEntry = currentByItem.get(itemId);
+    const basketEntry = desiredEntry ?? currentEntry;
+    const isSell = basketEntry?.direction === "sell";
     if (isSell) {
-      const sourceActor = resolveShopTargetActor(shop, desiredEntry.sourceActorId ?? targetActorId);
+      const sourceActor = resolveShopTargetActor(shop, basketEntry.sourceActorId ?? targetActorId);
       const sourceItem = sourceActor?.items?.get(itemId);
+      if (!sourceItem && delta < 0 && basketEntry.sourceItemData) {
+        const itemData = foundry.utils.deepClone(basketEntry.sourceItemData);
+        delete itemData._id;
+        itemData.system = { ...itemData.system ?? {}, quantity: -delta };
+        itemUpdates.push({ __createSourceActorId: sourceActor?.id, __createItemData: itemData });
+        continue;
+      }
       if (!sourceItem) continue;
-      const available2 = Number(sourceItem.system?.quantity ?? 0);
+      const available2 = Number(sourceItem.system?.quantity ?? 1);
       const quantity2 = available2 - delta;
       shopTelemetry("shopSocket", "applyBasket reserve sell quantity", {
         shopId: shop?.id,
@@ -32484,7 +32527,11 @@ async function applyBasket(shop, targetActorId, nextBasket) {
         delta,
         nextQuantity: quantity2
       });
-      itemUpdates.push({ _id: itemId, "system.quantity": quantity2, __sourceActorId: sourceActor.id });
+      if (quantity2 <= 0) {
+        itemUpdates.push({ _id: itemId, __deleteSourceActorId: sourceActor.id });
+      } else {
+        itemUpdates.push({ _id: itemId, "system.quantity": quantity2, __sourceActorId: sourceActor.id });
+      }
       continue;
     }
     const shopItem = shop.items.get(itemId);
@@ -32504,8 +32551,8 @@ async function applyBasket(shop, targetActorId, nextBasket) {
     stockUpdates.push({ itemId, quantity });
   }
   if (itemUpdates.length > 0) {
-    const sellUpdates = itemUpdates.filter((update2) => update2.__sourceActorId);
-    const buyUpdates = itemUpdates.filter((update2) => !update2.__sourceActorId);
+    const sellUpdates = itemUpdates.filter((update2) => update2.__sourceActorId || update2.__deleteSourceActorId || update2.__createSourceActorId);
+    const buyUpdates = itemUpdates.filter((update2) => !update2.__sourceActorId && !update2.__deleteSourceActorId && !update2.__createSourceActorId);
     if (buyUpdates.length > 0) {
       shopTelemetry("shopSocket", "applyBasket updateEmbeddedDocuments start", {
         shopId: shop?.id,
@@ -32522,8 +32569,16 @@ async function applyBasket(shop, targetActorId, nextBasket) {
       });
     }
     for (const update2 of sellUpdates) {
-      const sourceActor = resolveShopTargetActor(shop, update2.__sourceActorId);
+      const sourceActor = resolveShopTargetActor(shop, update2.__sourceActorId ?? update2.__deleteSourceActorId ?? update2.__createSourceActorId);
       if (!sourceActor) continue;
+      if (update2.__createSourceActorId) {
+        await sourceActor.createEmbeddedDocuments("Item", [update2.__createItemData]);
+        continue;
+      }
+      if (update2.__deleteSourceActorId) {
+        await sourceActor.deleteEmbeddedDocuments("Item", [update2._id]);
+        continue;
+      }
       const { __sourceActorId, ...cleanUpdate } = update2;
       shopTelemetry("shopSocket", "applyBasket reserve sell updateEmbeddedDocuments", {
         shopId: shop?.id,
@@ -32565,7 +32620,8 @@ async function applyPurchase({ requestId, shopId, shopUuid: requestedShopUuid, t
       const effectivePrice = shopItem ? getEffectiveItemPrice(shop, shopItem, shopConfig2.salePriceFactor ?? 100, allowOverrides) : entry.price;
       return { ...entry, price: effectivePrice };
     });
-    const purchaseTotal = sumPrices(effectiveBasket.map((entry) => ({
+    const purchaseEntries = effectiveBasket.filter((entry) => entry.direction !== "sell");
+    const purchaseTotal = sumPrices(purchaseEntries.map((entry) => ({
       price: entry.price,
       quantity: entry.quantity ?? 1
     })));
@@ -32583,6 +32639,7 @@ async function applyPurchase({ requestId, shopId, shopUuid: requestedShopUuid, t
       userId
     });
     for (const entry of basket ?? []) {
+      if (entry.direction === "sell") continue;
       const shopItem = shop.items.get(entry.itemId);
       if (!shopItem) {
         errors.push(`Item ${entry.itemName} not found in shop`);
@@ -32616,7 +32673,7 @@ async function applyPurchase({ requestId, shopId, shopUuid: requestedShopUuid, t
       }
     }
     if (errors.length === 0) {
-      for (const entry of effectiveBasket ?? []) {
+      for (const entry of purchaseEntries) {
         const shopItem = shop.items.get(entry.itemId);
         const qty = Number(entry.quantity ?? 1);
         const itemData = shopItem.toObject();
@@ -32722,7 +32779,7 @@ async function applySell({ requestId, shopId, shopUuid, targetActorId, basket, u
           continue;
         }
         const qty = Number(entry.quantity ?? 1);
-        const available = Number(sourceItem.system?.quantity ?? 0);
+        const available = Number(sourceItem.system?.quantity ?? 1);
         if (available < qty) {
           errors.push(`Insufficient quantity of ${entry.itemName} to sell`);
           continue;
@@ -32739,7 +32796,7 @@ async function applySell({ requestId, shopId, shopUuid, targetActorId, basket, u
           const sourceActor = resolveShopTargetActor(shop, entry.sourceActorId ?? targetActorId);
           const sourceItem = sourceActor.items.get(entry.itemId);
           const qty = Number(entry.quantity ?? 1);
-          const available = Number(sourceItem.system?.quantity ?? 0);
+          const available = Number(sourceItem.system?.quantity ?? 1);
           if (available > qty) {
             await sourceActor.updateEmbeddedDocuments("Item", [
               { _id: entry.itemId, "system.quantity": available - qty }
@@ -33290,7 +33347,7 @@ function create_else_block_2(ctx) {
     }
   };
 }
-function create_if_block_6$1(ctx) {
+function create_if_block_7$1(ctx) {
   let img;
   let img_src_value;
   let img_alt_value;
@@ -33340,13 +33397,13 @@ function create_if_block_6$1(ctx) {
     }
   };
 }
-function create_if_block_4$2(ctx) {
+function create_if_block_5$1(ctx) {
   let div;
   function select_block_type_1(ctx2, dirty) {
     if (
       /*actorOptions*/
       ctx2[4].length === 0
-    ) return create_if_block_5$1;
+    ) return create_if_block_6$1;
     return create_else_block_1;
   }
   let current_block_type = select_block_type_1(ctx);
@@ -33438,7 +33495,7 @@ function create_else_block_1(ctx) {
     }
   };
 }
-function create_if_block_5$1(ctx) {
+function create_if_block_6$1(ctx) {
   let div;
   return {
     c() {
@@ -33926,7 +33983,7 @@ function create_if_block$4(ctx) {
     }
   };
 }
-function create_if_block_3$2(ctx) {
+function create_if_block_4$2(ctx) {
   let span;
   return {
     c() {
@@ -33996,7 +34053,7 @@ function create_each_block$4(ctx) {
   let dispose;
   let if_block = (
     /*entry*/
-    ctx[43].direction === "sell" && create_if_block_3$2()
+    ctx[43].direction === "sell" && create_if_block_4$2()
   );
   return {
     c() {
@@ -34165,7 +34222,7 @@ function create_each_block$4(ctx) {
       ) {
         if (if_block) ;
         else {
-          if_block = create_if_block_3$2();
+          if_block = create_if_block_4$2();
           if_block.c();
           if_block.m(div1, null);
         }
@@ -34205,62 +34262,74 @@ function create_each_block$4(ctx) {
   };
 }
 function create_if_block_1$2(ctx) {
+  let show_if_1 = (
+    /*basket*/
+    ctx[2].some(func_1)
+  );
+  let if_block0_anchor;
   let show_if = (
     /*basket*/
     ctx[2].some(func)
   );
-  let button;
-  let mounted;
-  let dispose;
-  let if_block = show_if && create_if_block_2$2(ctx);
+  let if_block1_anchor;
+  let if_block0 = show_if_1 && create_if_block_3$2(ctx);
+  let if_block1 = show_if && create_if_block_2$2(ctx);
   return {
     c() {
-      if (if_block) if_block.c();
-      button = element("button");
-      button.textContent = `${localize("BuyNow") || "Buy Now"}`;
-      attr(button, "class", "glossy-button primary hover-shine buy-now-btn svelte-FOU-1qtrvn7");
+      if (if_block0) if_block0.c();
+      if_block0_anchor = empty();
+      if (if_block1) if_block1.c();
+      if_block1_anchor = empty();
     },
     m(target, anchor) {
-      if (if_block) if_block.m(target, anchor);
-      insert(target, button, anchor);
-      if (!mounted) {
-        dispose = listen(
-          button,
-          "click",
-          /*onBuyNow*/
-          ctx[15]
-        );
-        mounted = true;
-      }
+      if (if_block0) if_block0.m(target, anchor);
+      insert(target, if_block0_anchor, anchor);
+      if (if_block1) if_block1.m(target, anchor);
+      insert(target, if_block1_anchor, anchor);
     },
     p(ctx2, dirty) {
+      if (dirty[0] & /*basket*/
+      4) show_if_1 = /*basket*/
+      ctx2[2].some(func_1);
+      if (show_if_1) {
+        if (if_block0) {
+          if_block0.p(ctx2, dirty);
+        } else {
+          if_block0 = create_if_block_3$2(ctx2);
+          if_block0.c();
+          if_block0.m(if_block0_anchor.parentNode, if_block0_anchor);
+        }
+      } else if (if_block0) {
+        if_block0.d(1);
+        if_block0 = null;
+      }
       if (dirty[0] & /*basket*/
       4) show_if = /*basket*/
       ctx2[2].some(func);
       if (show_if) {
-        if (if_block) {
-          if_block.p(ctx2, dirty);
+        if (if_block1) {
+          if_block1.p(ctx2, dirty);
         } else {
-          if_block = create_if_block_2$2(ctx2);
-          if_block.c();
-          if_block.m(button.parentNode, button);
+          if_block1 = create_if_block_2$2(ctx2);
+          if_block1.c();
+          if_block1.m(if_block1_anchor.parentNode, if_block1_anchor);
         }
-      } else if (if_block) {
-        if_block.d(1);
-        if_block = null;
+      } else if (if_block1) {
+        if_block1.d(1);
+        if_block1 = null;
       }
     },
     d(detaching) {
       if (detaching) {
-        detach(button);
+        detach(if_block0_anchor);
+        detach(if_block1_anchor);
       }
-      if (if_block) if_block.d(detaching);
-      mounted = false;
-      dispose();
+      if (if_block0) if_block0.d(detaching);
+      if (if_block1) if_block1.d(detaching);
     }
   };
 }
-function create_if_block_2$2(ctx) {
+function create_if_block_3$2(ctx) {
   let button;
   let mounted;
   let dispose;
@@ -34292,6 +34361,38 @@ function create_if_block_2$2(ctx) {
     }
   };
 }
+function create_if_block_2$2(ctx) {
+  let button;
+  let mounted;
+  let dispose;
+  return {
+    c() {
+      button = element("button");
+      button.textContent = `${localize("BuyNow") || "Buy Now"}`;
+      attr(button, "class", "glossy-button primary hover-shine buy-now-btn svelte-FOU-1qtrvn7");
+    },
+    m(target, anchor) {
+      insert(target, button, anchor);
+      if (!mounted) {
+        dispose = listen(
+          button,
+          "click",
+          /*onBuyNow*/
+          ctx[15]
+        );
+        mounted = true;
+      }
+    },
+    p: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(button);
+      }
+      mounted = false;
+      dispose();
+    }
+  };
+}
 function create_fragment$7(ctx) {
   let div2;
   let div1;
@@ -34308,14 +34409,14 @@ function create_fragment$7(ctx) {
     if (
       /*selectedActor*/
       ctx2[5]
-    ) return create_if_block_6$1;
+    ) return create_if_block_7$1;
     return create_else_block_2;
   }
   let current_block_type = select_block_type(ctx);
   let if_block0 = current_block_type(ctx);
   let if_block1 = (
     /*dropdownOpen*/
-    ctx[6] && create_if_block_4$2(ctx)
+    ctx[6] && create_if_block_5$1(ctx)
   );
   const if_block_creators = [create_if_block$4, create_else_block$1];
   const if_blocks = [];
@@ -34411,7 +34512,7 @@ function create_fragment$7(ctx) {
         if (if_block1) {
           if_block1.p(ctx2, dirty);
         } else {
-          if_block1 = create_if_block_4$2(ctx2);
+          if_block1 = create_if_block_5$1(ctx2);
           if_block1.c();
           if_block1.m(div0, null);
         }
@@ -34461,7 +34562,8 @@ function create_fragment$7(ctx) {
     }
   };
 }
-const func = (e) => e.direction === "sell";
+const func = (e) => e.direction !== "sell";
+const func_1 = (e) => e.direction === "sell";
 const click_handler_2 = (e) => e.stopPropagation();
 function instance$7($$self, $$props, $$invalidate) {
   let targetActorId;
@@ -34630,7 +34732,8 @@ function instance$7($$self, $$props, $$invalidate) {
       ui.notifications.warn(localize("NoTargetActor"));
       return;
     }
-    if (basket.length === 0) {
+    const buyEntries = basket.filter((entry) => entry.direction !== "sell");
+    if (buyEntries.length === 0) {
       window.GAS.log.p("onBuyNow | basket is empty, nothing to purchase");
       return;
     }
@@ -34639,7 +34742,7 @@ function instance$7($$self, $$props, $$invalidate) {
       ui.notifications.warn(localize("NoTargetActor"));
       return;
     }
-    const payment = getActorCurrencyPaymentUpdate(targetActor, getBasketTotalPrice(basket));
+    const payment = getActorCurrencyPaymentUpdate(targetActor, getBasketTotalPrice(buyEntries));
     if (!payment.success) {
       payment.errors.forEach((err) => ui.notifications.warn(err));
       return;
@@ -34649,14 +34752,14 @@ function instance$7($$self, $$props, $$invalidate) {
       shopId: $doc.id,
       shopUuid: $doc.uuid,
       targetActorId,
-      basket: basket.map((entry) => serializeBasketEntry(entry))
+      basket: buyEntries.map((entry) => serializeBasketEntry(entry))
     });
     window.GAS.log.p("onBuyNow | socket purchase result:", result.success, "| errors:", result.errors?.length || 0);
     if (result.errors?.length) {
       result.errors.forEach((err) => ui.notifications.warn(err));
     } else {
       window.GAS.log.p("onBuyNow | purchase successful, clearing local basket state");
-      $$invalidate(2, basket = []);
+      $$invalidate(2, basket = basket.filter((entry) => entry.direction === "sell"));
       ui.notifications.info(game.i18n.format("PurchaseComplete", { actorName: targetActor.name }));
     }
   }
@@ -34724,7 +34827,7 @@ function instance$7($$self, $$props, $$invalidate) {
       ui.notifications.warn(localize("SellFromWrongActor"));
       return;
     }
-    const maxQty = Number(sourceItem.system?.quantity ?? 0);
+    const maxQty = Number(sourceItem.system?.quantity ?? 1);
     if (maxQty <= 0) {
       ui.notifications.warn(localize("InsufficientStock"));
       return;
@@ -38714,7 +38817,7 @@ function create_each_block$1(ctx) {
   };
 }
 function create_fragment$3(ctx) {
-  let div9;
+  let div5;
   let div4;
   let div0;
   let label0;
@@ -38724,27 +38827,22 @@ function create_fragment$3(ctx) {
   let label1;
   let div3;
   let select;
-  let div8;
-  let div7;
-  let div6;
-  let div5;
-  let dropzone;
-  let div16;
-  let div15;
-  let div10;
+  let div12;
   let div11;
+  let div6;
+  let div7;
   let span0;
   let i0;
   let i0_class_value;
-  let div12;
+  let div8;
   let span1;
   let i1;
   let i1_class_value;
-  let div13;
+  let div9;
   let span2;
   let i2;
   let i2_class_value;
-  let div14;
+  let div10;
   let current;
   let mounted;
   let dispose;
@@ -38760,16 +38858,6 @@ function create_fragment$3(ctx) {
   for (let i = 0; i < each_value_1.length; i += 1) {
     each_blocks_1[i] = create_each_block_1$1(get_each_context_1$1(ctx, each_value_1, i));
   }
-  dropzone = new DropZone$1({
-    props: {
-      placeholder: localize("SellZone"),
-      acceptType: "Item",
-      onDrop: (
-        /*handleSellDrop*/
-        ctx[17]
-      )
-    }
-  });
   let each_value = ensure_array_like(
     /*items*/
     ctx[1]
@@ -38780,7 +38868,7 @@ function create_fragment$3(ctx) {
   }
   return {
     c() {
-      div9 = element("div");
+      div5 = element("div");
       div4 = element("div");
       div0 = element("div");
       label0 = element("label");
@@ -38795,27 +38883,22 @@ function create_fragment$3(ctx) {
       for (let i = 0; i < each_blocks_1.length; i += 1) {
         each_blocks_1[i].c();
       }
-      div8 = element("div");
-      div7 = element("div");
-      div6 = element("div");
-      div5 = element("div");
-      create_component(dropzone.$$.fragment);
-      div16 = element("div");
-      div15 = element("div");
-      div10 = element("div");
+      div12 = element("div");
       div11 = element("div");
+      div6 = element("div");
+      div7 = element("div");
       span0 = element("span");
       span0.textContent = `${localize("Name")}`;
       i0 = element("i");
-      div12 = element("div");
+      div8 = element("div");
       span1 = element("span");
       span1.textContent = `${localize("Price")}`;
       i1 = element("i");
-      div13 = element("div");
+      div9 = element("div");
       span2 = element("span");
       span2.textContent = `${localize("Quantity")}`;
       i2 = element("i");
-      div14 = element("div");
+      div10 = element("div");
       for (let i = 0; i < each_blocks.length; i += 1) {
         each_blocks[i].c();
       }
@@ -38825,21 +38908,17 @@ function create_fragment$3(ctx) {
       attr(select, "class", "short");
       attr(div3, "class", "flex3 right");
       attr(div4, "class", "flexrow pt-sm pr-sm pl-sm justify-flexrow-vertical gap-10");
-      attr(div5, "class", "sell-zone svelte-FOU-1b4akrd");
-      attr(div6, "class", "flex3");
-      attr(div7, "class", "flexrow gap-10");
-      attr(div8, "class", "padded svelte-FOU-1b4akrd");
-      attr(div9, "class", "panel fix");
-      attr(div10, "class", "inv-col-icon svelte-FOU-1b4akrd");
+      attr(div5, "class", "panel fix");
+      attr(div6, "class", "inv-col-icon svelte-FOU-1b4akrd");
       attr(i0, "class", i0_class_value = "fa sort-indicator " + /*sortKey*/
       (ctx[2] === "name" ? (
         /*sortDir*/
         ctx[3] === "asc" ? "fa-sort-asc" : "fa-sort-desc"
       ) : "fa-sort") + " svelte-FOU-1b4akrd");
-      attr(div11, "class", "inv-col-name sortable svelte-FOU-1b4akrd");
-      attr(div11, "data-key", "name");
+      attr(div7, "class", "inv-col-name sortable svelte-FOU-1b4akrd");
+      attr(div7, "data-key", "name");
       toggle_class(
-        div11,
+        div7,
         "active",
         /*sortKey*/
         ctx[2] === "name"
@@ -38849,10 +38928,10 @@ function create_fragment$3(ctx) {
         /*sortDir*/
         ctx[3] === "asc" ? "fa-sort-asc" : "fa-sort-desc"
       ) : "fa-sort") + " svelte-FOU-1b4akrd");
-      attr(div12, "class", "inv-col-price sortable svelte-FOU-1b4akrd");
-      attr(div12, "data-key", "price");
+      attr(div8, "class", "inv-col-price sortable svelte-FOU-1b4akrd");
+      attr(div8, "data-key", "price");
       toggle_class(
-        div12,
+        div8,
         "active",
         /*sortKey*/
         ctx[2] === "price"
@@ -38862,21 +38941,21 @@ function create_fragment$3(ctx) {
         /*sortDir*/
         ctx[3] === "asc" ? "fa-sort-asc" : "fa-sort-desc"
       ) : "fa-sort") + " svelte-FOU-1b4akrd");
-      attr(div13, "class", "inv-col-qty sortable svelte-FOU-1b4akrd");
-      attr(div13, "data-key", "system.quantity");
+      attr(div9, "class", "inv-col-qty sortable svelte-FOU-1b4akrd");
+      attr(div9, "data-key", "system.quantity");
       toggle_class(
-        div13,
+        div9,
         "active",
         /*sortKey*/
         ctx[2] === "system.quantity"
       );
-      attr(div14, "class", "inv-col-actions svelte-FOU-1b4akrd");
-      attr(div15, "class", "inv-header svelte-FOU-1b4akrd");
-      attr(div16, "class", "inv-table overflow containerx svelte-FOU-1b4akrd");
+      attr(div10, "class", "inv-col-actions svelte-FOU-1b4akrd");
+      attr(div11, "class", "inv-header svelte-FOU-1b4akrd");
+      attr(div12, "class", "inv-table overflow containerx svelte-FOU-1b4akrd");
     },
     m(target, anchor) {
-      insert(target, div9, anchor);
-      append(div9, div4);
+      insert(target, div5, anchor);
+      append(div5, div4);
       append(div4, div0);
       append(div0, label0);
       append(div4, div1);
@@ -38895,27 +38974,22 @@ function create_fragment$3(ctx) {
         /*typeFilterValue*/
         ctx[0]
       );
-      append(div9, div8);
-      append(div8, div7);
-      append(div7, div6);
-      append(div6, div5);
-      mount_component(dropzone, div5, null);
-      insert(target, div16, anchor);
-      append(div16, div15);
-      append(div15, div10);
-      append(div15, div11);
-      append(div11, span0);
-      append(div11, i0);
-      append(div15, div12);
-      append(div12, span1);
-      append(div12, i1);
-      append(div15, div13);
-      append(div13, span2);
-      append(div13, i2);
-      append(div15, div14);
+      insert(target, div12, anchor);
+      append(div12, div11);
+      append(div11, div6);
+      append(div11, div7);
+      append(div7, span0);
+      append(div7, i0);
+      append(div11, div8);
+      append(div8, span1);
+      append(div8, i1);
+      append(div11, div9);
+      append(div9, span2);
+      append(div9, i2);
+      append(div11, div10);
       for (let i = 0; i < each_blocks.length; i += 1) {
         if (each_blocks[i]) {
-          each_blocks[i].m(div16, null);
+          each_blocks[i].m(div12, null);
         }
       }
       current = true;
@@ -38928,19 +39002,19 @@ function create_fragment$3(ctx) {
             ctx[12]
           ),
           listen(
-            div11,
+            div7,
             "click",
             /*onSortClick*/
             ctx[13]
           ),
           listen(
-            div12,
+            div8,
             "click",
             /*onSortClick*/
             ctx[13]
           ),
           listen(
-            div13,
+            div9,
             "click",
             /*onSortClick*/
             ctx[13]
@@ -38991,7 +39065,7 @@ function create_fragment$3(ctx) {
       if (!current || dirty[0] & /*sortKey*/
       4) {
         toggle_class(
-          div11,
+          div7,
           "active",
           /*sortKey*/
           ctx2[2] === "name"
@@ -39008,7 +39082,7 @@ function create_fragment$3(ctx) {
       if (!current || dirty[0] & /*sortKey*/
       4) {
         toggle_class(
-          div12,
+          div8,
           "active",
           /*sortKey*/
           ctx2[2] === "price"
@@ -39025,7 +39099,7 @@ function create_fragment$3(ctx) {
       if (!current || dirty[0] & /*sortKey*/
       4) {
         toggle_class(
-          div13,
+          div9,
           "active",
           /*sortKey*/
           ctx2[2] === "system.quantity"
@@ -39045,7 +39119,7 @@ function create_fragment$3(ctx) {
           } else {
             each_blocks[i] = create_each_block$1(child_ctx);
             each_blocks[i].c();
-            each_blocks[i].m(div16, null);
+            each_blocks[i].m(div12, null);
           }
         }
         for (; i < each_blocks.length; i += 1) {
@@ -39057,22 +39131,19 @@ function create_fragment$3(ctx) {
     i(local) {
       if (current) return;
       transition_in(tjsinput.$$.fragment, local);
-      transition_in(dropzone.$$.fragment, local);
       current = true;
     },
     o(local) {
       transition_out(tjsinput.$$.fragment, local);
-      transition_out(dropzone.$$.fragment, local);
       current = false;
     },
     d(detaching) {
       if (detaching) {
-        detach(div9);
-        detach(div16);
+        detach(div5);
+        detach(div12);
       }
       destroy_component(tjsinput);
       destroy_each(each_blocks_1, detaching);
-      destroy_component(dropzone);
       destroy_each(each_blocks, detaching);
       mounted = false;
       run_all(dispose);
@@ -39090,15 +39161,15 @@ function instance$3($$self, $$props, $$invalidate) {
   let $wildcard;
   let $Actor;
   let $shopSocketState;
-  component_subscribe($$self, shopSocketState, ($$value) => $$invalidate(26, $shopSocketState = $$value));
+  component_subscribe($$self, shopSocketState, ($$value) => $$invalidate(25, $shopSocketState = $$value));
   const Actor2 = getContext("#doc");
-  component_subscribe($$self, Actor2, (value) => $$invalidate(25, $Actor = value));
+  component_subscribe($$self, Actor2, (value) => $$invalidate(24, $Actor = value));
   const doc = new TJSDocument($Actor);
   let { sharedProps = {} } = $$props;
   const typeSearch = createFilterQuery("type");
-  component_subscribe($$self, typeSearch, (value) => $$invalidate(22, $typeSearch = value));
+  component_subscribe($$self, typeSearch, (value) => $$invalidate(21, $typeSearch = value));
   const nameSearch = createFilterQuery("name");
-  component_subscribe($$self, nameSearch, (value) => $$invalidate(23, $nameSearch = value));
+  component_subscribe($$self, nameSearch, (value) => $$invalidate(22, $nameSearch = value));
   const sortQuery = createSortQuery({
     defaultKey: "name",
     defaultDirection: "asc",
@@ -39124,7 +39195,7 @@ function instance$3($$self, $$props, $$invalidate) {
     filters: [typeSearch, nameSearch],
     sort: (a, b) => a.name.localeCompare(b.name)
   });
-  component_subscribe($$self, wildcard, (value) => $$invalidate(24, $wildcard = value));
+  component_subscribe($$self, wildcard, (value) => $$invalidate(23, $wildcard = value));
   function onShowItemClick(e) {
     const idx = parseInt(e.currentTarget.dataset.index);
     items[idx].sheet.render(true);
@@ -39239,90 +39310,6 @@ function instance$3($$self, $$props, $$invalidate) {
     }
     ui.notifications.info(`${item.name} added to basket`);
   }
-  async function handleSellDrop(data) {
-    shopTelemetry("InventoryPlayerTab", "sell drop received", {
-      shopId: $Actor?.id,
-      shopUuid: $Actor?.uuid,
-      targetActorId,
-      dataType: data?.type,
-      dataUuid: data?.uuid
-    });
-    if (data?.type !== "Item" || !data?.uuid || !data.uuid.startsWith("Actor.")) {
-      return;
-    }
-    if (!targetActorId) {
-      ui.notifications.warn(localize("NoTargetActor"));
-      return;
-    }
-    const sourceItem = await fromUuid(data.uuid);
-    if (!sourceItem) return;
-    const sourceActor = sourceItem.actor;
-    if (!sourceActor) {
-      ui.notifications.warn(localize("SellFromWrongActor"));
-      return;
-    }
-    if (sourceActor.id !== targetActorId) {
-      ui.notifications.warn(localize("SellFromWrongActor"));
-      return;
-    }
-    const maxQty = Number(sourceItem.system?.quantity ?? 0);
-    if (maxQty <= 0) {
-      ui.notifications.warn(localize("InsufficientStock"));
-      return;
-    }
-    let quantity = 1;
-    if (sharedProps.sellQuantityMode === "prompt") {
-      const promptValue = await Dialog.prompt({
-        title: localize("SelectSellQuantity"),
-        content: `<p>${localize("SelectSellQuantity")}</p>`,
-        rejectClose: false,
-        callback: (html) => {
-          const input2 = html.querySelector("input");
-          return input2 ? Number(input2.value) : 1;
-        },
-        options: { width: 320 }
-      }).catch(() => null);
-      quantity = Number(promptValue ?? 1);
-    }
-    quantity = Math.min(Math.max(1, quantity), maxQty);
-    const sellPrice = getBuyPrice(sourceItem, sharedProps.buyPriceFactor ?? 50);
-    if (!sellPrice || getComparablePriceValue(sellPrice) <= 0) {
-      ui.notifications.warn(localize("NoItemPrice"));
-      return;
-    }
-    const currentBasket = targetActorId ? $Actor?.flags?.[MODULE_ID]?.basket?.[targetActorId] ?? [] : [];
-    const nextBasket = currentBasket.map((entry) => ({ ...entry }));
-    const existing = nextBasket.find((entry) => entry.itemId === sourceItem.id && entry.direction === "sell");
-    if (existing) {
-      existing.quantity = Math.min(maxQty, (existing.quantity ?? 1) + quantity);
-    } else {
-      nextBasket.push({
-        itemId: sourceItem.id,
-        itemName: sourceItem.name,
-        img: sourceItem.img,
-        price: makeBasketPrice$1(sellPrice),
-        quantity,
-        direction: "sell",
-        sourceActorId: targetActorId
-      });
-    }
-    const result = await requestBasketUpdate({
-      shopId: $Actor.id,
-      shopUuid: $Actor.uuid,
-      targetActorId,
-      nextBasket
-    });
-    shopTelemetry("InventoryPlayerTab", "sell drop basket update result", {
-      shopId: $Actor?.id,
-      targetActorId,
-      result
-    });
-    if (!result.success) {
-      (result.errors ?? []).forEach((err) => ui.notifications.warn(err));
-      return;
-    }
-    ui.notifications.info(`${sourceItem.name} added to sell list`);
-  }
   onMount(() => {
     shopTelemetry("InventoryPlayerTab", "mounted", {
       actorId: $Actor?.id,
@@ -39356,28 +39343,28 @@ function instance$3($$self, $$props, $$invalidate) {
     unsubscribeWildcard();
   });
   $$self.$$set = ($$props2) => {
-    if ("sharedProps" in $$props2) $$invalidate(18, sharedProps = $$props2.sharedProps);
+    if ("sharedProps" in $$props2) $$invalidate(17, sharedProps = $$props2.sharedProps);
   };
   $$self.$$.update = () => {
     if ($$self.$$.dirty[0] & /*$Actor*/
-    33554432) {
+    16777216) {
       doc.set($Actor);
     }
     if ($$self.$$.dirty[0] & /*sharedProps*/
-    262144) {
+    131072) {
       targetActorId = sharedProps.targetActorId ?? null;
     }
     if ($$self.$$.dirty[0] & /*$Actor*/
-    33554432) {
-      $$invalidate(21, shopUuid = $Actor?.uuid ?? ($Actor?.id ? `Actor.${$Actor.id}` : null));
+    16777216) {
+      $$invalidate(20, shopUuid = $Actor?.uuid ?? ($Actor?.id ? `Actor.${$Actor.id}` : null));
     }
     if ($$self.$$.dirty[0] & /*shopUuid, $shopSocketState*/
-    69206016) {
-      $$invalidate(19, socketShopState = shopUuid ? $shopSocketState.get(shopUuid) : null);
+    34603008) {
+      $$invalidate(18, socketShopState = shopUuid ? $shopSocketState.get(shopUuid) : null);
     }
     if ($$self.$$.dirty[0] & /*socketShopState*/
-    524288) {
-      $$invalidate(20, socketStockRevision = socketShopState?.revision ?? 0);
+    262144) {
+      $$invalidate(19, socketStockRevision = socketShopState?.revision ?? 0);
     }
     if ($$self.$$.dirty[0] & /*typeFilterValue*/
     1) {
@@ -39388,7 +39375,7 @@ function instance$3($$self, $$props, $$invalidate) {
       }
     }
     if ($$self.$$.dirty[0] & /*$Actor, $wildcard, $nameSearch, $typeSearch, sortKey, sortDir, socketStockRevision, shopUuid, items, socketShopState*/
-    66584590) {
+    33292302) {
       {
         $$invalidate(1, items = getInventoryItems());
         shopTelemetry("InventoryPlayerTab", "items reassigned", {
@@ -39423,7 +39410,6 @@ function instance$3($$self, $$props, $$invalidate) {
     getDisplayQuantity,
     isOutOfStock,
     formatPrice$1,
-    handleSellDrop,
     sharedProps,
     socketShopState,
     socketStockRevision,
@@ -39438,7 +39424,7 @@ function instance$3($$self, $$props, $$invalidate) {
 class InventoryPlayerTab extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance$3, create_fragment$3, safe_not_equal, { sharedProps: 18 }, null, [-1, -1]);
+    init(this, options, instance$3, create_fragment$3, safe_not_equal, { sharedProps: 17 }, null, [-1, -1]);
   }
 }
 function create_fragment$2(ctx) {
