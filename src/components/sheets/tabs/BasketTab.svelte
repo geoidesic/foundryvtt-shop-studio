@@ -660,7 +660,8 @@
             +if("targetActorId")
               +if("basket.some(e => e.direction === 'sell')")
                 button.glossy-button.sell.hover-shine.sell-now-btn(on:click!="{onSellNow}") {localize('SellNow') || 'Sell Now'}
-              button.glossy-button.primary.hover-shine.buy-now-btn(on:click!="{onBuyNow}") {localize('BuyNow') || 'Buy Now'}
+              +if("basket.some(e => e.direction !== 'sell')")
+                button.glossy-button.primary.hover-shine.buy-now-btn(on:click!="{onBuyNow}") {localize('BuyNow') || 'Buy Now'}
           .sell-zone
             h2.gold {localize('SellZone')}
             p.sell-zone__hint {localize('SellZoneHint')}
