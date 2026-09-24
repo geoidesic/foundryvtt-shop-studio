@@ -629,7 +629,24 @@ const application = getContext('#external').application;
     item.sheet?.render(true);
   }
 
-  function openImageEditor() {
+  //- provide Tokenizer support
+  function openImageEditor(event) {
+    // Shift+click opens the standard FilePicker.
+    if (event.shiftKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      launchStandardProfileEditor();
+      return;
+    }
+
+    // Option+click opens the Tokenizer; regular clicks do nothing.
+    if (!event.altKey) return;
+    event.preventDefault();
+    event.stopPropagation();
+    launchTokenizer();
+  }
+
+  function launchStandardProfileEditor() {
     const current = actor?.img;
     if (_filePickerInstance instanceof FilePicker && !_filePickerInstance?.rendered) {
       _filePickerInstance.render(true);
@@ -646,6 +663,24 @@ const application = getContext('#external').application;
       left: application.position.left + 10,
     });
     return _filePickerInstance.browse();
+  }
+
+  function launchTokenizer() {
+    // Tokenizer 2 (tokenizer-2) exposes window.Tokenizer2.openEditor(actor).
+    if (game.modules.get('tokenizer-2')?.active
+      && typeof window.Tokenizer2?.openEditor === 'function') {
+      window.Tokenizer2.openEditor($documentStore);
+      return true;
+    }
+
+    // Legacy Tokenizer (vtta-tokenizer) exposes window.Tokenizer.tokenizeActor(actor).
+    if (game.modules.get('vtta-tokenizer')?.active
+      && typeof window.Tokenizer?.tokenizeActor === 'function') {
+      window.Tokenizer.tokenizeActor($documentStore);
+      return true;
+    }
+
+    return false;
   }
 
   function getActorName(id) {
