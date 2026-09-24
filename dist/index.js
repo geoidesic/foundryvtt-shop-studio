@@ -21471,7 +21471,7 @@ class WelcomeAppShell extends SvelteComponent {
     flush();
   }
 }
-const version = "0.1.1";
+const version = "0.2.0";
 class WelcomeApplication extends SvelteApp {
   /**
    * Default Application options
@@ -37976,7 +37976,19 @@ function instance$5($$self, $$props, $$invalidate) {
   function clearFilter() {
     $$invalidate(4, filterText = "");
   }
-  function openImageEditor() {
+  function openImageEditor(event2) {
+    if (event2.shiftKey) {
+      event2.preventDefault();
+      event2.stopPropagation();
+      launchStandardProfileEditor();
+      return;
+    }
+    if (!event2.altKey) return;
+    event2.preventDefault();
+    event2.stopPropagation();
+    launchTokenizer();
+  }
+  function launchStandardProfileEditor() {
     const current = actor?.img;
     if (_filePickerInstance instanceof FilePicker && !_filePickerInstance?.rendered) {
       _filePickerInstance.render(true);
@@ -37992,6 +38004,17 @@ function instance$5($$self, $$props, $$invalidate) {
       left: application.position.left + 10
     });
     return _filePickerInstance.browse();
+  }
+  function launchTokenizer() {
+    if (game.modules.get("tokenizer-2")?.active && typeof window.Tokenizer2?.openEditor === "function") {
+      window.Tokenizer2.openEditor($documentStore);
+      return true;
+    }
+    if (game.modules.get("vtta-tokenizer")?.active && typeof window.Tokenizer?.tokenizeActor === "function") {
+      window.Tokenizer.tokenizeActor($documentStore);
+      return true;
+    }
+    return false;
   }
   function calculateSalePrice(basePrice = 0) {
     const factor = salePriceFactor / 100;
